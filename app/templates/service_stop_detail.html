@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Service Stop{% endblock %}
+{% block content %}
+<section class="section-head">
+    <div>
+        <div class="eyebrow">{{ service_stop.property.client.name }}</div>
+        <h1>Service Stop</h1>
+        <p>{{ service_stop.property.address }}</p>
+    </div>
+    <div class="badge">{{ service_stop.paid_status }}</div>
+</section>
+
+<section class="grid grid-2">
+    <div class="card">
+        <h3>Work summary</h3>
+        <p><strong>Date:</strong> {{ service_stop.date }}</p>
+        <p><strong>Tech:</strong> {{ service_stop.tech_name }}</p>
+        <p><strong>Status:</strong> {{ service_stop.status }}</p>
+        <p><strong>Problem Reported:</strong><br>{{ service_stop.problem_reported }}</p>
+        <p><strong>Work Performed:</strong><br>{{ service_stop.work_performed }}</p>
+        <p><strong>Recommendation:</strong><br>{{ service_stop.recommendation }}</p>
+        <p><strong>Invoice Notes:</strong><br>{{ service_stop.invoice_notes or "—" }}</p>
+    </div>
+    <div class="card">
+        <h3>Invoice breakdown</h3>
+        <div class="invoice-line"><span>Labor ({{ service_stop.labor_hours }} hrs × {{ service_stop.labor_rate|money }})</span><strong>{{ labor_total|money }}</strong></div>
+        <div class="invoice-line"><span>Additional billed amount</span><strong>{{ service_stop.billed_amount|money }}</strong></div>
+        <div class="invoice-line"><span>Materials</span><strong>{{ service_stop.material_cost|money }}</strong></div>
+        <div class="invoice-line"><span>Trip charge</span><strong>{{ service_stop.trip_charge|money }}</strong></div>
+        <div class="invoice-line"><span>Tax</span><strong>{{ service_stop.tax|money }}</strong></div>
+        <div class="invoice-total"><span>Total</span><strong>{{ invoice_total|money }}</strong></div>
+    </div>
+</section>
+{% endblock %}

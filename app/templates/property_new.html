@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Add Property{% endblock %}
+{% block content %}
+<div class="card form-card">
+    <h1>Add Property</h1>
+    <form method="post" class="form-grid">
+        <label>Existing Client
+            <select name="client_id">
+                <option value="">Create new client instead</option>
+                {% for client in clients %}
+                    <option value="{{ client.id }}">{{ client.name }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <label>New Client Name<input name="client_name"></label>
+        <label>New Client Phone<input name="client_phone"></label>
+        <label>New Client Email<input name="client_email" type="email"></label>
+        <label>Billing Address<input name="billing_address"></label>
+
+        <label>Property Address<input name="address" required></label>
+        <label>City<input name="city"></label>
+        <label>State<input name="state" value="IN"></label>
+        <label>ZIP<input name="zip_code"></label>
+        <label>Pool Type<input name="pool_type" placeholder="Gunite / Vinyl / Fiberglass"></label>
+        <label>Cover Type<input name="cover_type" placeholder="Automatic / Manual / None"></label>
+        <label>Gate Code<input name="gate_code"></label>
+        <label>Install Year<input name="install_year"></label>
+        <label class="full">Property Notes<textarea name="notes"></textarea></label>
+        <div class="full"><button class="btn btn-primary" type="submit">Save Property</button></div>
+    </form>
+</div>
+{% endblock %}

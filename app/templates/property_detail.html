@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}Property{% endblock %}
+{% block content %}
+<section class="section-head">
+    <div>
+        <div class="eyebrow">{{ property.client.name }}</div>
+        <h1>{{ property.address }}</h1>
+        <p>{{ property.city }}, {{ property.state }} {{ property.zip_code }}</p>
+    </div>
+    <div class="hero-actions">
+        <a class="btn btn-primary" href="/properties/{{ property.id }}/service-stop/new">Add Service Stop</a>
+        <a class="btn" href="/schedule/new">Schedule Work</a>
+    </div>
+</section>
+
+<section class="grid grid-3">
+    <div class="card">
+        <h3>Property info</h3>
+        <p><strong>Pool Type:</strong> {{ property.pool_type or "—" }}</p>
+        <p><strong>Cover Type:</strong> {{ property.cover_type or "—" }}</p>
+        <p><strong>Gate Code:</strong> {{ property.gate_code or "—" }}</p>
+        <p><strong>Install Year:</strong> {{ property.install_year or "—" }}</p>
+        <p><strong>Notes:</strong><br>{{ property.notes or "—" }}</p>
+    </div>
+    <div class="card">
+        <h3>Client info</h3>
+        <p><strong>Name:</strong> {{ property.client.name }}</p>
+        <p><strong>Phone:</strong> {{ property.client.phone or "—" }}</p>
+        <p><strong>Email:</strong> {{ property.client.email or "—" }}</p>
+        <p><strong>Billing Address:</strong><br>{{ property.client.billing_address or "—" }}</p>
+    </div>
+    <div class="card">
+        <h3>Quick notes for crew</h3>
+        <p>Use this page as the job-site hub for service history, access notes, and next scheduled work.</p>
+    </div>
+</section>
+
+<section class="grid grid-2">
+    <div class="card">
+        <div class="section-head"><h2>Service history</h2></div>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>Date</th><th>Tech</th><th>Status</th><th>Paid</th><th></th></tr></thead>
+                <tbody>
+                {% for stop in property.service_stops %}
+                    <tr>
+                        <td>{{ stop.date }}</td>
+                        <td>{{ stop.tech_name }}</td>
+                        <td>{{ stop.status }}</td>
+                        <td>{{ stop.paid_status }}</td>
+                        <td><a href="/service-stops/{{ stop.id }}">Open</a></td>
+                    </tr>
+                {% else %}
+                    <tr><td colspan="5">No service history yet.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="section-head"><h2>Scheduled work</h2></div>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>Date</th><th>Time</th><th>Assigned</th><th>Status</th></tr></thead>
+                <tbody>
+                {% for item in property.schedule_items %}
+                    <tr>
+                        <td>{{ item.date }}</td>
+                        <td>{{ item.start_time }}{% if item.end_time %}–{{ item.end_time }}{% endif %}</td>
+                        <td>{% if item.employee %}{{ item.employee.name }}{% else %}{{ item.assigned_to }}{% endif %}</td>
+                        <td>{{ item.status }}</td>
+                    </tr>
+                {% else %}
+                    <tr><td colspan="4">No scheduled work yet.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+{% endblock %}

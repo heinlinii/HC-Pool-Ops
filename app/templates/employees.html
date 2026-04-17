@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Employees{% endblock %}
+{% block content %}
+<div class="section-head">
+    <h1>Employees</h1>
+    <a class="btn btn-primary" href="/employees/new">Add Employee</a>
+</div>
+<div class="table-wrap card">
+<table>
+    <thead><tr><th>Name</th><th>Role</th><th>Phone</th><th>Email</th><th>Status</th></tr></thead>
+    <tbody>
+    {% for employee in employees %}
+        <tr>
+            <td>{{ employee.name }}</td>
+            <td>{{ employee.role }}</td>
+            <td>{{ employee.phone }}</td>
+            <td>{{ employee.email }}</td>
+            <td><span class="badge">{{ employee.status }}</span></td>
+        </tr>
+    {% else %}
+        <tr><td colspan="5">No employees yet.</td></tr>
+    {% endfor %}
+    </tbody>
+</table>
+</div>
+{% endblock %}

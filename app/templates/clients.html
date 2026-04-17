@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Clients{% endblock %}
+{% block content %}
+<div class="section-head">
+    <h1>Clients</h1>
+    <a class="btn btn-primary" href="/clients/new">Add Client</a>
+</div>
+<div class="table-wrap card">
+<table>
+    <thead><tr><th>Name</th><th>Phone</th><th>Email</th><th>Billing Address</th></tr></thead>
+    <tbody>
+    {% for client in clients %}
+        <tr>
+            <td>{{ client.name }}</td>
+            <td>{{ client.phone }}</td>
+            <td>{{ client.email }}</td>
+            <td>{{ client.billing_address }}</td>
+        </tr>
+    {% else %}
+        <tr><td colspan="4">No clients yet.</td></tr>
+    {% endfor %}
+    </tbody>
+</table>
+</div>
+{% endblock %}

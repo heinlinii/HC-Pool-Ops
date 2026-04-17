@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Add Schedule Item{% endblock %}
+{% block content %}
+<div class="card form-card">
+    <h1>Add Schedule Item</h1>
+    <form method="post" class="form-grid">
+        <label>Property
+            <select name="property_id" required>
+                <option value="">Select property</option>
+                {% for property in properties %}
+                    <option value="{{ property.id }}">{{ property.address }} — {{ property.client.name }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <label>Employee
+            <select name="employee_id">
+                <option value="">No linked employee</option>
+                {% for employee in employees %}
+                    <option value="{{ employee.id }}">{{ employee.name }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <label>Date<input type="date" name="date"></label>
+        <label>Start Time<input type="time" name="start_time"></label>
+        <label>End Time<input type="time" name="end_time"></label>
+        <label>Assigned To (text)<input name="assigned_to" placeholder="Crew name if not linked"></label>
+        <label>Job Type<input name="job_type" placeholder="Service / Opening / Remodel / Estimate"></label>
+        <label>Status
+            <select name="status">
+                <option value="scheduled">Scheduled</option>
+                <option value="confirmed">Confirmed</option>
+                <option value="in progress">In Progress</option>
+                <option value="completed">Completed</option>
+                <option value="rescheduled">Rescheduled</option>
+            </select>
+        </label>
+        <label class="full">Notes<textarea name="notes"></textarea></label>
+        <div class="full"><button class="btn btn-primary" type="submit">Save Schedule Item</button></div>
+    </form>
+</div>
+{% endblock %}

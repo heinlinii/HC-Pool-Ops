@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Client Portal{% endblock %}
+{% block content %}
+<div class="card form-card portal-card">
+    <div class="eyebrow">Client Intake Portal</div>
+    <h1>Request Service or an Estimate</h1>
+    <p>Use this page for customers to request maintenance, service, estimates, repairs, openings, closings, remodels, or automatic cover help.</p>
+    <form method="post" class="form-grid">
+        <label>Name<input name="client_name" required></label>
+        <label>Phone<input name="phone"></label>
+        <label>Email<input name="email" type="email"></label>
+        <label>Address<input name="address"></label>
+        <label>Request Type
+            <select name="request_type">
+                <option>Service Call</option>
+                <option>Estimate Request</option>
+                <option>Weekly Maintenance</option>
+                <option>Opening</option>
+                <option>Closing</option>
+                <option>Automatic Cover Issue</option>
+                <option>Remodel</option>
+            </select>
+        </label>
+        <label class="full">Description<textarea name="description"></textarea></label>
+        <div class="full"><button class="btn btn-primary" type="submit">Submit Request</button></div>
+    </form>
+</div>
+{% endblock %}

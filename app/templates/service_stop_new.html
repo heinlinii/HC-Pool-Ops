@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}New Service Stop{% endblock %}
+{% block content %}
+<div class="card form-card">
+    <div class="eyebrow">{{ property.client.name }}</div>
+    <h1>New Service Stop</h1>
+    <p>{{ property.address }}</p>
+    <form method="post" class="form-grid">
+        <label>Date<input type="date" name="date"></label>
+        <label>Tech Name<input name="tech_name"></label>
+        <label>Status
+            <select name="status">
+                <option value="completed">Completed</option>
+                <option value="follow up needed">Follow Up Needed</option>
+                <option value="awaiting parts">Awaiting Parts</option>
+            </select>
+        </label>
+        <label>Paid Status
+            <select name="paid_status">
+                <option value="unpaid">Unpaid</option>
+                <option value="paid">Paid</option>
+                <option value="partial">Partial</option>
+            </select>
+        </label>
+        <label class="full">Problem Reported<textarea name="problem_reported"></textarea></label>
+        <label class="full">Work Performed<textarea name="work_performed"></textarea></label>
+        <label class="full">Recommendation<textarea name="recommendation"></textarea></label>
+        <label>Labor Hours<input name="labor_hours" type="number" step="0.01" value="0"></label>
+        <label>Labor Rate<input name="labor_rate" type="number" step="0.01" value="95"></label>
+        <label>Additional Billed Amount<input name="billed_amount" type="number" step="0.01" value="0"></label>
+        <label>Material Cost<input name="material_cost" type="number" step="0.01" value="0"></label>
+        <label>Trip Charge<input name="trip_charge" type="number" step="0.01" value="0"></label>
+        <label>Tax<input name="tax" type="number" step="0.01" value="0"></label>
+        <label class="full">Invoice Notes<textarea name="invoice_notes"></textarea></label>
+        <div class="full"><button class="btn btn-primary" type="submit">Save Service Stop</button></div>
+    </form>
+</div>
+{% endblock %}

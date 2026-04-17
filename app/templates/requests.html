@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Client Requests{% endblock %}
+{% block content %}
+<div class="section-head">
+    <h1>Client Requests</h1>
+    <a class="btn" href="/portal/request">Open Portal Form</a>
+</div>
+<div class="table-wrap card">
+<table>
+    <thead><tr><th>Client</th><th>Phone</th><th>Email</th><th>Address</th><th>Type</th><th>Status</th><th>Description</th></tr></thead>
+    <tbody>
+    {% for item in requests_list %}
+        <tr>
+            <td>{{ item.client_name }}</td>
+            <td>{{ item.phone }}</td>
+            <td>{{ item.email }}</td>
+            <td>{{ item.address }}</td>
+            <td>{{ item.request_type }}</td>
+            <td><span class="badge">{{ item.status }}</span></td>
+            <td>{{ item.description }}</td>
+        </tr>
+    {% else %}
+        <tr><td colspan="7">No client requests yet.</td></tr>
+    {% endfor %}
+    </tbody>
+</table>
+</div>
+{% endblock %}

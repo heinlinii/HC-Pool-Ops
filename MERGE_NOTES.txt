@@ -1,0 +1,25 @@
+Merged version notes
+
+What was preserved from your current system:
+- FastAPI + SQLAlchemy structure
+- Properties flow
+- Property detail flow
+- Service stop flow
+- Schedule flow
+- Seed route
+- Root route still serves as operational dashboard
+
+What was added:
+- Clients section
+- Employees section
+- Client request portal
+- Better UI and navigation
+- PostgreSQL-ready database setup
+- Render deployment config
+- Compatibility shim: app/db.py
+
+Recommended next step:
+- Run this merged version in a new folder first
+- Seed data with /dev/seed
+- Test properties, service stops, and schedule
+- Then deploy

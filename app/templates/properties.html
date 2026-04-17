@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Properties{% endblock %}
+{% block content %}
+<div class="section-head">
+    <h1>Properties</h1>
+    <a class="btn btn-primary" href="/properties/new">Add Property</a>
+</div>
+<div class="cards">
+{% for property in properties %}
+    <a class="card property-card" href="/properties/{{ property.id }}">
+        <div class="eyebrow">{{ property.client.name }}</div>
+        <h3>{{ property.address }}</h3>
+        <p>{{ property.city }}, {{ property.state }} {{ property.zip_code }}</p>
+        <p><strong>Pool:</strong> {{ property.pool_type or "—" }}</p>
+        <p><strong>Cover:</strong> {{ property.cover_type or "—" }}</p>
+    </a>
+{% else %}
+    <div class="card">No properties yet.</div>
+{% endfor %}
+</div>
+{% endblock %}
