@@ -112,15 +112,12 @@ def require_roles(request: Request, db: Session, allowed_roles: list[str]):
     if user.role not in allowed_roles:
         raise HTTPException(status_code=403, detail="Not authorized")
     return user
-@app.get("/login")
-def login_page():
-    
+from fastapi import Request
+from fastapi.responses import HTMLResponse
+
 @app.get("/login", response_class=HTMLResponse)
 def login_page(request: Request):
-    return templates.TemplateResponse("login.html", {"request": request, "error": ""})
-@app.get("/login", response_class=HTMLResponse)
-def login_form(request: Request):
-    return templates.TemplateResponse("login.html", {"request": request, "error": ""})
+    return templates.TemplateResponse("login.html", {"request": request})
 
 @app.post("/login", response_class=HTMLResponse)
 def login_submit(
