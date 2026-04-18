@@ -11,7 +11,7 @@
 
 <div class="table-wrap card">
 <table>
-    <thead><tr><th>Name</th><th>Phone</th><th>Email</th><th>Billing Address</th></tr></thead>
+    <thead><tr><th>Name</th><th>Phone</th><th>Email</th><th>Billing Address</th><th></th></tr></thead>
     <tbody>
     {% for client in clients %}
         <tr>
@@ -19,9 +19,17 @@
             <td><a href="tel:{{ client.phone }}">{{ client.phone }}</a></td>
             <td>{{ client.email }}</td>
             <td>{{ client.billing_address }}</td>
+            <td>
+                <div class="job-actions">
+                    <a class="btn" href="/clients/{{ client.id }}/edit">Edit</a>
+                    <form method="post" action="/clients/{{ client.id }}/archive">
+                        <button class="btn" type="submit">Archive</button>
+                    </form>
+                </div>
+            </td>
         </tr>
     {% else %}
-        <tr><td colspan="4">No clients yet.</td></tr>
+        <tr><td colspan="5">No clients yet.</td></tr>
     {% endfor %}
     </tbody>
 </table>

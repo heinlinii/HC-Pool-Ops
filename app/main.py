@@ -1,4 +1,5 @@
 import csv
+import hashlib
 import io
 import os
 from datetime import date
@@ -14,7 +15,16 @@ from starlette.templating import Jinja2Templates
 from sqlalchemy.orm import Session, joinedload
 
 from .database import SessionLocal, engine, Base
-from .models import Client, Property, ServiceStop, ScheduleItem, Employee, ClientRequest, User
+from .models import (
+    Client,
+    Property,
+    PropertyPhoto,
+    ServiceStop,
+    ScheduleItem,
+    Employee,
+    ClientRequest,
+    User,
+)
 
 app = FastAPI(title="PoolOps Pro")
 app.add_middleware(SessionMiddleware, secret_key=os.getenv("SESSION_SECRET", "dev-secret-change-me"))
@@ -44,6 +54,14 @@ def urlencode(value):
     return quote_plus(str(value or ""))
 
 
+def hash_password(password: str) -> str:
+    return hashlib.sha256(password.encode("utf-8")).hexdigest()
+
+
+def verify_password(password: str, password_hash: str) -> bool:
+    return hash_password(password) == password_hash
+
+
 templates.env.filters["money"] = money
 templates.env.filters["urlencode"] = urlencode
 
@@ -55,7 +73,7 @@ def get_current_user(request: Request, db: Session):
     return (
         db.query(User)
         .options(joinedload(User.employee))
-        .filter(User.id == user_id)
+        .filter(User.id == user_id, User.is_active == True)
         .first()
     )
 
@@ -89,11 +107,11 @@ def login_submit(
     user = (
         db.query(User)
         .options(joinedload(User.employee))
-        .filter(User.username == username.strip())
+        .filter(User.username == username.strip(), User.is_active == True)
         .first()
     )
 
-    if not user or user.password != password.strip():
+    if not user or not verify_password(password.strip(), user.password_hash):
         return templates.TemplateResponse(
             "login.html",
             {"request": request, "error": "Invalid username or password"},
@@ -117,17 +135,20 @@ def logout(request: Request):
 def office_dashboard(request: Request, db: Session = Depends(get_db)):
     current_user = require_roles(request, db, ["admin", "office"])
 
-    properties = db.query(Property).count()
-    clients = db.query(Client).count()
+    properties = db.query(Property).filter(Property.is_archived == False).count()
+    clients = db.query(Client).filter(Client.is_archived == False).count()
     employees = db.query(Employee).count()
+    users = db.query(User).filter(User.is_active == True).count()
     open_requests = db.query(ClientRequest).filter(ClientRequest.status != "closed").count()
     unpaid_stops = db.query(ServiceStop).filter(ServiceStop.paid_status != "paid").count()
-    estimates_sent = db.query(Property).filter(Property.estimate_status == "sent").count()
-    estimates_approved = db.query(Property).filter(Property.estimate_status == "approved").count()
+    estimates_sent = db.query(Property).filter(Property.estimate_status == "sent", Property.is_archived == False).count()
+    estimates_approved = db.query(Property).filter(Property.estimate_status == "approved", Property.is_archived == False).count()
 
     upcoming = (
         db.query(ScheduleItem)
+        .join(Property)
         .options(joinedload(ScheduleItem.property).joinedload(Property.client), joinedload(ScheduleItem.employee))
+        .filter(Property.is_archived == False)
         .order_by(ScheduleItem.date.asc(), ScheduleItem.start_time.asc(), ScheduleItem.id.asc())
         .limit(8)
         .all()
@@ -152,6 +173,7 @@ def office_dashboard(request: Request, db: Session = Depends(get_db)):
                 "properties": properties,
                 "clients": clients,
                 "employees": employees,
+                "users": users,
                 "open_requests": open_requests,
                 "unpaid_stops": unpaid_stops,
                 "estimates_sent": estimates_sent,
@@ -171,8 +193,9 @@ def field_dashboard(request: Request, db: Session = Depends(get_db)):
 
     query = (
         db.query(ScheduleItem)
+        .join(Property)
         .options(joinedload(ScheduleItem.property).joinedload(Property.client), joinedload(ScheduleItem.employee))
-        .filter(ScheduleItem.date == today_string)
+        .filter(ScheduleItem.date == today_string, Property.is_archived == False)
     )
 
     if current_user.role == "field" and current_user.employee_id:
@@ -193,8 +216,9 @@ def today_page(request: Request, db: Session = Depends(get_db)):
 
     query = (
         db.query(ScheduleItem)
+        .join(Property)
         .options(joinedload(ScheduleItem.property).joinedload(Property.client), joinedload(ScheduleItem.employee))
-        .filter(ScheduleItem.date == today_string)
+        .filter(ScheduleItem.date == today_string, Property.is_archived == False)
     )
 
     if current_user.role == "field" and current_user.employee_id:
@@ -211,7 +235,7 @@ def today_page(request: Request, db: Session = Depends(get_db)):
 @app.get("/clients", response_class=HTMLResponse)
 def clients_page(request: Request, db: Session = Depends(get_db)):
     current_user = require_roles(request, db, ["admin", "office"])
-    clients = db.query(Client).order_by(Client.name.asc()).all()
+    clients = db.query(Client).filter(Client.is_archived == False).order_by(Client.name.asc()).all()
     return templates.TemplateResponse("clients.html", {"request": request, "current_user": current_user, "clients": clients})
 
 
@@ -244,6 +268,55 @@ def client_create(
         notes=notes.strip(),
     )
     db.add(client)
+    db.commit()
+    return RedirectResponse("/clients", status_code=303)
+
+
+@app.get("/clients/{client_id}/edit", response_class=HTMLResponse)
+def client_edit_form(request: Request, client_id: int, db: Session = Depends(get_db)):
+    current_user = require_roles(request, db, ["admin", "office"])
+    client = db.query(Client).filter(Client.id == client_id).first()
+    if not client:
+        raise HTTPException(status_code=404, detail="Client not found")
+    return templates.TemplateResponse("client_edit.html", {"request": request, "current_user": current_user, "client": client})
+
+
+@app.post("/clients/{client_id}/edit")
+def client_edit_submit(
+    request: Request,
+    client_id: int,
+    name: str = Form(""),
+    phone: str = Form(""),
+    email: str = Form(""),
+    billing_address: str = Form(""),
+    notes: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    require_roles(request, db, ["admin", "office"])
+    client = db.query(Client).filter(Client.id == client_id).first()
+    if not client:
+        raise HTTPException(status_code=404, detail="Client not found")
+
+    client.name = name.strip()
+    client.phone = phone.strip()
+    client.email = email.strip()
+    client.billing_address = billing_address.strip()
+    client.notes = notes.strip()
+    db.commit()
+    return RedirectResponse("/clients", status_code=303)
+
+
+@app.post("/clients/{client_id}/archive")
+def client_archive(
+    request: Request,
+    client_id: int,
+    db: Session = Depends(get_db),
+):
+    require_roles(request, db, ["admin", "office"])
+    client = db.query(Client).filter(Client.id == client_id).first()
+    if not client:
+        raise HTTPException(status_code=404, detail="Client not found")
+    client.is_archived = True
     db.commit()
     return RedirectResponse("/clients", status_code=303)
 
@@ -304,11 +377,10 @@ async def clients_import_submit(
             skipped_count += 1
             continue
 
-        existing = (
-            db.query(Client)
-            .filter(Client.name == name, Client.phone == phone)
-            .first()
-        )
+        existing = db.query(Client).filter(Client.is_archived == False, Client.name == name, Client.phone == phone).first()
+
+        if not existing and email:
+            existing = db.query(Client).filter(Client.is_archived == False, Client.email == email).first()
 
         if existing:
             skipped_count += 1
@@ -346,6 +418,7 @@ def properties_page(request: Request, db: Session = Depends(get_db)):
     properties = (
         db.query(Property)
         .options(joinedload(Property.client))
+        .filter(Property.is_archived == False)
         .order_by(Property.id.desc())
         .all()
     )
@@ -355,7 +428,7 @@ def properties_page(request: Request, db: Session = Depends(get_db)):
 @app.get("/properties/new", response_class=HTMLResponse)
 def new_property(request: Request, db: Session = Depends(get_db)):
     current_user = require_roles(request, db, ["admin", "office"])
-    clients = db.query(Client).order_by(Client.name.asc()).all()
+    clients = db.query(Client).filter(Client.is_archived == False).order_by(Client.name.asc()).all()
     return templates.TemplateResponse("property_new.html", {"request": request, "current_user": current_user, "clients": clients})
 
 
@@ -423,6 +496,163 @@ def create_property(
     return RedirectResponse(url=f"/properties/{prop.id}", status_code=303)
 
 
+@app.get("/properties/{property_id}/edit", response_class=HTMLResponse)
+def property_edit_form(request: Request, property_id: int, db: Session = Depends(get_db)):
+    current_user = require_roles(request, db, ["admin", "office"])
+    prop = db.query(Property).options(joinedload(Property.client)).filter(Property.id == property_id).first()
+    if not prop:
+        raise HTTPException(status_code=404, detail="Property not found")
+    clients = db.query(Client).filter(Client.is_archived == False).order_by(Client.name.asc()).all()
+    return templates.TemplateResponse(
+        "property_edit.html",
+        {"request": request, "current_user": current_user, "property": prop, "clients": clients},
+    )
+
+
+@app.post("/properties/{property_id}/edit")
+def property_edit_submit(
+    request: Request,
+    property_id: int,
+    client_id: int = Form(...),
+    address: str = Form(""),
+    city: str = Form(""),
+    state: str = Form(""),
+    zip_code: str = Form(""),
+    pool_type: str = Form(""),
+    cover_type: str = Form(""),
+    gate_code: str = Form(""),
+    install_year: str = Form(""),
+    estimate_status: str = Form("none"),
+    notes: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    require_roles(request, db, ["admin", "office"])
+    prop = db.query(Property).filter(Property.id == property_id).first()
+    if not prop:
+        raise HTTPException(status_code=404, detail="Property not found")
+
+    prop.client_id = client_id
+    prop.address = address.strip()
+    prop.city = city.strip()
+    prop.state = state.strip()
+    prop.zip_code = zip_code.strip()
+    prop.pool_type = pool_type.strip()
+    prop.cover_type = cover_type.strip()
+    prop.gate_code = gate_code.strip()
+    prop.install_year = install_year.strip()
+    prop.estimate_status = estimate_status.strip() or "none"
+    prop.notes = notes.strip()
+    db.commit()
+
+    return RedirectResponse(url=f"/properties/{prop.id}", status_code=303)
+
+
+@app.post("/properties/{property_id}/archive")
+def property_archive(
+    request: Request,
+    property_id: int,
+    db: Session = Depends(get_db),
+):
+    require_roles(request, db, ["admin", "office"])
+    prop = db.query(Property).filter(Property.id == property_id).first()
+    if not prop:
+        raise HTTPException(status_code=404, detail="Property not found")
+    prop.is_archived = True
+    db.commit()
+    return RedirectResponse("/properties", status_code=303)
+
+
+@app.get("/properties/import", response_class=HTMLResponse)
+def properties_import_form(request: Request, db: Session = Depends(get_db)):
+    current_user = require_roles(request, db, ["admin", "office"])
+    clients = db.query(Client).filter(Client.is_archived == False).order_by(Client.name.asc()).all()
+    return templates.TemplateResponse(
+        "properties_import.html",
+        {"request": request, "current_user": current_user, "clients": clients, "message": "", "imported_count": None, "skipped_count": None},
+    )
+
+
+@app.post("/properties/import", response_class=HTMLResponse)
+async def properties_import_submit(
+    request: Request,
+    file: UploadFile | None = File(default=None),
+    db: Session = Depends(get_db),
+):
+    current_user = require_roles(request, db, ["admin", "office"])
+
+    if not file or not file.filename:
+        return templates.TemplateResponse(
+            "properties_import.html",
+            {"request": request, "current_user": current_user, "clients": [], "message": "Please choose a CSV file.", "imported_count": 0, "skipped_count": 0},
+            status_code=400,
+        )
+
+    content = await file.read()
+    decoded = content.decode("utf-8-sig", errors="ignore")
+    reader = csv.DictReader(io.StringIO(decoded))
+
+    imported_count = 0
+    skipped_count = 0
+
+    for row in reader:
+        client_name = (row.get("client_name") or row.get("Client") or row.get("Client Name") or "").strip()
+        address = (row.get("address") or row.get("Address") or "").strip()
+        city = (row.get("city") or row.get("City") or "").strip()
+        state = (row.get("state") or row.get("State") or "").strip()
+        zip_code = (row.get("zip_code") or row.get("ZIP") or row.get("Zip") or "").strip()
+        pool_type = (row.get("pool_type") or row.get("Pool Type") or "").strip()
+        cover_type = (row.get("cover_type") or row.get("Cover Type") or "").strip()
+        gate_code = (row.get("gate_code") or row.get("Gate Code") or "").strip()
+        install_year = (row.get("install_year") or row.get("Install Year") or "").strip()
+        notes = (row.get("notes") or row.get("Notes") or "").strip()
+
+        if not client_name or not address:
+            skipped_count += 1
+            continue
+
+        client = db.query(Client).filter(Client.is_archived == False, Client.name == client_name).first()
+        if not client:
+            skipped_count += 1
+            continue
+
+        existing = db.query(Property).filter(Property.client_id == client.id, Property.address == address, Property.is_archived == False).first()
+        if existing:
+            skipped_count += 1
+            continue
+
+        db.add(
+            Property(
+                client_id=client.id,
+                address=address,
+                city=city,
+                state=state,
+                zip_code=zip_code,
+                pool_type=pool_type,
+                cover_type=cover_type,
+                gate_code=gate_code,
+                install_year=install_year,
+                notes=notes,
+                estimate_status="none",
+            )
+        )
+        imported_count += 1
+
+    db.commit()
+
+    clients = db.query(Client).filter(Client.is_archived == False).order_by(Client.name.asc()).all()
+    return templates.TemplateResponse(
+        "properties_import.html",
+        {
+            "request": request,
+            "current_user": current_user,
+            "clients": clients,
+            "message": "Property import completed.",
+            "imported_count": imported_count,
+            "skipped_count": skipped_count,
+        },
+    )
+
+
 @app.post("/properties/{property_id}/estimate-status")
 def update_estimate_status(
     request: Request,
@@ -450,6 +680,7 @@ def property_detail(request: Request, property_id: int, db: Session = Depends(ge
             joinedload(Property.client),
             joinedload(Property.service_stops),
             joinedload(Property.schedule_items).joinedload(ScheduleItem.employee),
+            joinedload(Property.photos),
         )
         .filter(Property.id == property_id)
         .first()
@@ -459,6 +690,45 @@ def property_detail(request: Request, property_id: int, db: Session = Depends(ge
         raise HTTPException(status_code=404, detail="Property not found")
 
     return templates.TemplateResponse("property_detail.html", {"request": request, "current_user": current_user, "property": prop})
+
+
+@app.post("/properties/{property_id}/photos")
+async def property_photo_upload(
+    request: Request,
+    property_id: int,
+    caption: str = Form(""),
+    photo: UploadFile | None = File(default=None),
+    db: Session = Depends(get_db),
+):
+    require_roles(request, db, ["admin", "office", "field"])
+
+    prop = db.query(Property).filter(Property.id == property_id).first()
+    if not prop:
+        raise HTTPException(status_code=404, detail="Property not found")
+
+    if not photo or not photo.filename:
+        raise HTTPException(status_code=400, detail="Photo is required")
+
+    ext = Path(photo.filename).suffix.lower()
+    if ext not in [".jpg", ".jpeg", ".png", ".webp"]:
+        raise HTTPException(status_code=400, detail="Photo must be jpg, jpeg, png, or webp")
+
+    filename = f"{uuid4().hex}{ext}"
+    output_path = UPLOAD_DIR / filename
+    content = await photo.read()
+    output_path.write_bytes(content)
+
+    db.add(
+        PropertyPhoto(
+            property_id=prop.id,
+            image_path=f"/static/uploads/{filename}",
+            caption=caption.strip(),
+            uploaded_on=str(date.today()),
+        )
+    )
+    db.commit()
+
+    return RedirectResponse(url=f"/properties/{prop.id}", status_code=303)
 
 
 @app.get("/employees", response_class=HTMLResponse)
@@ -503,12 +773,86 @@ def employee_create(
     return RedirectResponse("/employees", status_code=303)
 
 
+@app.get("/users", response_class=HTMLResponse)
+def users_page(request: Request, db: Session = Depends(get_db)):
+    current_user = require_roles(request, db, ["admin"])
+    users = db.query(User).options(joinedload(User.employee)).order_by(User.username.asc()).all()
+    employees = db.query(Employee).order_by(Employee.name.asc()).all()
+    return templates.TemplateResponse("users.html", {"request": request, "current_user": current_user, "users": users, "employees": employees})
+
+
+@app.post("/users/new")
+def user_create(
+    request: Request,
+    username: str = Form(""),
+    password: str = Form(""),
+    role: str = Form("field"),
+    employee_id: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    require_roles(request, db, ["admin"])
+
+    if not username.strip() or not password.strip():
+        raise HTTPException(status_code=400, detail="Username and password are required")
+
+    existing = db.query(User).filter(User.username == username.strip()).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="Username already exists")
+
+    employee_ref = int(employee_id) if employee_id.strip() else None
+
+    user = User(
+        username=username.strip(),
+        password_hash=hash_password(password.strip()),
+        role=role.strip() or "field",
+        employee_id=employee_ref,
+    )
+    db.add(user)
+    db.commit()
+    return RedirectResponse("/users", status_code=303)
+
+
+@app.post("/users/{user_id}/password")
+def user_change_password(
+    request: Request,
+    user_id: int,
+    new_password: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    require_roles(request, db, ["admin"])
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    if not new_password.strip():
+        raise HTTPException(status_code=400, detail="Password is required")
+    user.password_hash = hash_password(new_password.strip())
+    db.commit()
+    return RedirectResponse("/users", status_code=303)
+
+
+@app.post("/users/{user_id}/toggle")
+def user_toggle_active(
+    request: Request,
+    user_id: int,
+    db: Session = Depends(get_db),
+):
+    require_roles(request, db, ["admin"])
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    user.is_active = not user.is_active
+    db.commit()
+    return RedirectResponse("/users", status_code=303)
+
+
 @app.get("/schedule", response_class=HTMLResponse)
 def schedule_page(request: Request, db: Session = Depends(get_db)):
     current_user = require_roles(request, db, ["admin", "office"])
     schedule_items = (
         db.query(ScheduleItem)
+        .join(Property)
         .options(joinedload(ScheduleItem.property).joinedload(Property.client), joinedload(ScheduleItem.employee))
+        .filter(Property.is_archived == False)
         .order_by(ScheduleItem.date.asc(), ScheduleItem.start_time.asc(), ScheduleItem.id.asc())
         .all()
     )
@@ -518,7 +862,7 @@ def schedule_page(request: Request, db: Session = Depends(get_db)):
 @app.get("/schedule/new", response_class=HTMLResponse)
 def new_schedule_item(request: Request, db: Session = Depends(get_db)):
     current_user = require_roles(request, db, ["admin", "office"])
-    properties = db.query(Property).options(joinedload(Property.client)).order_by(Property.address.asc()).all()
+    properties = db.query(Property).options(joinedload(Property.client)).filter(Property.is_archived == False).order_by(Property.address.asc()).all()
     employees = db.query(Employee).order_by(Employee.name.asc()).all()
     requests_list = db.query(ClientRequest).order_by(ClientRequest.id.desc()).all()
     return templates.TemplateResponse(
@@ -764,9 +1108,9 @@ def seed(db: Session = Depends(get_db)):
     db.refresh(employee1)
     db.refresh(employee2)
 
-    admin_user = User(username="mike", password="1234", role="admin", employee_id=employee1.id)
-    office_user = User(username="office", password="1234", role="office")
-    field_user = User(username="jake", password="1234", role="field", employee_id=employee2.id)
+    admin_user = User(username="mike", password_hash=hash_password("1234"), role="admin", employee_id=employee1.id)
+    office_user = User(username="office", password_hash=hash_password("1234"), role="office")
+    field_user = User(username="jake", password_hash=hash_password("1234"), role="field", employee_id=employee2.id)
     db.add_all([admin_user, office_user, field_user])
     db.commit()
 
@@ -800,6 +1144,15 @@ def seed(db: Session = Depends(get_db)):
     db.commit()
     db.refresh(property1)
     db.refresh(property2)
+
+    db.add(
+        PropertyPhoto(
+            property_id=property1.id,
+            image_path="",
+            caption="",
+            uploaded_on=str(date.today()),
+        )
+    )
 
     stop = ServiceStop(
         property_id=property1.id,

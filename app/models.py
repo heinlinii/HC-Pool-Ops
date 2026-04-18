@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, ForeignKey, Text
+from sqlalchemy import Column, Integer, String, Float, ForeignKey, Text, Boolean
 from sqlalchemy.orm import relationship
 from .database import Base
 
@@ -12,6 +12,7 @@ class Client(Base):
     email = Column(String(255), default="")
     billing_address = Column(String(255), default="")
     notes = Column(Text, default="")
+    is_archived = Column(Boolean, default=False)
 
     properties = relationship("Property", back_populates="client", cascade="all, delete-orphan")
 
@@ -36,9 +37,10 @@ class User(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String(100), unique=True, nullable=False, index=True)
-    password = Column(String(255), nullable=False)
-    role = Column(String(50), nullable=False, default="field")  # admin / office / field
+    password_hash = Column(String(255), nullable=False)
+    role = Column(String(50), nullable=False, default="field")
     employee_id = Column(Integer, ForeignKey("employees.id"), nullable=True)
+    is_active = Column(Boolean, default=True)
 
     employee = relationship("Employee", back_populates="users")
 
@@ -58,11 +60,25 @@ class Property(Base):
     install_year = Column(String(20), default="")
     notes = Column(Text, default="")
     estimate_status = Column(String(50), default="none")
+    is_archived = Column(Boolean, default=False)
 
     client = relationship("Client", back_populates="properties")
     service_stops = relationship("ServiceStop", back_populates="property", cascade="all, delete-orphan")
     schedule_items = relationship("ScheduleItem", back_populates="property", cascade="all, delete-orphan")
     client_requests = relationship("ClientRequest", back_populates="property", cascade="all, delete-orphan")
+    photos = relationship("PropertyPhoto", back_populates="property", cascade="all, delete-orphan")
+
+
+class PropertyPhoto(Base):
+    __tablename__ = "property_photos"
+
+    id = Column(Integer, primary_key=True, index=True)
+    property_id = Column(Integer, ForeignKey("properties.id"), nullable=False)
+    image_path = Column(String(255), nullable=False)
+    caption = Column(String(255), default="")
+    uploaded_on = Column(String(50), default="")
+
+    property = relationship("Property", back_populates="photos")
 
 
 class ServiceStop(Base):

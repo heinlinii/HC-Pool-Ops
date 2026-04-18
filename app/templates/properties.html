@@ -3,17 +3,31 @@
 {% block content %}
 <div class="section-head">
     <h1>Properties</h1>
-    <a class="btn btn-primary" href="/properties/new">Add Property</a>
+    <div class="hero-actions">
+        {% if current_user.role in ["admin", "office"] %}
+        <a class="btn" href="/properties/import">Import Properties</a>
+        <a class="btn btn-primary" href="/properties/new">Add Property</a>
+        {% endif %}
+    </div>
 </div>
+
 <div class="cards">
 {% for property in properties %}
-    <a class="card property-card" href="/properties/{{ property.id }}">
-        <div class="eyebrow">{{ property.client.name }}</div>
-        <h3>{{ property.address }}</h3>
-        <p>{{ property.city }}, {{ property.state }} {{ property.zip_code }}</p>
-        <p><strong>Pool:</strong> {{ property.pool_type or "—" }}</p>
-        <p><strong>Cover:</strong> {{ property.cover_type or "—" }}</p>
-    </a>
+    <div class="card property-card">
+        <a href="/properties/{{ property.id }}" style="text-decoration:none; color:inherit;">
+            <div class="eyebrow">{{ property.client.name }}</div>
+            <h3>{{ property.address }}</h3>
+            <p>{{ property.city }}, {{ property.state }} {{ property.zip_code }}</p>
+            <p><strong>Pool:</strong> {{ property.pool_type or "—" }}</p>
+            <p><strong>Cover:</strong> {{ property.cover_type or "—" }}</p>
+        </a>
+        {% if current_user.role in ["admin", "office"] %}
+        <div class="job-actions">
+            <a class="btn" href="/properties/{{ property.id }}/edit">Edit</a>
+            <a class="btn" href="/properties/{{ property.id }}">Open</a>
+        </div>
+        {% endif %}
+    </div>
 {% else %}
     <div class="card">No properties yet.</div>
 {% endfor %}

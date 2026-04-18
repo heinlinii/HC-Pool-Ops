@@ -16,7 +16,9 @@
         {% endif %}
         <a class="btn" target="_blank" href="https://www.google.com/maps/search/?api=1&query={{ property.address | urlencode }}">Open Maps</a>
         <a class="btn btn-primary" href="/properties/{{ property.id }}/service-stop/new">Add Service Stop</a>
-        <a class="btn" href="/schedule/new">Schedule Work</a>
+        {% if current_user.role in ["admin", "office"] %}
+        <a class="btn" href="/properties/{{ property.id }}/edit">Edit Property</a>
+        {% endif %}
     </div>
 </section>
 
@@ -29,6 +31,7 @@
         <p><strong>Install Year:</strong> {{ property.install_year or "—" }}</p>
         <p><strong>Estimate Status:</strong> <span class="badge">{{ property.estimate_status }}</span></p>
 
+        {% if current_user.role in ["admin", "office"] %}
         <form method="post" action="/properties/{{ property.id }}/estimate-status" style="margin-top:16px;">
             <label style="display:block; margin-bottom:10px;">Update Estimate Status</label>
             <select name="estimate_status" style="margin-bottom:12px;">
@@ -40,8 +43,15 @@
             </select>
             <button class="btn btn-primary" type="submit">Save Estimate Status</button>
         </form>
+        {% endif %}
 
         <p style="margin-top:16px;"><strong>Notes:</strong><br>{{ property.notes or "—" }}</p>
+
+        {% if current_user.role in ["admin", "office"] %}
+        <form method="post" action="/properties/{{ property.id }}/archive" style="margin-top:16px;">
+            <button class="btn" type="submit">Archive Property</button>
+        </form>
+        {% endif %}
     </div>
 
     <div class="card">
@@ -53,16 +63,27 @@
     </div>
 
     <div class="card">
-        <h3>Field actions</h3>
-        <div class="job-actions">
-            {% if property.client.phone %}
-            <a class="btn" href="tel:{{ property.client.phone }}">Call</a>
-            {% endif %}
-            {% if property.client.phone %}
-            <a class="btn" href="sms:{{ property.client.phone }}">Text</a>
-            {% endif %}
-            <a class="btn" target="_blank" href="https://www.google.com/maps/search/?api=1&query={{ property.address | urlencode }}">Maps</a>
-            <a class="btn btn-primary" href="/properties/{{ property.id }}/service-stop/new">Closeout</a>
+        <h3>Property Photos</h3>
+        {% if current_user.role in ["admin", "office", "field"] %}
+        <form method="post" action="/properties/{{ property.id }}/photos" enctype="multipart/form-data" class="form-grid">
+            <label class="full">Photo<input type="file" name="photo" accept=".jpg,.jpeg,.png,.webp" required></label>
+            <label class="full">Caption<input name="caption"></label>
+            <div class="full"><button class="btn btn-primary" type="submit">Upload Photo</button></div>
+        </form>
+        {% endif %}
+
+        <div class="cards" style="margin-top:16px;">
+            {% for photo in property.photos %}
+                {% if photo.image_path %}
+                <div class="card">
+                    <img src="{{ photo.image_path }}" alt="Property photo" style="max-width:100%; border-radius:12px;">
+                    <p><strong>{{ photo.caption or "Photo" }}</strong></p>
+                    <p>{{ photo.uploaded_on }}</p>
+                </div>
+                {% endif %}
+            {% else %}
+                <p>No property photos yet.</p>
+            {% endfor %}
         </div>
     </div>
 </section>
