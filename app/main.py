@@ -98,13 +98,23 @@ def require_login(request: Request, db: Session):
         raise HTTPException(status_code=401, detail="Login required")
     return user
 
+@app.get("/dev/seed")
+def dev_seed():
+    from app.db import SessionLocal
+    from app import models
 
+    db = SessionLocal()
+    models.Base.metadata.create_all(bind=db.bind)
+
+    return {"status": "seeded"}
 def require_roles(request: Request, db: Session, allowed_roles: list[str]):
     user = require_login(request, db)
     if user.role not in allowed_roles:
         raise HTTPException(status_code=403, detail="Not authorized")
     return user
-
+@app.get("/login")
+def login_page():
+    return templates.TemplateResponse("login.html", {"request": request})
 
 @app.get("/login", response_class=HTMLResponse)
 def login_form(request: Request):
