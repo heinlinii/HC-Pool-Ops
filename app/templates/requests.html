@@ -6,6 +6,24 @@
     <a class="btn" href="/portal/request">Open Portal Form</a>
 </div>
 
+<div class="card form-card" style="margin-bottom:16px;">
+    <form method="get" class="form-grid">
+        <label>Search Requests
+            <input name="q" value="{{ q or '' }}" placeholder="Client, phone, address, request type">
+        </label>
+        <label>Status
+            <select name="status_filter">
+                <option value="">All</option>
+                <option value="new" {% if status_filter == "new" %}selected{% endif %}>New</option>
+                <option value="contacted" {% if status_filter == "contacted" %}selected{% endif %}>Contacted</option>
+                <option value="scheduled" {% if status_filter == "scheduled" %}selected{% endif %}>Scheduled</option>
+                <option value="closed" {% if status_filter == "closed" %}selected{% endif %}>Closed</option>
+            </select>
+        </label>
+        <div class="full"><button class="btn btn-primary" type="submit">Filter</button></div>
+    </form>
+</div>
+
 <div class="table-wrap card">
 <table>
     <thead>

@@ -337,3 +337,20 @@ img {
         overflow-x: auto;
     }
 }
+.form-card {
+    max-width: 100%;
+}
+
+.user-banner {
+    margin-bottom: 16px;
+    color: #94a3b8;
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+}
+
+@media (max-width: 768px) {
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+}

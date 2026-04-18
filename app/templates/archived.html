@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Archived Items{% endblock %}
+{% block content %}
+<div class="section-head">
+    <h1>Archived Items</h1>
+</div>
+
+<section class="grid grid-2">
+    <div class="card">
+        <h2>Archived Clients</h2>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>Name</th><th>Phone</th><th></th></tr></thead>
+                <tbody>
+                {% for client in archived_clients %}
+                    <tr>
+                        <td>{{ client.name }}</td>
+                        <td>{{ client.phone }}</td>
+                        <td>
+                            <form method="post" action="/clients/{{ client.id }}/restore">
+                                <button class="btn" type="submit">Restore</button>
+                            </form>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr><td colspan="3">No archived clients.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>Archived Properties</h2>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>Address</th><th>Client</th><th></th></tr></thead>
+                <tbody>
+                {% for property in archived_properties %}
+                    <tr>
+                        <td>{{ property.address }}</td>
+                        <td>{{ property.client.name }}</td>
+                        <td>
+                            <form method="post" action="/properties/{{ property.id }}/restore">
+                                <button class="btn" type="submit">Restore</button>
+                            </form>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr><td colspan="3">No archived properties.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+{% endblock %}

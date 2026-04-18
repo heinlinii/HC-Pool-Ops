@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Search{% endblock %}
+{% block content %}
+<div class="section-head">
+    <h1>Search</h1>
+</div>
+
+<div class="card form-card">
+    <form method="get" class="form-grid">
+        <label class="full">Search everything
+            <input name="q" value="{{ q }}" placeholder="Client, address, request, pool type...">
+        </label>
+        <div class="full">
+            <button class="btn btn-primary" type="submit">Search</button>
+        </div>
+    </form>
+</div>
+
+{% if q %}
+<section class="grid grid-3">
+    <div class="card">
+        <h2>Clients</h2>
+        {% for item in client_results %}
+            <p><a href="/clients/{{ item.id }}/edit">{{ item.name }}</a><br>{{ item.phone }}</p>
+        {% else %}
+            <p>No client matches.</p>
+        {% endfor %}
+    </div>
+
+    <div class="card">
+        <h2>Properties</h2>
+        {% for item in property_results %}
+            <p><a href="/properties/{{ item.id }}">{{ item.address }}</a><br>{{ item.client.name }}</p>
+        {% else %}
+            <p>No property matches.</p>
+        {% endfor %}
+    </div>
+
+    <div class="card">
+        <h2>Requests</h2>
+        {% for item in request_results %}
+            <p>{{ item.client_name }}<br>{{ item.request_type }}<br>{{ item.address }}</p>
+        {% else %}
+            <p>No request matches.</p>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+{% endblock %}

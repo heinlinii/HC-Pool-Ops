@@ -64,13 +64,11 @@
 
     <div class="card">
         <h3>Property Photos</h3>
-        {% if current_user.role in ["admin", "office", "field"] %}
         <form method="post" action="/properties/{{ property.id }}/photos" enctype="multipart/form-data" class="form-grid">
             <label class="full">Photo<input type="file" name="photo" accept=".jpg,.jpeg,.png,.webp" required></label>
             <label class="full">Caption<input name="caption"></label>
             <div class="full"><button class="btn btn-primary" type="submit">Upload Photo</button></div>
         </form>
-        {% endif %}
 
         <div class="cards" style="margin-top:16px;">
             {% for photo in property.photos %}
@@ -112,24 +110,16 @@
     </div>
 
     <div class="card">
-        <div class="section-head"><h2>Scheduled work</h2></div>
-        <div class="table-wrap">
-            <table>
-                <thead><tr><th>Date</th><th>Time</th><th>Assigned</th><th>Status</th></tr></thead>
-                <tbody>
-                {% for item in property.schedule_items %}
-                    <tr>
-                        <td>{{ item.date }}</td>
-                        <td>{{ item.start_time }}{% if item.end_time %}–{{ item.end_time }}{% endif %}</td>
-                        <td>{% if item.employee %}{{ item.employee.name }}{% else %}{{ item.assigned_to }}{% endif %}</td>
-                        <td>{{ item.status }}</td>
-                    </tr>
-                {% else %}
-                    <tr><td colspan="4">No scheduled work yet.</td></tr>
-                {% endfor %}
-                </tbody>
-            </table>
-        </div>
+        <div class="section-head"><h2>Activity Feed</h2></div>
+        {% for item in activities %}
+            <div style="padding:12px 0; border-bottom:1px solid rgba(148,163,184,0.12);">
+                <p><strong>{{ item.activity_type }}</strong></p>
+                <p>{{ item.message }}</p>
+                <p class="muted">{{ item.created_on }}</p>
+            </div>
+        {% else %}
+            <p>No activity yet.</p>
+        {% endfor %}
     </div>
 </section>
 {% endblock %}

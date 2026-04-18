@@ -12,6 +12,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 from starlette.templating import Jinja2Templates
+from sqlalchemy import or_
 from sqlalchemy.orm import Session, joinedload
 
 from .database import SessionLocal, engine, Base
@@ -19,6 +20,7 @@ from .models import (
     Client,
     Property,
     PropertyPhoto,
+    ActivityLog,
     ServiceStop,
     ScheduleItem,
     Employee,
@@ -60,6 +62,17 @@ def hash_password(password: str) -> str:
 
 def verify_password(password: str, password_hash: str) -> bool:
     return hash_password(password) == password_hash
+
+
+def add_property_activity(db: Session, property_id: int, activity_type: str, message: str):
+    db.add(
+        ActivityLog(
+            property_id=property_id,
+            activity_type=activity_type,
+            message=message,
+            created_on=str(date.today()),
+        )
+    )
 
 
 templates.env.filters["money"] = money
@@ -186,6 +199,125 @@ def office_dashboard(request: Request, db: Session = Depends(get_db)):
     )
 
 
+@app.get("/search", response_class=HTMLResponse)
+def search_page(
+    request: Request,
+    q: str = "",
+    db: Session = Depends(get_db),
+):
+    current_user = require_roles(request, db, ["admin", "office"])
+    q = q.strip()
+
+    client_results = []
+    property_results = []
+    request_results = []
+
+    if q:
+        client_results = (
+            db.query(Client)
+            .filter(
+                Client.is_archived == False,
+                or_(
+                    Client.name.ilike(f"%{q}%"),
+                    Client.phone.ilike(f"%{q}%"),
+                    Client.email.ilike(f"%{q}%"),
+                    Client.billing_address.ilike(f"%{q}%"),
+                ),
+            )
+            .order_by(Client.name.asc())
+            .all()
+        )
+
+        property_results = (
+            db.query(Property)
+            .options(joinedload(Property.client))
+            .filter(
+                Property.is_archived == False,
+                or_(
+                    Property.address.ilike(f"%{q}%"),
+                    Property.city.ilike(f"%{q}%"),
+                    Property.state.ilike(f"%{q}%"),
+                    Property.pool_type.ilike(f"%{q}%"),
+                    Property.cover_type.ilike(f"%{q}%"),
+                    Property.notes.ilike(f"%{q}%"),
+                ),
+            )
+            .order_by(Property.address.asc())
+            .all()
+        )
+
+        request_results = (
+            db.query(ClientRequest)
+            .filter(
+                or_(
+                    ClientRequest.client_name.ilike(f"%{q}%"),
+                    ClientRequest.phone.ilike(f"%{q}%"),
+                    ClientRequest.address.ilike(f"%{q}%"),
+                    ClientRequest.request_type.ilike(f"%{q}%"),
+                    ClientRequest.description.ilike(f"%{q}%"),
+                )
+            )
+            .order_by(ClientRequest.id.desc())
+            .all()
+        )
+
+    return templates.TemplateResponse(
+        "search.html",
+        {
+            "request": request,
+            "current_user": current_user,
+            "q": q,
+            "client_results": client_results,
+            "property_results": property_results,
+            "request_results": request_results,
+        },
+    )
+
+
+@app.get("/archived", response_class=HTMLResponse)
+def archived_page(request: Request, db: Session = Depends(get_db)):
+    current_user = require_roles(request, db, ["admin", "office"])
+    archived_clients = db.query(Client).filter(Client.is_archived == True).order_by(Client.name.asc()).all()
+    archived_properties = (
+        db.query(Property)
+        .options(joinedload(Property.client))
+        .filter(Property.is_archived == True)
+        .order_by(Property.address.asc())
+        .all()
+    )
+    return templates.TemplateResponse(
+        "archived.html",
+        {
+            "request": request,
+            "current_user": current_user,
+            "archived_clients": archived_clients,
+            "archived_properties": archived_properties,
+        },
+    )
+
+
+@app.post("/clients/{client_id}/restore")
+def client_restore(request: Request, client_id: int, db: Session = Depends(get_db)):
+    require_roles(request, db, ["admin", "office"])
+    client = db.query(Client).filter(Client.id == client_id).first()
+    if not client:
+        raise HTTPException(status_code=404, detail="Client not found")
+    client.is_archived = False
+    db.commit()
+    return RedirectResponse("/archived", status_code=303)
+
+
+@app.post("/properties/{property_id}/restore")
+def property_restore(request: Request, property_id: int, db: Session = Depends(get_db)):
+    require_roles(request, db, ["admin", "office"])
+    prop = db.query(Property).filter(Property.id == property_id).first()
+    if not prop:
+        raise HTTPException(status_code=404, detail="Property not found")
+    prop.is_archived = False
+    db.commit()
+    return RedirectResponse("/archived", status_code=303)
+
+
 @app.get("/field", response_class=HTMLResponse)
 def field_dashboard(request: Request, db: Session = Depends(get_db)):
     current_user = require_roles(request, db, ["admin", "office", "field"])
@@ -233,10 +365,30 @@ def today_page(request: Request, db: Session = Depends(get_db)):
 
 
 @app.get("/clients", response_class=HTMLResponse)
-def clients_page(request: Request, db: Session = Depends(get_db)):
+def clients_page(
+    request: Request,
+    q: str = "",
+    db: Session = Depends(get_db),
+):
     current_user = require_roles(request, db, ["admin", "office"])
-    clients = db.query(Client).filter(Client.is_archived == False).order_by(Client.name.asc()).all()
-    return templates.TemplateResponse("clients.html", {"request": request, "current_user": current_user, "clients": clients})
+    query = db.query(Client).filter(Client.is_archived == False)
+
+    if q.strip():
+        term = q.strip()
+        query = query.filter(
+            or_(
+                Client.name.ilike(f"%{term}%"),
+                Client.phone.ilike(f"%{term}%"),
+                Client.email.ilike(f"%{term}%"),
+                Client.billing_address.ilike(f"%{term}%"),
+            )
+        )
+
+    clients = query.order_by(Client.name.asc()).all()
+    return templates.TemplateResponse(
+        "clients.html",
+        {"request": request, "current_user": current_user, "clients": clients, "q": q},
+    )
 
 
 @app.get("/clients/new", response_class=HTMLResponse)
@@ -413,16 +565,47 @@ async def clients_import_submit(
 
 
 @app.get("/properties", response_class=HTMLResponse)
-def properties_page(request: Request, db: Session = Depends(get_db)):
+def properties_page(
+    request: Request,
+    q: str = "",
+    estimate_status: str = "",
+    db: Session = Depends(get_db),
+):
     current_user = require_roles(request, db, ["admin", "office", "field"])
-    properties = (
+    query = (
         db.query(Property)
         .options(joinedload(Property.client))
         .filter(Property.is_archived == False)
-        .order_by(Property.id.desc())
-        .all()
     )
-    return templates.TemplateResponse("properties.html", {"request": request, "current_user": current_user, "properties": properties})
+
+    if q.strip():
+        term = q.strip()
+        query = query.filter(
+            or_(
+                Property.address.ilike(f"%{term}%"),
+                Property.city.ilike(f"%{term}%"),
+                Property.state.ilike(f"%{term}%"),
+                Property.pool_type.ilike(f"%{term}%"),
+                Property.cover_type.ilike(f"%{term}%"),
+                Property.notes.ilike(f"%{term}%"),
+                Client.name.ilike(f"%{term}%"),
+            )
+        )
+
+    if estimate_status.strip():
+        query = query.filter(Property.estimate_status == estimate_status.strip())
+
+    properties = query.order_by(Property.id.desc()).all()
+    return templates.TemplateResponse(
+        "properties.html",
+        {
+            "request": request,
+            "current_user": current_user,
+            "properties": properties,
+            "q": q,
+            "estimate_status": estimate_status,
+        },
+    )
 
 
 @app.get("/properties/new", response_class=HTMLResponse)
@@ -493,6 +676,9 @@ def create_property(
     db.commit()
     db.refresh(prop)
 
+    add_property_activity(db, prop.id, "property_created", "Property created.")
+    db.commit()
+
     return RedirectResponse(url=f"/properties/{prop.id}", status_code=303)
 
 
@@ -542,6 +728,7 @@ def property_edit_submit(
     prop.install_year = install_year.strip()
     prop.estimate_status = estimate_status.strip() or "none"
     prop.notes = notes.strip()
+    add_property_activity(db, prop.id, "property_updated", "Property details updated.")
     db.commit()
 
     return RedirectResponse(url=f"/properties/{prop.id}", status_code=303)
@@ -620,21 +807,22 @@ async def properties_import_submit(
             skipped_count += 1
             continue
 
-        db.add(
-            Property(
-                client_id=client.id,
-                address=address,
-                city=city,
-                state=state,
-                zip_code=zip_code,
-                pool_type=pool_type,
-                cover_type=cover_type,
-                gate_code=gate_code,
-                install_year=install_year,
-                notes=notes,
-                estimate_status="none",
-            )
+        new_prop = Property(
+            client_id=client.id,
+            address=address,
+            city=city,
+            state=state,
+            zip_code=zip_code,
+            pool_type=pool_type,
+            cover_type=cover_type,
+            gate_code=gate_code,
+            install_year=install_year,
+            notes=notes,
+            estimate_status="none",
         )
+        db.add(new_prop)
+        db.flush()
+        add_property_activity(db, new_prop.id, "property_imported", "Property imported from CSV.")
         imported_count += 1
 
     db.commit()
@@ -667,6 +855,7 @@ def update_estimate_status(
         raise HTTPException(status_code=404, detail="Property not found")
 
     prop.estimate_status = estimate_status.strip() or "none"
+    add_property_activity(db, prop.id, "estimate_status", f"Estimate status changed to {prop.estimate_status}.")
     db.commit()
     return RedirectResponse(url=f"/properties/{prop.id}", status_code=303)
 
@@ -681,6 +870,7 @@ def property_detail(request: Request, property_id: int, db: Session = Depends(ge
             joinedload(Property.service_stops),
             joinedload(Property.schedule_items).joinedload(ScheduleItem.employee),
             joinedload(Property.photos),
+            joinedload(Property.activities),
         )
         .filter(Property.id == property_id)
         .first()
@@ -689,7 +879,12 @@ def property_detail(request: Request, property_id: int, db: Session = Depends(ge
     if not prop:
         raise HTTPException(status_code=404, detail="Property not found")
 
-    return templates.TemplateResponse("property_detail.html", {"request": request, "current_user": current_user, "property": prop})
+    activities = sorted(prop.activities, key=lambda x: x.id, reverse=True)
+
+    return templates.TemplateResponse(
+        "property_detail.html",
+        {"request": request, "current_user": current_user, "property": prop, "activities": activities},
+    )
 
 
 @app.post("/properties/{property_id}/photos")
@@ -726,6 +921,7 @@ async def property_photo_upload(
             uploaded_on=str(date.today()),
         )
     )
+    add_property_activity(db, prop.id, "photo_uploaded", f"Property photo uploaded. {caption.strip()}".strip())
     db.commit()
 
     return RedirectResponse(url=f"/properties/{prop.id}", status_code=303)
@@ -907,6 +1103,7 @@ def create_schedule_item(
         notes=notes.strip(),
     )
     db.add(item)
+    add_property_activity(db, property_id, "schedule_created", f"Scheduled {job_type.strip() or 'job'} on {date.strip()}.")
     db.commit()
     return RedirectResponse(url="/schedule", status_code=303)
 
@@ -977,6 +1174,8 @@ async def create_service_stop(
         property_id=prop.id,
     )
     db.add(stop)
+    db.flush()
+    add_property_activity(db, prop.id, "service_stop", f"Service stop logged by {tech_name.strip() or 'tech'}.")
     db.commit()
     db.refresh(stop)
     return RedirectResponse(url=f"/service-stops/{stop.id}", status_code=303)
@@ -996,6 +1195,7 @@ def update_paid_status(
         raise HTTPException(status_code=404, detail="Service stop not found")
 
     stop.paid_status = paid_status.strip() or "unpaid"
+    add_property_activity(db, stop.property_id, "paid_status", f"Paid status changed to {stop.paid_status}.")
     db.commit()
     return RedirectResponse(url=f"/service-stops/{stop.id}", status_code=303)
 
@@ -1028,10 +1228,35 @@ def service_stop_detail(request: Request, stop_id: int, db: Session = Depends(ge
 
 
 @app.get("/requests", response_class=HTMLResponse)
-def requests_page(request: Request, db: Session = Depends(get_db)):
+def requests_page(
+    request: Request,
+    status_filter: str = "",
+    q: str = "",
+    db: Session = Depends(get_db),
+):
     current_user = require_roles(request, db, ["admin", "office"])
-    requests_list = db.query(ClientRequest).order_by(ClientRequest.id.desc()).all()
-    return templates.TemplateResponse("requests.html", {"request": request, "current_user": current_user, "requests_list": requests_list})
+    query = db.query(ClientRequest)
+
+    if status_filter.strip():
+        query = query.filter(ClientRequest.status == status_filter.strip())
+
+    if q.strip():
+        term = q.strip()
+        query = query.filter(
+            or_(
+                ClientRequest.client_name.ilike(f"%{term}%"),
+                ClientRequest.phone.ilike(f"%{term}%"),
+                ClientRequest.address.ilike(f"%{term}%"),
+                ClientRequest.request_type.ilike(f"%{term}%"),
+                ClientRequest.description.ilike(f"%{term}%"),
+            )
+        )
+
+    requests_list = query.order_by(ClientRequest.id.desc()).all()
+    return templates.TemplateResponse(
+        "requests.html",
+        {"request": request, "current_user": current_user, "requests_list": requests_list, "status_filter": status_filter, "q": q},
+    )
 
 
 @app.post("/requests/{request_id}/status")
@@ -1145,14 +1370,9 @@ def seed(db: Session = Depends(get_db)):
     db.refresh(property1)
     db.refresh(property2)
 
-    db.add(
-        PropertyPhoto(
-            property_id=property1.id,
-            image_path="",
-            caption="",
-            uploaded_on=str(date.today()),
-        )
-    )
+    add_property_activity(db, property1.id, "property_created", "Property created.")
+    add_property_activity(db, property2.id, "property_created", "Property created.")
+    db.commit()
 
     stop = ServiceStop(
         property_id=property1.id,
@@ -1173,6 +1393,8 @@ def seed(db: Session = Depends(get_db)):
         photo_path="",
     )
     db.add(stop)
+    db.flush()
+    add_property_activity(db, property1.id, "service_stop", "Initial service stop seeded.")
 
     today_string = str(date.today())
 
@@ -1201,6 +1423,9 @@ def seed(db: Session = Depends(get_db)):
         notes="Opening chemicals on truck. Confirm access at gate.",
     )
     db.add_all([schedule1, schedule2])
+    db.flush()
+    add_property_activity(db, property1.id, "schedule_created", f"Scheduled Service Call on {today_string}.")
+    add_property_activity(db, property2.id, "schedule_created", f"Scheduled Opening / Cleaning on {today_string}.")
 
     request1 = ClientRequest(
         client_name="Amanda Cole",

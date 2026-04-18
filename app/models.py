@@ -67,6 +67,7 @@ class Property(Base):
     schedule_items = relationship("ScheduleItem", back_populates="property", cascade="all, delete-orphan")
     client_requests = relationship("ClientRequest", back_populates="property", cascade="all, delete-orphan")
     photos = relationship("PropertyPhoto", back_populates="property", cascade="all, delete-orphan")
+    activities = relationship("ActivityLog", back_populates="property", cascade="all, delete-orphan")
 
 
 class PropertyPhoto(Base):
@@ -79,6 +80,18 @@ class PropertyPhoto(Base):
     uploaded_on = Column(String(50), default="")
 
     property = relationship("Property", back_populates="photos")
+
+
+class ActivityLog(Base):
+    __tablename__ = "activity_logs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    property_id = Column(Integer, ForeignKey("properties.id"), nullable=False)
+    activity_type = Column(String(100), default="")
+    message = Column(Text, default="")
+    created_on = Column(String(50), default="")
+
+    property = relationship("Property", back_populates="activities")
 
 
 class ServiceStop(Base):

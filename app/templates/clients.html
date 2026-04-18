@@ -9,6 +9,15 @@
     </div>
 </div>
 
+<div class="card form-card" style="margin-bottom:16px;">
+    <form method="get" class="form-grid">
+        <label class="full">Search Clients
+            <input name="q" value="{{ q or '' }}" placeholder="Name, phone, email, billing address">
+        </label>
+        <div class="full"><button class="btn btn-primary" type="submit">Filter</button></div>
+    </form>
+</div>
+
 <div class="table-wrap card">
 <table>
     <thead><tr><th>Name</th><th>Phone</th><th>Email</th><th>Billing Address</th><th></th></tr></thead>
