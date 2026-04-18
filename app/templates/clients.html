@@ -3,8 +3,12 @@
 {% block content %}
 <div class="section-head">
     <h1>Clients</h1>
-    <a class="btn btn-primary" href="/clients/new">Add Client</a>
+    <div class="hero-actions">
+        <a class="btn" href="/clients/import">Import Clients</a>
+        <a class="btn btn-primary" href="/clients/new">Add Client</a>
+    </div>
 </div>
+
 <div class="table-wrap card">
 <table>
     <thead><tr><th>Name</th><th>Phone</th><th>Email</th><th>Billing Address</th></tr></thead>
@@ -12,7 +16,7 @@
     {% for client in clients %}
         <tr>
             <td>{{ client.name }}</td>
-            <td>{{ client.phone }}</td>
+            <td><a href="tel:{{ client.phone }}">{{ client.phone }}</a></td>
             <td>{{ client.email }}</td>
             <td>{{ client.billing_address }}</td>
         </tr>

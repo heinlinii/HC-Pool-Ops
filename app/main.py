@@ -1,15 +1,16 @@
+import csv
+import io
 import os
 from datetime import date
 from pathlib import Path
 from uuid import uuid4
 from urllib.parse import quote_plus
-from functools import wraps
 
 from fastapi import FastAPI, Request, Depends, HTTPException, Form, UploadFile, File
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
-from starlette.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
+from starlette.templating import Jinja2Templates
 from sqlalchemy.orm import Session, joinedload
 
 from .database import SessionLocal, engine, Base
@@ -245,6 +246,98 @@ def client_create(
     db.add(client)
     db.commit()
     return RedirectResponse("/clients", status_code=303)
+
+
+@app.get("/clients/import", response_class=HTMLResponse)
+def clients_import_form(request: Request, db: Session = Depends(get_db)):
+    current_user = require_roles(request, db, ["admin", "office"])
+    return templates.TemplateResponse(
+        "clients_import.html",
+        {"request": request, "current_user": current_user, "imported_count": None, "skipped_count": None, "preview_headers": []},
+    )
+
+
+@app.post("/clients/import", response_class=HTMLResponse)
+async def clients_import_submit(
+    request: Request,
+    file: UploadFile | None = File(default=None),
+    db: Session = Depends(get_db),
+):
+    current_user = require_roles(request, db, ["admin", "office"])
+
+    if not file or not file.filename:
+        return templates.TemplateResponse(
+            "clients_import.html",
+            {
+                "request": request,
+                "current_user": current_user,
+                "imported_count": 0,
+                "skipped_count": 0,
+                "preview_headers": [],
+                "message": "Please choose a CSV file.",
+            },
+            status_code=400,
+        )
+
+    content = await file.read()
+    decoded = content.decode("utf-8-sig", errors="ignore")
+    reader = csv.DictReader(io.StringIO(decoded))
+
+    headers = reader.fieldnames or []
+    imported_count = 0
+    skipped_count = 0
+
+    for row in reader:
+        name = (row.get("name") or row.get("Name") or row.get("Customer") or row.get("Customer Name") or "").strip()
+        phone = (row.get("phone") or row.get("Phone") or row.get("Main Phone") or row.get("Mobile") or "").strip()
+        email = (row.get("email") or row.get("Email") or row.get("Main Email") or "").strip()
+        billing_address = (
+            row.get("billing_address")
+            or row.get("Billing Address")
+            or row.get("Address")
+            or row.get("Bill Address")
+            or ""
+        ).strip()
+        notes = (row.get("notes") or row.get("Notes") or "").strip()
+
+        if not name:
+            skipped_count += 1
+            continue
+
+        existing = (
+            db.query(Client)
+            .filter(Client.name == name, Client.phone == phone)
+            .first()
+        )
+
+        if existing:
+            skipped_count += 1
+            continue
+
+        db.add(
+            Client(
+                name=name,
+                phone=phone,
+                email=email,
+                billing_address=billing_address,
+                notes=notes,
+            )
+        )
+        imported_count += 1
+
+    db.commit()
+
+    return templates.TemplateResponse(
+        "clients_import.html",
+        {
+            "request": request,
+            "current_user": current_user,
+            "imported_count": imported_count,
+            "skipped_count": skipped_count,
+            "preview_headers": headers,
+            "message": "Import completed.",
+        },
+    )
 
 
 @app.get("/properties", response_class=HTMLResponse)
@@ -504,7 +597,7 @@ async def create_service_stop(
     photo: UploadFile | None = File(default=None),
     db: Session = Depends(get_db),
 ):
-    current_user = require_roles(request, db, ["admin", "office", "field"])
+    require_roles(request, db, ["admin", "office", "field"])
 
     prop = db.query(Property).filter(Property.id == property_id).first()
     if not prop:

@@ -6,7 +6,9 @@
         <h1>Today's Jobs</h1>
         <p>{{ today_string }}</p>
     </div>
+    {% if current_user.role in ["admin", "office"] %}
     <a class="btn btn-primary" href="/schedule/new">Add Job</a>
+    {% endif %}
 </div>
 
 <div class="mobile-job-list">
@@ -26,14 +28,14 @@
 
         <div class="job-actions">
             {% if item.property.client.phone %}
-            <a class="btn" href="tel:{{ item.property.client.phone }}">Call Client</a>
+            <a class="btn" href="tel:{{ item.property.client.phone }}">Call</a>
             {% endif %}
             {% if item.property.client.phone %}
-            <a class="btn" href="sms:{{ item.property.client.phone }}">Text Client</a>
+            <a class="btn" href="sms:{{ item.property.client.phone }}">Text</a>
             {% endif %}
-            <a class="btn" target="_blank" href="https://www.google.com/maps/search/?api=1&query={{ item.property.address | urlencode }}">Open Maps</a>
+            <a class="btn" target="_blank" href="https://www.google.com/maps/search/?api=1&query={{ item.property.address | urlencode }}">Maps</a>
             <a class="btn" href="/properties/{{ item.property.id }}">Property</a>
-            <a class="btn btn-primary" href="/properties/{{ item.property.id }}/service-stop/new">Close Out Job</a>
+            <a class="btn btn-primary" href="/properties/{{ item.property.id }}/service-stop/new">Closeout</a>
         </div>
     </div>
 {% else %}

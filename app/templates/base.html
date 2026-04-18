@@ -4,12 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}PoolOps Pro{% endblock %}</title>
-    <link rel="stylesheet" href="/static/style.css?v=5">
+    <link rel="stylesheet" href="/static/style.css?v=6">
 </head>
 <body>
     <header class="topbar">
         <div class="brand">
-            <img src="/static/logo.png?v=5" style="height:40px; width:auto; margin-right:10px;" alt="Heinlin Logo">
+            <img src="/static/logo.png?v=6" style="height:40px; width:auto; margin-right:10px;" alt="Heinlin Logo">
             <div>
                 <div class="brand-title">Heinlin PoolOps Pro</div>
                 <div class="brand-subtitle">Office + Field workflow</div>
@@ -21,6 +21,7 @@
             <a href="/field">Field</a>
             <a href="/today">Today</a>
             <a href="/clients">Clients</a>
+            <a href="/clients/import">Import Clients</a>
             <a href="/properties">Properties</a>
             <a href="/employees">Employees</a>
             <a href="/schedule">Schedule</a>
@@ -32,12 +33,21 @@
 
     <main class="page-shell">
         {% if current_user %}
-        <div style="margin-bottom:16px; color:#94a3b8;">
-            Logged in as <strong style="color:#fff;">{{ current_user.username }}</strong>
-            — role: <strong style="color:#fff;">{{ current_user.role }}</strong>
+        <div class="user-banner">
+            Logged in as <strong>{{ current_user.username }}</strong>
+            <span>Role: <strong>{{ current_user.role }}</strong></span>
         </div>
         {% endif %}
         {% block content %}{% endblock %}
     </main>
+
+    {% if current_user and current_user.role == "field" %}
+    <div class="mobile-bottom-nav">
+        <a href="/field">Field</a>
+        <a href="/today">Today</a>
+        <a href="/properties">Properties</a>
+        <a href="/logout">Logout</a>
+    </div>
+    {% endif %}
 </body>
 </html>
