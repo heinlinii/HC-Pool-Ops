@@ -14,12 +14,30 @@
 </section>
 
 <section class="grid grid-6">
-    <div class="card stat"><div class="stat-label">Clients</div><div class="stat-value">{{ stats.clients }}</div></div>
-    <div class="card stat"><div class="stat-label">Properties</div><div class="stat-value">{{ stats.properties }}</div></div>
-    <div class="card stat"><div class="stat-label">Employees</div><div class="stat-value">{{ stats.employees }}</div></div>
-    <div class="card stat"><div class="stat-label">Users</div><div class="stat-value">{{ stats.users }}</div></div>
-    <div class="card stat"><div class="stat-label">Open Requests</div><div class="stat-value">{{ stats.open_requests }}</div></div>
-    <div class="card stat"><div class="stat-label">Unpaid Stops</div><div class="stat-value">{{ stats.unpaid_stops }}</div></div>
+    <div class="card stat">
+        <div class="stat-label">Clients</div>
+        <div class="stat-value">{{ stats.clients }}</div>
+    </div>
+    <div class="card stat">
+        <div class="stat-label">Properties</div>
+        <div class="stat-value">{{ stats.properties }}</div>
+    </div>
+    <div class="card stat">
+        <div class="stat-label">Employees</div>
+        <div class="stat-value">{{ stats.employees }}</div>
+    </div>
+    <div class="card stat">
+        <div class="stat-label">Users</div>
+        <div class="stat-value">{{ stats.users }}</div>
+    </div>
+    <div class="card stat">
+        <div class="stat-label">Open Requests</div>
+        <div class="stat-value">{{ stats.open_requests }}</div>
+    </div>
+    <div class="card stat">
+        <div class="stat-label">Unpaid Stops</div>
+        <div class="stat-value">{{ stats.unpaid_stops }}</div>
+    </div>
 </section>
 
 <section class="grid grid-2">
@@ -30,7 +48,14 @@
         </div>
         <div class="table-wrap">
             <table>
-                <thead><tr><th>Client</th><th>Phone</th><th>Type</th><th>Status</th></tr></thead>
+                <thead>
+                    <tr>
+                        <th>Client</th>
+                        <th>Phone</th>
+                        <th>Type</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
                 <tbody>
                 {% for item in open_request_list %}
                     <tr>
@@ -53,12 +78,19 @@
         </div>
         <div class="table-wrap">
             <table>
-                <thead><tr><th>Date</th><th>Property</th><th>Tech</th><th>Paid</th></tr></thead>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Property</th>
+                        <th>Tech</th>
+                        <th>Paid</th>
+                    </tr>
+                </thead>
                 <tbody>
                 {% for stop in recent_stops %}
                     <tr>
                         <td>{{ stop.date }}</td>
-                        <td>{{ stop.property.address }}</td>
+                        <td>{{ stop.property.address if stop.property else "—" }}</td>
                         <td>{{ stop.tech_name }}</td>
                         <td><span class="badge">{{ stop.paid_status }}</span></td>
                     </tr>
@@ -78,13 +110,25 @@
     </div>
     <div class="table-wrap">
         <table>
-            <thead><tr><th>Date</th><th>Time</th><th>Property</th><th>Assigned</th><th>Priority</th><th>Status</th></tr></thead>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Time</th>
+                    <th>Property</th>
+                    <th>Assigned</th>
+                    <th>Priority</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
             <tbody>
             {% for item in upcoming %}
                 <tr>
                     <td>{{ item.date }}</td>
                     <td>{{ item.start_time }}{% if item.end_time %}–{{ item.end_time }}{% endif %}</td>
-                    <td>{{ item.property.address }}<br><span class="muted">{{ item.property.client.name }}</span></td>
+                    <td>
+                        {{ item.property.address if item.property else "—" }}<br>
+                        <span class="muted">{{ item.property.client.name if item.property and item.property.client else "" }}</span>
+                    </td>
                     <td>{% if item.employee %}{{ item.employee.name }}{% else %}{{ item.assigned_to }}{% endif %}</td>
                     <td><span class="badge">{{ item.priority }}</span></td>
                     <td><span class="badge">{{ item.status }}</span></td>
