@@ -9,32 +9,47 @@
 <body>
     <main class="page-shell" style="max-width: 520px; padding-top: 60px;">
         <div class="card form-card">
+            
             <div class="eyebrow">PoolOps Pro</div>
             <h1>Login</h1>
             <p>Use your office or field login to continue.</p>
 
+            <!-- Error Message -->
             {% if error %}
-                <p style="color:#fca5a5; font-weight:700;">{{ error }}</p>
+                <p style="color:#fca5a5; font-weight:700; margin-bottom: 15px;">
+                    {{ error }}
+                </p>
             {% endif %}
 
-            <form method="post" class="form-grid">
-                <label class="full">Username
-                    <input name="username" required>
+            <!-- LOGIN FORM (THIS IS THE ONLY ONE) -->
+            <form method="post" action="/login" class="form-grid">
+                
+                <label class="full">
+                    Username
+                    <input type="text" name="username" required>
                 </label>
-                <label class="full">Password
-                    <input name="password" type="password" required>
+
+                <label class="full">
+                    Password
+                    <input type="password" name="password" required>
                 </label>
+
                 <div class="full">
-                    <button class="btn btn-primary" type="submit">Login</button>
+                    <button class="btn btn-primary" type="submit">
+                        Login
+                    </button>
                 </div>
+
             </form>
 
-            <div style="margin-top:20px; color:#94a3b8;">
+            <!-- Helpful Info -->
+            <div style="margin-top:20px; color:#94a3b8; font-size:14px;">
                 <p><strong>Seeded logins:</strong></p>
                 <p>mike / 1234</p>
                 <p>office / 1234</p>
                 <p>jake / 1234</p>
             </div>
+
         </div>
     </main>
 </body>

@@ -117,7 +117,41 @@ from fastapi.responses import HTMLResponse
 
 @app.get("/login", response_class=HTMLResponse)
 def login_page(request: Request):
-    return templates.TemplateResponse("login.html", {"request": request})
+    return templates.TemplateResponse("login.html", {"request": request, "error": ""})
+
+@app.get("/dev/reset-users")
+def dev_reset_users(db: Session = Depends(get_db)):
+    db.query(User).delete()
+
+    employee1 = db.query(Employee).filter(Employee.name == "Mike Heinlin").first()
+    employee2 = db.query(Employee).filter(Employee.name == "Jake Turner").first()
+
+    admin_user = User(
+        username="mike",
+        password_hash=hash_password("1234"),
+        role="admin",
+        employee_id=employee1.id if employee1 else None,
+        is_active=True,
+    )
+    office_user = User(
+        username="office",
+        password_hash=hash_password("1234"),
+        role="office",
+        employee_id=None,
+        is_active=True,
+    )
+    field_user = User(
+        username="jake",
+        password_hash=hash_password("1234"),
+        role="field",
+        employee_id=employee2.id if employee2 else None,
+        is_active=True,
+    )
+
+    db.add_all([admin_user, office_user, field_user])
+    db.commit()
+
+    return {"status": "users reset", "logins": ["mike/1234", "office/1234", "jake/1234"]}
 
 @app.post("/login", response_class=HTMLResponse)
 def login_submit(
