@@ -114,12 +114,13 @@ def require_roles(request: Request, db: Session, allowed_roles: list[str]):
     return user
 @app.get("/login")
 def login_page():
-    return templates.TemplateResponse("login.html", {"request": request})
-
+    
+@app.get("/login", response_class=HTMLResponse)
+def login_page(request: Request):
+    return templates.TemplateResponse("login.html", {"request": request, "error": ""})
 @app.get("/login", response_class=HTMLResponse)
 def login_form(request: Request):
     return templates.TemplateResponse("login.html", {"request": request, "error": ""})
-
 
 @app.post("/login", response_class=HTMLResponse)
 def login_submit(
@@ -147,6 +148,7 @@ def login_submit(
     if user.role in ["admin", "office"]:
         return RedirectResponse("/", status_code=303)
     return RedirectResponse("/field", status_code=303)
+
 
 
 @app.get("/logout")
