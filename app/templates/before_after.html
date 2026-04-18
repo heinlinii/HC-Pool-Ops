@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Before & After{% endblock %}
+{% block content %}
+<div class="section-head">
+    <h1>Before & After Gallery</h1>
+</div>
+
+<div class="card form-card">
+    <h2>Add Before / After Photo</h2>
+    <form method="post" action="/before-after/upload" enctype="multipart/form-data" class="form-grid">
+        <label>Property
+            <select name="property_id" required>
+                <option value="">Select property</option>
+                {% for property in properties %}
+                    <option value="{{ property.id }}">
+    {{ property.address }} — {{ property.client.name if property.client else "No Client" }}
+</option>
+                {% endfor %}
+            </select>
+        </label>
+        <label>Type
+            <select name="photo_type">
+                <option value="before">Before</option>
+                <option value="after">After</option>
+            </select>
+        </label>
+        <label class="full">Label<input name="label" placeholder="Spring cleanup, remodel, tile replacement..."></label>
+        <label class="full">Notes<textarea name="notes"></textarea></label>
+        <label class="full">Photo<input type="file" name="photo" accept=".jpg,.jpeg,.png,.webp" required></label>
+        <div class="full"><button class="btn btn-primary" type="submit">Upload Photo</button></div>
+    </form>
+</div>
+
+<div class="cards" style="margin-top:20px;">
+{% for item in photos %}
+    <div class="card">
+        <img src="{{ item.image_path }}" alt="Before after photo" style="max-width:100%; border-radius:12px;">
+        <p><strong>{{ item.photo_type|title }}</strong></p>
+        <p>
+<strong>{{ item.property.address }}</strong><br>
+{{ item.property.client.name if item.property.client else "No Client" }}
+</p>
+        <p>{{ item.label or "—" }}</p>
+        <p>{{ item.notes or "—" }}</p>
+        <p>{{ item.uploaded_on }}</p>
+        <div class="job-actions">
+            <a class="btn" href="/before-after/{{ item.id }}/edit">Edit</a>
+            <form method="post" action="/before-after/{{ item.id }}/delete">
+                <button class="btn" type="submit">Delete</button>
+            </form>
+        </div>
+    </div>
+{% else %}
+    <div class="card">No before / after photos yet.</div>
+{% endfor %}
+</div>
+{% endblock %}

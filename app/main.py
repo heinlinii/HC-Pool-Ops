@@ -26,6 +26,7 @@ from .models import (
     Employee,
     ClientRequest,
     User,
+    BeforeAfterPhoto,
 )
 
 app = FastAPI(title="PoolOps Pro")
@@ -339,7 +340,54 @@ def field_dashboard(request: Request, db: Session = Depends(get_db)):
         "field_dashboard.html",
         {"request": request, "current_user": current_user, "today_items": today_items, "today_string": today_string},
     )
+@app.get("/employees/{employee_id}/edit", response_class=HTMLResponse)
+def employee_edit_form(request: Request, employee_id: int, db: Session = Depends(get_db)):
+    current_user = require_roles(request, db, ["admin", "office"])
+    employee = db.query(Employee).filter(Employee.id == employee_id).first()
+    if not employee:
+        raise HTTPException(status_code=404, detail="Employee not found")
+    return templates.TemplateResponse("employee_edit.html", {"request": request, "current_user": current_user, "employee": employee})
 
+
+@app.post("/employees/{employee_id}/edit")
+def employee_edit_submit(
+    request: Request,
+    employee_id: int,
+    name: str = Form(""),
+    role: str = Form(""),
+    phone: str = Form(""),
+    email: str = Form(""),
+    status: str = Form("active"),
+    notes: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    require_roles(request, db, ["admin", "office"])
+    employee = db.query(Employee).filter(Employee.id == employee_id).first()
+    if not employee:
+        raise HTTPException(status_code=404, detail="Employee not found")
+
+    employee.name = name.strip()
+    employee.role = role.strip()
+    employee.phone = phone.strip()
+    employee.email = email.strip()
+    employee.status = status.strip()
+    employee.notes = notes.strip()
+    db.commit()
+
+    return RedirectResponse("/employees", status_code=303)
+
+
+@app.post("/employees/{employee_id}/delete")
+def employee_delete(request: Request, employee_id: int, db: Session = Depends(get_db)):
+    require_roles(request, db, ["admin", "office"])
+    employee = db.query(Employee).filter(Employee.id == employee_id).first()
+    if not employee:
+        raise HTTPException(status_code=404, detail="Employee not found")
+
+    db.query(User).filter(User.employee_id == employee.id).delete()
+    db.delete(employee)
+    db.commit()
+    return RedirectResponse("/employees", status_code=303)
 
 @app.get("/today", response_class=HTMLResponse)
 def today_page(request: Request, db: Session = Depends(get_db)):
@@ -480,7 +528,26 @@ def clients_import_form(request: Request, db: Session = Depends(get_db)):
         "clients_import.html",
         {"request": request, "current_user": current_user, "imported_count": None, "skipped_count": None, "preview_headers": []},
     )
+@app.post("/clients/{client_id}/delete")
+def client_delete(request: Request, client_id: int, db: Session = Depends(get_db)):
+    require_roles(request, db, ["admin", "office"])
+    client = db.query(Client).filter(Client.id == client_id).first()
+    if not client:
+        raise HTTPException(status_code=404, detail="Client not found")
+    db.delete(client)
+    db.commit()
+    return RedirectResponse("/clients", status_code=303)
 
+
+@app.post("/properties/{property_id}/delete")
+def property_delete(request: Request, property_id: int, db: Session = Depends(get_db)):
+    require_roles(request, db, ["admin", "office"])
+    prop = db.query(Property).filter(Property.id == property_id).first()
+    if not prop:
+        raise HTTPException(status_code=404, detail="Property not found")
+    db.delete(prop)
+    db.commit()
+    return RedirectResponse("/properties", status_code=303)
 
 @app.post("/clients/import", response_class=HTMLResponse)
 async def clients_import_submit(
@@ -562,8 +629,148 @@ async def clients_import_submit(
             "message": "Import completed.",
         },
     )
+@app.post("/before-after/upload")
+async def before_after_upload(
+    request: Request,
+    property_id: int = Form(...),
+    photo_type: str = Form("before"),
+    label: str = Form(""),
+    notes: str = Form(""),
+    photo: UploadFile | None = File(default=None),
+    db: Session = Depends(get_db),
+):
+    require_roles(request, db, ["admin", "office", "field"])
+
+    prop = db.query(Property).filter(Property.id == property_id).first()
+    if not prop:
+        raise HTTPException(status_code=404, detail="Property not found")
+
+    if not photo or not photo.filename:
+        raise HTTPException(status_code=400, detail="Photo is required")
+
+    ext = Path(photo.filename).suffix.lower()
+    if ext not in [".jpg", ".jpeg", ".png", ".webp"]:
+        raise HTTPException(status_code=400, detail="Photo must be jpg, jpeg, png, or webp")
+
+    filename = f"{uuid4().hex}{ext}"
+    output_path = UPLOAD_DIR / filename
+    content = await photo.read()
+    output_path.write_bytes(content)
+
+    item = BeforeAfterPhoto(
+        property_id=property_id,
+        image_path=f"/static/uploads/{filename}",
+        photo_type=photo_type.strip() or "before",
+        label=label.strip(),
+        notes=notes.strip(),
+        uploaded_on=str(date.today()),
+    )
+    db.add(item)
+    add_property_activity(db, property_id, "before_after_photo", f"{item.photo_type.title()} photo uploaded.")
+    db.commit()
+
+    return RedirectResponse("/before-after", status_code=303)
+
+@app.get("/before-after/{photo_id}/edit", response_class=HTMLResponse)
+def before_after_edit_form(request: Request, photo_id: int, db: Session = Depends(get_db)):
+    current_user = require_roles(request, db, ["admin", "office", "field"])
+    item = (
+        db.query(BeforeAfterPhoto)
+        .options(joinedload(BeforeAfterPhoto.property).joinedload(Property.client))
+        .filter(BeforeAfterPhoto.id == photo_id)
+        .first()
+    )
+    if not item:
+        raise HTTPException(status_code=404, detail="Photo not found")
+
+    return templates.TemplateResponse(
+        "before_after_edit.html",
+        {"request": request, "current_user": current_user, "item": item},
+    )
+@app.get("/before-after/{photo_id}/edit", response_class=HTMLResponse)
+def before_after_edit_form(request: Request, photo_id: int, db: Session = Depends(get_db)):
+    current_user = require_roles(request, db, ["admin", "office", "field"])
+    item = (
+        db.query(BeforeAfterPhoto)
+        .options(joinedload(BeforeAfterPhoto.property).joinedload(Property.client))
+        .filter(BeforeAfterPhoto.id == photo_id)
+        .first()
+    )
+    if not item:
+        raise HTTPException(status_code=404, detail="Photo not found")
+
+    return templates.TemplateResponse(
+        "before_after_edit.html",
+        {"request": request, "current_user": current_user, "item": item},
+    )
 
 
+@app.post("/before-after/{photo_id}/edit")
+def before_after_edit_submit(
+    request: Request,
+    photo_id: int,
+    photo_type: str = Form("before"),
+    label: str = Form(""),
+    notes: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    require_roles(request, db, ["admin", "office", "field"])
+    item = db.query(BeforeAfterPhoto).filter(BeforeAfterPhoto.id == photo_id).first()
+    if not item:
+        raise HTTPException(status_code=404, detail="Photo not found")
+
+    item.photo_type = photo_type.strip() or "before"
+    item.label = label.strip()
+    item.notes = notes.strip()
+    db.commit()
+
+    return RedirectResponse("/before-after", status_code=303)
+
+@app.post("/before-after/{photo_id}/edit")
+def before_after_edit_submit(
+    request: Request,
+    photo_id: int,
+    photo_type: str = Form("before"),
+    label: str = Form(""),
+    notes: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    require_roles(request, db, ["admin", "office", "field"])
+    item = db.query(BeforeAfterPhoto).filter(BeforeAfterPhoto.id == photo_id).first()
+    if not item:
+        raise HTTPException(status_code=404, detail="Photo not found")
+
+    item.photo_type = photo_type.strip() or "before"
+    item.label = label.strip()
+    item.notes = notes.strip()
+    db.commit()
+
+    return RedirectResponse("/before-after", status_code=303)
+
+@app.get("/before-after", response_class=HTMLResponse)
+def before_after_page(request: Request, db: Session = Depends(get_db)):
+    current_user = require_roles(request, db, ["admin", "office", "field"])
+    properties = db.query(Property).options(joinedload(Property.client)).filter(Property.is_archived == False).order_by(Property.address.asc()).all()
+    photos = (
+        db.query(BeforeAfterPhoto)
+        .options(joinedload(BeforeAfterPhoto.property).joinedload(Property.client))
+        .order_by(BeforeAfterPhoto.id.desc())
+        .all()
+    )
+    return templates.TemplateResponse(
+        "office_dashboard.html",
+        {"request": request, "current_user": current_user, "properties": properties, "photos": photos},
+    )
+@app.post("/before-after/{photo_id}/delete")
+def before_after_delete(request: Request, photo_id: int, db: Session = Depends(get_db)):
+    require_roles(request, db, ["admin", "office", "field"])
+    item = db.query(BeforeAfterPhoto).filter(BeforeAfterPhoto.id == photo_id).first()
+    if not item:
+        raise HTTPException(status_code=404, detail="Photo not found")
+
+    db.delete(item)
+    db.commit()
+    return RedirectResponse("/before-after", status_code=303)
 @app.get("/properties", response_class=HTMLResponse)
 def properties_page(
     request: Request,

@@ -1,55 +1,7 @@
-{% extends "base.html" %}
-{% block title %}Properties{% endblock %}
-{% block content %}
-<div class="section-head">
-    <h1>Properties</h1>
-    <div class="hero-actions">
-        {% if current_user.role in ["admin", "office"] %}
-        <a class="btn" href="/properties/import">Import Properties</a>
-        <a class="btn btn-primary" href="/properties/new">Add Property</a>
-        {% endif %}
-    </div>
-</div>
-
-<div class="card form-card" style="margin-bottom:16px;">
-    <form method="get" class="form-grid">
-        <label>Search Properties
-            <input name="q" value="{{ q or '' }}" placeholder="Address, city, pool type, notes">
-        </label>
-        <label>Estimate Status
-            <select name="estimate_status">
-                <option value="">All</option>
-                <option value="none" {% if estimate_status == "none" %}selected{% endif %}>None</option>
-                <option value="requested" {% if estimate_status == "requested" %}selected{% endif %}>Requested</option>
-                <option value="sent" {% if estimate_status == "sent" %}selected{% endif %}>Sent</option>
-                <option value="approved" {% if estimate_status == "approved" %}selected{% endif %}>Approved</option>
-                <option value="declined" {% if estimate_status == "declined" %}selected{% endif %}>Declined</option>
-            </select>
-        </label>
-        <div class="full"><button class="btn btn-primary" type="submit">Filter</button></div>
+<div class="job-actions">
+    <a class="btn" href="/properties/{{ property.id }}/edit">Edit</a>
+    <a class="btn" href="/properties/{{ property.id }}">Open</a>
+    <form method="post" action="/properties/{{ property.id }}/delete">
+        <button class="btn" type="submit">Delete</button>
     </form>
 </div>
-
-<div class="cards">
-{% for property in properties %}
-    <div class="card property-card">
-        <a href="/properties/{{ property.id }}" style="text-decoration:none; color:inherit;">
-            <div class="eyebrow">{{ property.client.name }}</div>
-            <h3>{{ property.address }}</h3>
-            <p>{{ property.city }}, {{ property.state }} {{ property.zip_code }}</p>
-            <p><strong>Pool:</strong> {{ property.pool_type or "—" }}</p>
-            <p><strong>Cover:</strong> {{ property.cover_type or "—" }}</p>
-            <p><strong>Estimate:</strong> {{ property.estimate_status or "—" }}</p>
-        </a>
-        {% if current_user.role in ["admin", "office"] %}
-        <div class="job-actions">
-            <a class="btn" href="/properties/{{ property.id }}/edit">Edit</a>
-            <a class="btn" href="/properties/{{ property.id }}">Open</a>
-        </div>
-        {% endif %}
-    </div>
-{% else %}
-    <div class="card">No properties yet.</div>
-{% endfor %}
-</div>
-{% endblock %}

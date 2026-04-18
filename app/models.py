@@ -33,7 +33,7 @@ class Employee(Base):
 
 
 class User(Base):
-    __tablename__ = "users"
+    __tablename__ = "app_users"
 
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String(100), unique=True, nullable=False, index=True)
@@ -68,6 +68,7 @@ class Property(Base):
     client_requests = relationship("ClientRequest", back_populates="property", cascade="all, delete-orphan")
     photos = relationship("PropertyPhoto", back_populates="property", cascade="all, delete-orphan")
     activities = relationship("ActivityLog", back_populates="property", cascade="all, delete-orphan")
+    before_after_photos = relationship("BeforeAfterPhoto", back_populates="property", cascade="all, delete-orphan")
 
 
 class PropertyPhoto(Base):
@@ -80,6 +81,20 @@ class PropertyPhoto(Base):
     uploaded_on = Column(String(50), default="")
 
     property = relationship("Property", back_populates="photos")
+
+
+class BeforeAfterPhoto(Base):
+    __tablename__ = "before_after_photos"
+
+    id = Column(Integer, primary_key=True, index=True)
+    property_id = Column(Integer, ForeignKey("properties.id"), nullable=False)
+    image_path = Column(String(255), nullable=False)
+    photo_type = Column(String(20), default="before")  # before / after
+    label = Column(String(255), default="")
+    notes = Column(Text, default="")
+    uploaded_on = Column(String(50), default="")
+
+    property = relationship("Property", back_populates="before_after_photos")
 
 
 class ActivityLog(Base):

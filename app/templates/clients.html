@@ -1,46 +1,11 @@
-{% extends "base.html" %}
-{% block title %}Clients{% endblock %}
-{% block content %}
-<div class="section-head">
-    <h1>Clients</h1>
-    <div class="hero-actions">
-        <a class="btn" href="/clients/import">Import Clients</a>
-        <a class="btn btn-primary" href="/clients/new">Add Client</a>
+<td>
+    <div class="job-actions">
+        <a class="btn" href="/clients/{{ client.id }}/edit">Edit</a>
+        <form method="post" action="/clients/{{ client.id }}/archive">
+            <button class="btn" type="submit">Archive</button>
+        </form>
+        <form method="post" action="/clients/{{ client.id }}/delete">
+            <button class="btn" type="submit">Delete</button>
+        </form>
     </div>
-</div>
-
-<div class="card form-card" style="margin-bottom:16px;">
-    <form method="get" class="form-grid">
-        <label class="full">Search Clients
-            <input name="q" value="{{ q or '' }}" placeholder="Name, phone, email, billing address">
-        </label>
-        <div class="full"><button class="btn btn-primary" type="submit">Filter</button></div>
-    </form>
-</div>
-
-<div class="table-wrap card">
-<table>
-    <thead><tr><th>Name</th><th>Phone</th><th>Email</th><th>Billing Address</th><th></th></tr></thead>
-    <tbody>
-    {% for client in clients %}
-        <tr>
-            <td>{{ client.name }}</td>
-            <td><a href="tel:{{ client.phone }}">{{ client.phone }}</a></td>
-            <td>{{ client.email }}</td>
-            <td>{{ client.billing_address }}</td>
-            <td>
-                <div class="job-actions">
-                    <a class="btn" href="/clients/{{ client.id }}/edit">Edit</a>
-                    <form method="post" action="/clients/{{ client.id }}/archive">
-                        <button class="btn" type="submit">Archive</button>
-                    </form>
-                </div>
-            </td>
-        </tr>
-    {% else %}
-        <tr><td colspan="5">No clients yet.</td></tr>
-    {% endfor %}
-    </tbody>
-</table>
-</div>
-{% endblock %}
+</td>
