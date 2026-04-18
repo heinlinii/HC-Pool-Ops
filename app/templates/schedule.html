@@ -3,11 +3,15 @@
 {% block content %}
 <div class="section-head">
     <h1>Schedule</h1>
-    <a class="btn btn-primary" href="/schedule/new">Add Schedule Item</a>
+    <div class="hero-actions">
+        <a class="btn" href="/today">Today's Jobs</a>
+        <a class="btn btn-primary" href="/schedule/new">Add Schedule Item</a>
+    </div>
 </div>
+
 <div class="table-wrap card">
 <table>
-    <thead><tr><th>Date</th><th>Time</th><th>Property</th><th>Client</th><th>Assigned</th><th>Job Type</th><th>Status</th><th>Notes</th></tr></thead>
+    <thead><tr><th>Date</th><th>Time</th><th>Property</th><th>Client</th><th>Assigned</th><th>Job Type</th><th>Priority</th><th>Status</th><th>Notes</th></tr></thead>
     <tbody>
     {% for item in schedule_items %}
         <tr>
@@ -17,11 +21,12 @@
             <td>{{ item.property.client.name }}</td>
             <td>{% if item.employee %}{{ item.employee.name }}{% else %}{{ item.assigned_to }}{% endif %}</td>
             <td>{{ item.job_type }}</td>
+            <td><span class="badge">{{ item.priority }}</span></td>
             <td><span class="badge">{{ item.status }}</span></td>
             <td>{{ item.notes }}</td>
         </tr>
     {% else %}
-        <tr><td colspan="8">No schedule items yet.</td></tr>
+        <tr><td colspan="9">No schedule items yet.</td></tr>
     {% endfor %}
     </tbody>
 </table>

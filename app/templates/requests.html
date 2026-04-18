@@ -5,19 +5,49 @@
     <h1>Client Requests</h1>
     <a class="btn" href="/portal/request">Open Portal Form</a>
 </div>
+
 <div class="table-wrap card">
 <table>
-    <thead><tr><th>Client</th><th>Phone</th><th>Email</th><th>Address</th><th>Type</th><th>Status</th><th>Description</th></tr></thead>
+    <thead>
+        <tr>
+            <th>Client</th>
+            <th>Phone</th>
+            <th>Address</th>
+            <th>Type</th>
+            <th>Status</th>
+            <th>Description</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
     <tbody>
     {% for item in requests_list %}
         <tr>
             <td>{{ item.client_name }}</td>
             <td>{{ item.phone }}</td>
-            <td>{{ item.email }}</td>
             <td>{{ item.address }}</td>
             <td>{{ item.request_type }}</td>
             <td><span class="badge">{{ item.status }}</span></td>
             <td>{{ item.description }}</td>
+            <td>
+                <div class="job-actions">
+                    {% if item.phone %}
+                    <a class="btn" href="tel:{{ item.phone }}">Call</a>
+                    {% endif %}
+                    {% if item.phone %}
+                    <a class="btn" href="sms:{{ item.phone }}">Text</a>
+                    {% endif %}
+                </div>
+
+                <form method="post" action="/requests/{{ item.id }}/status" style="margin-top:10px;">
+                    <select name="status" style="margin-bottom:10px;">
+                        <option value="new" {% if item.status == "new" %}selected{% endif %}>New</option>
+                        <option value="contacted" {% if item.status == "contacted" %}selected{% endif %}>Contacted</option>
+                        <option value="scheduled" {% if item.status == "scheduled" %}selected{% endif %}>Scheduled</option>
+                        <option value="closed" {% if item.status == "closed" %}selected{% endif %}>Closed</option>
+                    </select>
+                    <button class="btn btn-primary" type="submit">Save</button>
+                </form>
+            </td>
         </tr>
     {% else %}
         <tr><td colspan="7">No client requests yet.</td></tr>

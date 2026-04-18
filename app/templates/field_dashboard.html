@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Field Dashboard{% endblock %}
+{% block content %}
+<section class="hero">
+    <div>
+        <h1>Field Dashboard</h1>
+        <p>Fast access for crews: today’s jobs, client contact, maps, property info, and closeout.</p>
+    </div>
+    <div class="hero-actions">
+        <a class="btn btn-primary" href="/today">Open Today's Jobs</a>
+    </div>
+</section>
+
+<div class="mobile-job-list">
+{% for item in today_items %}
+    <div class="card mobile-job-card">
+        <div class="job-topline">
+            <span class="badge">{{ item.priority }}</span>
+            <span class="job-time">{{ item.start_time }}{% if item.end_time %}–{{ item.end_time }}{% endif %}</span>
+        </div>
+
+        <h2>{{ item.property.address }}</h2>
+        <p><strong>Client:</strong> {{ item.property.client.name }}</p>
+        <p><strong>Assigned:</strong> {% if item.employee %}{{ item.employee.name }}{% else %}{{ item.assigned_to }}{% endif %}</p>
+        <p><strong>Job Type:</strong> {{ item.job_type }}</p>
+        <p><strong>Status:</strong> {{ item.status }}</p>
+        <p><strong>Notes:</strong> {{ item.notes or "—" }}</p>
+
+        <div class="job-actions">
+            {% if item.property.client.phone %}
+            <a class="btn" href="tel:{{ item.property.client.phone }}">Call</a>
+            {% endif %}
+            {% if item.property.client.phone %}
+            <a class="btn" href="sms:{{ item.property.client.phone }}">Text</a>
+            {% endif %}
+            <a class="btn" target="_blank" href="https://www.google.com/maps/search/?api=1&query={{ item.property.address | urlencode }}">Maps</a>
+            <a class="btn" href="/properties/{{ item.property.id }}">Property</a>
+            <a class="btn btn-primary" href="/properties/{{ item.property.id }}/service-stop/new">Closeout</a>
+        </div>
+    </div>
+{% else %}
+    <div class="card">No jobs scheduled for today.</div>
+{% endfor %}
+</div>
+{% endblock %}

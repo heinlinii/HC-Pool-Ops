@@ -28,6 +28,19 @@ class Employee(Base):
     notes = Column(Text, default="")
 
     schedule_items = relationship("ScheduleItem", back_populates="employee")
+    users = relationship("User", back_populates="employee")
+
+
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String(100), unique=True, nullable=False, index=True)
+    password = Column(String(255), nullable=False)
+    role = Column(String(50), nullable=False, default="field")  # admin / office / field
+    employee_id = Column(Integer, ForeignKey("employees.id"), nullable=True)
+
+    employee = relationship("Employee", back_populates="users")
 
 
 class Property(Base):
@@ -44,6 +57,7 @@ class Property(Base):
     gate_code = Column(String(100), default="")
     install_year = Column(String(20), default="")
     notes = Column(Text, default="")
+    estimate_status = Column(String(50), default="none")
 
     client = relationship("Client", back_populates="properties")
     service_stops = relationship("ServiceStop", back_populates="property", cascade="all, delete-orphan")
@@ -70,6 +84,7 @@ class ServiceStop(Base):
     billed_amount = Column(Float, default=0)
     paid_status = Column(String(50), default="unpaid")
     invoice_notes = Column(Text, default="")
+    photo_path = Column(String(255), default="")
 
     property = relationship("Property", back_populates="service_stops")
 
@@ -86,6 +101,7 @@ class ScheduleItem(Base):
     assigned_to = Column(String(255), default="")
     job_type = Column(String(100), default="")
     status = Column(String(50), default="scheduled")
+    priority = Column(String(50), default="normal")
     notes = Column(Text, default="")
 
     property = relationship("Property", back_populates="schedule_items")

@@ -1,46 +1,46 @@
 {% extends "base.html" %}
-{% block title %}Dashboard • PoolOps Pro{% endblock %}
+{% block title %}Office Dashboard{% endblock %}
 {% block content %}
 <section class="hero">
     <div>
-        <h1>Run the whole operation from one place.</h1>
-        <p>Track clients, properties, service calls, crews, requests, and scheduling without the scattered mess.</p>
+        <h1>Office Dashboard</h1>
+        <p>Track requests, estimates, unpaid work, and upcoming schedule from one command center.</p>
     </div>
     <div class="hero-actions">
-        <a class="btn btn-primary" href="/today">Today's Jobs</a>
-        <a class="btn" href="/properties/new">Add Property</a>
+        <a class="btn btn-primary" href="/requests">Open Requests</a>
         <a class="btn" href="/schedule/new">Schedule Job</a>
-        <a class="btn" href="/portal/request">Open Client Portal</a>
+        <a class="btn" href="/properties/new">Add Property</a>
     </div>
 </section>
 
-<section class="grid grid-5">
+<section class="grid grid-6">
     <div class="card stat"><div class="stat-label">Clients</div><div class="stat-value">{{ stats.clients }}</div></div>
     <div class="card stat"><div class="stat-label">Properties</div><div class="stat-value">{{ stats.properties }}</div></div>
     <div class="card stat"><div class="stat-label">Employees</div><div class="stat-value">{{ stats.employees }}</div></div>
     <div class="card stat"><div class="stat-label">Open Requests</div><div class="stat-value">{{ stats.open_requests }}</div></div>
     <div class="card stat"><div class="stat-label">Unpaid Stops</div><div class="stat-value">{{ stats.unpaid_stops }}</div></div>
+    <div class="card stat"><div class="stat-label">Estimates Sent</div><div class="stat-value">{{ stats.estimates_sent }}</div></div>
 </section>
 
 <section class="grid grid-2">
     <div class="card">
         <div class="section-head">
-            <h2>Recent properties</h2>
-            <a href="/properties">View all</a>
+            <h2>Incoming requests</h2>
+            <a href="/requests">View all</a>
         </div>
         <div class="table-wrap">
             <table>
-                <thead><tr><th>Address</th><th>Client</th><th>Pool</th><th></th></tr></thead>
+                <thead><tr><th>Client</th><th>Phone</th><th>Type</th><th>Status</th></tr></thead>
                 <tbody>
-                {% for property in recent_properties %}
+                {% for item in open_request_list %}
                     <tr>
-                        <td>{{ property.address }}</td>
-                        <td>{{ property.client.name }}</td>
-                        <td>{{ property.pool_type or "—" }}</td>
-                        <td><a href="/properties/{{ property.id }}">Open</a></td>
+                        <td>{{ item.client_name }}</td>
+                        <td>{{ item.phone }}</td>
+                        <td>{{ item.request_type }}</td>
+                        <td><span class="badge">{{ item.status }}</span></td>
                     </tr>
                 {% else %}
-                    <tr><td colspan="4">No properties yet.</td></tr>
+                    <tr><td colspan="4">No requests yet.</td></tr>
                 {% endfor %}
                 </tbody>
             </table>
@@ -53,18 +53,17 @@
         </div>
         <div class="table-wrap">
             <table>
-                <thead><tr><th>Date</th><th>Property</th><th>Tech</th><th>Paid</th><th></th></tr></thead>
+                <thead><tr><th>Date</th><th>Property</th><th>Tech</th><th>Paid</th></tr></thead>
                 <tbody>
                 {% for stop in recent_stops %}
                     <tr>
                         <td>{{ stop.date }}</td>
-                        <td>{{ stop.property.address }}<br><span class="muted">{{ stop.property.client.name }}</span></td>
+                        <td>{{ stop.property.address }}</td>
                         <td>{{ stop.tech_name }}</td>
                         <td><span class="badge">{{ stop.paid_status }}</span></td>
-                        <td><a href="/service-stops/{{ stop.id }}">Open</a></td>
                     </tr>
                 {% else %}
-                    <tr><td colspan="5">No service stops yet.</td></tr>
+                    <tr><td colspan="4">No service stops yet.</td></tr>
                 {% endfor %}
                 </tbody>
             </table>
@@ -75,7 +74,7 @@
 <section class="card">
     <div class="section-head">
         <h2>Upcoming schedule</h2>
-        <a href="/schedule/new">Add</a>
+        <a href="/schedule">View full schedule</a>
     </div>
     <div class="table-wrap">
         <table>

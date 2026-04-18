@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login • PoolOps Pro</title>
+    <link rel="stylesheet" href="/static/style.css?v=5">
+</head>
+<body>
+    <main class="page-shell" style="max-width: 520px; padding-top: 60px;">
+        <div class="card form-card">
+            <div class="eyebrow">PoolOps Pro</div>
+            <h1>Login</h1>
+            <p>Use your office or field login to continue.</p>
+
+            {% if error %}
+                <p style="color:#fca5a5; font-weight:700;">{{ error }}</p>
+            {% endif %}
+
+            <form method="post" class="form-grid">
+                <label class="full">Username
+                    <input name="username" required>
+                </label>
+                <label class="full">Password
+                    <input name="password" type="password" required>
+                </label>
+                <div class="full">
+                    <button class="btn btn-primary" type="submit">Login</button>
+                </div>
+            </form>
+
+            <div style="margin-top:20px; color:#94a3b8;">
+                <p><strong>Seeded logins:</strong></p>
+                <p>mike / 1234</p>
+                <p>office / 1234</p>
+                <p>jake / 1234</p>
+            </div>
+        </div>
+    </main>
+</body>
+</html>

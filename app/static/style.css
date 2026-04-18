@@ -189,3 +189,54 @@ textarea { min-height: 120px; resize: vertical; }
 @media (max-width: 980px) {
     .grid-2, .grid-3, .grid-5, .cards, .form-grid { grid-template-columns: 1fr; }
 }
+.form-grid h3 {
+    margin-bottom: 10px;
+}
+
+select {
+    min-height: 44px;
+}
+
+img {
+    max-width: 100%;
+}
+
+.badge {
+    white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+    table {
+        font-size: 14px;
+    }
+
+    th, td {
+        padding: 10px 8px;
+    }
+
+    .mobile-job-card h2 {
+        font-size: 22px;
+    }
+
+    .brand-title {
+        font-size: 16px;
+    }
+
+    .brand-subtitle {
+        font-size: 12px;
+    }
+}.grid-6 {
+    grid-template-columns: repeat(6, minmax(0,1fr));
+}
+
+@media (max-width: 1200px) {
+    .grid-6 {
+        grid-template-columns: repeat(3, minmax(0,1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .grid-6 {
+        grid-template-columns: 1fr 1fr;
+    }
+}

@@ -12,6 +12,7 @@
                 {% endfor %}
             </select>
         </label>
+
         <label>New Client Name<input name="client_name"></label>
         <label>New Client Phone<input name="client_phone"></label>
         <label>New Client Email<input name="client_email" type="email"></label>
@@ -25,6 +26,17 @@
         <label>Cover Type<input name="cover_type" placeholder="Automatic / Manual / None"></label>
         <label>Gate Code<input name="gate_code"></label>
         <label>Install Year<input name="install_year"></label>
+
+        <label>Estimate Status
+            <select name="estimate_status">
+                <option value="none">None</option>
+                <option value="requested">Requested</option>
+                <option value="sent">Sent</option>
+                <option value="approved">Approved</option>
+                <option value="declined">Declined</option>
+            </select>
+        </label>
+
         <label class="full">Property Notes<textarea name="notes"></textarea></label>
         <div class="full"><button class="btn btn-primary" type="submit">Save Property</button></div>
     </form>
