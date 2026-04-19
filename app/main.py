@@ -12,17 +12,14 @@ from starlette.middleware.sessions import SessionMiddleware
 
 app = FastAPI()
 
-# Sessions (required for login)
 app.add_middleware(SessionMiddleware, secret_key="super-secret-key")
 
-# Static + Templates
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 templates = Jinja2Templates(directory="app/templates")
 
-# Create tables
 Base.metadata.create_all(bind=engine)
 
-# DB dependency
+
 def get_db():
     db = SessionLocal()
     try:
@@ -31,9 +28,6 @@ def get_db():
         db.close()
 
 
-# =========================
-# PASSWORD FUNCTIONS
-# =========================
 def hash_password(password: str) -> str:
     return hashlib.sha256(password.encode("utf-8")).hexdigest()
 
@@ -42,22 +36,16 @@ def verify_password(password: str, password_hash: str) -> bool:
     return hash_password(password) == password_hash
 
 
-# =========================
-# ROUTES
-# =========================
-
 @app.get("/", response_class=HTMLResponse)
 def home(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+    return templates.TemplateResponse("office_dashboard.html", {"request": request})
 
 
-# LOGIN PAGE
 @app.get("/login", response_class=HTMLResponse)
 def login_page(request: Request):
     return templates.TemplateResponse("login.html", {"request": request, "error": ""})
 
 
-# LOGIN SUBMIT
 @app.post("/login", response_class=HTMLResponse)
 def login_submit(
     request: Request,
@@ -94,9 +82,6 @@ def login_submit(
     return RedirectResponse("/field", status_code=303)
 
 
-# =========================
-# DEV: RESET USERS
-# =========================
 @app.get("/dev/reset-users")
 def reset_users(db: Session = Depends(get_db)):
     db.query(User).delete()
@@ -141,9 +126,6 @@ def reset_users(db: Session = Depends(get_db)):
     }
 
 
-# =========================
-# FIELD PAGE (example)
-# =========================
 @app.get("/field", response_class=HTMLResponse)
 def field_page(request: Request):
-    return templates.TemplateResponse("field.html", {"request": request})
+    return templates.TemplateResponse("field_dashboard.html", {"request": request})
