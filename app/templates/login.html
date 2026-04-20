@@ -1,56 +1,19 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login • PoolOps Pro</title>
-    <link rel="stylesheet" href="/static/style.css?v=5">
-</head>
-<body>
-    <main class="page-shell" style="max-width: 520px; padding-top: 60px;">
-        <div class="card form-card">
-            
-            <div class="eyebrow">PoolOps Pro</div>
-            <h1>Login</h1>
-            <p>Use your office or field login to continue.</p>
+{% extends "layout.html" %}
 
-            <!-- Error Message -->
-            {% if error %}
-                <p style="color:#fca5a5; font-weight:700; margin-bottom: 15px;">
-                    {{ error }}
-                </p>
-            {% endif %}
+{% block title %}Login • PoolOps Pro{% endblock %}
 
-            <!-- LOGIN FORM (THIS IS THE ONLY ONE) -->
-            <form method="post" action="/login" class="form-grid">
-                
-                <label class="full">
-                    Username
-                    <input type="text" name="username" required>
-                </label>
+{% block content %}
+<div class="center-wrap">
+    <div class="card auth-card">
+        <div class="eyebrow">PoolOps Pro</div>
+        <h1>Login</h1>
+        <p>Use your office or field login to continue.</p>
 
-                <label class="full">
-                    Password
-                    <input type="password" name="password" required>
-                </label>
-
-                <div class="full">
-                    <button class="btn btn-primary" type="submit">
-                        Login
-                    </button>
-                </div>
-
-            </form>
-
-            <!-- Helpful Info -->
-            <div style="margin-top:20px; color:#94a3b8; font-size:14px;">
-                <p><strong>Seeded logins:</strong></p>
-                <p>mike / 1234</p>
-                <p>office / 1234</p>
-                <p>jake / 1234</p>
-            </div>
-
-        </div>
-    </main>
-</body>
-</html>
+        <form method="post" action="{{ url_for('login') }}" class="form-stack">
+            <input type="text" name="username" placeholder="Username" required>
+            <input type="password" name="password" placeholder="Password" required>
+            <button type="submit">Login</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

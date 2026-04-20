@@ -1,0 +1,69 @@
+{% extends "layout.html" %}
+
+{% block title %}Add Property • PoolOps Pro{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <div>
+        <div class="eyebrow">Sites</div>
+        <h1>Add Property</h1>
+        <p>Create a new property for an existing client.</p>
+    </div>
+</div>
+
+<div class="card form-card-wide">
+    {% if clients %}
+    <form method="post" action="{{ url_for('add_property') }}" class="form-stack">
+        <div class="form-grid">
+            <div>
+                <label>Client</label>
+                <select name="client_id" required>
+                    <option value="">Select client</option>
+                    {% for client in clients %}
+                        <option value="{{ client.id }}">{{ client.full_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label>Property Name</label>
+                <input type="text" name="property_name" placeholder="Home, Lake House, Smith Residence, etc.">
+            </div>
+            <div>
+                <label>Street</label>
+                <input type="text" name="street" required>
+            </div>
+            <div>
+                <label>City</label>
+                <input type="text" name="city">
+            </div>
+            <div>
+                <label>State</label>
+                <input type="text" name="state">
+            </div>
+            <div>
+                <label>ZIP Code</label>
+                <input type="text" name="zip_code">
+            </div>
+            <div>
+                <label>Pool Type</label>
+                <input type="text" name="pool_type" placeholder="Concrete, vinyl, fiberglass, etc.">
+            </div>
+            <div>
+                <label>Cover Type</label>
+                <input type="text" name="cover_type" placeholder="Auto cover, none, manual, etc.">
+            </div>
+        </div>
+
+        <div>
+            <label>Notes</label>
+            <textarea name="notes" rows="5"></textarea>
+        </div>
+
+        <button type="submit">Save Property</button>
+    </form>
+    {% else %}
+        <p>You need to add a client before adding a property.</p>
+        <a class="primary-link" href="{{ url_for('add_client') }}">Go Add Client</a>
+    {% endif %}
+</div>
+{% endblock %}

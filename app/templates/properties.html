@@ -1,7 +1,43 @@
-<div class="job-actions">
-    <a class="btn" href="/properties/{{ property.id }}/edit">Edit</a>
-    <a class="btn" href="/properties/{{ property.id }}">Open</a>
-    <form method="post" action="/properties/{{ property.id }}/delete">
-        <button class="btn" type="submit">Delete</button>
-    </form>
+{% extends "layout.html" %}
+
+{% block title %}Properties • PoolOps Pro{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <div>
+        <div class="eyebrow">Sites</div>
+        <h1>Properties</h1>
+        <p>Manage jobsite and pool location records.</p>
+    </div>
+    <a class="primary-link" href="{{ url_for('add_property') }}">+ Add Property</a>
 </div>
+
+<div class="card table-card">
+    {% if properties %}
+    <table>
+        <thead>
+            <tr>
+                <th>Property</th>
+                <th>Client</th>
+                <th>Address</th>
+                <th>Pool Type</th>
+                <th>Cover Type</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for prop in properties %}
+            <tr>
+                <td>{{ prop.property_name or "—" }}</td>
+                <td>{{ prop.client.full_name }}</td>
+                <td>{{ prop.street }}, {{ prop.city }}, {{ prop.state }} {{ prop.zip_code }}</td>
+                <td>{{ prop.pool_type or "" }}</td>
+                <td>{{ prop.cover_type or "" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>No properties found yet.</p>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,100 +1,68 @@
-{% extends "base.html" %}
+{% extends "layout.html" %}
+
 {% block title %}Dashboard • PoolOps Pro{% endblock %}
+
 {% block content %}
-<section class="hero">
+<div class="page-head">
     <div>
-        <h1>Run the whole operation from one place.</h1>
-        <p>Track clients, properties, service calls, crews, requests, and scheduling without the scattered mess.</p>
+        <div class="eyebrow">Overview</div>
+        <h1>Welcome back, {{ username }}</h1>
+        <p>Here’s your PoolOps snapshot.</p>
     </div>
-    <div class="hero-actions">
-        <a class="btn btn-primary" href="/today">Today's Jobs</a>
-        <a class="btn" href="/properties/new">Add Property</a>
-        <a class="btn" href="/schedule/new">Schedule Job</a>
-        <a class="btn" href="/portal/request">Open Client Portal</a>
+</div>
+
+<div class="stats-grid">
+    <div class="card stat-card">
+        <h2>{{ client_count }}</h2>
+        <p>Total Clients</p>
     </div>
-</section>
+    <div class="card stat-card">
+        <h2>{{ property_count }}</h2>
+        <p>Total Properties</p>
+    </div>
+</div>
 
-<section class="grid grid-5">
-    <div class="card stat"><div class="stat-label">Clients</div><div class="stat-value">{{ stats.clients }}</div></div>
-    <div class="card stat"><div class="stat-label">Properties</div><div class="stat-value">{{ stats.properties }}</div></div>
-    <div class="card stat"><div class="stat-label">Employees</div><div class="stat-value">{{ stats.employees }}</div></div>
-    <div class="card stat"><div class="stat-label">Open Requests</div><div class="stat-value">{{ stats.open_requests }}</div></div>
-    <div class="card stat"><div class="stat-label">Unpaid Stops</div><div class="stat-value">{{ stats.unpaid_stops }}</div></div>
-</section>
-
-<section class="grid grid-2">
+<div class="content-grid">
     <div class="card">
         <div class="section-head">
-            <h2>Recent properties</h2>
-            <a href="/properties">View all</a>
+            <h3>Recent Clients</h3>
+            <a class="mini-btn" href="{{ url_for('add_client') }}">+ Add Client</a>
         </div>
-        <div class="table-wrap">
-            <table>
-                <thead><tr><th>Address</th><th>Client</th><th>Pool</th><th></th></tr></thead>
-                <tbody>
-                {% for property in recent_properties %}
-                    <tr>
-                        <td>{{ property.address }}</td>
-                        <td>{{ property.client.name }}</td>
-                        <td>{{ property.pool_type or "—" }}</td>
-                        <td><a href="/properties/{{ property.id }}">Open</a></td>
-                    </tr>
-                {% else %}
-                    <tr><td colspan="4">No properties yet.</td></tr>
+
+        {% if recent_clients %}
+            <div class="list-stack">
+                {% for client in recent_clients %}
+                    <div class="list-item">
+                        <strong>{{ client.full_name }}</strong>
+                        <span>{{ client.phone or "No phone" }}</span>
+                        <span>{{ client.email or "No email" }}</span>
+                    </div>
                 {% endfor %}
-                </tbody>
-            </table>
-        </div>
+            </div>
+        {% else %}
+            <p>No clients added yet.</p>
+        {% endif %}
     </div>
 
     <div class="card">
         <div class="section-head">
-            <h2>Recent service stops</h2>
+            <h3>Recent Properties</h3>
+            <a class="mini-btn" href="{{ url_for('add_property') }}">+ Add Property</a>
         </div>
-        <div class="table-wrap">
-            <table>
-                <thead><tr><th>Date</th><th>Property</th><th>Tech</th><th>Paid</th><th></th></tr></thead>
-                <tbody>
-                {% for stop in recent_stops %}
-                    <tr>
-                        <td>{{ stop.date }}</td>
-                        <td>{{ stop.property.address }}<br><span class="muted">{{ stop.property.client.name }}</span></td>
-                        <td>{{ stop.tech_name }}</td>
-                        <td><span class="badge">{{ stop.paid_status }}</span></td>
-                        <td><a href="/service-stops/{{ stop.id }}">Open</a></td>
-                    </tr>
-                {% else %}
-                    <tr><td colspan="5">No service stops yet.</td></tr>
-                {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
-</section>
 
-<section class="card">
-    <div class="section-head">
-        <h2>Upcoming schedule</h2>
-        <a href="/schedule/new">Add</a>
+        {% if recent_properties %}
+            <div class="list-stack">
+                {% for prop in recent_properties %}
+                    <div class="list-item">
+                        <strong>{{ prop.property_name or prop.street }}</strong>
+                        <span>{{ prop.client.full_name }}</span>
+                        <span>{{ prop.city }}, {{ prop.state }}</span>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p>No properties added yet.</p>
+        {% endif %}
     </div>
-    <div class="table-wrap">
-        <table>
-            <thead><tr><th>Date</th><th>Time</th><th>Property</th><th>Assigned</th><th>Priority</th><th>Status</th></tr></thead>
-            <tbody>
-            {% for item in upcoming %}
-                <tr>
-                    <td>{{ item.date }}</td>
-                    <td>{{ item.start_time }}{% if item.end_time %}–{{ item.end_time }}{% endif %}</td>
-                    <td>{{ item.property.address }}<br><span class="muted">{{ item.property.client.name }}</span></td>
-                    <td>{% if item.employee %}{{ item.employee.name }}{% else %}{{ item.assigned_to }}{% endif %}</td>
-                    <td><span class="badge">{{ item.priority }}</span></td>
-                    <td><span class="badge">{{ item.status }}</span></td>
-                </tr>
-            {% else %}
-                <tr><td colspan="6">No schedule items yet.</td></tr>
-            {% endfor %}
-            </tbody>
-        </table>
-    </div>
-</section>
+</div>
 {% endblock %}

@@ -1,11 +1,41 @@
-<td>
-    <div class="job-actions">
-        <a class="btn" href="/clients/{{ client.id }}/edit">Edit</a>
-        <form method="post" action="/clients/{{ client.id }}/archive">
-            <button class="btn" type="submit">Archive</button>
-        </form>
-        <form method="post" action="/clients/{{ client.id }}/delete">
-            <button class="btn" type="submit">Delete</button>
-        </form>
+{% extends "layout.html" %}
+
+{% block title %}Clients • PoolOps Pro{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <div>
+        <div class="eyebrow">CRM</div>
+        <h1>Clients</h1>
+        <p>Manage your customer list.</p>
     </div>
-</td>
+    <a class="primary-link" href="{{ url_for('add_client') }}">+ Add Client</a>
+</div>
+
+<div class="card table-card">
+    {% if clients %}
+    <table>
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Phone</th>
+                <th>Email</th>
+                <th>Notes</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for client in clients %}
+            <tr>
+                <td>{{ client.full_name }}</td>
+                <td>{{ client.phone or "" }}</td>
+                <td>{{ client.email or "" }}</td>
+                <td>{{ client.notes or "" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>No clients found yet.</p>
+    {% endif %}
+</div>
+{% endblock %}

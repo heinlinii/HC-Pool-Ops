@@ -1,0 +1,43 @@
+{% extends "layout.html" %}
+
+{% block title %}Add Client • PoolOps Pro{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <div>
+        <div class="eyebrow">CRM</div>
+        <h1>Add Client</h1>
+        <p>Create a new customer record.</p>
+    </div>
+</div>
+
+<div class="card form-card-wide">
+    <form method="post" action="{{ url_for('add_client') }}" class="form-stack">
+        <div class="form-grid">
+            <div>
+                <label>First Name</label>
+                <input type="text" name="first_name" required>
+            </div>
+            <div>
+                <label>Last Name</label>
+                <input type="text" name="last_name" required>
+            </div>
+            <div>
+                <label>Phone</label>
+                <input type="text" name="phone">
+            </div>
+            <div>
+                <label>Email</label>
+                <input type="email" name="email">
+            </div>
+        </div>
+
+        <div>
+            <label>Notes</label>
+            <textarea name="notes" rows="5"></textarea>
+        </div>
+
+        <button type="submit">Save Client</button>
+    </form>
+</div>
+{% endblock %}
