@@ -5,7 +5,7 @@ from flask import Flask, render_template, request, redirect, url_for, session, f
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 
-app = Flask(__name__)
+gunicorn app.main:app
 
 app.secret_key = os.environ.get("SECRET_KEY", "poolops-dev-secret")
 
@@ -240,10 +240,10 @@ with app.app_context():
 if __name__ == "__main__":
     app.run(debug=True)
 
-    @app.route("/schedule")
+  @app.route("/schedule")
 @login_required
 def schedule():
-    return render_template("schedule.html")
+    return render_template("schedule.html") 
 
 
 @app.route("/schedule/new")
