@@ -1,143 +1,17 @@
 {% extends "base.html" %}
-{% block title %}Office Dashboard{% endblock %}
+
+{% block title %}Office View • PoolOps Pro{% endblock %}
+
 {% block content %}
-<section class="hero">
+<div class="page-head">
     <div>
+        <div class="eyebrow">Office</div>
         <h1>Office Dashboard</h1>
-        <p>Track requests, estimates, unpaid work, users, and upcoming schedule from one command center.</p>
+        <p>Office operations view is connected.</p>
     </div>
-    <div class="hero-actions">
-        <a class="btn btn-primary" href="/requests">Open Requests</a>
-        <a class="btn" href="/schedule/new">Schedule Job</a>
-        <a class="btn" href="/properties/new">Add Property</a>
-    </div>
-</section>
+</div>
 
-<section class="grid grid-6">
-    <div class="card stat">
-        <div class="stat-label">Clients</div>
-        <div class="stat-value">{{ stats.clients }}</div>
-    </div>
-    <div class="card stat">
-        <div class="stat-label">Properties</div>
-        <div class="stat-value">{{ stats.properties }}</div>
-    </div>
-    <div class="card stat">
-        <div class="stat-label">Employees</div>
-        <div class="stat-value">{{ stats.employees }}</div>
-    </div>
-    <div class="card stat">
-        <div class="stat-label">Users</div>
-        <div class="stat-value">{{ stats.users }}</div>
-    </div>
-    <div class="card stat">
-        <div class="stat-label">Open Requests</div>
-        <div class="stat-value">{{ stats.open_requests }}</div>
-    </div>
-    <div class="card stat">
-        <div class="stat-label">Unpaid Stops</div>
-        <div class="stat-value">{{ stats.unpaid_stops }}</div>
-    </div>
-</section>
-
-<section class="grid grid-2">
-    <div class="card">
-        <div class="section-head">
-            <h2>Incoming requests</h2>
-            <a href="/requests">View all</a>
-        </div>
-        <div class="table-wrap">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Client</th>
-                        <th>Phone</th>
-                        <th>Type</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                {% for item in open_request_list %}
-                    <tr>
-                        <td>{{ item.client_name }}</td>
-                        <td>{{ item.phone }}</td>
-                        <td>{{ item.request_type }}</td>
-                        <td><span class="badge">{{ item.status }}</span></td>
-                    </tr>
-                {% else %}
-                    <tr><td colspan="4">No requests yet.</td></tr>
-                {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <div class="card">
-        <div class="section-head">
-            <h2>Recent service stops</h2>
-        </div>
-        <div class="table-wrap">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Date</th>
-                        <th>Property</th>
-                        <th>Tech</th>
-                        <th>Paid</th>
-                    </tr>
-                </thead>
-                <tbody>
-                {% for stop in recent_stops %}
-                    <tr>
-                        <td>{{ stop.date }}</td>
-                        <td>{{ stop.property.address if stop.property else "—" }}</td>
-                        <td>{{ stop.tech_name }}</td>
-                        <td><span class="badge">{{ stop.paid_status }}</span></td>
-                    </tr>
-                {% else %}
-                    <tr><td colspan="4">No service stops yet.</td></tr>
-                {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
-</section>
-
-<section class="card">
-    <div class="section-head">
-        <h2>Upcoming schedule</h2>
-        <a href="/schedule">View full schedule</a>
-    </div>
-    <div class="table-wrap">
-        <table>
-            <thead>
-                <tr>
-                    <th>Date</th>
-                    <th>Time</th>
-                    <th>Property</th>
-                    <th>Assigned</th>
-                    <th>Priority</th>
-                    <th>Status</th>
-                </tr>
-            </thead>
-            <tbody>
-            {% for item in upcoming %}
-                <tr>
-                    <td>{{ item.date }}</td>
-                    <td>{{ item.start_time }}{% if item.end_time %}–{{ item.end_time }}{% endif %}</td>
-                    <td>
-                        {{ item.property.address if item.property else "—" }}<br>
-                        <span class="muted">{{ item.property.client.name if item.property and item.property.client else "" }}</span>
-                    </td>
-                    <td>{% if item.employee %}{{ item.employee.name }}{% else %}{{ item.assigned_to }}{% endif %}</td>
-                    <td><span class="badge">{{ item.priority }}</span></td>
-                    <td><span class="badge">{{ item.status }}</span></td>
-                </tr>
-            {% else %}
-                <tr><td colspan="6">No schedule items yet.</td></tr>
-            {% endfor %}
-            </tbody>
-        </table>
-    </div>
-</section>
+<div class="card">
+    <p>Office dashboard placeholder.</p>
+</div>
 {% endblock %}

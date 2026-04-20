@@ -1,10 +1,19 @@
-import os
+    import os
 from functools import wraps
 
-from flask import Flask, render_template, request, redirect, url_for, session, flash
+from flask import (
+    Flask,
+    render_template,
+    request,
+    redirect,
+    url_for,
+    session,
+    flash,
+)
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 
+app = Flask(__name__, template_folder="templates", static_folder="static")
 
 app.secret_key = os.environ.get("SECRET_KEY", "poolops-dev-secret")
 
@@ -18,22 +27,23 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db = SQLAlchemy(app)
 
 
-# ----------------------
-# Models
-# ----------------------
 class User(db.Model):
+    __tablename__ = "users"
+
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
 
-    def set_password(self, password):
+    def set_password(self, password: str) -> None:
         self.password_hash = generate_password_hash(password)
 
-    def check_password(self, password):
+    def check_password(self, password: str) -> bool:
         return check_password_hash(self.password_hash, password)
 
 
 class Client(db.Model):
+    __tablename__ = "clients"
+
     id = db.Column(db.Integer, primary_key=True)
     first_name = db.Column(db.String(120), nullable=False)
     last_name = db.Column(db.String(120), nullable=False)
@@ -41,43 +51,45 @@ class Client(db.Model):
     email = db.Column(db.String(120))
     notes = db.Column(db.Text)
 
-    properties = db.relationship("Property", backref="client", lazy=True, cascade="all, delete-orphan")
+    properties = db.relationship(
+        "Property",
+        backref="client",
+        lazy=True,
+        cascade="all, delete-orphan",
+    )
 
     @property
-    def full_name(self):
+    def full_name(self) -> str:
         return f"{self.first_name} {self.last_name}"
 
 
 class Property(db.Model):
+    __tablename__ = "properties"
+
     id = db.Column(db.Integer, primary_key=True)
-    client_id = db.Column(db.Integer, db.ForeignKey("client.id"), nullable=False)
+    client_id = db.Column(db.Integer, db.ForeignKey("clients.id"), nullable=False)
 
     property_name = db.Column(db.String(150))
     street = db.Column(db.String(200), nullable=False)
     city = db.Column(db.String(100))
     state = db.Column(db.String(50))
     zip_code = db.Column(db.String(20))
-
     pool_type = db.Column(db.String(100))
     cover_type = db.Column(db.String(100))
     notes = db.Column(db.Text)
 
 
-# ----------------------
-# Helpers
-# ----------------------
-def login_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
+def login_required(route_function):
+    @wraps(route_function)
+    def wrapped(*args, **kwargs):
         if "user_id" not in session:
+            flash("Please log in first.", "error")
             return redirect(url_for("login"))
-        return f(*args, **kwargs)
-    return decorated_function
+        return route_function(*args, **kwargs)
+
+    return wrapped
 
 
-# ----------------------
-# Routes
-# ----------------------
 @app.route("/")
 def home():
     if "user_id" in session:
@@ -112,10 +124,26 @@ def logout():
     return redirect(url_for("login"))
 
 
+@app.route("/create-admin")
+def create_admin():
+    username = os.environ.get("ADMIN_USERNAME", "admin")
+    password = os.environ.get("ADMIN_PASSWORD", "password123")
+
+    existing_user = User.query.filter_by(username=username).first()
+    if existing_user:
+        return f"Admin user '{username}' already exists."
+
+    user = User(username=username)
+    user.set_password(password)
+    db.session.add(user)
+    db.session.commit()
+
+    return f"Admin user '{username}' created successfully."
+
+
 @app.route("/dashboard")
 @login_required
 def dashboard():
-    username = session.get("username", "User")
     client_count = Client.query.count()
     property_count = Property.query.count()
     recent_clients = Client.query.order_by(Client.id.desc()).limit(5).all()
@@ -123,7 +151,7 @@ def dashboard():
 
     return render_template(
         "dashboard.html",
-        username=username,
+        username=session.get("username", "User"),
         client_count=client_count,
         property_count=property_count,
         recent_clients=recent_clients,
@@ -192,7 +220,7 @@ def add_property():
         notes = request.form.get("notes", "").strip()
 
         if not client_id or not street:
-            flash("Client and street address are required.", "error")
+            flash("Client and street are required.", "error")
             return redirect(url_for("add_property"))
 
         new_property = Property(
@@ -215,34 +243,10 @@ def add_property():
     return render_template("add_property.html", clients=all_clients)
 
 
-@app.route("/create-admin")
-def create_admin():
-    username = os.environ.get("ADMIN_USERNAME", "admin")
-    password = os.environ.get("ADMIN_PASSWORD", "password123")
-
-    existing_user = User.query.filter_by(username=username).first()
-    if existing_user:
-        return f"Admin user '{username}' already exists."
-
-    user = User(username=username)
-    user.set_password(password)
-    db.session.add(user)
-    db.session.commit()
-
-    return f"Admin user '{username}' created successfully."
-
-
-with app.app_context():
-    db.create_all()
-
-
-if __name__ == "__main__":
-    app.run(debug=True)
-
-  @app.route("/schedule")
+@app.route("/schedule")
 @login_required
 def schedule():
-    return render_template("schedule.html") 
+    return render_template("schedule.html")
 
 
 @app.route("/schedule/new")
@@ -295,5 +299,13 @@ def search():
 
 @app.route("/requests")
 @login_required
-def requests():
+def requests_page():
     return render_template("requests.html")
+
+
+with app.app_context():
+    db.create_all()
+
+
+if __name__ == "__main__":
+    app.run(debug=True)

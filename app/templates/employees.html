@@ -1,35 +1,18 @@
 {% extends "base.html" %}
-{% block title %}Employees{% endblock %}
+
+{% block title %}Employees • PoolOps Pro{% endblock %}
+
 {% block content %}
-<div class="section-head">
-    <h1>Employees</h1>
-    <a class="btn btn-primary" href="/employees/new">Add Employee</a>
+<div class="page-head">
+    <div>
+        <div class="eyebrow">Crew</div>
+        <h1>Employees</h1>
+        <p>Employee list page is connected.</p>
+    </div>
+    <a class="primary-link" href="{{ url_for('employee_new') }}">+ Add Employee</a>
 </div>
 
-<div class="table-wrap card">
-<table>
-    <thead><tr><th>Name</th><th>Role</th><th>Phone</th><th>Email</th><th>Status</th><th></th></tr></thead>
-    <tbody>
-    {% for employee in employees %}
-        <tr>
-            <td>{{ employee.name }}</td>
-            <td>{{ employee.role }}</td>
-            <td>{{ employee.phone }}</td>
-            <td>{{ employee.email }}</td>
-            <td>{{ employee.status }}</td>
-            <td>
-                <div class="job-actions">
-                    <a class="btn" href="/employees/{{ employee.id }}/edit">Edit</a>
-                    <form method="post" action="/employees/{{ employee.id }}/delete">
-                        <button class="btn" type="submit">Delete</button>
-                    </form>
-                </div>
-            </td>
-        </tr>
-    {% else %}
-        <tr><td colspan="6">No employees yet.</td></tr>
-    {% endfor %}
-    </tbody>
-</table>
+<div class="card">
+    <p>Employee management placeholder.</p>
 </div>
 {% endblock %}

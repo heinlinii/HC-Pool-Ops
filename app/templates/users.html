@@ -1,65 +1,17 @@
 {% extends "base.html" %}
-{% block title %}Users{% endblock %}
+
+{% block title %}Users • PoolOps Pro{% endblock %}
+
 {% block content %}
-<div class="section-head">
-    <h1>Users</h1>
+<div class="page-head">
+    <div>
+        <div class="eyebrow">Access</div>
+        <h1>Users</h1>
+        <p>System users page is connected.</p>
+    </div>
 </div>
 
-<section class="grid grid-2">
-    <div class="card">
-        <h2>Create User</h2>
-        <form method="post" action="/users/new" class="form-grid">
-            <label>Username<input name="username" required></label>
-            <label>Password<input name="password" type="password" required></label>
-            <label>Role
-                <select name="role">
-                    <option value="field">Field</option>
-                    <option value="office">Office</option>
-                    <option value="admin">Admin</option>
-                </select>
-            </label>
-            <label>Linked Employee
-                <select name="employee_id">
-                    <option value="">None</option>
-                    {% for employee in employees %}
-                        <option value="{{ employee.id }}">{{ employee.name }}</option>
-                    {% endfor %}
-                </select>
-            </label>
-            <div class="full"><button class="btn btn-primary" type="submit">Create User</button></div>
-        </form>
-    </div>
-
-    <div class="card">
-        <h2>Existing Users</h2>
-        <div class="table-wrap">
-            <table>
-                <thead><tr><th>Username</th><th>Role</th><th>Employee</th><th>Status</th><th>Actions</th></tr></thead>
-                <tbody>
-                {% for user in users %}
-                    <tr>
-                        <td>{{ user.username }}</td>
-                        <td>{{ user.role }}</td>
-                        <td>{% if user.employee %}{{ user.employee.name }}{% else %}—{% endif %}</td>
-                        <td>{% if user.is_active %}Active{% else %}Inactive{% endif %}</td>
-                        <td>
-                            <form method="post" action="/users/{{ user.id }}/password" style="margin-bottom:8px;">
-                                <input name="new_password" type="password" placeholder="New password" required>
-                                <button class="btn" type="submit">Change Password</button>
-                            </form>
-                            <form method="post" action="/users/{{ user.id }}/toggle">
-                                <button class="btn" type="submit">
-                                    {% if user.is_active %}Deactivate{% else %}Activate{% endif %}
-                                </button>
-                            </form>
-                        </td>
-                    </tr>
-                {% else %}
-                    <tr><td colspan="5">No users yet.</td></tr>
-                {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
-</section>
+<div class="card">
+    <p>User management placeholder.</p>
+</div>
 {% endblock %}

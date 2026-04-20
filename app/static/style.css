@@ -11,6 +11,7 @@ body {
 
 a {
     text-decoration: none;
+    color: inherit;
 }
 
 .app-shell {
@@ -212,7 +213,8 @@ textarea {
 
 button,
 .primary-link,
-.mini-btn {
+.mini-btn,
+.btn {
     background: #2563eb;
     color: #fff;
     border: none;
@@ -226,7 +228,8 @@ button,
 
 button:hover,
 .primary-link:hover,
-.mini-btn:hover {
+.mini-btn:hover,
+.btn:hover {
     background: #1d4ed8;
 }
 
@@ -235,7 +238,8 @@ button:hover,
     font-size: 13px;
 }
 
-.table-card {
+.table-card,
+.table-wrap {
     overflow-x: auto;
 }
 
@@ -279,6 +283,16 @@ tbody td {
 .flash.success {
     background: #dcfce7;
     color: #166534;
+}
+
+.hero-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.muted {
+    color: #64748b;
 }
 
 @media (max-width: 980px) {

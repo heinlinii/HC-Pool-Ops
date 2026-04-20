@@ -1,34 +1,18 @@
 {% extends "base.html" %}
-{% block title %}Schedule{% endblock %}
+
+{% block title %}Schedule • PoolOps Pro{% endblock %}
+
 {% block content %}
-<div class="section-head">
-    <h1>Schedule</h1>
-    <div class="hero-actions">
-        <a class="btn" href="/today">Today's Jobs</a>
-        <a class="btn btn-primary" href="/schedule/new">Add Schedule Item</a>
+<div class="page-head">
+    <div>
+        <div class="eyebrow">Planning</div>
+        <h1>Schedule</h1>
+        <p>Scheduling page is live and ready for buildout.</p>
     </div>
+    <a class="primary-link" href="{{ url_for('schedule_new') }}">+ New Schedule Item</a>
 </div>
 
-<div class="table-wrap card">
-<table>
-    <thead><tr><th>Date</th><th>Time</th><th>Property</th><th>Client</th><th>Assigned</th><th>Job Type</th><th>Priority</th><th>Status</th><th>Notes</th></tr></thead>
-    <tbody>
-    {% for item in schedule_items %}
-        <tr>
-            <td>{{ item.date }}</td>
-            <td>{{ item.start_time }}{% if item.end_time %}–{{ item.end_time }}{% endif %}</td>
-            <td>{{ item.property.address }}</td>
-            <td>{{ item.property.client.name }}</td>
-            <td>{% if item.employee %}{{ item.employee.name }}{% else %}{{ item.assigned_to }}{% endif %}</td>
-            <td>{{ item.job_type }}</td>
-            <td><span class="badge">{{ item.priority }}</span></td>
-            <td><span class="badge">{{ item.status }}</span></td>
-            <td>{{ item.notes }}</td>
-        </tr>
-    {% else %}
-        <tr><td colspan="9">No schedule items yet.</td></tr>
-    {% endfor %}
-    </tbody>
-</table>
+<div class="card">
+    <p>This is your schedule hub.</p>
 </div>
 {% endblock %}

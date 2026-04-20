@@ -1,4 +1,4 @@
-{% extends "layout.html" %}
+{% extends "base.html" %}
 
 {% block title %}Properties • PoolOps Pro{% endblock %}
 
@@ -29,7 +29,7 @@
             <tr>
                 <td>{{ prop.property_name or "—" }}</td>
                 <td>{{ prop.client.full_name }}</td>
-                <td>{{ prop.street }}, {{ prop.city }}, {{ prop.state }} {{ prop.zip_code }}</td>
+                <td>{{ prop.street }}, {{ prop.city or "" }}, {{ prop.state or "" }} {{ prop.zip_code or "" }}</td>
                 <td>{{ prop.pool_type or "" }}</td>
                 <td>{{ prop.cover_type or "" }}</td>
             </tr>

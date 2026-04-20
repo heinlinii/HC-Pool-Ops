@@ -1,76 +1,17 @@
 {% extends "base.html" %}
-{% block title %}Add Schedule Item{% endblock %}
+
+{% block title %}New Schedule Item • PoolOps Pro{% endblock %}
+
 {% block content %}
-<div class="card form-card">
-    <h1>Add Schedule Item</h1>
-    <form method="post" class="form-grid">
-        <label>Property
-            <select name="property_id" required>
-                <option value="">Select property</option>
-                {% for property in properties %}
-                    <option value="{{ property.id }}">{{ property.address }} — {{ property.client.name }}</option>
-                {% endfor %}
-            </select>
-        </label>
+<div class="page-head">
+    <div>
+        <div class="eyebrow">Planning</div>
+        <h1>New Schedule Item</h1>
+        <p>Placeholder page for adding schedule items.</p>
+    </div>
+</div>
 
-        <label>Employee
-            <select name="employee_id">
-                <option value="">No linked employee</option>
-                {% for employee in employees %}
-                    <option value="{{ employee.id }}">{{ employee.name }}</option>
-                {% endfor %}
-            </select>
-        </label>
-
-        <label>Date<input type="date" name="date"></label>
-        <label>Start Time<input type="time" name="start_time"></label>
-        <label>End Time<input type="time" name="end_time"></label>
-        <label>Assigned To (text)<input name="assigned_to" placeholder="Crew name if not linked"></label>
-        <label>Job Type<input name="job_type" placeholder="Service / Opening / Remodel / Estimate"></label>
-
-        <label>Priority
-            <select name="priority">
-                <option value="normal">Normal</option>
-                <option value="high">High</option>
-                <option value="urgent">Urgent</option>
-            </select>
-        </label>
-
-        <label>Status
-            <select name="status">
-                <option value="scheduled">Scheduled</option>
-                <option value="confirmed">Confirmed</option>
-                <option value="in progress">In Progress</option>
-                <option value="completed">Completed</option>
-                <option value="rescheduled">Rescheduled</option>
-            </select>
-        </label>
-
-        <label class="full">Notes<textarea name="notes"></textarea></label>
-
-        <div class="full">
-            <h3>Quick request reference</h3>
-            <div class="table-wrap">
-                <table>
-                    <thead><tr><th>Client</th><th>Phone</th><th>Address</th><th>Type</th><th>Status</th></tr></thead>
-                    <tbody>
-                    {% for item in requests_list %}
-                        <tr>
-                            <td>{{ item.client_name }}</td>
-                            <td>{{ item.phone }}</td>
-                            <td>{{ item.address }}</td>
-                            <td>{{ item.request_type }}</td>
-                            <td>{{ item.status }}</td>
-                        </tr>
-                    {% else %}
-                        <tr><td colspan="5">No requests yet.</td></tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <div class="full"><button class="btn btn-primary" type="submit">Save Schedule Item</button></div>
-    </form>
+<div class="card">
+    <p>Form buildout goes here next.</p>
 </div>
 {% endblock %}

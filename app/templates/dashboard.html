@@ -1,4 +1,4 @@
-{% extends "layout.html" %}
+{% extends "base.html" %}
 
 {% block title %}Dashboard • PoolOps Pro{% endblock %}
 
@@ -56,7 +56,7 @@
                     <div class="list-item">
                         <strong>{{ prop.property_name or prop.street }}</strong>
                         <span>{{ prop.client.full_name }}</span>
-                        <span>{{ prop.city }}, {{ prop.state }}</span>
+                        <span>{{ prop.city or "" }} {{ prop.state or "" }}</span>
                     </div>
                 {% endfor %}
             </div>
