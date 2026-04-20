@@ -1,17 +1,94 @@
-{% extends "base.html" %}
+<h1 style="color:red;">TEST</h1>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Heinlin Ops</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="app-body">
+    <header class="topbar">
+        <div class="topbar-left">
+            <div class="brand-mark">H</div>
+            <div>
+                <div class="brand-title">Heinlin Ops</div>
+                <div class="brand-subtitle">Field dashboard for properties, service stops, and job records</div>
+            </div>
+        </div>
 
-{% block title %}Field View • PoolOps Pro{% endblock %}
+        <div class="topbar-actions">
+            <a class="btn btn-secondary" href="/schedule">Schedule</a>
+            <a class="btn btn-primary" href="/properties/new">Add Property</a>
+            <a class="btn btn-secondary" href="/dev/seed">Seed Demo</a>
+        </div>
+    </header>
 
-{% block content %}
-<div class="page-head">
-    <div>
-        <div class="eyebrow">Field</div>
-        <h1>Field Dashboard</h1>
-        <p>Field crew view is connected.</p>
-    </div>
-</div>
+    <main class="page-shell">
+        <section class="hero-card">
+            <div class="hero-copy">
+                <div class="eyebrow">Live System</div>
+                <h1>Field Dashboard</h1>
+                <p>Track service stops, manage properties, and keep job records moving without the clutter.</p>
+            </div>
+        </section>
 
-<div class="card">
-    <p>Field dashboard placeholder.</p>
-</div>
-{% endblock %}
+        <section class="content-grid">
+            <div class="panel">
+                <div class="panel-head">
+                    <h2>Quick Actions</h2>
+                    <span class="pill">Field Tools</span>
+                </div>
+
+                <div class="action-grid">
+                    <a class="action-card" href="/properties/new">
+                        <h3>Add Property</h3>
+                        <p>Create a new property record.</p>
+                    </a>
+
+                    <a class="action-card" href="/property/1">
+                        <h3>Open Demo Property</h3>
+                        <p>Jump into the seeded property.</p>
+                    </a>
+
+                    <a class="action-card" href="/service-stop/new">
+                        <h3>New Service Stop</h3>
+                        <p>Start a job visit entry.</p>
+                    </a>
+
+                    <a class="action-card" href="/service-stop/1">
+                        <h3>Service Stop Detail</h3>
+                        <p>Review the seeded stop.</p>
+                    </a>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-head">
+                    <h2>All Properties</h2>
+                    <span class="pill">Demo Data</span>
+                </div>
+
+                {% if properties %}
+                    <div class="list-wrap">
+                        {% for property in properties %}
+                            <a class="list-row" href="/property/{{ property.id }}">
+                                <div>
+                                    <div class="row-title">{{ property.name }}</div>
+                                    <div class="row-subtitle">{{ property.address or "No address listed" }}</div>
+                                </div>
+                                <div class="row-arrow">→</div>
+                            </a>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="empty-state">
+                        <h3>No properties yet</h3>
+                        <p>Add your first property to get rolling.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </section>
+    </main>
+</body>
+</html>
