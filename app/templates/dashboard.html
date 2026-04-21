@@ -1,82 +1,92 @@
 {% extends "base.html" %}
 
-{% block title %}Dashboard | HC Pool Ops{% endblock %}
-
 {% block content %}
-<div class="page-wrap">
-    <div class="hero">
-        <div>
-            <div class="eyebrow">HC POOL OPS</div>
-            <h1>Dashboard</h1>
-            <p>Welcome back, {{ username }}. Manage office and field work from one place.</p>
+<div class="page-header">
+    <div>
+        <div class="eyebrow">Overview</div>
+        <h1>Dashboard</h1>
+        <p class="subtext">Welcome back{% if current_user %}, {{ current_user }}{% endif %}.</p>
+    </div>
+</div>
+
+<div class="stats-grid">
+    <div class="card stat-card">
+        <div class="stat-label">Clients</div>
+        <div class="stat-value">{{ client_count }}</div>
+    </div>
+
+    <div class="card stat-card">
+        <div class="stat-label">Properties</div>
+        <div class="stat-value">{{ property_count }}</div>
+    </div>
+
+    <div class="card stat-card">
+        <div class="stat-label">Jobs</div>
+        <div class="stat-value">{{ job_count }}</div>
+    </div>
+
+    <div class="card stat-card">
+        <div class="stat-label">Open Jobs</div>
+        <div class="stat-value">{{ open_jobs }}</div>
+    </div>
+</div>
+
+<div class="two-col">
+    <div class="card">
+        <div class="section-head">
+            <h2>Quick Actions</h2>
+        </div>
+        <div class="button-row">
+            <a href="{{ url_for('clients') }}" class="btn">Manage Clients</a>
+            <a href="{{ url_for('properties') }}" class="btn">Manage Properties</a>
+            <a href="{{ url_for('jobs') }}" class="btn">Manage Jobs</a>
         </div>
     </div>
 
-    <div class="stats-grid">
-        <div class="stat-card">
-            <h3>{{ client_count }}</h3>
-            <p>Clients</p>
+    <div class="card">
+        <div class="section-head">
+            <h2>System Status</h2>
         </div>
-        <div class="stat-card">
-            <h3>{{ property_count }}</h3>
-            <p>Properties</p>
-        </div>
-        <div class="stat-card">
-            <h3>{{ stop_count }}</h3>
-            <p>Service Stops</p>
-        </div>
-        <div class="stat-card">
-            <h3>{{ employee_count }}</h3>
-            <p>Employees</p>
-        </div>
+        <p>App deployed and database connected.</p>
+        <p>This is the clean reset version of PoolOps Pro.</p>
     </div>
+</div>
 
-    <div class="panel">
-        <h2>Quick Actions</h2>
-        <div class="card-grid">
-            <a class="card-link" href="/clients/new">
-                <h3>Add Client</h3>
-                <p>Create a new customer record.</p>
-            </a>
-            <a class="card-link" href="/properties/new">
-                <h3>Add Property</h3>
-                <p>Create a new property record.</p>
-            </a>
-            <a class="card-link" href="/schedule/new">
-                <h3>Schedule Item</h3>
-                <p>Add a new scheduled visit or task.</p>
-            </a>
-            <a class="card-link" href="/service-stop/new">
-                <h3>New Service Stop</h3>
-                <p>Create a field service entry.</p>
-            </a>
+<div class="two-col">
+    <div class="card">
+        <div class="section-head">
+            <h2>Recent Clients</h2>
         </div>
-    </div>
-
-    <div class="two-col">
-        <div class="panel">
-            <h2>Recent Properties</h2>
-            <div class="stack-list">
-                {% for property in recent_properties %}
-                <a class="list-item" href="/property/{{ property.id }}">
-                    <strong>{{ property.name }}</strong>
-                    <span>{{ property.address }}</span>
-                </a>
+        {% if recent_clients %}
+            <div class="simple-list">
+                {% for client in recent_clients %}
+                    <div class="list-row">
+                        <strong>{{ client.name }}</strong>
+                        <span>{{ client.phone or "No phone" }}</span>
+                    </div>
                 {% endfor %}
             </div>
-        </div>
+        {% else %}
+            <p>No clients yet.</p>
+        {% endif %}
+    </div>
 
-        <div class="panel">
-            <h2>Recent Service Stops</h2>
-            <div class="stack-list">
-                {% for stop in recent_stops %}
-                <a class="list-item" href="/service-stop/{{ stop.id }}">
-                    <strong>{{ stop.title }}</strong>
-                    <span>{{ stop.scheduled_for }} · {{ stop.status }}</span>
-                </a>
+    <div class="card">
+        <div class="section-head">
+            <h2>Recent Jobs</h2>
+        </div>
+        {% if recent_jobs %}
+            <div class="simple-list">
+                {% for job in recent_jobs %}
+                    <div class="list-row">
+                        <strong>{{ job.title }}</strong>
+                        <span>{{ job.status }}</span>
+                    </div>
                 {% endfor %}
             </div>
-        </div>
+        {% else %}
+            <p>No jobs yet.</p>
+        {% endif %}
     </div>
 </div>
 {% endblock %}

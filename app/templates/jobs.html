@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="page-header">
+    <h1>Jobs</h1>
+    <a href="/service-stop/new" class="btn">+ New Job</a>
+</div>
+
+<div class="card">
+    {% if jobs %}
+    <table class="table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Client</th>
+                <th>Property</th>
+                <th>Date</th>
+                <th>Status</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for job in jobs %}
+            <tr>
+                <td>#{{ job.id }}</td>
+                <td>{{ job.client_name }}</td>
+                <td>{{ job.property_name }}</td>
+                <td>{{ job.date }}</td>
+                <td>{{ job.status }}</td>
+                <td>
+                    <a href="/service-stop/{{ job.id }}">View</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+        <p>No jobs yet.</p>
+    {% endif %}
+</div>
+
+{% endblock %}
