@@ -8,43 +8,75 @@
         <div>
             <div class="eyebrow">HC POOL OPS</div>
             <h1>Dashboard</h1>
-            <p>Manage your clients, jobs, and team from one place.</p>
+            <p>Welcome back, {{ username }}. Manage office and field work from one place.</p>
+        </div>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <h3>{{ client_count }}</h3>
+            <p>Clients</p>
+        </div>
+        <div class="stat-card">
+            <h3>{{ property_count }}</h3>
+            <p>Properties</p>
+        </div>
+        <div class="stat-card">
+            <h3>{{ stop_count }}</h3>
+            <p>Service Stops</p>
+        </div>
+        <div class="stat-card">
+            <h3>{{ employee_count }}</h3>
+            <p>Employees</p>
         </div>
     </div>
 
     <div class="panel">
         <h2>Quick Actions</h2>
         <div class="card-grid">
-            <a class="card-link" href="/clients">
-                <h3>Clients</h3>
-                <p>View and manage your customer records.</p>
+            <a class="card-link" href="/clients/new">
+                <h3>Add Client</h3>
+                <p>Create a new customer record.</p>
             </a>
-
-            <a class="card-link" href="/jobs">
-                <h3>Jobs</h3>
-                <p>Track project and service work.</p>
+            <a class="card-link" href="/properties/new">
+                <h3>Add Property</h3>
+                <p>Create a new property record.</p>
             </a>
-
-            <a class="card-link" href="/employees">
-                <h3>Employees</h3>
-                <p>See office and field team records.</p>
+            <a class="card-link" href="/schedule/new">
+                <h3>Schedule Item</h3>
+                <p>Add a new scheduled visit or task.</p>
             </a>
-
-            <a class="card-link" href="/dashboard">
-                <h3>System Status</h3>
-                <p>Current build is live and stable.</p>
+            <a class="card-link" href="/service-stop/new">
+                <h3>New Service Stop</h3>
+                <p>Create a field service entry.</p>
             </a>
         </div>
     </div>
 
-    <div class="panel">
-        <h2>Build Status</h2>
-        <ul class="status-list">
-            <li>✅ Render deploy working</li>
-            <li>✅ Login route working</li>
-            <li>✅ Dashboard route working</li>
-            <li>🚧 Office modules next</li>
-        </ul>
+    <div class="two-col">
+        <div class="panel">
+            <h2>Recent Properties</h2>
+            <div class="stack-list">
+                {% for property in recent_properties %}
+                <a class="list-item" href="/property/{{ property.id }}">
+                    <strong>{{ property.name }}</strong>
+                    <span>{{ property.address }}</span>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="panel">
+            <h2>Recent Service Stops</h2>
+            <div class="stack-list">
+                {% for stop in recent_stops %}
+                <a class="list-item" href="/service-stop/{{ stop.id }}">
+                    <strong>{{ stop.title }}</strong>
+                    <span>{{ stop.scheduled_for }} · {{ stop.status }}</span>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
     </div>
 </div>
 {% endblock %}

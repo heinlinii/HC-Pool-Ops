@@ -1,43 +1,43 @@
 {% extends "base.html" %}
 
-{% block title %}Properties • PoolOps Pro{% endblock %}
+{% block title %}Properties | HC Pool Ops{% endblock %}
 
 {% block content %}
-<div class="page-head">
-    <div>
-        <div class="eyebrow">Sites</div>
-        <h1>Properties</h1>
-        <p>Manage jobsite and pool location records.</p>
+<div class="page-wrap">
+    <div class="page-head">
+        <div>
+            <h1>Properties</h1>
+            <p>Manage customer properties and pool records.</p>
+        </div>
+        <div class="head-actions">
+            <a class="btn" href="/dashboard">Back</a>
+            <a class="btn btn-primary" href="/properties/new">Add Property</a>
+        </div>
     </div>
-    <a class="primary-link" href="{{ url_for('add_property') }}">+ Add Property</a>
-</div>
 
-<div class="card table-card">
-    {% if properties %}
-    <table>
-        <thead>
-            <tr>
-                <th>Property</th>
-                <th>Client</th>
-                <th>Address</th>
-                <th>Pool Type</th>
-                <th>Cover Type</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for prop in properties %}
-            <tr>
-                <td>{{ prop.property_name or "—" }}</td>
-                <td>{{ prop.client.full_name }}</td>
-                <td>{{ prop.street }}, {{ prop.city or "" }}, {{ prop.state or "" }} {{ prop.zip_code or "" }}</td>
-                <td>{{ prop.pool_type or "" }}</td>
-                <td>{{ prop.cover_type or "" }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    {% else %}
-    <p>No properties found yet.</p>
-    {% endif %}
+    <div class="panel">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Client</th>
+                    <th>Address</th>
+                    <th>Pool Type</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for property in properties %}
+                <tr>
+                    <td><a href="/property/{{ property.id }}">{{ property.name }}</a></td>
+                    <td>{{ property.client_name }}</td>
+                    <td>{{ property.address }}</td>
+                    <td>{{ property.pool_type }}</td>
+                    <td>{{ property.status }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
 {% endblock %}

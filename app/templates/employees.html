@@ -1,18 +1,43 @@
 {% extends "base.html" %}
 
-{% block title %}Employees • PoolOps Pro{% endblock %}
+{% block title %}Employees | HC Pool Ops{% endblock %}
 
 {% block content %}
-<div class="page-head">
-    <div>
-        <div class="eyebrow">Crew</div>
-        <h1>Employees</h1>
-        <p>Employee list page is connected.</p>
+<div class="page-wrap">
+    <div class="page-head">
+        <div>
+            <h1>Employees</h1>
+            <p>Field and office employee records.</p>
+        </div>
+        <div class="head-actions">
+            <a class="btn" href="/dashboard">Back</a>
+            <a class="btn btn-primary" href="/employees/new">Add Employee</a>
+        </div>
     </div>
-    <a class="primary-link" href="{{ url_for('employee_new') }}">+ Add Employee</a>
-</div>
 
-<div class="card">
-    <p>Employee management placeholder.</p>
+    <div class="panel">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Role</th>
+                    <th>Phone</th>
+                    <th>Email</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for employee in employees %}
+                <tr>
+                    <td>{{ employee.name }}</td>
+                    <td>{{ employee.role }}</td>
+                    <td>{{ employee.phone }}</td>
+                    <td>{{ employee.email }}</td>
+                    <td>{{ employee.status }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
 {% endblock %}

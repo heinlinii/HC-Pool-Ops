@@ -1,18 +1,43 @@
 {% extends "base.html" %}
 
-{% block title %}Schedule • PoolOps Pro{% endblock %}
+{% block title %}Schedule | HC Pool Ops{% endblock %}
 
 {% block content %}
-<div class="page-head">
-    <div>
-        <div class="eyebrow">Planning</div>
-        <h1>Schedule</h1>
-        <p>Scheduling page is live and ready for buildout.</p>
+<div class="page-wrap">
+    <div class="page-head">
+        <div>
+            <h1>Schedule</h1>
+            <p>Scheduled service and office tasks.</p>
+        </div>
+        <div class="head-actions">
+            <a class="btn" href="/dashboard">Back</a>
+            <a class="btn btn-primary" href="/schedule/new">Add Schedule Item</a>
+        </div>
     </div>
-    <a class="primary-link" href="{{ url_for('schedule_new') }}">+ New Schedule Item</a>
-</div>
 
-<div class="card">
-    <p>This is your schedule hub.</p>
+    <div class="panel">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>Property</th>
+                    <th>Date</th>
+                    <th>Technician</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for stop in service_stops %}
+                <tr>
+                    <td><a href="/service-stop/{{ stop.id }}">{{ stop.title }}</a></td>
+                    <td>{{ stop.property_name }}</td>
+                    <td>{{ stop.scheduled_for }}</td>
+                    <td>{{ stop.technician }}</td>
+                    <td>{{ stop.status }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
 {% endblock %}

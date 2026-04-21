@@ -1,50 +1,28 @@
 {% extends "base.html" %}
-{% block title %}Service Stop{% endblock %}
+
+{% block title %}Service Stop Detail | HC Pool Ops{% endblock %}
+
 {% block content %}
-<section class="section-head">
-    <div>
-        <div class="eyebrow">{{ service_stop.property.client.name }}</div>
-        <h1>Service Stop</h1>
-        <p>{{ service_stop.property.address }}</p>
-    </div>
-    <div class="badge">{{ service_stop.paid_status }}</div>
-</section>
-
-<section class="grid grid-2">
-    <div class="card">
-        <h3>Work summary</h3>
-        <p><strong>Date:</strong> {{ service_stop.date }}</p>
-        <p><strong>Tech:</strong> {{ service_stop.tech_name }}</p>
-        <p><strong>Status:</strong> {{ service_stop.status }}</p>
-        <p><strong>Problem Reported:</strong><br>{{ service_stop.problem_reported }}</p>
-        <p><strong>Work Performed:</strong><br>{{ service_stop.work_performed }}</p>
-        <p><strong>Recommendation:</strong><br>{{ service_stop.recommendation }}</p>
-        <p><strong>Invoice Notes:</strong><br>{{ service_stop.invoice_notes or "—" }}</p>
-
-        {% if service_stop.photo_path %}
-            <h3 style="margin-top:20px;">Job Photo</h3>
-            <img src="{{ service_stop.photo_path }}" alt="Job photo" style="max-width:100%; border-radius:16px;">
-        {% endif %}
+<div class="page-wrap">
+    <div class="page-head">
+        <div>
+            <h1>{{ stop.title }}</h1>
+            <p>{{ property.name if property else "Unknown Property" }}</p>
+        </div>
+        <div class="head-actions">
+            <a class="btn" href="/schedule">Back to Schedule</a>
+        </div>
     </div>
 
-    <div class="card">
-        <h3>Invoice breakdown</h3>
-        <div class="invoice-line"><span>Labor ({{ service_stop.labor_hours }} hrs × {{ service_stop.labor_rate|money }})</span><strong>{{ labor_total|money }}</strong></div>
-        <div class="invoice-line"><span>Additional billed amount</span><strong>{{ service_stop.billed_amount|money }}</strong></div>
-        <div class="invoice-line"><span>Materials</span><strong>{{ service_stop.material_cost|money }}</strong></div>
-        <div class="invoice-line"><span>Trip charge</span><strong>{{ service_stop.trip_charge|money }}</strong></div>
-        <div class="invoice-line"><span>Tax</span><strong>{{ service_stop.tax|money }}</strong></div>
-        <div class="invoice-total"><span>Total</span><strong>{{ invoice_total|money }}</strong></div>
-
-        <form method="post" action="/service-stops/{{ service_stop.id }}/paid-status" style="margin-top:24px;">
-            <label style="display:block; margin-bottom:10px;">Update Paid Status</label>
-            <select name="paid_status" style="margin-bottom:12px;">
-                <option value="unpaid" {% if service_stop.paid_status == "unpaid" %}selected{% endif %}>Unpaid</option>
-                <option value="partial" {% if service_stop.paid_status == "partial" %}selected{% endif %}>Partial</option>
-                <option value="paid" {% if service_stop.paid_status == "paid" %}selected{% endif %}>Paid</option>
-            </select>
-            <button class="btn btn-primary" type="submit">Save Paid Status</button>
-        </form>
+    <div class="panel">
+        <div class="detail-list">
+            <div><strong>Property:</strong> {{ property.name if property else "Unknown" }}</div>
+            <div><strong>Address:</strong> {{ property.address if property else "Unknown" }}</div>
+            <div><strong>Date:</strong> {{ stop.scheduled_for }}</div>
+            <div><strong>Technician:</strong> {{ stop.technician }}</div>
+            <div><strong>Status:</strong> {{ stop.status }}</div>
+            <div><strong>Notes:</strong> {{ stop.notes }}</div>
+        </div>
     </div>
-</section>
+</div>
 {% endblock %}

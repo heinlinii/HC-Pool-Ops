@@ -1,17 +1,28 @@
 {% extends "base.html" %}
 
-{% block title %}Today • PoolOps Pro{% endblock %}
+{% block title %}Today | HC Pool Ops{% endblock %}
 
 {% block content %}
-<div class="page-head">
-    <div>
-        <div class="eyebrow">Daily View</div>
-        <h1>Today</h1>
-        <p>Today’s work overview.</p>
+<div class="page-wrap">
+    <div class="page-head">
+        <div>
+            <h1>Today</h1>
+            <p>Current service work and scheduled items.</p>
+        </div>
+        <div class="head-actions">
+            <a class="btn" href="/dashboard">Back</a>
+        </div>
     </div>
-</div>
 
-<div class="card">
-    <p>Today page is connected.</p>
+    <div class="panel">
+        <div class="stack-list">
+            {% for item in items %}
+            <a class="list-item" href="/service-stop/{{ item.id }}">
+                <strong>{{ item.title }}</strong>
+                <span>{{ item.property_name }} · {{ item.scheduled_for }} · {{ item.technician }}</span>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
 </div>
 {% endblock %}

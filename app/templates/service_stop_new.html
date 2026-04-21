@@ -1,46 +1,63 @@
 {% extends "base.html" %}
-{% block title %}New Service Stop{% endblock %}
+
+{% block title %}New Service Stop | HC Pool Ops{% endblock %}
+
 {% block content %}
-<div class="card form-card">
-    <div class="eyebrow">{{ property.client.name }}</div>
-    <h1>Field Closeout</h1>
-    <p>{{ property.address }}</p>
+<div class="page-wrap narrow">
+    <div class="page-head">
+        <div>
+            <h1>New Service Stop</h1>
+            <p>Create a field service stop record.</p>
+        </div>
+        <div class="head-actions">
+            <a class="btn" href="/schedule">Back to Schedule</a>
+        </div>
+    </div>
 
-    <form method="post" class="form-grid" enctype="multipart/form-data">
-        <label>Date<input type="date" name="date"></label>
-        <label>Tech Name<input name="tech_name"></label>
+    <div class="panel">
+        <form method="post" action="/service-stop/new" class="form-grid">
+            <label>
+                <span>Property</span>
+                <select name="property_id" required>
+                    {% for property in properties %}
+                    <option value="{{ property.id }}">{{ property.name }}</option>
+                    {% endfor %}
+                </select>
+            </label>
 
-        <label>Status
-            <select name="status">
-                <option value="completed">Completed</option>
-                <option value="follow up needed">Follow Up Needed</option>
-                <option value="awaiting parts">Awaiting Parts</option>
-            </select>
-        </label>
+            <label>
+                <span>Title</span>
+                <input type="text" name="title" required />
+            </label>
 
-        <label>Paid Status
-            <select name="paid_status">
-                <option value="unpaid">Unpaid</option>
-                <option value="paid">Paid</option>
-                <option value="partial">Partial</option>
-            </select>
-        </label>
+            <label>
+                <span>Date</span>
+                <input type="date" name="scheduled_for" required />
+            </label>
 
-        <label class="full">Problem Reported<textarea name="problem_reported"></textarea></label>
-        <label class="full">Work Performed<textarea name="work_performed"></textarea></label>
-        <label class="full">Recommendation<textarea name="recommendation"></textarea></label>
+            <label>
+                <span>Technician</span>
+                <select name="technician" required>
+                    {% for employee in employees %}
+                    <option value="{{ employee.name }}">{{ employee.name }}</option>
+                    {% endfor %}
+                </select>
+            </label>
 
-        <label>Labor Hours<input name="labor_hours" type="number" step="0.01" value="0"></label>
-        <label>Labor Rate<input name="labor_rate" type="number" step="0.01" value="95"></label>
-        <label>Additional Billed Amount<input name="billed_amount" type="number" step="0.01" value="0"></label>
-        <label>Material Cost<input name="material_cost" type="number" step="0.01" value="0"></label>
-        <label>Trip Charge<input name="trip_charge" type="number" step="0.01" value="0"></label>
-        <label>Tax<input name="tax" type="number" step="0.01" value="0"></label>
+            <label>
+                <span>Status</span>
+                <input type="text" name="status" value="Open" />
+            </label>
 
-        <label class="full">Job Photo<input type="file" name="photo" accept=".jpg,.jpeg,.png,.webp"></label>
-        <label class="full">Invoice Notes<textarea name="invoice_notes"></textarea></label>
+            <label class="full">
+                <span>Notes</span>
+                <textarea name="notes" rows="5"></textarea>
+            </label>
 
-        <div class="full"><button class="btn btn-primary" type="submit">Save Field Closeout</button></div>
-    </form>
+            <div class="full">
+                <button type="submit" class="btn btn-primary">Create Service Stop</button>
+            </div>
+        </form>
+    </div>
 </div>
 {% endblock %}
