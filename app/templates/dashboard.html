@@ -1,30 +1,39 @@
 {% extends "base.html" %}
 
-{% block title %}Dashboard{% endblock %}
+{% block title %}Dashboard | HC Pool Ops{% endblock %}
 
 {% block content %}
+<div class="container">
+    <header class="dash-header">
+        <h1>HC Pool Ops Dashboard</h1>
+        <p class="subtitle">Manage your clients, jobs, and team from one place.</p>
+    </header>
 
-<div style="padding: 30px; font-family: Arial;">
+    <section class="quick-actions">
+        <h2>Quick Actions</h2>
+        <div class="action-links">
+            <a href="/clients" class="action-card">
+                <h3>View Clients</h3>
+                <p>Browse and edit all clients.</p>
+            </a>
+            <a href="/jobs" class="action-card">
+                <h3>View Jobs</h3>
+                <p>See current and past jobs.</p>
+            </a>
+            <a href="/employees" class="action-card">
+                <h3>View Employees</h3>
+                <p>Review team members and roles.</p>
+            </a>
+        </div>
+    </section>
 
-    <h1>HC Pool Ops Dashboard</h1>
-
-    <hr style="margin: 20px 0;">
-
-    <h2>Quick Actions</h2>
-
-    <div style="margin-top: 15px;">
-        <a href="/clients" style="display:block; margin-bottom:10px;">➡️ View Clients</a>
-        <a href="/jobs" style="display:block; margin-bottom:10px;">➡️ View Jobs</a>
-        <a href="/employees" style="display:block; margin-bottom:10px;">➡️ View Employees</a>
-    </div>
-
-    <hr style="margin: 30px 0;">
-
-    <h2>System Status</h2>
-    <p>✅ App Connected</p>
-    <p>✅ Database Connected</p>
-    <p>🚧 Features Coming Next</p>
-
+    <section class="system-status">
+        <h2>System Status</h2>
+        <ul class="status-list">
+            <li>✅ App Connected</li>
+            <li>✅ Database Connected</li>
+            <li>🚧 Features Coming Next</li>
+        </ul>
+    </section>
 </div>
-
 {% endblock %}
