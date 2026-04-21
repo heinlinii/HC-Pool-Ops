@@ -5,10 +5,13 @@ from starlette.templating import Jinja2Templates
 
 app = FastAPI()
 
+# Static files
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
+
+# Templates
 templates = Jinja2Templates(directory="app/templates")
 
-# demo in-memory data for now
+# Temporary in-memory client data
 CLIENTS = [
     {
         "id": 1,
@@ -28,21 +31,43 @@ CLIENTS = [
     },
 ]
 
+# -------------------------
+# AUTH / ENTRY
+# -------------------------
+
 @app.get("/", response_class=HTMLResponse)
 def home(request: Request):
-    return templates.TemplateResponse("login.html", {"request": request})
+    return templates.TemplateResponse("login.html", {"request": request, "error": ""})
+
 
 @app.get("/login", response_class=HTMLResponse)
 def login_page(request: Request):
-    return templates.TemplateResponse("login.html", {"request": request})
+    return templates.TemplateResponse("login.html", {"request": request, "error": ""})
+
 
 @app.post("/login")
-def login(username: str = Form(...), password: str = Form(...)):
-    return RedirectResponse("/dashboard", status_code=302)
+def login(
+    username: str = Form(...),
+    password: str = Form(...),
+):
+    # TEMP login: lets us move through app while building structure
+    # We can replace this with real auth/database users next
+    if username.strip() and password.strip():
+        return RedirectResponse("/dashboard", status_code=302)
+
+    return RedirectResponse("/login", status_code=302)
+
+# -------------------------
+# DASHBOARD
+# -------------------------
 
 @app.get("/dashboard", response_class=HTMLResponse)
 def dashboard(request: Request):
     return templates.TemplateResponse("dashboard.html", {"request": request})
+
+# -------------------------
+# CLIENTS
+# -------------------------
 
 @app.get("/clients", response_class=HTMLResponse)
 def clients_page(request: Request):
@@ -54,9 +79,11 @@ def clients_page(request: Request):
         },
     )
 
+
 @app.get("/clients/new", response_class=HTMLResponse)
 def new_client_page(request: Request):
     return templates.TemplateResponse("client_new.html", {"request": request})
+
 
 @app.post("/clients/new")
 def create_client(
@@ -67,6 +94,7 @@ def create_client(
     notes: str = Form(""),
 ):
     next_id = max([c["id"] for c in CLIENTS], default=0) + 1
+
     CLIENTS.append(
         {
             "id": next_id,
@@ -77,22 +105,64 @@ def create_client(
             "notes": notes,
         }
     )
+
     return RedirectResponse("/clients", status_code=302)
 
+# -------------------------
+# PLACEHOLDER PAGES
+# -------------------------
+
 @app.get("/jobs", response_class=HTMLResponse)
-def jobs_page(request: Request):
+def jobs_page():
     return HTMLResponse("""
-    <html><head><title>Jobs</title><link rel="stylesheet" href="/static/style.css"></head>
-    <body class="app-shell"><div class="page-wrap">
-    <h1>Jobs</h1><p>Jobs page coming next.</p><p><a href="/dashboard">← Back to Dashboard</a></p>
-    </div></body></html>
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Jobs | HC Pool Ops</title>
+        <link rel="stylesheet" href="/static/style.css" />
+    </head>
+    <body>
+        <div class="page-wrap">
+            <div class="page-head">
+                <div>
+                    <h1>Jobs</h1>
+                    <p>Jobs page coming next.</p>
+                </div>
+                <div class="head-actions">
+                    <a class="btn" href="/dashboard">Back to Dashboard</a>
+                </div>
+            </div>
+        </div>
+    </body>
+    </html>
     """)
 
+
 @app.get("/employees", response_class=HTMLResponse)
-def employees_page(request: Request):
+def employees_page():
     return HTMLResponse("""
-    <html><head><title>Employees</title><link rel="stylesheet" href="/static/style.css"></head>
-    <body class="app-shell"><div class="page-wrap">
-    <h1>Employees</h1><p>Employees page coming next.</p><p><a href="/dashboard">← Back to Dashboard</a></p>
-    </div></body></html>
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Employees | HC Pool Ops</title>
+        <link rel="stylesheet" href="/static/style.css" />
+    </head>
+    <body>
+        <div class="page-wrap">
+            <div class="page-head">
+                <div>
+                    <h1>Employees</h1>
+                    <p>Employees page coming next.</p>
+                </div>
+                <div class="head-actions">
+                    <a class="btn" href="/dashboard">Back to Dashboard</a>
+                </div>
+            </div>
+        </div>
+    </body>
+    </html>
     """)

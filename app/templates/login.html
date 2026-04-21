@@ -1,19 +1,23 @@
 {% extends "base.html" %}
 
-{% block title %}Login • PoolOps Pro{% endblock %}
+{% block title %}Login | HC Pool Ops{% endblock %}
 
 {% block content %}
-<div class="center-wrap">
-    <div class="card auth-card">
-        <div class="eyebrow">PoolOps Pro</div>
+<div class="login-shell">
+    <div class="login-card">
+        <div class="login-brand">POOLOPS PRO</div>
         <h1>Login</h1>
         <p>Use your office or field login to continue.</p>
 
-        <form method="post" action="{{ url_for('login') }}" class="form-stack">
-            <input type="text" name="username" placeholder="Username" required>
-            <input type="password" name="password" placeholder="Password" required>
-            <button type="submit">Login</button>
+        <form method="post" action="/login" class="login-form">
+            <input type="text" name="username" placeholder="Username" required />
+            <input type="password" name="password" placeholder="Password" required />
+            <button type="submit" class="btn btn-primary">Login</button>
         </form>
+
+        {% if error %}
+        <div class="error-text">{{ error }}</div>
+        {% endif %}
     </div>
 </div>
 {% endblock %}
