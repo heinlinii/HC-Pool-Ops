@@ -5,41 +5,45 @@
 {% block content %}
 <div class="page-wrap">
     <div class="hero">
-        <h1>HC Pool Ops Dashboard</h1>
-        <p>Manage your clients, jobs, and team from one place.</p>
+        <div>
+            <div class="eyebrow">HC POOL OPS</div>
+            <h1>Dashboard</h1>
+            <p>Manage your clients, jobs, and team from one place.</p>
+        </div>
     </div>
 
     <div class="panel">
         <h2>Quick Actions</h2>
         <div class="card-grid">
             <a class="card-link" href="/clients">
-                <h3>View Clients</h3>
-                <p>Browse and edit all clients.</p>
-            </a>
-
-            <a class="card-link" href="/clients/new">
-                <h3>Add Client</h3>
-                <p>Create a new client record.</p>
+                <h3>Clients</h3>
+                <p>View and manage your customer records.</p>
             </a>
 
             <a class="card-link" href="/jobs">
-                <h3>View Jobs</h3>
-                <p>See current and past jobs.</p>
+                <h3>Jobs</h3>
+                <p>Track project and service work.</p>
             </a>
 
             <a class="card-link" href="/employees">
-                <h3>View Employees</h3>
-                <p>Review team members and roles.</p>
+                <h3>Employees</h3>
+                <p>See office and field team records.</p>
+            </a>
+
+            <a class="card-link" href="/dashboard">
+                <h3>System Status</h3>
+                <p>Current build is live and stable.</p>
             </a>
         </div>
     </div>
 
     <div class="panel">
-        <h2>System Status</h2>
+        <h2>Build Status</h2>
         <ul class="status-list">
-            <li>✅ App Connected</li>
-            <li>✅ Dashboard Working</li>
-            <li>✅ Clients Module Ready</li>
+            <li>✅ Render deploy working</li>
+            <li>✅ Login route working</li>
+            <li>✅ Dashboard route working</li>
+            <li>🚧 Office modules next</li>
         </ul>
     </div>
 </div>
