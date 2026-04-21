@@ -1,43 +1,69 @@
 {% extends "base.html" %}
 
-{% block content %}
+{% block title %}Jobs | HC Pool Ops{% endblock %}
 
+{% block content %}
 <div class="page-header">
-    <h1>Jobs</h1>
-    <a href="/service-stop/new" class="btn">+ New Job</a>
+    <div>
+        <h1>Jobs</h1>
+        <p class="page-subtitle">View current and upcoming service work.</p>
+    </div>
+    <div class="page-actions">
+        <a class="btn btn-primary" href="/schedule/new">New Job</a>
+    </div>
 </div>
 
 <div class="card">
-    {% if jobs %}
-    <table class="table">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Client</th>
-                <th>Property</th>
-                <th>Date</th>
-                <th>Status</th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for job in jobs %}
-            <tr>
-                <td>#{{ job.id }}</td>
-                <td>{{ job.client_name }}</td>
-                <td>{{ job.property_name }}</td>
-                <td>{{ job.date }}</td>
-                <td>{{ job.status }}</td>
-                <td>
-                    <a href="/service-stop/{{ job.id }}">View</a>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <div class="card-header">
+        <h2>All Jobs</h2>
+        <span class="badge">{{ jobs|length if jobs else 0 }}</span>
+    </div>
+
+    {% if jobs and jobs|length > 0 %}
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Title</th>
+                    <th>Property</th>
+                    <th>Address</th>
+                    <th>Scheduled For</th>
+                    <th>Technician</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for job in jobs %}
+                <tr>
+                    <td>#{{ job.id if job.id is defined else job["id"] }}</td>
+                    <td>{{ job.title if job.title is defined else job["title"] }}</td>
+                    <td>{{ job.property_name if job.property_name is defined else job["property_name"] }}</td>
+                    <td>{{ job.property_address if job.property_address is defined else job["property_address"] }}</td>
+                    <td>{{ job.scheduled_for if job.scheduled_for is defined else job["scheduled_for"] }}</td>
+                    <td>{{ job.technician if job.technician is defined else job["technician"] }}</td>
+                    <td>
+                        <span class="status-pill">
+                            {{ job.status if job.status is defined else job["status"] }}
+                        </span>
+                    </td>
+                    <td>
+                        <a class="table-link" href="/service-stops/{{ job.id if job.id is defined else job['id'] }}">
+                            Open
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
     {% else %}
-        <p>No jobs yet.</p>
+    <div class="empty-state">
+        <h3>No jobs yet</h3>
+        <p>Add your first scheduled service stop to get started.</p>
+        <a class="btn btn-primary" href="/schedule/new">Create Job</a>
+    </div>
     {% endif %}
 </div>
-
 {% endblock %}
