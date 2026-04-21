@@ -3,37 +3,44 @@
 {% block title %}Dashboard | HC Pool Ops{% endblock %}
 
 {% block content %}
-<div class="container">
-    <header class="dash-header">
+<div class="page-wrap">
+    <div class="hero">
         <h1>HC Pool Ops Dashboard</h1>
-        <p class="subtitle">Manage your clients, jobs, and team from one place.</p>
-    </header>
+        <p>Manage your clients, jobs, and team from one place.</p>
+    </div>
 
-    <section class="quick-actions">
+    <div class="panel">
         <h2>Quick Actions</h2>
-        <div class="action-links">
-            <a href="/clients" class="action-card">
+        <div class="card-grid">
+            <a class="card-link" href="/clients">
                 <h3>View Clients</h3>
                 <p>Browse and edit all clients.</p>
             </a>
-            <a href="/jobs" class="action-card">
+
+            <a class="card-link" href="/clients/new">
+                <h3>Add Client</h3>
+                <p>Create a new client record.</p>
+            </a>
+
+            <a class="card-link" href="/jobs">
                 <h3>View Jobs</h3>
                 <p>See current and past jobs.</p>
             </a>
-            <a href="/employees" class="action-card">
+
+            <a class="card-link" href="/employees">
                 <h3>View Employees</h3>
                 <p>Review team members and roles.</p>
             </a>
         </div>
-    </section>
+    </div>
 
-    <section class="system-status">
+    <div class="panel">
         <h2>System Status</h2>
         <ul class="status-list">
             <li>✅ App Connected</li>
-            <li>✅ Database Connected</li>
-            <li>🚧 Features Coming Next</li>
+            <li>✅ Dashboard Working</li>
+            <li>✅ Clients Module Ready</li>
         </ul>
-    </section>
+    </div>
 </div>
 {% endblock %}

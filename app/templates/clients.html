@@ -1,41 +1,43 @@
 {% extends "base.html" %}
 
-{% block title %}Clients • PoolOps Pro{% endblock %}
+{% block title %}Clients | HC Pool Ops{% endblock %}
 
 {% block content %}
-<div class="page-head">
-    <div>
-        <div class="eyebrow">CRM</div>
-        <h1>Clients</h1>
-        <p>Manage your customer list.</p>
+<div class="page-wrap">
+    <div class="page-head">
+        <div>
+            <h1>Clients</h1>
+            <p>Client records for PoolOps Pro.</p>
+        </div>
+        <div class="head-actions">
+            <a class="btn" href="/dashboard">Back to Dashboard</a>
+            <a class="btn btn-primary" href="/clients/new">Add Client</a>
+        </div>
     </div>
-    <a class="primary-link" href="{{ url_for('add_client') }}">+ Add Client</a>
-</div>
 
-<div class="card table-card">
-    {% if clients %}
-    <table>
-        <thead>
-            <tr>
-                <th>Name</th>
-                <th>Phone</th>
-                <th>Email</th>
-                <th>Notes</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for client in clients %}
-            <tr>
-                <td>{{ client.full_name }}</td>
-                <td>{{ client.phone or "" }}</td>
-                <td>{{ client.email or "" }}</td>
-                <td>{{ client.notes or "" }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    {% else %}
-    <p>No clients found yet.</p>
-    {% endif %}
+    <div class="panel">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Phone</th>
+                    <th>Email</th>
+                    <th>Address</th>
+                    <th>Notes</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for client in clients %}
+                <tr>
+                    <td>{{ client.name }}</td>
+                    <td>{{ client.phone }}</td>
+                    <td>{{ client.email }}</td>
+                    <td>{{ client.address }}</td>
+                    <td>{{ client.notes }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
 {% endblock %}

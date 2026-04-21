@@ -1,43 +1,210 @@
-{% extends "base.html" %}
+:root {
+    --bg: #0f172a;
+    --panel: #111827;
+    --panel-2: #1f2937;
+    --text: #f8fafc;
+    --muted: #cbd5e1;
+    --line: #334155;
+    --accent: #3b82f6;
+    --accent-2: #60a5fa;
+}
 
-{% block title %}Add Client • PoolOps Pro{% endblock %}
+* {
+    box-sizing: border-box;
+}
 
-{% block content %}
-<div class="page-head">
-    <div>
-        <div class="eyebrow">CRM</div>
-        <h1>Add Client</h1>
-        <p>Create a new customer record.</p>
-    </div>
-</div>
+body {
+    margin: 0;
+    font-family: Arial, Helvetica, sans-serif;
+    background: linear-gradient(180deg, #0b1020 0%, #0f172a 100%);
+    color: var(--text);
+}
 
-<div class="card form-card-wide">
-    <form method="post" action="{{ url_for('add_client') }}" class="form-stack">
-        <div class="form-grid">
-            <div>
-                <label>First Name</label>
-                <input type="text" name="first_name" required>
-            </div>
-            <div>
-                <label>Last Name</label>
-                <input type="text" name="last_name" required>
-            </div>
-            <div>
-                <label>Phone</label>
-                <input type="text" name="phone">
-            </div>
-            <div>
-                <label>Email</label>
-                <input type="email" name="email">
-            </div>
-        </div>
+a {
+    color: inherit;
+    text-decoration: none;
+}
 
-        <div>
-            <label>Notes</label>
-            <textarea name="notes" rows="5"></textarea>
-        </div>
+.page-wrap {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 32px 24px 60px;
+}
 
-        <button type="submit">Save Client</button>
-    </form>
-</div>
-{% endblock %}
+.page-wrap.narrow {
+    max-width: 800px;
+}
+
+.hero {
+    margin-bottom: 24px;
+}
+
+.hero h1,
+.page-head h1 {
+    margin: 0 0 8px;
+    font-size: 42px;
+    line-height: 1.1;
+}
+
+.hero p,
+.page-head p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 18px;
+}
+
+.page-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.head-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.panel {
+    background: rgba(17, 24, 39, 0.92);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+}
+
+.panel h2 {
+    margin-top: 0;
+    margin-bottom: 18px;
+    font-size: 28px;
+}
+
+.card-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.card-link {
+    display: block;
+    background: rgba(31, 41, 55, 0.9);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 18px;
+    transition: 0.2s ease;
+}
+
+.card-link:hover {
+    border-color: var(--accent-2);
+    transform: translateY(-2px);
+}
+
+.card-link h3 {
+    margin: 0 0 8px;
+    font-size: 24px;
+}
+
+.card-link p {
+    margin: 0;
+    color: var(--muted);
+}
+
+.status-list {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.status-list li {
+    margin-bottom: 10px;
+    font-size: 18px;
+}
+
+.btn {
+    display: inline-block;
+    padding: 12px 18px;
+    border-radius: 10px;
+    border: 1px solid var(--line);
+    background: rgba(31, 41, 55, 0.95);
+    color: var(--text);
+    font-weight: 700;
+}
+
+.btn-primary {
+    background: var(--accent);
+    border-color: var(--accent);
+}
+
+.btn-primary:hover {
+    background: var(--accent-2);
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.data-table th,
+.data-table td {
+    text-align: left;
+    padding: 14px 12px;
+    border-bottom: 1px solid var(--line);
+    vertical-align: top;
+}
+
+.data-table th {
+    color: var(--muted);
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.form-grid label {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.form-grid label.full {
+    grid-column: 1 / -1;
+}
+
+input,
+textarea {
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 10px;
+    border: 1px solid var(--line);
+    background: #0b1220;
+    color: var(--text);
+    font-size: 16px;
+}
+
+textarea {
+    resize: vertical;
+}
+
+@media (max-width: 800px) {
+    .card-grid,
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .page-head {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .hero h1,
+    .page-head h1 {
+        font-size: 34px;
+    }
+}
