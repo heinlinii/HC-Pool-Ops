@@ -1,86 +1,39 @@
 {% extends "base.html" %}
 
+{% block title %}Properties • HC Pool Ops{% endblock %}
+
 {% block content %}
 <div class="page-header">
-    <div>
-        <div class="eyebrow">Locations</div>
-        <h1>Properties</h1>
-        <p class="subtext">Track each client property and job site.</p>
-    </div>
+    <h1>Properties</h1>
+    <p>All service properties and pools.</p>
 </div>
 
-<div class="two-col align-start">
-    <div class="card">
-        <div class="section-head">
-            <h2>Add Property</h2>
-        </div>
-
-        <form method="post" action="{{ url_for('properties') }}" class="form-grid">
-            <label for="client_id">Client</label>
-            <select id="client_id" name="client_id" required>
-                <option value="">Select client</option>
-                {% for client in clients %}
-                    <option value="{{ client.id }}">{{ client.name }}</option>
+<div class="card">
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Property</th>
+                    <th>Client</th>
+                    <th>Address</th>
+                    <th>Pool Type</th>
+                    <th>Status</th>
+                    <th>Notes</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for property in properties %}
+                <tr>
+                    <td>{{ property.name }}</td>
+                    <td>{{ property.client_name }}</td>
+                    <td>{{ property.address }}</td>
+                    <td>{{ property.pool_type }}</td>
+                    <td>{{ property.status }}</td>
+                    <td>{{ property.notes }}</td>
+                </tr>
                 {% endfor %}
-            </select>
-
-            <label for="name">Property Name</label>
-            <input type="text" id="name" name="name" placeholder="Ex: Smith Residence" required>
-
-            <label for="address">Address</label>
-            <input type="text" id="address" name="address">
-
-            <label for="city">City</label>
-            <input type="text" id="city" name="city">
-
-            <label for="state">State</label>
-            <input type="text" id="state" name="state">
-
-            <label for="zip_code">ZIP Code</label>
-            <input type="text" id="zip_code" name="zip_code">
-
-            <label for="notes">Notes</label>
-            <textarea id="notes" name="notes" rows="4"></textarea>
-
-            <button type="submit" class="btn">Add Property</button>
-        </form>
-    </div>
-
-    <div class="card">
-        <div class="section-head">
-            <h2>Property List</h2>
-        </div>
-
-        {% if properties %}
-            <div class="table-wrap">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Property</th>
-                            <th>Client</th>
-                            <th>Address</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for property in properties %}
-                        <tr>
-                            <td>{{ property.name }}</td>
-                            <td>{{ property.client.name }}</td>
-                            <td>
-                                {{ property.address or "" }}
-                                {% if property.city or property.state or property.zip_code %}
-                                    <br>
-                                    {{ property.city or "" }} {{ property.state or "" }} {{ property.zip_code or "" }}
-                                {% endif %}
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        {% else %}
-            <p>No properties added yet.</p>
-        {% endif %}
+            </tbody>
+        </table>
     </div>
 </div>
 {% endblock %}

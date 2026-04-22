@@ -1,92 +1,112 @@
 {% extends "base.html" %}
 
-{% block content %}
-<div class="page-header">
-    <div>
-        <div class="eyebrow">Overview</div>
-        <h1>Dashboard</h1>
-        <p class="subtext">Welcome back{% if current_user %}, {{ current_user }}{% endif %}.</p>
-    </div>
-</div>
+{% block title %}Dashboard • HC Pool Ops{% endblock %}
 
-<div class="stats-grid">
-    <div class="card stat-card">
+{% block content %}
+<section class="hero-card">
+    <div>
+        <div class="eyebrow">Dashboard</div>
+        <h1>Welcome, {{ employee_name }}</h1>
+        <p>Manage your clients, properties, jobs, and team from one place.</p>
+    </div>
+</section>
+
+<section class="stats-grid">
+    <div class="stat-card">
         <div class="stat-label">Clients</div>
         <div class="stat-value">{{ client_count }}</div>
     </div>
-
-    <div class="card stat-card">
+    <div class="stat-card">
         <div class="stat-label">Properties</div>
         <div class="stat-value">{{ property_count }}</div>
     </div>
-
-    <div class="card stat-card">
+    <div class="stat-card">
         <div class="stat-label">Jobs</div>
-        <div class="stat-value">{{ job_count }}</div>
+        <div class="stat-value">{{ stop_count }}</div>
     </div>
-
-    <div class="card stat-card">
-        <div class="stat-label">Open Jobs</div>
-        <div class="stat-value">{{ open_jobs }}</div>
+    <div class="stat-card">
+        <div class="stat-label">Employees</div>
+        <div class="stat-value">{{ employee_count }}</div>
     </div>
-</div>
+</section>
 
-<div class="two-col">
+<section class="content-grid">
     <div class="card">
-        <div class="section-head">
+        <div class="card-head">
             <h2>Quick Actions</h2>
         </div>
-        <div class="button-row">
-            <a href="{{ url_for('clients') }}" class="btn">Manage Clients</a>
-            <a href="{{ url_for('properties') }}" class="btn">Manage Properties</a>
-            <a href="{{ url_for('jobs') }}" class="btn">Manage Jobs</a>
+        <div class="action-grid">
+            <a class="action-card" href="/clients">
+                <h3>View Clients</h3>
+                <p>Browse and edit all clients.</p>
+            </a>
+            <a class="action-card" href="/properties">
+                <h3>View Properties</h3>
+                <p>See all pools and service locations.</p>
+            </a>
+            <a class="action-card" href="/jobs">
+                <h3>View Jobs</h3>
+                <p>See current and past jobs.</p>
+            </a>
+            <a class="action-card" href="/employees">
+                <h3>View Employees</h3>
+                <p>Review team members and roles.</p>
+            </a>
         </div>
     </div>
 
     <div class="card">
-        <div class="section-head">
-            <h2>System Status</h2>
+        <div class="card-head">
+            <h2>Recent Properties</h2>
         </div>
-        <p>App deployed and database connected.</p>
-        <p>This is the clean reset version of PoolOps Pro.</p>
-    </div>
-</div>
-
-<div class="two-col">
-    <div class="card">
-        <div class="section-head">
-            <h2>Recent Clients</h2>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Address</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for prop in recent_properties %}
+                    <tr>
+                        <td>{{ prop.name }}</td>
+                        <td>{{ prop.address }}</td>
+                        <td>{{ prop.status }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
-        {% if recent_clients %}
-            <div class="simple-list">
-                {% for client in recent_clients %}
-                    <div class="list-row">
-                        <strong>{{ client.name }}</strong>
-                        <span>{{ client.phone or "No phone" }}</span>
-                    </div>
-                {% endfor %}
-            </div>
-        {% else %}
-            <p>No clients yet.</p>
-        {% endif %}
     </div>
 
     <div class="card">
-        <div class="section-head">
+        <div class="card-head">
             <h2>Recent Jobs</h2>
         </div>
-        {% if recent_jobs %}
-            <div class="simple-list">
-                {% for job in recent_jobs %}
-                    <div class="list-row">
-                        <strong>{{ job.title }}</strong>
-                        <span>{{ job.status }}</span>
-                    </div>
-                {% endfor %}
-            </div>
-        {% else %}
-            <p>No jobs yet.</p>
-        {% endif %}
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Date</th>
+                        <th>Tech</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for stop in recent_stops %}
+                    <tr>
+                        <td>{{ stop.title }}</td>
+                        <td>{{ stop.scheduled_for }}</td>
+                        <td>{{ stop.technician }}</td>
+                        <td>{{ stop.status }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
-</div>
+</section>
 {% endblock %}

@@ -1,22 +1,16 @@
 {% extends "base.html" %}
 
-{% block title %}Employees | HC Pool Ops{% endblock %}
+{% block title %}Employees • HC Pool Ops{% endblock %}
 
 {% block content %}
-<div class="page-wrap">
-    <div class="page-head">
-        <div>
-            <h1>Employees</h1>
-            <p>Field and office employee records.</p>
-        </div>
-        <div class="head-actions">
-            <a class="btn" href="/dashboard">Back</a>
-            <a class="btn btn-primary" href="/employees/new">Add Employee</a>
-        </div>
-    </div>
+<div class="page-header">
+    <h1>Employees</h1>
+    <p>Team directory.</p>
+</div>
 
-    <div class="panel">
-        <table class="data-table">
+<div class="card">
+    <div class="table-wrap">
+        <table>
             <thead>
                 <tr>
                     <th>Name</th>

@@ -1,28 +1,27 @@
 {% extends "base.html" %}
 
-{% block title %}Service Stop Detail | HC Pool Ops{% endblock %}
+{% block title %}Job Detail • HC Pool Ops{% endblock %}
 
 {% block content %}
-<div class="page-wrap">
-    <div class="page-head">
-        <div>
-            <h1>{{ stop.title }}</h1>
-            <p>{{ property.name if property else "Unknown Property" }}</p>
-        </div>
-        <div class="head-actions">
-            <a class="btn" href="/schedule">Back to Schedule</a>
-        </div>
+<div class="page-header">
+    <h1>{{ stop.title }}</h1>
+    <p>Service stop detail.</p>
+</div>
+
+<div class="detail-grid">
+    <div class="card">
+        <h2>Job Info</h2>
+        <p><strong>Status:</strong> {{ stop.status }}</p>
+        <p><strong>Date:</strong> {{ stop.scheduled_for }}</p>
+        <p><strong>Technician:</strong> {{ stop.technician }}</p>
+        <p><strong>Notes:</strong> {{ stop.notes }}</p>
     </div>
 
-    <div class="panel">
-        <div class="detail-list">
-            <div><strong>Property:</strong> {{ property.name if property else "Unknown" }}</div>
-            <div><strong>Address:</strong> {{ property.address if property else "Unknown" }}</div>
-            <div><strong>Date:</strong> {{ stop.scheduled_for }}</div>
-            <div><strong>Technician:</strong> {{ stop.technician }}</div>
-            <div><strong>Status:</strong> {{ stop.status }}</div>
-            <div><strong>Notes:</strong> {{ stop.notes }}</div>
-        </div>
+    <div class="card">
+        <h2>Property Info</h2>
+        <p><strong>Client:</strong> {{ stop.client_name }}</p>
+        <p><strong>Property:</strong> {{ stop.property_name }}</p>
+        <p><strong>Address:</strong> {{ stop.property_address }}</p>
     </div>
 </div>
 {% endblock %}
