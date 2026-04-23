@@ -1,16 +1,21 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h1>Dashboard</h1>
+<div class="card">
+    <h1>Dashboard</h1>
+    <p>Clients: {{ client_count }}</p>
+    <p>Properties: {{ property_count }}</p>
+    <p>Jobs: {{ job_count }}</p>
+</div>
 
-<p>Clients: {{ client_count }}</p>
-<p>Properties: {{ property_count }}</p>
-<p>Jobs: {{ job_count }}</p>
-
-<h2>Recent Jobs</h2>
-<ul>
-    {% for job in recent_jobs %}
-    <li>{{ job.title }}</li>
-    {% endfor %}
-</ul>
+<div class="card">
+    <h2>Recent Jobs</h2>
+    <ul>
+        {% for job in recent_jobs %}
+        <li>{{ job.title }}</li>
+        {% else %}
+        <li>No jobs yet.</li>
+        {% endfor %}
+    </ul>
+</div>
 {% endblock %}

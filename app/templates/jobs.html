@@ -1,34 +1,36 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h1>Jobs</h1>
+<div class="card">
+    <h1>Jobs</h1>
 
-{% if error %}
-<p style="color: red;">{{ error }}</p>
-{% endif %}
+    {% if error %}
+    <div class="error">{{ error }}</div>
+    {% endif %}
 
-<form method="post" action="/jobs">
-    <div>
-        <label>Job Title</label>
-        <input type="text" name="title" required>
-    </div>
+    <form method="post" action="/jobs" class="form">
+        <label for="title">Job Title</label>
+        <input id="title" type="text" name="title" required>
 
-    <div>
-        <label>Property</label>
-        <select name="property_id" required>
+        <label for="property_id">Property</label>
+        <select id="property_id" name="property_id" required>
             {% for property in properties %}
             <option value="{{ property.id }}">{{ property.name }}</option>
             {% endfor %}
         </select>
-    </div>
 
-    <button type="submit">Add Job</button>
-</form>
+        <button type="submit">Add Job</button>
+    </form>
+</div>
 
-<h2>Job List</h2>
-<ul>
-    {% for job in jobs %}
-    <li>{{ job.title }}</li>
-    {% endfor %}
-</ul>
+<div class="card">
+    <h2>Job List</h2>
+    <ul>
+        {% for job in jobs %}
+        <li>{{ job.title }}</li>
+        {% else %}
+        <li>No jobs yet.</li>
+        {% endfor %}
+    </ul>
+</div>
 {% endblock %}

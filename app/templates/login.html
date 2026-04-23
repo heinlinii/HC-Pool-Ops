@@ -1,29 +1,23 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h1>Login</h1>
+<div class="card">
+    <h1>Login</h1>
 
-{% if error %}
-<p style="color: red;">{{ error }}</p>
-{% endif %}
+    {% if error %}
+    <div class="error">{{ error }}</div>
+    {% endif %}
 
-<form method="post" action="/login">
-    <div>
-        <label>Username</label>
-        <input type="text" name="username" required>
-    </div>
+    <form method="post" action="/login" class="form">
+        <label for="username">Username</label>
+        <input id="username" type="text" name="username" required>
 
-    <div>
-        <label>Password</label>
-        <input type="password" name="password" required>
-    </div>
+        <label for="password">Password</label>
+        <input id="password" type="password" name="password" required>
 
-    <button type="submit">Login</button>
-</form>
+        <button type="submit">Login</button>
+    </form>
 
-<p>Demo logins:</p>
-<ul>
-    <li>mike / 1234</li>
-    <li>jake / 1234</li>
-</ul>
+    <p class="note">Demo logins: mike / 1234, jake / 1234</p>
+</div>
 {% endblock %}

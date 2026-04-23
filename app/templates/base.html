@@ -3,20 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ title or "PoolOps" }}</title>
+    <title>{{ title }}</title>
+    <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
     {% if user %}
-    <nav>
-        <a href="/dashboard">Dashboard</a> |
-        <a href="/clients">Clients</a> |
-        <a href="/properties">Properties</a> |
-        <a href="/jobs">Jobs</a> |
+    <nav class="nav">
+        <a href="/dashboard">Dashboard</a>
+        <a href="/clients">Clients</a>
+        <a href="/properties">Properties</a>
+        <a href="/jobs">Jobs</a>
         <a href="/logout">Logout</a>
     </nav>
-    <hr>
     {% endif %}
 
-    {% block content %}{% endblock %}
+    <main class="page">
+        {% block content %}{% endblock %}
+    </main>
 </body>
 </html>

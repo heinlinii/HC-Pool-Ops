@@ -1,35 +1,35 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h1>Clients</h1>
+<div class="card">
+    <h1>Clients</h1>
 
-{% if error %}
-<p style="color: red;">{{ error }}</p>
-{% endif %}
+    {% if error %}
+    <div class="error">{{ error }}</div>
+    {% endif %}
 
-<form method="post" action="/clients">
-    <div>
-        <label>Client Name</label>
-        <input type="text" name="name" required>
-    </div>
+    <form method="post" action="/clients" class="form">
+        <label for="name">Client Name</label>
+        <input id="name" type="text" name="name" required>
 
-    <div>
-        <label>Phone</label>
-        <input type="text" name="phone">
-    </div>
+        <label for="phone">Phone</label>
+        <input id="phone" type="text" name="phone">
 
-    <div>
-        <label>Email</label>
-        <input type="text" name="email">
-    </div>
+        <label for="email">Email</label>
+        <input id="email" type="text" name="email">
 
-    <button type="submit">Add Client</button>
-</form>
+        <button type="submit">Add Client</button>
+    </form>
+</div>
 
-<h2>Client List</h2>
-<ul>
-    {% for client in clients %}
-    <li>{{ client.name }} | {{ client.phone }} | {{ client.email }}</li>
-    {% endfor %}
-</ul>
+<div class="card">
+    <h2>Client List</h2>
+    <ul>
+        {% for client in clients %}
+        <li>{{ client.name }} | {{ client.phone }} | {{ client.email }}</li>
+        {% else %}
+        <li>No clients yet.</li>
+        {% endfor %}
+    </ul>
+</div>
 {% endblock %}

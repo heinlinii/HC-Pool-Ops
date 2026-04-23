@@ -5,8 +5,8 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))   # .../app/app
-PROJECT_ROOT = os.path.dirname(BASE_DIR)                # .../app
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))      # .../app/app
+APP_ROOT = os.path.dirname(BASE_DIR)                       # .../app
 
 app = FastAPI(title="HC Pool Ops")
 
@@ -15,8 +15,8 @@ app.add_middleware(
     secret_key="super-secret-key-change-me",
 )
 
-app.mount("/static", StaticFiles(directory=os.path.join(PROJECT_ROOT, "static")), name="static")
-templates = Jinja2Templates(directory=os.path.join(PROJECT_ROOT, "templates"))
+app.mount("/static", StaticFiles(directory=os.path.join(APP_ROOT, "static")), name="static")
+templates = Jinja2Templates(directory=os.path.join(APP_ROOT, "templates"))
 
 USERS = {
     "mike": "1234",
@@ -46,38 +46,17 @@ def require_login(request: Request):
     return None
 
 
-def property_name(property_id: int) -> str:
-    for prop in DATA["properties"]:
-        if prop["id"] == property_id:
-            return prop["name"]
-    return f"Property #{property_id}"
-
-
-def client_name(client_id: int) -> str:
-    for client in DATA["clients"]:
-        if client["id"] == client_id:
-            return client["name"]
-    return f"Client #{client_id}"
-
-
-@app.get("/healthz")
-def healthz():
-    return {"status": "ok"}
-
-
 @app.get("/", response_class=HTMLResponse)
-def root(request: Request):
-    if get_user(request):
-        return RedirectResponse(url="/dashboard", status_code=303)
+def root():
     return RedirectResponse(url="/login", status_code=303)
 
 
 @app.get("/login", response_class=HTMLResponse)
 def login_page(request: Request):
     return templates.TemplateResponse(
-        "login.html",
-        {
-            "request": request,
+        request=request,
+        name="login.html",
+        context={
             "title": "Login",
             "user": None,
             "error": None,
@@ -96,9 +75,9 @@ def login_submit(
         return RedirectResponse(url="/dashboard", status_code=303)
 
     return templates.TemplateResponse(
-        "login.html",
-        {
-            "request": request,
+        request=request,
+        name="login.html",
+        context={
             "title": "Login",
             "user": None,
             "error": "Invalid username or password.",
@@ -119,25 +98,16 @@ def dashboard(request: Request):
     if auth:
         return auth
 
-    recent_jobs = []
-    for job in DATA["jobs"]:
-        recent_jobs.append(
-            {
-                **job,
-                "property_name": property_name(job["property_id"]),
-            }
-        )
-
     return templates.TemplateResponse(
-        "dashboard.html",
-        {
-            "request": request,
+        request=request,
+        name="dashboard.html",
+        context={
             "title": "Dashboard",
             "user": get_user(request),
             "client_count": len(DATA["clients"]),
             "property_count": len(DATA["properties"]),
             "job_count": len(DATA["jobs"]),
-            "recent_jobs": recent_jobs,
+            "recent_jobs": DATA["jobs"],
         },
     )
 
@@ -149,18 +119,18 @@ def clients_page(request: Request):
         return auth
 
     return templates.TemplateResponse(
-        "clients.html",
-        {
-            "request": request,
+        request=request,
+        name="clients.html",
+        context={
             "title": "Clients",
             "user": get_user(request),
-            "clients": DATA["clients"],
             "error": None,
+            "clients": DATA["clients"],
         },
     )
 
 
-@app.post("/clients", response_class=HTMLResponse)
+@app.post("/clients")
 def add_client(
     request: Request,
     name: str = Form(...),
@@ -190,33 +160,24 @@ def properties_page(request: Request):
     if auth:
         return auth
 
-    enriched_properties = []
-    for prop in DATA["properties"]:
-        enriched_properties.append(
-            {
-                **prop,
-                "client_name": client_name(prop["client_id"]),
-            }
-        )
-
     return templates.TemplateResponse(
-        "properties.html",
-        {
-            "request": request,
+        request=request,
+        name="properties.html",
+        context={
             "title": "Properties",
             "user": get_user(request),
-            "properties": enriched_properties,
-            "clients": DATA["clients"],
             "error": None,
+            "clients": DATA["clients"],
+            "properties": DATA["properties"],
         },
     )
 
 
-@app.post("/properties", response_class=HTMLResponse)
+@app.post("/properties")
 def add_property(
     request: Request,
-    client_id: int = Form(...),
     name: str = Form(...),
+    client_id: int = Form(...),
     address: str = Form(""),
     city: str = Form(""),
 ):
@@ -227,8 +188,8 @@ def add_property(
     DATA["properties"].append(
         {
             "id": COUNTERS["properties"],
-            "client_id": client_id,
             "name": name.strip(),
+            "client_id": client_id,
             "address": address.strip(),
             "city": city.strip(),
         }
@@ -244,35 +205,24 @@ def jobs_page(request: Request):
     if auth:
         return auth
 
-    enriched_jobs = []
-    for job in DATA["jobs"]:
-        enriched_jobs.append(
-            {
-                **job,
-                "property_name": property_name(job["property_id"]),
-            }
-        )
-
     return templates.TemplateResponse(
-        "jobs.html",
-        {
-            "request": request,
+        request=request,
+        name="jobs.html",
+        context={
             "title": "Jobs",
             "user": get_user(request),
-            "jobs": enriched_jobs,
-            "properties": DATA["properties"],
             "error": None,
+            "properties": DATA["properties"],
+            "jobs": DATA["jobs"],
         },
     )
 
 
-@app.post("/jobs", response_class=HTMLResponse)
+@app.post("/jobs")
 def add_job(
     request: Request,
-    property_id: int = Form(...),
     title: str = Form(...),
-    status: str = Form("Scheduled"),
-    scheduled_for: str = Form(""),
+    property_id: int = Form(...),
 ):
     auth = require_login(request)
     if auth:
@@ -281,10 +231,8 @@ def add_job(
     DATA["jobs"].append(
         {
             "id": COUNTERS["jobs"],
-            "property_id": property_id,
             "title": title.strip(),
-            "status": status.strip() or "Scheduled",
-            "scheduled_for": scheduled_for.strip(),
+            "property_id": property_id,
         }
     )
     COUNTERS["jobs"] += 1
