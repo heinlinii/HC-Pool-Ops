@@ -2,62 +2,14 @@
 
 {% block content %}
 <main class="page">
-    <div class="page-header">
-        <div>
-            <h1>Dashboard</h1>
-            <p>Simple working reset: login, clients, properties, and jobs.</p>
-        </div>
-    </div>
+    <h1>Dashboard</h1>
 
-    <section class="grid grid-3">
-        <div class="card">
-            <div class="muted">Clients</div>
-            <div class="stat">{{ client_count }}</div>
-        </div>
+    <p>Clients: {{ client_count }}</p>
+    <p>Properties: {{ property_count }}</p>
+    <p>Jobs: {{ job_count }}</p>
 
-        <div class="card">
-            <div class="muted">Properties</div>
-            <div class="stat">{{ property_count }}</div>
-        </div>
-
-        <div class="card">
-            <div class="muted">Jobs</div>
-            <div class="stat">{{ job_count }}</div>
-        </div>
-    </section>
-
-    <section class="card" style="margin-top: 20px;">
-        <h2>Recent Jobs</h2>
-        <div class="table-wrap">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Job</th>
-                        <th>Property</th>
-                        <th>Status</th>
-                        <th>Scheduled For</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for job in recent_jobs %}
-                    <tr>
-                        <td>{{ job.title }}</td>
-                        <td>{{ job.property_name }}</td>
-                        <td>
-                            {% if job.status == "Scheduled" %}
-                                <span class="badge badge-scheduled">{{ job.status }}</span>
-                            {% elif job.status == "In Progress" %}
-                                <span class="badge badge-progress">{{ job.status }}</span>
-                            {% else %}
-                                <span class="badge badge-done">{{ job.status }}</span>
-                            {% endif %}
-                        </td>
-                        <td>{{ job.scheduled_for or "-" }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </section>
+    <a href="/clients">Clients</a><br>
+    <a href="/properties">Properties</a><br>
+    <a href="/jobs">Jobs</a>
 </main>
 {% endblock %}
