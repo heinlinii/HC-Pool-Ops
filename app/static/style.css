@@ -82,6 +82,12 @@ body {
   gap: 10px;
 }
 
+.inline-form {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
 input,
 select,
 button {
@@ -105,6 +111,14 @@ button {
 
 button:hover {
   background: #0d2d5e;
+}
+
+.danger-btn {
+  background: #b42318;
+}
+
+.danger-btn:hover {
+  background: #8f1c14;
 }
 
 button:disabled,
@@ -154,6 +168,7 @@ td {
   text-align: left;
   padding: 12px 10px;
   border-bottom: 1px solid #e3e7ee;
+  vertical-align: top;
 }
 
 th {
@@ -168,5 +183,10 @@ th {
   .nav-links a {
     display: inline-block;
     margin: 8px 12px 0 0;
+  }
+
+  .inline-form {
+    flex-direction: column;
+    align-items: stretch;
   }
 }

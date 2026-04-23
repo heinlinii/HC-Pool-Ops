@@ -43,6 +43,7 @@
                     <th>Client</th>
                     <th>Address</th>
                     <th>City</th>
+                    <th>Delete</th>
                 </tr>
             </thead>
             <tbody>
@@ -52,10 +53,16 @@
                     <td>{{ property.client_name }}</td>
                     <td>{{ property.address or "-" }}</td>
                     <td>{{ property.city or "-" }}</td>
+                    <td>
+                        <form method="post" action="/properties/delete" onsubmit="return confirm('Delete this property and all linked jobs?');">
+                            <input type="hidden" name="id" value="{{ property.id }}">
+                            <button type="submit" class="danger-btn">Delete</button>
+                        </form>
+                    </td>
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="4">No properties yet.</td>
+                    <td colspan="5">No properties yet.</td>
                 </tr>
                 {% endfor %}
             </tbody>

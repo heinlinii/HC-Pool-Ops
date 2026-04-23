@@ -47,6 +47,8 @@
                     <th>Property</th>
                     <th>Status</th>
                     <th>Scheduled</th>
+                    <th>Update Status</th>
+                    <th>Delete</th>
                 </tr>
             </thead>
             <tbody>
@@ -56,10 +58,27 @@
                     <td>{{ job.property_name }}</td>
                     <td>{{ job.status or "-" }}</td>
                     <td>{{ job.scheduled_for or "-" }}</td>
+                    <td>
+                        <form method="post" action="/jobs/status" class="inline-form">
+                            <input type="hidden" name="id" value="{{ job.id }}">
+                            <select name="status">
+                                <option value="Scheduled" {% if job.status == "Scheduled" %}selected{% endif %}>Scheduled</option>
+                                <option value="In Progress" {% if job.status == "In Progress" %}selected{% endif %}>In Progress</option>
+                                <option value="Complete" {% if job.status == "Complete" %}selected{% endif %}>Complete</option>
+                            </select>
+                            <button type="submit">Save</button>
+                        </form>
+                    </td>
+                    <td>
+                        <form method="post" action="/jobs/delete" onsubmit="return confirm('Delete this job?');">
+                            <input type="hidden" name="id" value="{{ job.id }}">
+                            <button type="submit" class="danger-btn">Delete</button>
+                        </form>
+                    </td>
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="4">No jobs yet.</td>
+                    <td colspan="6">No jobs yet.</td>
                 </tr>
                 {% endfor %}
             </tbody>

@@ -31,6 +31,7 @@
                     <th>Name</th>
                     <th>Phone</th>
                     <th>Email</th>
+                    <th>Delete</th>
                 </tr>
             </thead>
             <tbody>
@@ -39,10 +40,16 @@
                     <td>{{ client.name }}</td>
                     <td>{{ client.phone or "-" }}</td>
                     <td>{{ client.email or "-" }}</td>
+                    <td>
+                        <form method="post" action="/clients/delete" onsubmit="return confirm('Delete this client and all linked properties/jobs?');">
+                            <input type="hidden" name="id" value="{{ client.id }}">
+                            <button type="submit" class="danger-btn">Delete</button>
+                        </form>
+                    </td>
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="3">No clients yet.</td>
+                    <td colspan="4">No clients yet.</td>
                 </tr>
                 {% endfor %}
             </tbody>
