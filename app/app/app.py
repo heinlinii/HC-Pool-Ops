@@ -18,7 +18,10 @@ app.add_middleware(
 app.mount("/static", StaticFiles(directory=os.path.join(APP_ROOT, "static")), name="static")
 templates = Jinja2Templates(directory=os.path.join(APP_ROOT, "templates"))
 
-USERS = {"mike": "1234", "jake": "1234"}
+USERS = {
+    "mike": "1234",
+    "jake": "1234",
+}
 
 DATA = {
     "clients": [],
@@ -26,7 +29,11 @@ DATA = {
     "jobs": [],
 }
 
-COUNTERS = {"clients": 1, "properties": 1, "jobs": 1}
+COUNTERS = {
+    "clients": 1,
+    "properties": 1,
+    "jobs": 1,
+}
 
 
 def get_user(request: Request):
@@ -39,188 +46,433 @@ def require_login(request: Request):
     return None
 
 
-def get_client_name(client_id):
-    for c in DATA["clients"]:
-        if c["id"] == client_id:
-            return c["name"]
-    return "Unknown"
+def get_client_name(client_id: int) -> str:
+    for client in DATA["clients"]:
+        if client["id"] == client_id:
+            return client["name"]
+    return "Unknown Client"
 
 
-def get_property_name(property_id):
-    for p in DATA["properties"]:
-        if p["id"] == property_id:
-            return p["name"]
-    return "Unknown"
+def get_property_name(property_id: int) -> str:
+    for prop in DATA["properties"]:
+        if prop["id"] == property_id:
+            return prop["name"]
+    return "Unknown Property"
 
 
-def jobs_with_names():
-    result = []
-    for j in DATA["jobs"]:
-        result.append({
-            **j,
-            "property_name": get_property_name(j["property_id"])
-        })
-    return result
+def build_properties_with_client_names():
+    rows = []
+    for prop in DATA["properties"]:
+        rows.append(
+            {
+                "id": prop["id"],
+                "name": prop["name"],
+                "client_id": prop["client_id"],
+                "client_name": get_client_name(prop["client_id"]),
+                "address": prop.get("address", ""),
+                "city": prop.get("city", ""),
+            }
+        )
+    return rows
+
+
+def build_jobs_with_property_names():
+    rows = []
+    for job in DATA["jobs"]:
+        rows.append(
+            {
+                "id": job["id"],
+                "title": job["title"],
+                "property_id": job["property_id"],
+                "property_name": get_property_name(job["property_id"]),
+                "status": job.get("status", ""),
+                "scheduled_for": job.get("scheduled_for", ""),
+            }
+        )
+    return rows
 
 
 @app.get("/", response_class=HTMLResponse)
 def root():
-    return RedirectResponse("/login")
+    return RedirectResponse(url="/login", status_code=303)
 
 
 @app.get("/login", response_class=HTMLResponse)
 def login_page(request: Request):
-    return templates.TemplateResponse("login.html", {
-        "request": request,
-        "user": None,
-        "error": None
-    })
+    if get_user(request):
+        return RedirectResponse(url="/dashboard", status_code=303)
+
+    return templates.TemplateResponse(
+        request=request,
+        name="login.html",
+        context={
+            "title": "Login",
+            "user": None,
+            "error": None,
+        },
+    )
 
 
-@app.post("/login")
-def login(request: Request, username: str = Form(...), password: str = Form(...)):
-    if USERS.get(username) == password:
+@app.post("/login", response_class=HTMLResponse)
+def login_submit(
+    request: Request,
+    username: str = Form(...),
+    password: str = Form(...),
+):
+    if username in USERS and USERS[username] == password:
         request.session["user"] = username
-        return RedirectResponse("/dashboard", status_code=303)
+        return RedirectResponse(url="/dashboard", status_code=303)
 
-    return templates.TemplateResponse("login.html", {
-        "request": request,
-        "user": None,
-        "error": "Invalid login"
-    })
+    return templates.TemplateResponse(
+        request=request,
+        name="login.html",
+        context={
+            "title": "Login",
+            "user": None,
+            "error": "Invalid username or password.",
+        },
+        status_code=400,
+    )
 
 
 @app.get("/logout")
 def logout(request: Request):
     request.session.clear()
-    return RedirectResponse("/login")
+    return RedirectResponse(url="/login", status_code=303)
 
 
 @app.get("/dashboard", response_class=HTMLResponse)
 def dashboard(request: Request):
-    if require_login(request):
-        return require_login(request)
+    auth = require_login(request)
+    if auth:
+        return auth
 
-    return templates.TemplateResponse("dashboard.html", {
-        "request": request,
-        "user": get_user(request),
-        "client_count": len(DATA["clients"]),
-        "property_count": len(DATA["properties"]),
-        "job_count": len(DATA["jobs"]),
-        "recent_jobs": jobs_with_names()
-    })
+    return templates.TemplateResponse(
+        request=request,
+        name="dashboard.html",
+        context={
+            "title": "Dashboard",
+            "user": get_user(request),
+            "client_count": len(DATA["clients"]),
+            "property_count": len(DATA["properties"]),
+            "job_count": len(DATA["jobs"]),
+            "recent_jobs": build_jobs_with_property_names(),
+        },
+    )
 
-
-# ================= CLIENTS =================
 
 @app.get("/clients", response_class=HTMLResponse)
 def clients_page(request: Request):
-    if require_login(request):
-        return require_login(request)
+    auth = require_login(request)
+    if auth:
+        return auth
 
-    return templates.TemplateResponse("clients.html", {
-        "request": request,
-        "user": get_user(request),
-        "clients": DATA["clients"],
-        "error": None
-    })
+    return templates.TemplateResponse(
+        request=request,
+        name="clients.html",
+        context={
+            "title": "Clients",
+            "user": get_user(request),
+            "error": None,
+            "clients": DATA["clients"],
+        },
+    )
 
 
 @app.post("/clients")
-def add_client(request: Request, name: str = Form(...), phone: str = Form(""), email: str = Form("")):
-    DATA["clients"].append({
-        "id": COUNTERS["clients"],
-        "name": name,
-        "phone": phone,
-        "email": email
-    })
+def add_client(
+    request: Request,
+    name: str = Form(...),
+    phone: str = Form(""),
+    email: str = Form(""),
+):
+    auth = require_login(request)
+    if auth:
+        return auth
+
+    clean_name = name.strip()
+    if not clean_name:
+        return templates.TemplateResponse(
+            request=request,
+            name="clients.html",
+            context={
+                "title": "Clients",
+                "user": get_user(request),
+                "error": "Client name is required.",
+                "clients": DATA["clients"],
+            },
+            status_code=400,
+        )
+
+    DATA["clients"].append(
+        {
+            "id": COUNTERS["clients"],
+            "name": clean_name,
+            "phone": phone.strip(),
+            "email": email.strip(),
+        }
+    )
     COUNTERS["clients"] += 1
-    return RedirectResponse("/clients", status_code=303)
+
+    return RedirectResponse(url="/clients", status_code=303)
 
 
 @app.post("/clients/delete")
-def delete_client(id: int = Form(...)):
+def delete_client(
+    request: Request,
+    id: int = Form(...),
+):
+    auth = require_login(request)
+    if auth:
+        return auth
+
+    property_ids_to_delete = [p["id"] for p in DATA["properties"] if p["client_id"] == id]
+    DATA["jobs"] = [j for j in DATA["jobs"] if j["property_id"] not in property_ids_to_delete]
+    DATA["properties"] = [p for p in DATA["properties"] if p["client_id"] != id]
     DATA["clients"] = [c for c in DATA["clients"] if c["id"] != id]
-    return RedirectResponse("/clients", status_code=303)
 
+    return RedirectResponse(url="/clients", status_code=303)
 
-# ================= PROPERTIES =================
 
 @app.get("/properties", response_class=HTMLResponse)
 def properties_page(request: Request):
-    if require_login(request):
-        return require_login(request)
+    auth = require_login(request)
+    if auth:
+        return auth
 
-    props = []
-    for p in DATA["properties"]:
-        props.append({
-            **p,
-            "client_name": get_client_name(p["client_id"])
-        })
-
-    return templates.TemplateResponse("properties.html", {
-        "request": request,
-        "user": get_user(request),
-        "clients": DATA["clients"],
-        "properties": props,
-        "error": None
-    })
+    return templates.TemplateResponse(
+        request=request,
+        name="properties.html",
+        context={
+            "title": "Properties",
+            "user": get_user(request),
+            "error": None,
+            "clients": DATA["clients"],
+            "properties": build_properties_with_client_names(),
+        },
+    )
 
 
 @app.post("/properties")
-def add_property(name: str = Form(...), client_id: int = Form(...)):
-    DATA["properties"].append({
-        "id": COUNTERS["properties"],
-        "name": name,
-        "client_id": client_id
-    })
+def add_property(
+    request: Request,
+    name: str = Form(...),
+    client_id: int = Form(...),
+    address: str = Form(""),
+    city: str = Form(""),
+):
+    auth = require_login(request)
+    if auth:
+        return auth
+
+    if len(DATA["clients"]) == 0:
+        return templates.TemplateResponse(
+            request=request,
+            name="properties.html",
+            context={
+                "title": "Properties",
+                "user": get_user(request),
+                "error": "Add a client before adding a property.",
+                "clients": DATA["clients"],
+                "properties": build_properties_with_client_names(),
+            },
+            status_code=400,
+        )
+
+    valid_client_ids = [client["id"] for client in DATA["clients"]]
+    if client_id not in valid_client_ids:
+        return templates.TemplateResponse(
+            request=request,
+            name="properties.html",
+            context={
+                "title": "Properties",
+                "user": get_user(request),
+                "error": "Please choose a valid client.",
+                "clients": DATA["clients"],
+                "properties": build_properties_with_client_names(),
+            },
+            status_code=400,
+        )
+
+    clean_name = name.strip()
+    if not clean_name:
+        return templates.TemplateResponse(
+            request=request,
+            name="properties.html",
+            context={
+                "title": "Properties",
+                "user": get_user(request),
+                "error": "Property name is required.",
+                "clients": DATA["clients"],
+                "properties": build_properties_with_client_names(),
+            },
+            status_code=400,
+        )
+
+    DATA["properties"].append(
+        {
+            "id": COUNTERS["properties"],
+            "name": clean_name,
+            "client_id": client_id,
+            "address": address.strip(),
+            "city": city.strip(),
+        }
+    )
     COUNTERS["properties"] += 1
-    return RedirectResponse("/properties", status_code=303)
+
+    return RedirectResponse(url="/properties", status_code=303)
 
 
 @app.post("/properties/delete")
-def delete_property(id: int = Form(...)):
+def delete_property(
+    request: Request,
+    id: int = Form(...),
+):
+    auth = require_login(request)
+    if auth:
+        return auth
+
+    DATA["jobs"] = [j for j in DATA["jobs"] if j["property_id"] != id]
     DATA["properties"] = [p for p in DATA["properties"] if p["id"] != id]
-    return RedirectResponse("/properties", status_code=303)
 
+    return RedirectResponse(url="/properties", status_code=303)
 
-# ================= JOBS =================
 
 @app.get("/jobs", response_class=HTMLResponse)
 def jobs_page(request: Request):
-    if require_login(request):
-        return require_login(request)
+    auth = require_login(request)
+    if auth:
+        return auth
 
-    return templates.TemplateResponse("jobs.html", {
-        "request": request,
-        "user": get_user(request),
-        "properties": DATA["properties"],
-        "jobs": jobs_with_names(),
-        "error": None
-    })
+    return templates.TemplateResponse(
+        request=request,
+        name="jobs.html",
+        context={
+            "title": "Jobs",
+            "user": get_user(request),
+            "error": None,
+            "properties": DATA["properties"],
+            "jobs": build_jobs_with_property_names(),
+        },
+    )
 
 
 @app.post("/jobs")
-def add_job(title: str = Form(...), property_id: int = Form(...)):
-    DATA["jobs"].append({
-        "id": COUNTERS["jobs"],
-        "title": title,
-        "property_id": property_id,
-        "status": "Scheduled"
-    })
+def add_job(
+    request: Request,
+    title: str = Form(...),
+    property_id: int = Form(...),
+    status: str = Form(...),
+    scheduled_for: str = Form(""),
+):
+    auth = require_login(request)
+    if auth:
+        return auth
+
+    if len(DATA["properties"]) == 0:
+        return templates.TemplateResponse(
+            request=request,
+            name="jobs.html",
+            context={
+                "title": "Jobs",
+                "user": get_user(request),
+                "error": "Add a property before adding a job.",
+                "properties": DATA["properties"],
+                "jobs": build_jobs_with_property_names(),
+            },
+            status_code=400,
+        )
+
+    valid_property_ids = [prop["id"] for prop in DATA["properties"]]
+    valid_statuses = ["Scheduled", "In Progress", "Complete"]
+
+    if property_id not in valid_property_ids:
+        return templates.TemplateResponse(
+            request=request,
+            name="jobs.html",
+            context={
+                "title": "Jobs",
+                "user": get_user(request),
+                "error": "Please choose a valid property.",
+                "properties": DATA["properties"],
+                "jobs": build_jobs_with_property_names(),
+            },
+            status_code=400,
+        )
+
+    clean_title = title.strip()
+    clean_status = status.strip()
+
+    if not clean_title:
+        return templates.TemplateResponse(
+            request=request,
+            name="jobs.html",
+            context={
+                "title": "Jobs",
+                "user": get_user(request),
+                "error": "Job title is required.",
+                "properties": DATA["properties"],
+                "jobs": build_jobs_with_property_names(),
+            },
+            status_code=400,
+        )
+
+    if clean_status not in valid_statuses:
+        return templates.TemplateResponse(
+            request=request,
+            name="jobs.html",
+            context={
+                "title": "Jobs",
+                "user": get_user(request),
+                "error": "Please choose a valid job status.",
+                "properties": DATA["properties"],
+                "jobs": build_jobs_with_property_names(),
+            },
+            status_code=400,
+        )
+
+    DATA["jobs"].append(
+        {
+            "id": COUNTERS["jobs"],
+            "title": clean_title,
+            "property_id": property_id,
+            "status": clean_status,
+            "scheduled_for": scheduled_for.strip(),
+        }
+    )
     COUNTERS["jobs"] += 1
-    return RedirectResponse("/jobs", status_code=303)
+
+    return RedirectResponse(url="/jobs", status_code=303)
 
 
 @app.post("/jobs/delete")
-def delete_job(id: int = Form(...)):
+def delete_job(
+    request: Request,
+    id: int = Form(...),
+):
+    auth = require_login(request)
+    if auth:
+        return auth
+
     DATA["jobs"] = [j for j in DATA["jobs"] if j["id"] != id]
-    return RedirectResponse("/jobs", status_code=303)
+    return RedirectResponse(url="/jobs", status_code=303)
 
 
 @app.post("/jobs/status")
-def update_status(id: int = Form(...), status: str = Form(...)):
-    for j in DATA["jobs"]:
-        if j["id"] == id:
-            j["status"] = status
-    return RedirectResponse("/jobs", status_code=303)
+def update_job_status(
+    request: Request,
+    id: int = Form(...),
+    status: str = Form(...),
+):
+    auth = require_login(request)
+    if auth:
+        return auth
+
+    valid_statuses = ["Scheduled", "In Progress", "Complete"]
+    if status in valid_statuses:
+        for job in DATA["jobs"]:
+            if job["id"] == id:
+                job["status"] = status
+                break
+
+    return RedirectResponse(url="/jobs", status_code=303)
