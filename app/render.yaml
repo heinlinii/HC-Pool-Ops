@@ -1,14 +1,10 @@
 services:
   - type: web
-    name: poolops
+    name: hc-pool-ops
     env: python
     plan: free
     buildCommand: pip install -r requirements.txt
-    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
     envVars:
-      - key: APP_USERNAME
-        value: admin
-      - key: APP_PASSWORD
-        value: poolops123
       - key: SESSION_SECRET
         value: replace-this-with-a-long-random-secret

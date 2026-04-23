@@ -1,33 +1,28 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>{% block title %}HC Pool Ops{% endblock %}</title>
-    <link rel="stylesheet" href="/static/style.css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }} • HC Pool Ops</title>
+    <link rel="stylesheet" href="/static/style.css">
 </head>
-<body class="app-body">
+<body>
+    {% if user %}
     <header class="topbar">
-        <div class="topbar-left">
-            <div class="brand-mark">HC</div>
-            <div>
-                <div class="brand-title">HC Pool Ops</div>
-                <div class="brand-subtitle">Office Operations Dashboard</div>
-            </div>
+        <div class="topbar-inner">
+            <div class="brand">HC Pool Ops</div>
+            <nav class="nav">
+                <a href="/dashboard">Dashboard</a>
+                <a href="/clients">Clients</a>
+                <a href="/properties">Properties</a>
+                <a href="/jobs">Jobs</a>
+                <span class="user-pill">Logged in as {{ user }}</span>
+                <a href="/logout">Logout</a>
+            </nav>
         </div>
-
-        <nav class="topbar-nav">
-            <a href="/dashboard">Dashboard</a>
-            <a href="/clients">Clients</a>
-            <a href="/properties">Properties</a>
-            <a href="/jobs">Jobs</a>
-            <a href="/employees">Employees</a>
-            <a href="/logout">Logout</a>
-        </nav>
     </header>
+    {% endif %}
 
-    <main class="page-shell">
-        {% block content %}{% endblock %}
-    </main>
+    {% block content %}{% endblock %}
 </body>
 </html>

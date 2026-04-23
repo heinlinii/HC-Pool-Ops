@@ -1,34 +1,35 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Login • HC Pool Ops</title>
-    <link rel="stylesheet" href="/static/style.css" />
-</head>
-<body class="login-body">
-    <main class="login-shell">
-        <div class="login-card">
-            <div class="login-eyebrow">HC POOL OPS</div>
-            <h1>Login</h1>
-            <p class="login-subtext">Use your office or field login to continue.</p>
+{% extends "base.html" %}
 
-            {% if error %}
-            <div class="alert-error">{{ error }}</div>
-            {% endif %}
+{% block content %}
+<div class="login-shell">
+    <div class="card login-card">
+        <div class="eyebrow">HC POOL OPS</div>
+        <h1>Login</h1>
+        <p>Use your office or field login to continue.</p>
 
-            <form method="post" action="/login" class="login-form">
-                <input type="text" name="username" placeholder="Username" required />
-                <input type="password" name="password" placeholder="Password" required />
-                <button type="submit">Login</button>
-            </form>
+        {% if error %}
+        <div class="alert alert-error">{{ error }}</div>
+        {% endif %}
 
-            <div class="login-help">
-                Demo logins:<br />
-                <strong>mike / 1234</strong><br />
-                <strong>jake / 1234</strong>
+        <form method="post" action="/login" class="form-grid">
+            <div>
+                <label for="username">Username</label>
+                <input id="username" name="username" type="text" placeholder="Enter username" required>
             </div>
+
+            <div>
+                <label for="password">Password</label>
+                <input id="password" name="password" type="password" placeholder="Enter password" required>
+            </div>
+
+            <button type="submit">Login</button>
+        </form>
+
+        <div class="footer-note">
+            Demo logins:<br>
+            <strong>mike / 1234</strong><br>
+            <strong>jake / 1234</strong>
         </div>
-    </main>
-</body>
-</html>
+    </div>
+</div>
+{% endblock %}

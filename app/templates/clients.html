@@ -1,37 +1,72 @@
 {% extends "base.html" %}
 
-{% block title %}Clients • HC Pool Ops{% endblock %}
-
 {% block content %}
-<div class="page-header">
-    <h1>Clients</h1>
-    <p>All client records.</p>
-</div>
-
-<div class="card">
-    <div class="table-wrap">
-        <table>
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Phone</th>
-                    <th>Email</th>
-                    <th>Address</th>
-                    <th>Notes</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for client in clients %}
-                <tr>
-                    <td>{{ client.name }}</td>
-                    <td>{{ client.phone }}</td>
-                    <td>{{ client.email }}</td>
-                    <td>{{ client.address }}</td>
-                    <td>{{ client.notes }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+<main class="page">
+    <div class="page-header">
+        <div>
+            <h1>Clients</h1>
+            <p>Add and view clients.</p>
+        </div>
     </div>
-</div>
+
+    <section class="grid grid-2">
+        <div class="card">
+            <h2>Add Client</h2>
+
+            {% if error %}
+            <div class="alert alert-error">{{ error }}</div>
+            {% endif %}
+
+            <form method="post" action="/clients" class="form-grid">
+                <div>
+                    <label for="name">Client Name</label>
+                    <input id="name" name="name" type="text" required>
+                </div>
+
+                <div>
+                    <label for="phone">Phone</label>
+                    <input id="phone" name="phone" type="text">
+                </div>
+
+                <div>
+                    <label for="email">Email</label>
+                    <input id="email" name="email" type="email">
+                </div>
+
+                <button type="submit">Save Client</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <h2>Client List</h2>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Phone</th>
+                            <th>Email</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for client in clients %}
+                        <tr>
+                            <td>{{ client.id }}</td>
+                            <td>{{ client.name }}</td>
+                            <td>{{ client.phone or "-" }}</td>
+                            <td>{{ client.email or "-" }}</td>
+                        </tr>
+                        {% endfor %}
+                        {% if not clients %}
+                        <tr>
+                            <td colspan="4">No clients yet.</td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+</main>
 {% endblock %}

@@ -1,39 +1,83 @@
 {% extends "base.html" %}
 
-{% block title %}Properties • HC Pool Ops{% endblock %}
-
 {% block content %}
-<div class="page-header">
-    <h1>Properties</h1>
-    <p>All service properties and pools.</p>
-</div>
-
-<div class="card">
-    <div class="table-wrap">
-        <table>
-            <thead>
-                <tr>
-                    <th>Property</th>
-                    <th>Client</th>
-                    <th>Address</th>
-                    <th>Pool Type</th>
-                    <th>Status</th>
-                    <th>Notes</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for property in properties %}
-                <tr>
-                    <td>{{ property.name }}</td>
-                    <td>{{ property.client_name }}</td>
-                    <td>{{ property.address }}</td>
-                    <td>{{ property.pool_type }}</td>
-                    <td>{{ property.status }}</td>
-                    <td>{{ property.notes }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+<main class="page">
+    <div class="page-header">
+        <div>
+            <h1>Properties</h1>
+            <p>Assign properties to clients.</p>
+        </div>
     </div>
-</div>
+
+    <section class="grid grid-2">
+        <div class="card">
+            <h2>Add Property</h2>
+
+            {% if error %}
+            <div class="alert alert-error">{{ error }}</div>
+            {% endif %}
+
+            <form method="post" action="/properties" class="form-grid">
+                <div>
+                    <label for="client_id">Client</label>
+                    <select id="client_id" name="client_id" required>
+                        {% for client in clients %}
+                        <option value="{{ client.id }}">{{ client.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div>
+                    <label for="name">Property Name</label>
+                    <input id="name" name="name" type="text" required>
+                </div>
+
+                <div>
+                    <label for="address">Address</label>
+                    <input id="address" name="address" type="text">
+                </div>
+
+                <div>
+                    <label for="city">City</label>
+                    <input id="city" name="city" type="text">
+                </div>
+
+                <button type="submit">Save Property</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <h2>Property List</h2>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Property</th>
+                            <th>Client</th>
+                            <th>Address</th>
+                            <th>City</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for property in properties %}
+                        <tr>
+                            <td>{{ property.id }}</td>
+                            <td>{{ property.name }}</td>
+                            <td>{{ property.client_name }}</td>
+                            <td>{{ property.address or "-" }}</td>
+                            <td>{{ property.city or "-" }}</td>
+                        </tr>
+                        {% endfor %}
+                        {% if not properties %}
+                        <tr>
+                            <td colspan="5">No properties yet.</td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+</main>
 {% endblock %}

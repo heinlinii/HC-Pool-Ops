@@ -1,41 +1,87 @@
 {% extends "base.html" %}
 
-{% block title %}Jobs • HC Pool Ops{% endblock %}
-
 {% block content %}
-<div class="page-header">
-    <h1>Jobs</h1>
-    <p>All scheduled and open service stops.</p>
-</div>
-
-<div class="card">
-    <div class="table-wrap">
-        <table>
-            <thead>
-                <tr>
-                    <th>Job</th>
-                    <th>Client</th>
-                    <th>Property</th>
-                    <th>Date</th>
-                    <th>Technician</th>
-                    <th>Status</th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for job in jobs %}
-                <tr>
-                    <td>{{ job.title }}</td>
-                    <td>{{ job.client_name }}</td>
-                    <td>{{ job.property_name }}</td>
-                    <td>{{ job.scheduled_for }}</td>
-                    <td>{{ job.technician }}</td>
-                    <td>{{ job.status }}</td>
-                    <td><a href="/service-stops/{{ job.id }}">Open</a></td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+<main class="page">
+    <div class="page-header">
+        <div>
+            <h1>Jobs</h1>
+            <p>Create and track jobs by property.</p>
+        </div>
     </div>
-</div>
+
+    <section class="grid grid-2">
+        <div class="card">
+            <h2>Add Job</h2>
+
+            {% if error %}
+            <div class="alert alert-error">{{ error }}</div>
+            {% endif %}
+
+            <form method="post" action="/jobs" class="form-grid">
+                <div>
+                    <label for="property_id">Property</label>
+                    <select id="property_id" name="property_id" required>
+                        {% for property in properties %}
+                        <option value="{{ property.id }}">{{ property.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div>
+                    <label for="title">Job Title</label>
+                    <input id="title" name="title" type="text" required>
+                </div>
+
+                <div>
+                    <label for="status">Status</label>
+                    <select id="status" name="status">
+                        <option value="Scheduled">Scheduled</option>
+                        <option value="In Progress">In Progress</option>
+                        <option value="Complete">Complete</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label for="scheduled_for">Scheduled For</label>
+                    <input id="scheduled_for" name="scheduled_for" type="date">
+                </div>
+
+                <button type="submit">Save Job</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <h2>Job List</h2>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Job</th>
+                            <th>Property</th>
+                            <th>Status</th>
+                            <th>Scheduled For</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for job in jobs %}
+                        <tr>
+                            <td>{{ job.id }}</td>
+                            <td>{{ job.title }}</td>
+                            <td>{{ job.property_name }}</td>
+                            <td>{{ job.status or "-" }}</td>
+                            <td>{{ job.scheduled_for or "-" }}</td>
+                        </tr>
+                        {% endfor %}
+                        {% if not jobs %}
+                        <tr>
+                            <td colspan="5">No jobs yet.</td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+</main>
 {% endblock %}
