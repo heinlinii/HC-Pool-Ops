@@ -8,35 +8,58 @@
     <div class="error">{{ error }}</div>
     {% endif %}
 
+    {% if clients|length == 0 %}
+    <div class="warning">Add a client first before creating a property.</div>
+    {% endif %}
+
     <form method="post" action="/properties" class="form">
         <label for="property_name">Property Name</label>
-        <input id="property_name" type="text" name="name" required>
+        <input id="property_name" type="text" name="name" required {% if clients|length == 0 %}disabled{% endif %}>
 
         <label for="client_id">Client</label>
-        <select id="client_id" name="client_id" required>
+        <select id="client_id" name="client_id" required {% if clients|length == 0 %}disabled{% endif %}>
             {% for client in clients %}
             <option value="{{ client.id }}">{{ client.name }}</option>
             {% endfor %}
         </select>
 
         <label for="address">Address</label>
-        <input id="address" type="text" name="address">
+        <input id="address" type="text" name="address" {% if clients|length == 0 %}disabled{% endif %}>
 
         <label for="city">City</label>
-        <input id="city" type="text" name="city">
+        <input id="city" type="text" name="city" {% if clients|length == 0 %}disabled{% endif %}>
 
-        <button type="submit">Add Property</button>
+        <button type="submit" {% if clients|length == 0 %}disabled{% endif %}>Add Property</button>
     </form>
 </div>
 
 <div class="card">
     <h2>Property List</h2>
-    <ul>
-        {% for property in properties %}
-        <li>{{ property.name }} | {{ property.address }} | {{ property.city }}</li>
-        {% else %}
-        <li>No properties yet.</li>
-        {% endfor %}
-    </ul>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Property</th>
+                    <th>Client</th>
+                    <th>Address</th>
+                    <th>City</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for property in properties %}
+                <tr>
+                    <td>{{ property.name }}</td>
+                    <td>{{ property.client_name }}</td>
+                    <td>{{ property.address or "-" }}</td>
+                    <td>{{ property.city or "-" }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="4">No properties yet.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
 {% endblock %}

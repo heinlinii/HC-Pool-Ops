@@ -9,11 +9,16 @@
 <body>
     {% if user %}
     <nav class="nav">
-        <a href="/dashboard">Dashboard</a>
-        <a href="/clients">Clients</a>
-        <a href="/properties">Properties</a>
-        <a href="/jobs">Jobs</a>
-        <a href="/logout">Logout</a>
+        <div class="nav-inner">
+            <div class="brand">HC Pool Ops</div>
+            <div class="nav-links">
+                <a href="/dashboard">Dashboard</a>
+                <a href="/clients">Clients</a>
+                <a href="/properties">Properties</a>
+                <a href="/jobs">Jobs</a>
+                <a href="/logout">Logout</a>
+            </div>
+        </div>
     </nav>
     {% endif %}
 

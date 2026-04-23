@@ -1,21 +1,48 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="card">
-    <h1>Dashboard</h1>
-    <p>Clients: {{ client_count }}</p>
-    <p>Properties: {{ property_count }}</p>
-    <p>Jobs: {{ job_count }}</p>
+<div class="stats-grid">
+    <div class="card stat-card">
+        <div class="stat-label">Clients</div>
+        <div class="stat-value">{{ client_count }}</div>
+    </div>
+    <div class="card stat-card">
+        <div class="stat-label">Properties</div>
+        <div class="stat-value">{{ property_count }}</div>
+    </div>
+    <div class="card stat-card">
+        <div class="stat-label">Jobs</div>
+        <div class="stat-value">{{ job_count }}</div>
+    </div>
 </div>
 
 <div class="card">
     <h2>Recent Jobs</h2>
-    <ul>
-        {% for job in recent_jobs %}
-        <li>{{ job.title }}</li>
-        {% else %}
-        <li>No jobs yet.</li>
-        {% endfor %}
-    </ul>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Job</th>
+                    <th>Property</th>
+                    <th>Status</th>
+                    <th>Scheduled</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for job in recent_jobs %}
+                <tr>
+                    <td>{{ job.title }}</td>
+                    <td>{{ job.property_name }}</td>
+                    <td>{{ job.status or "-" }}</td>
+                    <td>{{ job.scheduled_for or "-" }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="4">No jobs yet.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
 {% endblock %}

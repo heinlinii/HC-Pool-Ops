@@ -24,12 +24,29 @@
 
 <div class="card">
     <h2>Client List</h2>
-    <ul>
-        {% for client in clients %}
-        <li>{{ client.name }} | {{ client.phone }} | {{ client.email }}</li>
-        {% else %}
-        <li>No clients yet.</li>
-        {% endfor %}
-    </ul>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Phone</th>
+                    <th>Email</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for client in clients %}
+                <tr>
+                    <td>{{ client.name }}</td>
+                    <td>{{ client.phone or "-" }}</td>
+                    <td>{{ client.email or "-" }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="3">No clients yet.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
 {% endblock %}
