@@ -1,21 +1,35 @@
 {% extends "base.html" %}
 
 {% block content %}
-<main class="page">
-    <h1>Clients</h1>
+<h1>Clients</h1>
 
-    <form method="post" action="/clients">
-        <input name="name" placeholder="Client Name" required>
-        <input name="phone" placeholder="Phone">
-        <input name="email" placeholder="Email">
-        <button type="submit">Add Client</button>
-    </form>
+{% if error %}
+<p style="color: red;">{{ error }}</p>
+{% endif %}
 
-    <h2>List</h2>
-    <ul>
-        {% for c in clients %}
-            <li>{{ c.name }} ({{ c.phone }})</li>
-        {% endfor %}
-    </ul>
-</main>
+<form method="post" action="/clients">
+    <div>
+        <label>Client Name</label>
+        <input type="text" name="name" required>
+    </div>
+
+    <div>
+        <label>Phone</label>
+        <input type="text" name="phone">
+    </div>
+
+    <div>
+        <label>Email</label>
+        <input type="text" name="email">
+    </div>
+
+    <button type="submit">Add Client</button>
+</form>
+
+<h2>Client List</h2>
+<ul>
+    {% for client in clients %}
+    <li>{{ client.name }} | {{ client.phone }} | {{ client.email }}</li>
+    {% endfor %}
+</ul>
 {% endblock %}

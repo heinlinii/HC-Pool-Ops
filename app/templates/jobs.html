@@ -1,26 +1,34 @@
 {% extends "base.html" %}
 
 {% block content %}
-<main class="page">
-    <h1>Jobs</h1>
+<h1>Jobs</h1>
 
-    <form method="post" action="/jobs">
-        <input name="title" placeholder="Job Title" required>
+{% if error %}
+<p style="color: red;">{{ error }}</p>
+{% endif %}
 
-        <select name="property_id">
-            {% for p in properties %}
-                <option value="{{ p.id }}">{{ p.name }}</option>
+<form method="post" action="/jobs">
+    <div>
+        <label>Job Title</label>
+        <input type="text" name="title" required>
+    </div>
+
+    <div>
+        <label>Property</label>
+        <select name="property_id" required>
+            {% for property in properties %}
+            <option value="{{ property.id }}">{{ property.name }}</option>
             {% endfor %}
         </select>
+    </div>
 
-        <button type="submit">Add Job</button>
-    </form>
+    <button type="submit">Add Job</button>
+</form>
 
-    <h2>List</h2>
-    <ul>
-        {% for j in jobs %}
-            <li>{{ j.title }}</li>
-        {% endfor %}
-    </ul>
-</main>
+<h2>Job List</h2>
+<ul>
+    {% for job in jobs %}
+    <li>{{ job.title }}</li>
+    {% endfor %}
+</ul>
 {% endblock %}

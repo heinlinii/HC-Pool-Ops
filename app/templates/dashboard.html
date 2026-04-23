@@ -1,15 +1,16 @@
 {% extends "base.html" %}
 
 {% block content %}
-<main class="page">
-    <h1>Dashboard</h1>
+<h1>Dashboard</h1>
 
-    <p>Clients: {{ client_count }}</p>
-    <p>Properties: {{ property_count }}</p>
-    <p>Jobs: {{ job_count }}</p>
+<p>Clients: {{ client_count }}</p>
+<p>Properties: {{ property_count }}</p>
+<p>Jobs: {{ job_count }}</p>
 
-    <a href="/clients">Clients</a><br>
-    <a href="/properties">Properties</a><br>
-    <a href="/jobs">Jobs</a>
-</main>
+<h2>Recent Jobs</h2>
+<ul>
+    {% for job in recent_jobs %}
+    <li>{{ job.title }}</li>
+    {% endfor %}
+</ul>
 {% endblock %}

@@ -1,18 +1,20 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>PoolOps</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title or "PoolOps" }}</title>
 </head>
 <body>
     {% if user %}
-        <div>
-            <a href="/dashboard">Dashboard</a> |
-            <a href="/clients">Clients</a> |
-            <a href="/properties">Properties</a> |
-            <a href="/jobs">Jobs</a> |
-            <a href="/logout">Logout</a>
-        </div>
-        <hr>
+    <nav>
+        <a href="/dashboard">Dashboard</a> |
+        <a href="/clients">Clients</a> |
+        <a href="/properties">Properties</a> |
+        <a href="/jobs">Jobs</a> |
+        <a href="/logout">Logout</a>
+    </nav>
+    <hr>
     {% endif %}
 
     {% block content %}{% endblock %}
