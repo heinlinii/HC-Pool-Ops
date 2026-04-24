@@ -318,7 +318,7 @@ def render(request: Request, template_name: str, context: dict, status_code: int
         context=context,
         status_code=status_code,
     )
-    
+
     def role_required(*allowed_roles):
     def decorator(route_func):
         @wraps(route_func)
@@ -331,7 +331,6 @@ def render(request: Request, template_name: str, context: dict, status_code: int
 
                 if user.role not in allowed_roles:
                     return RedirectResponse(url="/dashboard", status_code=303)
-
             finally:
                 db.close()
 
@@ -340,6 +339,7 @@ def render(request: Request, template_name: str, context: dict, status_code: int
         return wrapper
 
     return decorator
+
 def role_required(*allowed_roles):
     def decorator(route_func):
         @wraps(route_func)
