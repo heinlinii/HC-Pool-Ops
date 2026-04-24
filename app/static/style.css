@@ -53,7 +53,9 @@ body {
   padding: 0 16px 32px;
 }
 
-.card {
+.card,
+.job-card,
+.mini-job {
   background: white;
   border: 1px solid #d7dbe2;
   border-radius: 10px;
@@ -78,10 +80,9 @@ body {
   text-align: center;
 }
 
-.stat-label {
+.stat-label,
+.muted {
   color: #555;
-  font-size: 14px;
-  margin-bottom: 8px;
 }
 
 .stat-value {
@@ -103,14 +104,16 @@ body {
 
 input,
 select,
-button {
+button,
+textarea {
   padding: 10px 12px;
   font-size: 16px;
   border-radius: 6px;
 }
 
 input,
-select {
+select,
+textarea {
   border: 1px solid #c8ced8;
 }
 
@@ -140,6 +143,20 @@ button:hover,
 
 .danger-btn:hover {
   background: #8f1c14;
+}
+
+.complete-btn {
+  background: #137333;
+}
+
+.complete-btn:hover {
+  background: #0f5f29;
+}
+
+.big-btn {
+  width: 100%;
+  padding: 16px;
+  font-size: 18px;
 }
 
 .error {
@@ -200,19 +217,57 @@ th {
   background: #f8fafc;
 }
 
+.crew-header {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 20px;
+  align-items: start;
+}
+
+.clock-box {
+  background: white;
+  border: 1px solid #d7dbe2;
+  border-radius: 10px;
+  padding: 20px;
+}
+
+.job-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: start;
+  margin-bottom: 16px;
+}
+
+.status-pill {
+  background: #e8eefc;
+  color: #123b7a;
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+.crew-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
 @media (max-width: 900px) {
-  .stats-grid {
-    grid-template-columns: 1fr 1fr;
+  .stats-grid,
+  .crew-header,
+  .crew-actions {
+    grid-template-columns: 1fr;
   }
 
   .inline-form {
     flex-direction: column;
     align-items: stretch;
   }
-}
 
-@media (max-width: 600px) {
-  .stats-grid {
-    grid-template-columns: 1fr;
+  .job-top {
+    flex-direction: column;
   }
 }
