@@ -4,6 +4,7 @@
 <div class="card">
     <h1>Client Portal</h1>
     <p>{{ client.name if client else "No linked client record." }}</p>
+    <p class="muted">Request an open slot. Heinlin Concrete will approve the final booking.</p>
 </div>
 
 <div class="card">
@@ -18,15 +19,17 @@
 </div>
 
 <div class="card">
-    <h2>Open Schedule Slots</h2>
+    <h2>Available Request Slots</h2>
     <div class="table-wrap">
         <table>
             <thead>
                 <tr>
                     <th>Date</th>
                     <th>Time</th>
-                    <th>Book For Property</th>
-                    <th>Action</th>
+                    <th>Job Type</th>
+                    <th>Property</th>
+                    <th>Notes</th>
+                    <th>Request</th>
                 </tr>
             </thead>
             <tbody>
@@ -34,8 +37,9 @@
                 <tr>
                     <td>{{ item.slot_date }}</td>
                     <td>{{ item.start_time }} - {{ item.end_time }}</td>
+                    <td>{{ item.job_type or "Other" }}</td>
                     <td>
-                        <form method="post" action="/schedule/book" class="inline-form">
+                        <form method="post" action="/schedule/request" class="client-request-form">
                             <input type="hidden" name="id" value="{{ item.id }}">
                             <select name="property_id" required>
                                 {% for property in properties %}
@@ -44,13 +48,16 @@
                             </select>
                     </td>
                     <td>
-                            <button type="submit" {% if properties|length == 0 %}disabled{% endif %}>Book</button>
+                            <input type="text" name="client_notes" placeholder="Example: Need pool opened before weekend">
+                    </td>
+                    <td>
+                            <button type="submit" {% if properties|length == 0 %}disabled{% endif %}>Request Slot</button>
                         </form>
                     </td>
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="4">No open slots right now.</td>
+                    <td colspan="6">No open slots right now.</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -59,13 +66,38 @@
 </div>
 
 <div class="card">
-    <h2>Your Booked Slots</h2>
-    <ul>
-        {% for item in my_booked_slots %}
-        <li>{{ item.slot_date }} | {{ item.start_time }} - {{ item.end_time }} | {{ item.property.name if item.property else "-" }}</li>
-        {% else %}
-        <li>No booked slots yet.</li>
-        {% endfor %}
-    </ul>
+    <h2>Your Requests</h2>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Time</th>
+                    <th>Job Type</th>
+                    <th>Property</th>
+                    <th>Status</th>
+                    <th>Your Notes</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in my_requested_slots %}
+                <tr>
+                    <td>{{ item.slot_date }}</td>
+                    <td>{{ item.start_time }} - {{ item.end_time }}</td>
+                    <td>{{ item.job_type or "Other" }}</td>
+                    <td>{{ item.property.name if item.property else "-" }}</td>
+                    <td>
+                        <span class="status-pill status-{{ item.status|lower }}">{{ item.status }}</span>
+                    </td>
+                    <td>{{ item.client_notes or "-" }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6">No requests yet.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
 {% endblock %}

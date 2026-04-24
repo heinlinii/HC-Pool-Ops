@@ -102,6 +102,10 @@ body {
   align-items: center;
 }
 
+.client-request-form {
+  display: contents;
+}
+
 input,
 select,
 button,
@@ -131,6 +135,11 @@ button,
 button:hover,
 .button-link:hover {
   background: #0d2d5e;
+}
+
+button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 .button-link {
@@ -246,6 +255,27 @@ th {
   border-radius: 999px;
   font-weight: bold;
   white-space: nowrap;
+  display: inline-block;
+}
+
+.status-open {
+  background: #e8f7ec;
+  color: #126b2e;
+}
+
+.status-requested {
+  background: #fff6db;
+  color: #7a5a00;
+}
+
+.status-approved {
+  background: #e8eefc;
+  color: #123b7a;
+}
+
+.status-blocked {
+  background: #fde8e8;
+  color: #a61b1b;
 }
 
 .crew-actions {
@@ -269,5 +299,9 @@ th {
 
   .job-top {
     flex-direction: column;
+  }
+
+  .client-request-form {
+    display: block;
   }
 }

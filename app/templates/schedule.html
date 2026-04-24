@@ -2,7 +2,8 @@
 
 {% block content %}
 <div class="card">
-    <h1>Schedule Slots</h1>
+    <h1>Schedule Control</h1>
+    <p class="muted">Create available schedule slots, review client requests, and approve final bookings.</p>
 
     {% if error %}
     <div class="error">{{ error }}</div>
@@ -17,6 +18,13 @@
 
         <label>End Time</label>
         <input type="text" name="end_time" placeholder="10:00 AM" required>
+
+        <label>Job Type</label>
+        <select name="job_type" required>
+            {% for item in job_types %}
+            <option value="{{ item }}">{{ item }}</option>
+            {% endfor %}
+        </select>
 
         <label>Status</label>
         <select name="status" required>
@@ -33,25 +41,28 @@
             {% endfor %}
         </select>
 
-        <label>Notes</label>
-        <input type="text" name="notes">
+        <label>Admin Notes</label>
+        <input type="text" name="notes" placeholder="Example: Morning opening slot, west side only">
 
-        <button type="submit">Add Slot</button>
+        <button type="submit">Add Schedule Slot</button>
     </form>
 </div>
 
 <div class="card">
-    <h2>Slot List</h2>
+    <h2>Schedule Slots & Requests</h2>
     <div class="table-wrap">
         <table>
             <thead>
                 <tr>
                     <th>Date</th>
                     <th>Time</th>
+                    <th>Job Type</th>
                     <th>Status</th>
                     <th>Property</th>
-                    <th>Booked By</th>
-                    <th>Notes</th>
+                    <th>Requested By</th>
+                    <th>Client Notes</th>
+                    <th>Admin Notes</th>
+                    <th>Change Status</th>
                     <th>Delete</th>
                 </tr>
             </thead>
@@ -60,12 +71,27 @@
                 <tr>
                     <td>{{ item.slot_date }}</td>
                     <td>{{ item.start_time }} - {{ item.end_time }}</td>
-                    <td>{{ item.status }}</td>
+                    <td>{{ item.job_type or "Other" }}</td>
+                    <td>
+                        <span class="status-pill status-{{ item.status|lower }}">{{ item.status }}</span>
+                    </td>
                     <td>{{ item.property.name if item.property else "-" }}</td>
                     <td>{{ item.booked_by_client.name if item.booked_by_client else "-" }}</td>
+                    <td>{{ item.client_notes or "-" }}</td>
                     <td>{{ item.notes or "-" }}</td>
                     <td>
-                        <form method="post" action="/schedule/delete">
+                        <form method="post" action="/schedule/status" class="inline-form">
+                            <input type="hidden" name="id" value="{{ item.id }}">
+                            <select name="status">
+                                {% for status in slot_statuses %}
+                                <option value="{{ status }}" {% if item.status == status %}selected{% endif %}>{{ status }}</option>
+                                {% endfor %}
+                            </select>
+                            <button type="submit">Save</button>
+                        </form>
+                    </td>
+                    <td>
+                        <form method="post" action="/schedule/delete" onsubmit="return confirm('Delete this schedule slot?');">
                             <input type="hidden" name="id" value="{{ item.id }}">
                             <button type="submit" class="danger-btn">Delete</button>
                         </form>
@@ -73,7 +99,7 @@
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="7">No schedule slots yet.</td>
+                    <td colspan="10">No schedule slots yet.</td>
                 </tr>
                 {% endfor %}
             </tbody>
