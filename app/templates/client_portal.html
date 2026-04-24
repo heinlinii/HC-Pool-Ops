@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card">
+    <h1>Client Portal</h1>
+    <p>{{ client.name if client else "No linked client record." }}</p>
+</div>
+
+<div class="card">
+    <h2>Your Properties</h2>
+    <ul>
+        {% for item in properties %}
+        <li>{{ item.name }} - {{ item.address }} {{ item.city }}</li>
+        {% else %}
+        <li>No properties linked yet.</li>
+        {% endfor %}
+    </ul>
+</div>
+
+<div class="card">
+    <h2>Open Schedule Slots</h2>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Time</th>
+                    <th>Book For Property</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in open_slots %}
+                <tr>
+                    <td>{{ item.slot_date }}</td>
+                    <td>{{ item.start_time }} - {{ item.end_time }}</td>
+                    <td>
+                        <form method="post" action="/schedule/book" class="inline-form">
+                            <input type="hidden" name="id" value="{{ item.id }}">
+                            <select name="property_id" required>
+                                {% for property in properties %}
+                                <option value="{{ property.id }}">{{ property.name }}</option>
+                                {% endfor %}
+                            </select>
+                    </td>
+                    <td>
+                            <button type="submit" {% if properties|length == 0 %}disabled{% endif %}>Book</button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="4">No open slots right now.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="card">
+    <h2>Your Booked Slots</h2>
+    <ul>
+        {% for item in my_booked_slots %}
+        <li>{{ item.slot_date }} | {{ item.start_time }} - {{ item.end_time }} | {{ item.property.name if item.property else "-" }}</li>
+        {% else %}
+        <li>No booked slots yet.</li>
+        {% endfor %}
+    </ul>
+</div>
+{% endblock %}

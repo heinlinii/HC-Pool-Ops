@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card">
+    <h1>Schedule Slots</h1>
+
+    {% if error %}
+    <div class="error">{{ error }}</div>
+    {% endif %}
+
+    <form method="post" action="/schedule" class="form">
+        <label>Date</label>
+        <input type="date" name="slot_date" required>
+
+        <label>Start Time</label>
+        <input type="text" name="start_time" placeholder="08:00 AM" required>
+
+        <label>End Time</label>
+        <input type="text" name="end_time" placeholder="10:00 AM" required>
+
+        <label>Status</label>
+        <select name="status" required>
+            {% for item in slot_statuses %}
+            <option value="{{ item }}">{{ item }}</option>
+            {% endfor %}
+        </select>
+
+        <label>Property (optional)</label>
+        <select name="property_id">
+            <option value="">-- none --</option>
+            {% for item in properties %}
+            <option value="{{ item.id }}">{{ item.name }} - {{ item.client.name if item.client else "-" }}</option>
+            {% endfor %}
+        </select>
+
+        <label>Notes</label>
+        <input type="text" name="notes">
+
+        <button type="submit">Add Slot</button>
+    </form>
+</div>
+
+<div class="card">
+    <h2>Slot List</h2>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Time</th>
+                    <th>Status</th>
+                    <th>Property</th>
+                    <th>Booked By</th>
+                    <th>Notes</th>
+                    <th>Delete</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in slots %}
+                <tr>
+                    <td>{{ item.slot_date }}</td>
+                    <td>{{ item.start_time }} - {{ item.end_time }}</td>
+                    <td>{{ item.status }}</td>
+                    <td>{{ item.property.name if item.property else "-" }}</td>
+                    <td>{{ item.booked_by_client.name if item.booked_by_client else "-" }}</td>
+                    <td>{{ item.notes or "-" }}</td>
+                    <td>
+                        <form method="post" action="/schedule/delete">
+                            <input type="hidden" name="id" value="{{ item.id }}">
+                            <button type="submit" class="danger-btn">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7">No schedule slots yet.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

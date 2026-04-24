@@ -9,14 +9,25 @@
     {% endif %}
 
     <form method="post" action="/clients" class="form">
-        <label for="name">Client Name</label>
-        <input id="name" type="text" name="name" required>
+        <label>Client Name</label>
+        <input type="text" name="name" required>
 
-        <label for="phone">Phone</label>
-        <input id="phone" type="text" name="phone">
+        <label>Phone</label>
+        <input type="text" name="phone">
 
-        <label for="email">Email</label>
-        <input id="email" type="text" name="email">
+        <label>Email</label>
+        <input type="text" name="email">
+
+        <label>QuickBooks Customer ID</label>
+        <input type="text" name="qb_customer_id">
+
+        <label>Portal User</label>
+        <select name="portal_user_id">
+            <option value="">-- none --</option>
+            {% for user_item in client_users %}
+            <option value="{{ user_item.id }}">{{ user_item.full_name }} ({{ user_item.username }})</option>
+            {% endfor %}
+        </select>
 
         <button type="submit">Add Client</button>
     </form>
@@ -31,25 +42,29 @@
                     <th>Name</th>
                     <th>Phone</th>
                     <th>Email</th>
+                    <th>QB ID</th>
+                    <th>Portal User</th>
                     <th>Delete</th>
                 </tr>
             </thead>
             <tbody>
-                {% for client in clients %}
+                {% for item in clients %}
                 <tr>
-                    <td>{{ client.name }}</td>
-                    <td>{{ client.phone or "-" }}</td>
-                    <td>{{ client.email or "-" }}</td>
+                    <td>{{ item.name }}</td>
+                    <td>{{ item.phone or "-" }}</td>
+                    <td>{{ item.email or "-" }}</td>
+                    <td>{{ item.qb_customer_id or "-" }}</td>
+                    <td>{{ item.portal_user.full_name if item.portal_user else "-" }}</td>
                     <td>
-                        <form method="post" action="/clients/delete" onsubmit="return confirm('Delete this client and all linked properties/jobs?');">
-                            <input type="hidden" name="id" value="{{ client.id }}">
+                        <form method="post" action="/clients/delete">
+                            <input type="hidden" name="id" value="{{ item.id }}">
                             <button type="submit" class="danger-btn">Delete</button>
                         </form>
                     </td>
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="4">No clients yet.</td>
+                    <td colspan="6">No clients yet.</td>
                 </tr>
                 {% endfor %}
             </tbody>

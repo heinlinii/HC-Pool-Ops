@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 
 {% block content %}
+{% if user.role == ROLE_ADMIN %}
 <div class="stats-grid">
     <div class="card stat-card">
         <div class="stat-label">Clients</div>
@@ -14,6 +15,10 @@
         <div class="stat-label">Jobs</div>
         <div class="stat-value">{{ job_count }}</div>
     </div>
+    <div class="card stat-card">
+        <div class="stat-label">Open Slots</div>
+        <div class="stat-value">{{ open_slot_count }}</div>
+    </div>
 </div>
 
 <div class="card">
@@ -26,23 +31,100 @@
                     <th>Property</th>
                     <th>Status</th>
                     <th>Scheduled</th>
+                    <th>Crew</th>
                 </tr>
             </thead>
             <tbody>
                 {% for job in recent_jobs %}
                 <tr>
                     <td>{{ job.title }}</td>
-                    <td>{{ job.property_name }}</td>
-                    <td>{{ job.status or "-" }}</td>
+                    <td>{{ job.property.name if job.property else "-" }}</td>
+                    <td>{{ job.status }}</td>
                     <td>{{ job.scheduled_for or "-" }}</td>
+                    <td>{{ job.crew_user.full_name if job.crew_user else "-" }}</td>
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="4">No jobs yet.</td>
+                    <td colspan="5">No jobs yet.</td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
 </div>
+{% endif %}
+
+{% if user.role == ROLE_CREW %}
+<div class="card">
+    <h1>Crew Dashboard</h1>
+    <p>Use My Day to clock in and manage your assigned work.</p>
+    <a class="button-link" href="/my-day">Go to My Day</a>
+</div>
+
+<div class="card">
+    <h2>Assigned Jobs</h2>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Job</th>
+                    <th>Property</th>
+                    <th>Status</th>
+                    <th>Scheduled</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for job in today_jobs %}
+                <tr>
+                    <td>{{ job.title }}</td>
+                    <td>{{ job.property.name if job.property else "-" }}</td>
+                    <td>{{ job.status }}</td>
+                    <td>{{ job.scheduled_for or "-" }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="4">No assigned jobs.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if open_clock %}
+    <div class="success">You are clocked in.</div>
+    {% else %}
+    <div class="warning">You are not clocked in.</div>
+    {% endif %}
+</div>
+{% endif %}
+
+{% if user.role == ROLE_CLIENT %}
+<div class="card">
+    <h1>Client Dashboard</h1>
+    <p>Use the client portal to view your property and request open schedule slots.</p>
+    <a class="button-link" href="/client-portal">Go to Client Portal</a>
+</div>
+
+<div class="card">
+    <h2>Your Properties</h2>
+    <ul>
+        {% for property in properties %}
+        <li>{{ property.name }} - {{ property.address }} {{ property.city }}</li>
+        {% else %}
+        <li>No properties linked yet.</li>
+        {% endfor %}
+    </ul>
+</div>
+
+<div class="card">
+    <h2>Open Booking Slots</h2>
+    <ul>
+        {% for slot in open_slots %}
+        <li>{{ slot.slot_date }} | {{ slot.start_time }} - {{ slot.end_time }}</li>
+        {% else %}
+        <li>No open slots right now.</li>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
 {% endblock %}

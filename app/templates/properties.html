@@ -9,25 +9,25 @@
     {% endif %}
 
     {% if clients|length == 0 %}
-    <div class="warning">Add a client first before creating a property.</div>
+    <div class="warning">Add a client first.</div>
     {% endif %}
 
     <form method="post" action="/properties" class="form">
-        <label for="property_name">Property Name</label>
-        <input id="property_name" type="text" name="name" required {% if clients|length == 0 %}disabled{% endif %}>
-
-        <label for="client_id">Client</label>
-        <select id="client_id" name="client_id" required {% if clients|length == 0 %}disabled{% endif %}>
-            {% for client in clients %}
-            <option value="{{ client.id }}">{{ client.name }}</option>
+        <label>Client</label>
+        <select name="client_id" {% if clients|length == 0 %}disabled{% endif %} required>
+            {% for item in clients %}
+            <option value="{{ item.id }}">{{ item.name }}</option>
             {% endfor %}
         </select>
 
-        <label for="address">Address</label>
-        <input id="address" type="text" name="address" {% if clients|length == 0 %}disabled{% endif %}>
+        <label>Property Name</label>
+        <input type="text" name="name" {% if clients|length == 0 %}disabled{% endif %} required>
 
-        <label for="city">City</label>
-        <input id="city" type="text" name="city" {% if clients|length == 0 %}disabled{% endif %}>
+        <label>Address</label>
+        <input type="text" name="address" {% if clients|length == 0 %}disabled{% endif %}>
+
+        <label>City</label>
+        <input type="text" name="city" {% if clients|length == 0 %}disabled{% endif %}>
 
         <button type="submit" {% if clients|length == 0 %}disabled{% endif %}>Add Property</button>
     </form>
@@ -47,15 +47,15 @@
                 </tr>
             </thead>
             <tbody>
-                {% for property in properties %}
+                {% for item in properties %}
                 <tr>
-                    <td>{{ property.name }}</td>
-                    <td>{{ property.client_name }}</td>
-                    <td>{{ property.address or "-" }}</td>
-                    <td>{{ property.city or "-" }}</td>
+                    <td>{{ item.name }}</td>
+                    <td>{{ item.client.name if item.client else "-" }}</td>
+                    <td>{{ item.address or "-" }}</td>
+                    <td>{{ item.city or "-" }}</td>
                     <td>
-                        <form method="post" action="/properties/delete" onsubmit="return confirm('Delete this property and all linked jobs?');">
-                            <input type="hidden" name="id" value="{{ property.id }}">
+                        <form method="post" action="/properties/delete">
+                            <input type="hidden" name="id" value="{{ item.id }}">
                             <button type="submit" class="danger-btn">Delete</button>
                         </form>
                     </td>

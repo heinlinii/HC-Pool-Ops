@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card">
+    <h1>My Day</h1>
+
+    {% if open_clock %}
+    <div class="success">Clocked in since {{ open_clock.clock_in_at }}</div>
+    <form method="post" action="/clock/out">
+        <button type="submit" class="danger-btn">Clock Out</button>
+    </form>
+    {% else %}
+    <div class="warning">You are not clocked in.</div>
+    <form method="post" action="/clock/in" class="form">
+        <label>Clock-in Notes</label>
+        <input type="text" name="notes" placeholder="Morning start">
+        <button type="submit">Clock In</button>
+    </form>
+    {% endif %}
+</div>
+
+<div class="card">
+    <h2>Assigned Jobs</h2>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Job</th>
+                    <th>Property</th>
+                    <th>Status</th>
+                    <th>Scheduled</th>
+                    <th>Update</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in jobs %}
+                <tr>
+                    <td>{{ item.title }}</td>
+                    <td>{{ item.property.name if item.property else "-" }}</td>
+                    <td>{{ item.status }}</td>
+                    <td>{{ item.scheduled_for or "-" }}</td>
+                    <td>
+                        <form method="post" action="/jobs/status" class="inline-form">
+                            <input type="hidden" name="id" value="{{ item.id }}">
+                            <select name="status">
+                                <option value="Scheduled" {% if item.status == "Scheduled" %}selected{% endif %}>Scheduled</option>
+                                <option value="In Progress" {% if item.status == "In Progress" %}selected{% endif %}>In Progress</option>
+                                <option value="Complete" {% if item.status == "Complete" %}selected{% endif %}>Complete</option>
+                            </select>
+                            <button type="submit">Save</button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5">No assigned jobs.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="card">
+    <h2>Recent Clock Entries</h2>
+    <ul>
+        {% for item in today_entries %}
+        <li>
+            In: {{ item.clock_in_at }} |
+            Out: {{ item.clock_out_at or "still clocked in" }} |
+            {{ item.notes or "" }}
+        </li>
+        {% else %}
+        <li>No entries yet.</li>
+        {% endfor %}
+    </ul>
+</div>
+{% endblock %}

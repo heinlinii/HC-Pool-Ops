@@ -13,9 +13,24 @@
             <div class="brand">HC Pool Ops</div>
             <div class="nav-links">
                 <a href="/dashboard">Dashboard</a>
+
+                {% if user.role == ROLE_ADMIN %}
+                <a href="/users">Users</a>
                 <a href="/clients">Clients</a>
                 <a href="/properties">Properties</a>
                 <a href="/jobs">Jobs</a>
+                <a href="/schedule">Schedule</a>
+                {% endif %}
+
+                {% if user.role == ROLE_CREW %}
+                <a href="/my-day">My Day</a>
+                {% endif %}
+
+                {% if user.role == ROLE_CLIENT %}
+                <a href="/client-portal">Client Portal</a>
+                {% endif %}
+
+                <span class="user-tag">{{ user.full_name }} ({{ user.role }})</span>
                 <a href="/logout">Logout</a>
             </div>
         </div>

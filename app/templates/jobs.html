@@ -9,29 +9,40 @@
     {% endif %}
 
     {% if properties|length == 0 %}
-    <div class="warning">Add a property first before creating a job.</div>
+    <div class="warning">Add a property first.</div>
     {% endif %}
 
     <form method="post" action="/jobs" class="form">
-        <label for="title">Job Title</label>
-        <input id="title" type="text" name="title" required {% if properties|length == 0 %}disabled{% endif %}>
-
-        <label for="property_id">Property</label>
-        <select id="property_id" name="property_id" required {% if properties|length == 0 %}disabled{% endif %}>
-            {% for property in properties %}
-            <option value="{{ property.id }}">{{ property.name }}</option>
+        <label>Property</label>
+        <select name="property_id" {% if properties|length == 0 %}disabled{% endif %} required>
+            {% for item in properties %}
+            <option value="{{ item.id }}">{{ item.name }}</option>
             {% endfor %}
         </select>
 
-        <label for="status">Status</label>
-        <select id="status" name="status" required {% if properties|length == 0 %}disabled{% endif %}>
-            <option value="Scheduled">Scheduled</option>
-            <option value="In Progress">In Progress</option>
-            <option value="Complete">Complete</option>
+        <label>Job Title</label>
+        <input type="text" name="title" {% if properties|length == 0 %}disabled{% endif %} required>
+
+        <label>Status</label>
+        <select name="status" {% if properties|length == 0 %}disabled{% endif %} required>
+            {% for status in statuses %}
+            <option value="{{ status }}">{{ status }}</option>
+            {% endfor %}
         </select>
 
-        <label for="scheduled_for">Scheduled Date</label>
-        <input id="scheduled_for" type="date" name="scheduled_for" {% if properties|length == 0 %}disabled{% endif %}>
+        <label>Scheduled Date</label>
+        <input type="date" name="scheduled_for" {% if properties|length == 0 %}disabled{% endif %}>
+
+        <label>Assigned Crew</label>
+        <select name="crew_user_id" {% if properties|length == 0 %}disabled{% endif %}>
+            <option value="">-- none --</option>
+            {% for item in crew_users %}
+            <option value="{{ item.id }}">{{ item.full_name }}</option>
+            {% endfor %}
+        </select>
+
+        <label>Notes</label>
+        <input type="text" name="notes" {% if properties|length == 0 %}disabled{% endif %}>
 
         <button type="submit" {% if properties|length == 0 %}disabled{% endif %}>Add Job</button>
     </form>
@@ -47,31 +58,21 @@
                     <th>Property</th>
                     <th>Status</th>
                     <th>Scheduled</th>
-                    <th>Update Status</th>
+                    <th>Crew</th>
                     <th>Delete</th>
                 </tr>
             </thead>
             <tbody>
-                {% for job in jobs %}
+                {% for item in jobs %}
                 <tr>
-                    <td>{{ job.title }}</td>
-                    <td>{{ job.property_name }}</td>
-                    <td>{{ job.status or "-" }}</td>
-                    <td>{{ job.scheduled_for or "-" }}</td>
+                    <td>{{ item.title }}</td>
+                    <td>{{ item.property.name if item.property else "-" }}</td>
+                    <td>{{ item.status }}</td>
+                    <td>{{ item.scheduled_for or "-" }}</td>
+                    <td>{{ item.crew_user.full_name if item.crew_user else "-" }}</td>
                     <td>
-                        <form method="post" action="/jobs/status" class="inline-form">
-                            <input type="hidden" name="id" value="{{ job.id }}">
-                            <select name="status">
-                                <option value="Scheduled" {% if job.status == "Scheduled" %}selected{% endif %}>Scheduled</option>
-                                <option value="In Progress" {% if job.status == "In Progress" %}selected{% endif %}>In Progress</option>
-                                <option value="Complete" {% if job.status == "Complete" %}selected{% endif %}>Complete</option>
-                            </select>
-                            <button type="submit">Save</button>
-                        </form>
-                    </td>
-                    <td>
-                        <form method="post" action="/jobs/delete" onsubmit="return confirm('Delete this job?');">
-                            <input type="hidden" name="id" value="{{ job.id }}">
+                        <form method="post" action="/jobs/delete">
+                            <input type="hidden" name="id" value="{{ item.id }}">
                             <button type="submit" class="danger-btn">Delete</button>
                         </form>
                     </td>
