@@ -318,6 +318,27 @@ def render(request: Request, template_name: str, context: dict, status_code: int
         context=context,
         status_code=status_code,
     )
+    def role_required(*allowed_roles):
+    def decorator(route_func):
+        @wraps(route_func)
+        def wrapper(request: Request, *args, **kwargs):
+            db = db_session()
+            try:
+                user = get_user(request, db)
+                if not user:
+                    return RedirectResponse(url="/login", status_code=303)
+
+                if user.role not in allowed_roles:
+                    return RedirectResponse(url="/dashboard", status_code=303)
+
+            finally:
+                db.close()
+
+            return route_func(request, *args, **kwargs)
+
+        return wrapper
+
+    return decorator
 def role_required(*allowed_roles):
     def decorator(route_func):
         @wraps(route_func)
