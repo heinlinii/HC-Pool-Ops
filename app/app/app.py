@@ -1,5 +1,5 @@
 import os
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from functools import wraps
 from typing import Optional
 
@@ -7,7 +7,7 @@ from fastapi import FastAPI, Form, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from sqlalchemy import Boolean, Column, Date, DateTime, ForeignKey, Integer, String, Text, create_engine
+from sqlalchemy import Boolean, Column, Date, DateTime, ForeignKey, Integer, Numeric, String, Text, create_engine
 from sqlalchemy.orm import declarative_base, relationship, sessionmaker, joinedload
 from starlette.middleware.sessions import SessionMiddleware
 
@@ -38,6 +38,7 @@ ROLE_CREW = "crew"
 ROLE_CLIENT = "client"
 
 JOB_STATUSES = ["Scheduled", "In Progress", "Complete"]
+BILLING_STATUSES = ["Pending", "Ready to Bill", "Billed", "Paid"]
 SLOT_STATUSES = ["Open", "Booked", "Blocked"]
 JOB_TYPES = [
     "Opening",
@@ -109,6 +110,23 @@ class Job(Base):
 
     property = relationship("Property", back_populates="jobs")
     crew_user = relationship("User", back_populates="assigned_jobs", foreign_keys=[crew_user_id])
+    billing = relationship("JobBilling", back_populates="job", uselist=False, cascade="all, delete")
+
+
+class JobBilling(Base):
+    __tablename__ = "job_billing"
+
+    id = Column(Integer, primary_key=True)
+    job_id = Column(Integer, ForeignKey("jobs.id"), unique=True, nullable=False)
+    price = Column(Numeric(10, 2), default=0)
+    billing_status = Column(String(50), default="Pending")
+    invoice_number = Column(String(100), default="")
+    notes = Column(Text, default="")
+    ready_to_bill_at = Column(DateTime, nullable=True)
+    billed_at = Column(DateTime, nullable=True)
+    paid_at = Column(DateTime, nullable=True)
+
+    job = relationship("Job", back_populates="billing")
 
 
 class ScheduleSlot(Base):
@@ -148,6 +166,22 @@ def db_session():
     return SessionLocal()
 
 
+def ensure_billing_for_job(db, job: Job):
+    if job and not job.billing:
+        billing = JobBilling(job_id=job.id, price=0, billing_status="Pending")
+        db.add(billing)
+        db.commit()
+        db.refresh(job)
+
+
+def ensure_billing_for_all_jobs(db):
+    jobs = db.query(Job).options(joinedload(Job.billing)).all()
+    for job in jobs:
+        if not job.billing:
+            db.add(JobBilling(job_id=job.id, price=0, billing_status="Pending"))
+    db.commit()
+
+
 def seed_database():
     db = db_session()
     try:
@@ -184,16 +218,19 @@ def seed_database():
 
             prop = db.query(Property).filter(Property.name == "Backyard Pool").first()
 
-            db.add(
-                Job(
-                    property_id=prop.id,
-                    title="Spring Opening",
-                    status="Scheduled",
-                    scheduled_for=date.today(),
-                    crew_user_id=crew.id,
-                    notes="Demo seeded job",
-                )
+            job = Job(
+                property_id=prop.id,
+                title="Spring Opening",
+                status="Scheduled",
+                scheduled_for=date.today(),
+                crew_user_id=crew.id,
+                notes="Demo seeded job",
             )
+            db.add(job)
+            db.commit()
+
+            job = db.query(Job).filter(Job.title == "Spring Opening").first()
+            db.add(JobBilling(job_id=job.id, price=450, billing_status="Pending"))
 
             db.add(
                 ScheduleSlot(
@@ -208,6 +245,8 @@ def seed_database():
             )
 
             db.commit()
+        else:
+            ensure_billing_for_all_jobs(db)
     finally:
         db.close()
 
@@ -283,6 +322,36 @@ def role_required(*allowed_roles):
     return decorator
 
 
+def money(value):
+    if value is None:
+        return 0
+    return float(value)
+
+
+def billing_total(db, status: str):
+    records = db.query(JobBilling).filter(JobBilling.billing_status == status).all()
+    return sum(money(record.price) for record in records)
+
+
+def billing_total_for_week(db):
+    today = date.today()
+    week_start = today - timedelta(days=today.weekday())
+    week_end = week_start + timedelta(days=6)
+
+    jobs = (
+        db.query(Job)
+        .options(joinedload(Job.billing))
+        .filter(Job.scheduled_for >= week_start, Job.scheduled_for <= week_end)
+        .all()
+    )
+
+    total = 0
+    for job in jobs:
+        if job.billing:
+            total += money(job.billing.price)
+    return total
+
+
 @app.get("/", response_class=HTMLResponse)
 def root(request: Request):
     db = db_session()
@@ -352,13 +421,20 @@ def dashboard(request: Request):
         context = base_context(request, db, "Dashboard")
 
         if user.role == ROLE_ADMIN:
+            ensure_billing_for_all_jobs(db)
+
             context["client_count"] = db.query(Client).count()
             context["property_count"] = db.query(Property).count()
             context["job_count"] = db.query(Job).count()
             context["open_slot_count"] = db.query(ScheduleSlot).filter(ScheduleSlot.status == "Open").count()
+            context["billing_pending_total"] = billing_total(db, "Pending")
+            context["ready_to_bill_total"] = billing_total(db, "Ready to Bill")
+            context["billed_total"] = billing_total(db, "Billed")
+            context["paid_total"] = billing_total(db, "Paid")
+            context["week_total"] = billing_total_for_week(db)
             context["recent_jobs"] = (
                 db.query(Job)
-                .options(joinedload(Job.property), joinedload(Job.crew_user))
+                .options(joinedload(Job.property), joinedload(Job.crew_user), joinedload(Job.billing))
                 .order_by(Job.id.desc())
                 .limit(10)
                 .all()
@@ -597,6 +673,8 @@ def delete_property(request: Request, id: int = Form(...)):
 def jobs_page(request: Request):
     db = db_session()
     try:
+        ensure_billing_for_all_jobs(db)
+
         context = base_context(request, db, "Jobs")
         context["properties"] = db.query(Property).order_by(Property.name.asc()).all()
         context["crew_users"] = (
@@ -607,11 +685,12 @@ def jobs_page(request: Request):
         )
         context["jobs"] = (
             db.query(Job)
-            .options(joinedload(Job.property), joinedload(Job.crew_user))
+            .options(joinedload(Job.property), joinedload(Job.crew_user), joinedload(Job.billing))
             .order_by(Job.id.desc())
             .all()
         )
         context["statuses"] = JOB_STATUSES
+        context["billing_statuses"] = BILLING_STATUSES
         context["error"] = None
         return render(request, "jobs.html", context)
     finally:
@@ -628,22 +707,27 @@ def add_job(
     scheduled_for: str = Form(""),
     crew_user_id: Optional[str] = Form(""),
     notes: str = Form(""),
+    price: str = Form("0"),
 ):
     db = db_session()
     try:
         parsed_date = datetime.strptime(scheduled_for, "%Y-%m-%d").date() if scheduled_for.strip() else None
         parsed_crew_id = int(crew_user_id) if str(crew_user_id).strip() else None
 
-        db.add(
-            Job(
-                property_id=property_id,
-                title=title.strip(),
-                status=status.strip(),
-                scheduled_for=parsed_date,
-                crew_user_id=parsed_crew_id,
-                notes=notes.strip(),
-            )
+        job = Job(
+            property_id=property_id,
+            title=title.strip(),
+            status=status.strip(),
+            scheduled_for=parsed_date,
+            crew_user_id=parsed_crew_id,
+            notes=notes.strip(),
         )
+        db.add(job)
+        db.commit()
+        db.refresh(job)
+
+        clean_price = float(price) if str(price).strip() else 0
+        db.add(JobBilling(job_id=job.id, price=clean_price, billing_status="Pending"))
         db.commit()
 
         return RedirectResponse(url="/jobs", status_code=303)
@@ -677,6 +761,71 @@ def update_job_status(request: Request, id: int = Form(...), status: str = Form(
         if job and status in JOB_STATUSES:
             if user.role == ROLE_ADMIN or job.crew_user_id == user.id:
                 job.status = status
+                db.commit()
+
+        if user.role == ROLE_CREW:
+            return RedirectResponse(url="/my-day", status_code=303)
+
+        return RedirectResponse(url="/jobs", status_code=303)
+    finally:
+        db.close()
+
+
+@app.post("/jobs/billing")
+@role_required(ROLE_ADMIN)
+def update_job_billing(
+    request: Request,
+    id: int = Form(...),
+    price: str = Form("0"),
+    billing_status: str = Form("Pending"),
+    invoice_number: str = Form(""),
+    billing_notes: str = Form(""),
+):
+    db = db_session()
+    try:
+        job = db.query(Job).options(joinedload(Job.billing)).filter(Job.id == id).first()
+
+        if job:
+            ensure_billing_for_job(db, job)
+            billing = db.query(JobBilling).filter(JobBilling.job_id == job.id).first()
+
+            clean_price = float(price) if str(price).strip() else 0
+            clean_status = billing_status if billing_status in BILLING_STATUSES else "Pending"
+
+            billing.price = clean_price
+            billing.billing_status = clean_status
+            billing.invoice_number = invoice_number.strip()
+            billing.notes = billing_notes.strip()
+
+            now = datetime.now()
+            if clean_status == "Ready to Bill" and not billing.ready_to_bill_at:
+                billing.ready_to_bill_at = now
+            if clean_status == "Billed" and not billing.billed_at:
+                billing.billed_at = now
+            if clean_status == "Paid" and not billing.paid_at:
+                billing.paid_at = now
+
+            db.commit()
+
+        return RedirectResponse(url="/jobs", status_code=303)
+    finally:
+        db.close()
+
+
+@app.post("/jobs/ready-to-bill")
+@role_required(ROLE_ADMIN, ROLE_CREW)
+def mark_ready_to_bill(request: Request, id: int = Form(...)):
+    db = db_session()
+    try:
+        user = get_user(request, db)
+        job = db.query(Job).options(joinedload(Job.billing)).filter(Job.id == id).first()
+
+        if job:
+            if user.role == ROLE_ADMIN or job.crew_user_id == user.id:
+                ensure_billing_for_job(db, job)
+                billing = db.query(JobBilling).filter(JobBilling.job_id == job.id).first()
+                billing.billing_status = "Ready to Bill"
+                billing.ready_to_bill_at = datetime.now()
                 db.commit()
 
         if user.role == ROLE_CREW:
@@ -735,6 +884,10 @@ def complete_job(request: Request, id: int = Form(...)):
 
         if job:
             job.status = "Complete"
+            ensure_billing_for_job(db, job)
+            billing = db.query(JobBilling).filter(JobBilling.job_id == job.id).first()
+            billing.billing_status = "Ready to Bill"
+            billing.ready_to_bill_at = datetime.now()
             db.commit()
 
         return RedirectResponse(url="/my-day", status_code=303)
@@ -851,7 +1004,7 @@ def my_day_page(request: Request):
         context = base_context(request, db, "My Day")
         context["jobs"] = (
             db.query(Job)
-            .options(joinedload(Job.property))
+            .options(joinedload(Job.property), joinedload(Job.billing))
             .filter(Job.crew_user_id == user.id)
             .order_by(Job.scheduled_for.asc().nulls_last(), Job.id.asc())
             .all()
