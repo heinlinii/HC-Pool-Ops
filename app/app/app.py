@@ -7,19 +7,8 @@ from fastapi import FastAPI, Form, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from sqlalchemy import (
-    Boolean,
-    Column,
-    Date,
-    DateTime,
-    ForeignKey,
-    Integer,
-    String,
-    Text,
-    create_engine,
-    inspect,
-)
-from sqlalchemy.orm import declarative_base, joinedload, relationship, sessionmaker
+from sqlalchemy import Boolean, Column, Date, DateTime, ForeignKey, Integer, String, Text, create_engine
+from sqlalchemy.orm import declarative_base, relationship, sessionmaker, joinedload
 from starlette.middleware.sessions import SessionMiddleware
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -35,13 +24,12 @@ app.add_middleware(
 app.mount("/static", StaticFiles(directory=os.path.join(APP_ROOT, "static")), name="static")
 templates = Jinja2Templates(directory=os.path.join(APP_ROOT, "templates"))
 
-raw_database_url = os.getenv("DATABASE_URL", "sqlite:///./poolops.db")
-if raw_database_url.startswith("postgres://"):
-    raw_database_url = raw_database_url.replace("postgres://", "postgresql://", 1)
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./poolops.db")
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
-connect_args = {"check_same_thread": False} if raw_database_url.startswith("sqlite") else {}
-
-engine = create_engine(raw_database_url, connect_args=connect_args)
+connect_args = {"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}
+engine = create_engine(DATABASE_URL, connect_args=connect_args)
 SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
 Base = declarative_base()
 
@@ -153,131 +141,77 @@ class ClockEntry(Base):
     user = relationship("User", back_populates="clock_entries")
 
 
-REQUIRED_COLUMNS = {
-    "users": ["id", "username", "password", "full_name", "role", "is_active"],
-    "clients": ["id", "name", "phone", "email", "qb_customer_id", "portal_user_id"],
-    "properties": ["id", "client_id", "name", "address", "city"],
-    "jobs": ["id", "property_id", "title", "status", "scheduled_for", "crew_user_id", "notes"],
-    "schedule_slots": [
-        "id",
-        "property_id",
-        "slot_date",
-        "start_time",
-        "end_time",
-        "job_type",
-        "status",
-        "notes",
-        "booked_by_client_id",
-    ],
-    "clock_entries": ["id", "user_id", "clock_in_at", "clock_out_at", "entry_date", "notes"],
-}
+Base.metadata.create_all(bind=engine)
 
 
 def db_session():
     return SessionLocal()
 
 
-def reset_if_schema_is_mismatched():
-    inspector = inspect(engine)
-    existing_tables = inspector.get_table_names()
-
-    for table_name, required_columns in REQUIRED_COLUMNS.items():
-        if table_name in existing_tables:
-            existing_columns = [column["name"] for column in inspector.get_columns(table_name)]
-            for required_column in required_columns:
-                if required_column not in existing_columns:
-                    Base.metadata.drop_all(bind=engine)
-                    Base.metadata.create_all(bind=engine)
-                    return
-
-    Base.metadata.create_all(bind=engine)
-
-
 def seed_database():
     db = db_session()
     try:
-        if db.query(User).count() > 0:
-            return
+        if db.query(User).count() == 0:
+            admin = User(username="mike", password="1234", full_name="Mike Heinlin", role=ROLE_ADMIN)
+            crew = User(username="jake", password="1234", full_name="Jake Crew", role=ROLE_CREW)
+            client_user = User(username="smith", password="1234", full_name="Smith Family", role=ROLE_CLIENT)
+            db.add_all([admin, crew, client_user])
+            db.commit()
 
-        admin = User(
-            username="mike",
-            password="1234",
-            full_name="Mike Heinlin",
-            role=ROLE_ADMIN,
-        )
+            client_user = db.query(User).filter(User.username == "smith").first()
+            crew = db.query(User).filter(User.username == "jake").first()
 
-        crew = User(
-            username="jake",
-            password="1234",
-            full_name="Jake Crew",
-            role=ROLE_CREW,
-        )
-
-        client_user = User(
-            username="smith",
-            password="1234",
-            full_name="Smith Family",
-            role=ROLE_CLIENT,
-        )
-
-        db.add_all([admin, crew, client_user])
-        db.commit()
-
-        client_user = db.query(User).filter(User.username == "smith").first()
-
-        client = Client(
-            name="Smith Family",
-            phone="812-555-0101",
-            email="smith@example.com",
-            qb_customer_id="QB-DEMO-1001",
-            portal_user_id=client_user.id,
-        )
-        db.add(client)
-        db.commit()
-
-        client = db.query(Client).filter(Client.name == "Smith Family").first()
-
-        prop = Property(
-            client_id=client.id,
-            name="Backyard Pool",
-            address="123 Main St",
-            city="Evansville",
-        )
-        db.add(prop)
-        db.commit()
-
-        prop = db.query(Property).filter(Property.name == "Backyard Pool").first()
-        crew = db.query(User).filter(User.username == "jake").first()
-
-        db.add(
-            Job(
-                property_id=prop.id,
-                title="Spring Opening",
-                status="Scheduled",
-                scheduled_for=date.today(),
-                crew_user_id=crew.id,
-                notes="Seeded demo job",
+            client = Client(
+                name="Smith Family",
+                phone="812-555-0101",
+                email="smith@example.com",
+                qb_customer_id="QB-DEMO-1001",
+                portal_user_id=client_user.id,
             )
-        )
+            db.add(client)
+            db.commit()
 
-        db.add(
-            ScheduleSlot(
-                property_id=None,
-                slot_date=date.today(),
-                start_time="8am",
-                end_time="9am",
-                job_type="Opening",
-                status="Open",
-                notes="Demo open client booking slot",
+            client = db.query(Client).filter(Client.name == "Smith Family").first()
+
+            prop = Property(
+                client_id=client.id,
+                name="Backyard Pool",
+                address="123 Main St",
+                city="Evansville",
             )
-        )
+            db.add(prop)
+            db.commit()
 
-        db.commit()
+            prop = db.query(Property).filter(Property.name == "Backyard Pool").first()
+
+            db.add(
+                Job(
+                    property_id=prop.id,
+                    title="Spring Opening",
+                    status="Scheduled",
+                    scheduled_for=date.today(),
+                    crew_user_id=crew.id,
+                    notes="Demo seeded job",
+                )
+            )
+
+            db.add(
+                ScheduleSlot(
+                    property_id=prop.id,
+                    slot_date=date.today(),
+                    start_time="8am",
+                    end_time="9am",
+                    job_type="Opening",
+                    status="Open",
+                    notes="Demo open schedule slot",
+                )
+            )
+
+            db.commit()
     finally:
         db.close()
 
 
-reset_if_schema_is_mismatched()
 seed_database()
 
 
@@ -286,11 +220,7 @@ def get_user(request: Request, db):
     if not user_id:
         return None
 
-    return (
-        db.query(User)
-        .filter(User.id == user_id, User.is_active == True)
-        .first()
-    )
+    return db.query(User).filter(User.id == user_id, User.is_active == True).first()
 
 
 def base_context(request: Request, db, title: str):
@@ -357,10 +287,8 @@ def role_required(*allowed_roles):
 def root(request: Request):
     db = db_session()
     try:
-        user = get_user(request, db)
-        if user:
+        if get_user(request, db):
             return RedirectResponse(url="/dashboard", status_code=303)
-
         return RedirectResponse(url="/login", status_code=303)
     finally:
         db.close()
@@ -370,8 +298,7 @@ def root(request: Request):
 def login_page(request: Request):
     db = db_session()
     try:
-        user = get_user(request, db)
-        if user:
+        if get_user(request, db):
             return RedirectResponse(url="/dashboard", status_code=303)
 
         context = base_context(request, db, "Login")
@@ -442,7 +369,7 @@ def dashboard(request: Request):
                 db.query(Job)
                 .options(joinedload(Job.property))
                 .filter(Job.crew_user_id == user.id)
-                .order_by(Job.id.asc())
+                .order_by(Job.scheduled_for.asc().nulls_last(), Job.id.asc())
                 .all()
             )
             context["open_clock"] = (
@@ -456,14 +383,9 @@ def dashboard(request: Request):
             )
 
         elif user.role == ROLE_CLIENT:
-            client = (
-                db.query(Client)
-                .options(joinedload(Client.properties))
-                .filter(Client.portal_user_id == user.id)
-                .first()
-            )
+            client = db.query(Client).filter(Client.portal_user_id == user.id).first()
             context["client"] = client
-            context["properties"] = list(client.properties) if client else []
+            context["properties"] = client.properties if client else []
             context["open_slots"] = (
                 db.query(ScheduleSlot)
                 .filter(ScheduleSlot.status == "Open")
@@ -501,26 +423,24 @@ def add_user(
     db = db_session()
     try:
         clean_username = username.strip().lower()
-        clean_password = password.strip()
-        clean_full_name = full_name.strip()
         clean_role = role.strip()
 
         if clean_role not in [ROLE_ADMIN, ROLE_CREW, ROLE_CLIENT]:
             return RedirectResponse(url="/users", status_code=303)
 
         existing = db.query(User).filter(User.username == clean_username).first()
-        if not existing:
-            db.add(
-                User(
-                    username=clean_username,
-                    password=clean_password,
-                    full_name=clean_full_name,
-                    role=clean_role,
-                    is_active=True,
-                )
-            )
-            db.commit()
+        if existing:
+            return RedirectResponse(url="/users", status_code=303)
 
+        db.add(
+            User(
+                username=clean_username,
+                password=password.strip(),
+                full_name=full_name.strip(),
+                role=clean_role,
+            )
+        )
+        db.commit()
         return RedirectResponse(url="/users", status_code=303)
     finally:
         db.close()
@@ -532,10 +452,10 @@ def delete_user(request: Request, id: int = Form(...)):
     db = db_session()
     try:
         current_user = get_user(request, db)
-        user_to_delete = db.query(User).filter(User.id == id).first()
+        user = db.query(User).filter(User.id == id).first()
 
-        if user_to_delete and current_user and user_to_delete.id != current_user.id:
-            db.delete(user_to_delete)
+        if user and current_user and user.id != current_user.id:
+            db.delete(user)
             db.commit()
 
         return RedirectResponse(url="/users", status_code=303)
@@ -579,20 +499,18 @@ def add_client(
 ):
     db = db_session()
     try:
-        clean_name = name.strip()
         parsed_portal_user_id = int(portal_user_id) if str(portal_user_id).strip() else None
 
-        if clean_name:
-            db.add(
-                Client(
-                    name=clean_name,
-                    phone=phone.strip(),
-                    email=email.strip(),
-                    qb_customer_id=qb_customer_id.strip(),
-                    portal_user_id=parsed_portal_user_id,
-                )
+        db.add(
+            Client(
+                name=name.strip(),
+                phone=phone.strip(),
+                email=email.strip(),
+                qb_customer_id=qb_customer_id.strip(),
+                portal_user_id=parsed_portal_user_id,
             )
-            db.commit()
+        )
+        db.commit()
 
         return RedirectResponse(url="/clients", status_code=303)
     finally:
@@ -604,9 +522,9 @@ def add_client(
 def delete_client(request: Request, id: int = Form(...)):
     db = db_session()
     try:
-        client = db.query(Client).filter(Client.id == id).first()
-        if client:
-            db.delete(client)
+        item = db.query(Client).filter(Client.id == id).first()
+        if item:
+            db.delete(item)
             db.commit()
 
         return RedirectResponse(url="/clients", status_code=303)
@@ -644,18 +562,15 @@ def add_property(
 ):
     db = db_session()
     try:
-        clean_name = name.strip()
-
-        if clean_name:
-            db.add(
-                Property(
-                    client_id=client_id,
-                    name=clean_name,
-                    address=address.strip(),
-                    city=city.strip(),
-                )
+        db.add(
+            Property(
+                client_id=client_id,
+                name=name.strip(),
+                address=address.strip(),
+                city=city.strip(),
             )
-            db.commit()
+        )
+        db.commit()
 
         return RedirectResponse(url="/properties", status_code=303)
     finally:
@@ -667,9 +582,9 @@ def add_property(
 def delete_property(request: Request, id: int = Form(...)):
     db = db_session()
     try:
-        prop = db.query(Property).filter(Property.id == id).first()
-        if prop:
-            db.delete(prop)
+        item = db.query(Property).filter(Property.id == id).first()
+        if item:
+            db.delete(item)
             db.commit()
 
         return RedirectResponse(url="/properties", status_code=303)
@@ -723,7 +638,7 @@ def add_job(
             Job(
                 property_id=property_id,
                 title=title.strip(),
-                status=status,
+                status=status.strip(),
                 scheduled_for=parsed_date,
                 crew_user_id=parsed_crew_id,
                 notes=notes.strip(),
@@ -741,9 +656,9 @@ def add_job(
 def delete_job(request: Request, id: int = Form(...)):
     db = db_session()
     try:
-        job = db.query(Job).filter(Job.id == id).first()
-        if job:
-            db.delete(job)
+        item = db.query(Job).filter(Job.id == id).first()
+        if item:
+            db.delete(item)
             db.commit()
 
         return RedirectResponse(url="/jobs", status_code=303)
@@ -815,20 +730,14 @@ def add_schedule_slot(
         parsed_date = datetime.strptime(slot_date, "%Y-%m-%d").date()
         parsed_property_id = int(property_id) if str(property_id).strip() else None
 
-        if job_type not in JOB_TYPES:
-            job_type = "Service"
-
-        if status not in SLOT_STATUSES:
-            status = "Open"
-
         db.add(
             ScheduleSlot(
                 property_id=parsed_property_id,
                 slot_date=parsed_date,
                 start_time=start_time.strip(),
                 end_time=end_time.strip(),
-                job_type=job_type,
-                status=status,
+                job_type=job_type.strip() or "Service",
+                status=status.strip() or "Open",
                 notes=notes.strip(),
             )
         )
@@ -844,12 +753,36 @@ def add_schedule_slot(
 def delete_schedule_slot(request: Request, id: int = Form(...)):
     db = db_session()
     try:
-        slot = db.query(ScheduleSlot).filter(ScheduleSlot.id == id).first()
-        if slot:
-            db.delete(slot)
+        item = db.query(ScheduleSlot).filter(ScheduleSlot.id == id).first()
+        if item:
+            db.delete(item)
             db.commit()
 
         return RedirectResponse(url="/schedule", status_code=303)
+    finally:
+        db.close()
+
+
+@app.post("/schedule/book")
+@role_required(ROLE_CLIENT)
+def book_schedule_slot(
+    request: Request,
+    id: int = Form(...),
+    property_id: int = Form(...),
+):
+    db = db_session()
+    try:
+        user = get_user(request, db)
+        client = db.query(Client).filter(Client.portal_user_id == user.id).first()
+        slot = db.query(ScheduleSlot).filter(ScheduleSlot.id == id).first()
+
+        if client and slot and slot.status == "Open":
+            slot.status = "Booked"
+            slot.booked_by_client_id = client.id
+            slot.property_id = property_id
+            db.commit()
+
+        return RedirectResponse(url="/client-portal", status_code=303)
     finally:
         db.close()
 
@@ -865,7 +798,7 @@ def my_day_page(request: Request):
             db.query(Job)
             .options(joinedload(Job.property))
             .filter(Job.crew_user_id == user.id)
-            .order_by(Job.id.asc())
+            .order_by(Job.scheduled_for.asc().nulls_last(), Job.id.asc())
             .all()
         )
         context["open_clock"] = (
@@ -895,7 +828,7 @@ def clock_in(request: Request, notes: str = Form("")):
     db = db_session()
     try:
         user = get_user(request, db)
-        open_clock = (
+        existing = (
             db.query(ClockEntry)
             .filter(
                 ClockEntry.user_id == user.id,
@@ -905,7 +838,7 @@ def clock_in(request: Request, notes: str = Form("")):
             .first()
         )
 
-        if not open_clock:
+        if not existing:
             db.add(
                 ClockEntry(
                     user_id=user.id,
@@ -927,7 +860,7 @@ def clock_out(request: Request):
     db = db_session()
     try:
         user = get_user(request, db)
-        open_clock = (
+        existing = (
             db.query(ClockEntry)
             .filter(
                 ClockEntry.user_id == user.id,
@@ -937,8 +870,8 @@ def clock_out(request: Request):
             .first()
         )
 
-        if open_clock:
-            open_clock.clock_out_at = datetime.now()
+        if existing:
+            existing.clock_out_at = datetime.now()
             db.commit()
 
         return RedirectResponse(url="/my-day", status_code=303)
@@ -952,16 +885,11 @@ def client_portal_page(request: Request):
     db = db_session()
     try:
         user = get_user(request, db)
-        client = (
-            db.query(Client)
-            .options(joinedload(Client.properties))
-            .filter(Client.portal_user_id == user.id)
-            .first()
-        )
+        client = db.query(Client).filter(Client.portal_user_id == user.id).first()
 
         context = base_context(request, db, "Client Portal")
         context["client"] = client
-        context["properties"] = list(client.properties) if client else []
+        context["properties"] = client.properties if client else []
         context["open_slots"] = (
             db.query(ScheduleSlot)
             .filter(ScheduleSlot.status == "Open")
@@ -970,7 +898,6 @@ def client_portal_page(request: Request):
         )
         context["my_booked_slots"] = (
             db.query(ScheduleSlot)
-            .options(joinedload(ScheduleSlot.property))
             .filter(ScheduleSlot.booked_by_client_id == client.id)
             .order_by(ScheduleSlot.slot_date.asc(), ScheduleSlot.start_time.asc())
             .all()
@@ -979,29 +906,5 @@ def client_portal_page(request: Request):
         )
 
         return render(request, "client_portal.html", context)
-    finally:
-        db.close()
-
-
-@app.post("/schedule/book")
-@role_required(ROLE_CLIENT)
-def book_schedule_slot(
-    request: Request,
-    id: int = Form(...),
-    property_id: int = Form(...),
-):
-    db = db_session()
-    try:
-        user = get_user(request, db)
-        client = db.query(Client).filter(Client.portal_user_id == user.id).first()
-        slot = db.query(ScheduleSlot).filter(ScheduleSlot.id == id).first()
-
-        if client and slot and slot.status == "Open":
-            slot.status = "Booked"
-            slot.booked_by_client_id = client.id
-            slot.property_id = property_id
-            db.commit()
-
-        return RedirectResponse(url="/client-portal", status_code=303)
     finally:
         db.close()
