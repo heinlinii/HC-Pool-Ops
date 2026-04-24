@@ -1,90 +1,97 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="crew-header">
-    <div>
-        <h1>My Day</h1>
-        <p>{{ user.full_name }} • {{ today }}</p>
-    </div>
+<div class="crew-header card">
+    <h1>My Day</h1>
+    <p>Today’s assigned work and time clock.</p>
 
-    <div class="clock-box">
-        {% if open_clock %}
-        <div class="success">Clocked in</div>
-        <form method="post" action="/clock/out">
-            <button type="submit" class="danger-btn big-btn">Clock Out</button>
-        </form>
-        {% else %}
-        <div class="warning">Not clocked in</div>
-        <form method="post" action="/clock/in" class="form">
-            <input type="text" name="notes" placeholder="Clock-in notes">
-            <button type="submit" class="big-btn">Clock In</button>
-        </form>
-        {% endif %}
-    </div>
+    {% if open_clock %}
+    <div class="success">Clocked in since {{ open_clock.clock_in_at }}</div>
+    <form method="post" action="/clock/out">
+        <button type="submit" class="danger-btn big-button">Clock Out</button>
+    </form>
+    {% else %}
+    <div class="warning">You are not clocked in.</div>
+    <form method="post" action="/clock/in" class="form">
+        <input type="text" name="notes" placeholder="Clock-in note optional">
+        <button type="submit" class="big-button">Clock In</button>
+    </form>
+    {% endif %}
 </div>
 
 <div class="card">
-    <h2>Today’s Jobs</h2>
+    <h2>Assigned Jobs</h2>
 
-    {% for job in jobs_today %}
-    <div class="job-card">
-        <div class="job-top">
-            <div>
-                <h3>{{ job.title }}</h3>
-                <p class="muted">{{ job.property.name if job.property else "-" }}</p>
-                <p>{{ job.property.address if job.property else "" }} {{ job.property.city if job.property else "" }}</p>
+    <div class="crew-job-list">
+        {% for item in jobs %}
+        <div class="crew-job-card">
+            <div class="crew-job-top">
+                <h3>{{ item.title }}</h3>
+                <span class="status-pill status-{{ item.status|lower|replace(' ', '-') }}">
+                    {{ item.status }}
+                </span>
             </div>
-            <span class="status-pill">{{ job.status }}</span>
+
+            <div class="crew-job-detail">
+                <strong>Property:</strong>
+                {{ item.property.name if item.property else "-" }}
+            </div>
+
+            <div class="crew-job-detail">
+                <strong>Scheduled:</strong>
+                {{ item.scheduled_for or "-" }}
+            </div>
+
+            {% if item.notes %}
+            <div class="crew-job-detail">
+                <strong>Notes:</strong>
+                {{ item.notes }}
+            </div>
+            {% endif %}
+
+            <div class="crew-actions">
+                {% if item.status != "In Progress" and item.status != "Complete" %}
+                <form method="post" action="/jobs/start">
+                    <input type="hidden" name="id" value="{{ item.id }}">
+                    <button type="submit" class="big-button">Start Job</button>
+                </form>
+                {% endif %}
+
+                {% if item.status == "In Progress" %}
+                <form method="post" action="/jobs/complete">
+                    <input type="hidden" name="id" value="{{ item.id }}">
+                    <button type="submit" class="big-button complete-button">Complete Job</button>
+                </form>
+                {% endif %}
+
+                <form method="post" action="/jobs/status" class="inline-form">
+                    <input type="hidden" name="id" value="{{ item.id }}">
+                    <select name="status">
+                        <option value="Scheduled" {% if item.status == "Scheduled" %}selected{% endif %}>Scheduled</option>
+                        <option value="In Progress" {% if item.status == "In Progress" %}selected{% endif %}>In Progress</option>
+                        <option value="Complete" {% if item.status == "Complete" %}selected{% endif %}>Complete</option>
+                    </select>
+                    <button type="submit">Save</button>
+                </form>
+            </div>
         </div>
-
-        <div class="crew-actions">
-            <form method="post" action="/jobs/status">
-                <input type="hidden" name="id" value="{{ job.id }}">
-                <input type="hidden" name="status" value="In Progress">
-                <button type="submit" class="big-btn">Start Job</button>
-            </form>
-
-            <form method="post" action="/jobs/status">
-                <input type="hidden" name="id" value="{{ job.id }}">
-                <input type="hidden" name="status" value="Complete">
-                <button type="submit" class="big-btn complete-btn">Complete</button>
-            </form>
-        </div>
-
-        <form method="post" action="/jobs/notes" class="form">
-            <input type="hidden" name="id" value="{{ job.id }}">
-            <label>Job Notes</label>
-            <textarea name="notes" rows="3">{{ job.notes or "" }}</textarea>
-            <button type="submit">Save Notes</button>
-        </form>
+        {% else %}
+        <p>No assigned jobs.</p>
+        {% endfor %}
     </div>
-    {% else %}
-    <p>No jobs scheduled for today.</p>
-    {% endfor %}
-</div>
-
-<div class="card">
-    <h2>Upcoming / Unscheduled Jobs</h2>
-
-    {% for job in jobs_upcoming %}
-    <div class="mini-job">
-        <strong>{{ job.title }}</strong><br>
-        {{ job.property.name if job.property else "-" }}<br>
-        Scheduled: {{ job.scheduled_for or "Not scheduled" }}<br>
-        Status: {{ job.status }}
-    </div>
-    {% else %}
-    <p>No upcoming jobs.</p>
-    {% endfor %}
 </div>
 
 <div class="card">
     <h2>Recent Clock Entries</h2>
     <ul>
         {% for item in today_entries %}
-        <li>In: {{ item.clock_in_at }} | Out: {{ item.clock_out_at or "still clocked in" }} | {{ item.notes or "" }}</li>
+        <li>
+            In: {{ item.clock_in_at }} |
+            Out: {{ item.clock_out_at or "still clocked in" }} |
+            {{ item.notes or "" }}
+        </li>
         {% else %}
-        <li>No clock entries yet.</li>
+        <li>No entries yet.</li>
         {% endfor %}
     </ul>
 </div>

@@ -53,9 +53,7 @@ body {
   padding: 0 16px 32px;
 }
 
-.card,
-.job-card,
-.mini-job {
+.card {
   background: white;
   border: 1px solid #d7dbe2;
   border-radius: 10px;
@@ -80,9 +78,10 @@ body {
   text-align: center;
 }
 
-.stat-label,
-.muted {
+.stat-label {
   color: #555;
+  font-size: 14px;
+  margin-bottom: 8px;
 }
 
 .stat-value {
@@ -102,22 +101,16 @@ body {
   align-items: center;
 }
 
-.client-request-form {
-  display: contents;
-}
-
 input,
 select,
-button,
-textarea {
+button {
   padding: 10px 12px;
   font-size: 16px;
   border-radius: 6px;
 }
 
 input,
-select,
-textarea {
+select {
   border: 1px solid #c8ced8;
 }
 
@@ -137,13 +130,23 @@ button:hover,
   background: #0d2d5e;
 }
 
-button:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-}
-
 .button-link {
   padding: 10px 12px;
+}
+
+.big-button {
+  width: 100%;
+  min-height: 56px;
+  font-size: 18px;
+  border-radius: 10px;
+}
+
+.complete-button {
+  background: #137333;
+}
+
+.complete-button:hover {
+  background: #0f5f2a;
 }
 
 .danger-btn {
@@ -152,20 +155,6 @@ button:disabled {
 
 .danger-btn:hover {
   background: #8f1c14;
-}
-
-.complete-btn {
-  background: #137333;
-}
-
-.complete-btn:hover {
-  background: #0f5f29;
-}
-
-.big-btn {
-  width: 100%;
-  padding: 16px;
-  font-size: 18px;
 }
 
 .error {
@@ -226,82 +215,139 @@ th {
   background: #f8fafc;
 }
 
-.crew-header {
+/* Crew workflow */
+.crew-header h1 {
+  margin-bottom: 6px;
+}
+
+.crew-header p {
+  color: #555;
+  margin-top: 0;
+}
+
+.crew-job-list {
   display: grid;
-  grid-template-columns: 1fr 320px;
-  gap: 20px;
-  align-items: start;
+  gap: 16px;
 }
 
-.clock-box {
-  background: white;
+.crew-job-card {
   border: 1px solid #d7dbe2;
-  border-radius: 10px;
-  padding: 20px;
+  border-radius: 12px;
+  padding: 16px;
+  background: #f8fafc;
 }
 
-.job-top {
+.crew-job-top {
   display: flex;
   justify-content: space-between;
-  gap: 16px;
-  align-items: start;
-  margin-bottom: 16px;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 12px;
 }
 
-.status-pill {
-  background: #e8eefc;
-  color: #123b7a;
-  padding: 8px 12px;
-  border-radius: 999px;
-  font-weight: bold;
-  white-space: nowrap;
-  display: inline-block;
+.crew-job-top h3 {
+  margin: 0;
+  font-size: 22px;
 }
 
-.status-open {
-  background: #e8f7ec;
-  color: #126b2e;
-}
-
-.status-requested {
-  background: #fff6db;
-  color: #7a5a00;
-}
-
-.status-approved {
-  background: #e8eefc;
-  color: #123b7a;
-}
-
-.status-blocked {
-  background: #fde8e8;
-  color: #a61b1b;
+.crew-job-detail {
+  margin: 8px 0;
+  font-size: 16px;
 }
 
 .crew-actions {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin-bottom: 16px;
+  gap: 10px;
+  margin-top: 16px;
 }
 
+.status-pill {
+  display: inline-block;
+  padding: 7px 10px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+.status-scheduled {
+  background: #fff6db;
+  color: #7a5a00;
+  border: 1px solid #f0df9b;
+}
+
+.status-in-progress {
+  background: #e0ecff;
+  color: #123b7a;
+  border: 1px solid #aac5f8;
+}
+
+.status-complete {
+  background: #e8f7ec;
+  color: #126b2e;
+  border: 1px solid #b7e7c3;
+}
+
+/* Mobile */
 @media (max-width: 900px) {
-  .stats-grid,
-  .crew-header,
-  .crew-actions {
-    grid-template-columns: 1fr;
+  .stats-grid {
+    grid-template-columns: 1fr 1fr;
   }
 
   .inline-form {
     flex-direction: column;
     align-items: stretch;
   }
+}
 
-  .job-top {
+@media (max-width: 600px) {
+  .page {
+    margin: 14px auto;
+    padding: 0 12px 28px;
+  }
+
+  .nav-inner {
+    align-items: flex-start;
+  }
+
+  .nav-links {
+    gap: 10px;
+  }
+
+  .nav-links a,
+  .user-tag {
+    font-size: 14px;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .card {
+    padding: 16px;
+    border-radius: 12px;
+  }
+
+  .crew-job-top {
     flex-direction: column;
   }
 
-  .client-request-form {
-    display: block;
+  .crew-job-top h3 {
+    font-size: 24px;
+  }
+
+  .crew-job-detail {
+    font-size: 17px;
+  }
+
+  input,
+  select,
+  button {
+    font-size: 17px;
+  }
+
+  .big-button {
+    min-height: 62px;
+    font-size: 20px;
   }
 }
