@@ -687,6 +687,61 @@ def update_job_status(request: Request, id: int = Form(...), status: str = Form(
         db.close()
 
 
+@app.post("/jobs/start")
+@role_required(ROLE_CREW)
+def start_job(request: Request, id: int = Form(...)):
+    db = db_session()
+    try:
+        user = get_user(request, db)
+        job = db.query(Job).filter(Job.id == id, Job.crew_user_id == user.id).first()
+
+        if job:
+            job.status = "In Progress"
+
+            open_clock = (
+                db.query(ClockEntry)
+                .filter(
+                    ClockEntry.user_id == user.id,
+                    ClockEntry.entry_date == date.today(),
+                    ClockEntry.clock_out_at == None,
+                )
+                .first()
+            )
+
+            if not open_clock:
+                db.add(
+                    ClockEntry(
+                        user_id=user.id,
+                        clock_in_at=datetime.now(),
+                        entry_date=date.today(),
+                        notes=f"Auto clock-in: started {job.title}",
+                    )
+                )
+
+            db.commit()
+
+        return RedirectResponse(url="/my-day", status_code=303)
+    finally:
+        db.close()
+
+
+@app.post("/jobs/complete")
+@role_required(ROLE_CREW)
+def complete_job(request: Request, id: int = Form(...)):
+    db = db_session()
+    try:
+        user = get_user(request, db)
+        job = db.query(Job).filter(Job.id == id, Job.crew_user_id == user.id).first()
+
+        if job:
+            job.status = "Complete"
+            db.commit()
+
+        return RedirectResponse(url="/my-day", status_code=303)
+    finally:
+        db.close()
+
+
 @app.get("/schedule", response_class=HTMLResponse)
 @role_required(ROLE_ADMIN)
 def schedule_page(request: Request):
