@@ -867,6 +867,7 @@ def delete_schedule_slot(request: Request, id: int = Form(...)):
 
 
 @app.post("/schedule/book")
+@role_required(ROLE_CLIENT)
 def book_schedule_slot(
     request: Request,
     id: int = Form(...),
@@ -874,18 +875,30 @@ def book_schedule_slot(
 ):
     db = db_session()
     try:
-        auth = redirect_if_not_role(request, db, [ROLE_CLIENT])
-        if auth:
-            return auth
-
-        user = current_user(request, db)
+        user = get_user(request, db)
         client = db.query(Client).filter(Client.portal_user_id == user.id).first()
         slot = db.query(ScheduleSlot).filter(ScheduleSlot.id == id).first()
 
         if client and slot and slot.status == "Open":
+            # Book the slot
             slot.status = "Booked"
             slot.booked_by_client_id = client.id
             slot.property_id = property_id
+
+            # 🔥 CREATE JOB AUTOMATICALLY
+            job_title = f"{slot.job_type or 'Service'} - {client.name}"
+
+            db.add(
+                Job(
+                    property_id=property_id,
+                    title=job_title,
+                    status="Scheduled",
+                    scheduled_for=slot.slot_date,
+                    crew_user_id=None,
+                    notes=f"Booked via client portal | {slot.start_time}-{slot.end_time} | {slot.notes or ''}",
+                )
+            )
+
             db.commit()
 
         return RedirectResponse(url="/client-portal", status_code=303)
