@@ -318,6 +318,7 @@ def render(request: Request, template_name: str, context: dict, status_code: int
         context=context,
         status_code=status_code,
     )
+    
     def role_required(*allowed_roles):
     def decorator(route_func):
         @wraps(route_func)
