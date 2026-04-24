@@ -2,8 +2,7 @@
 
 {% block content %}
 <div class="card">
-    <h1>Schedule Control</h1>
-    <p class="muted">Create available schedule slots, review client requests, and approve final bookings.</p>
+    <h1>Schedule</h1>
 
     {% if error %}
     <div class="error">{{ error }}</div>
@@ -14,30 +13,38 @@
         <input type="date" name="slot_date" required>
 
         <label>Start Time</label>
-        <input type="text" name="start_time" placeholder="08:00 AM" required>
+        <input type="text" name="start_time" placeholder="8am" required>
 
         <label>End Time</label>
-        <input type="text" name="end_time" placeholder="10:00 AM" required>
+        <input type="text" name="end_time" placeholder="9am" required>
 
         <label>Job Type</label>
         <select name="job_type" required>
-            {% for item in job_types %}
-            <option value="{{ item }}">{{ item }}</option>
-            {% endfor %}
+            <option value="Opening">Opening</option>
+            <option value="Closing">Closing</option>
+            <option value="Service">Service</option>
+            <option value="Repair">Repair</option>
+            <option value="Estimate">Estimate</option>
+            <option value="Cover Service">Cover Service</option>
+            <option value="Leak Check">Leak Check</option>
+            <option value="Tile/Coping">Tile/Coping</option>
+            <option value="Other">Other</option>
         </select>
 
         <label>Status</label>
         <select name="status" required>
-            {% for item in slot_statuses %}
-            <option value="{{ item }}">{{ item }}</option>
-            {% endfor %}
+            <option value="Open">Open</option>
+            <option value="Booked">Booked</option>
+            <option value="Blocked">Blocked</option>
         </select>
 
-        <label>Property (optional)</label>
+        <label>Property optional</label>
         <select name="property_id">
             <option value="">-- none --</option>
             {% for item in properties %}
-            <option value="{{ item.id }}">{{ item.name }} - {{ item.client.name if item.client else "-" }}</option>
+            <option value="{{ item.id }}">
+                {{ item.name }}{% if item.client %} - {{ item.client.name }}{% endif %}
+            </option>
             {% endfor %}
         </select>
 
@@ -49,7 +56,8 @@
 </div>
 
 <div class="card">
-    <h2>Schedule Slots & Requests</h2>
+    <h2>Schedule Slots</h2>
+
     <div class="table-wrap">
         <table>
             <thead>
@@ -59,10 +67,8 @@
                     <th>Job Type</th>
                     <th>Status</th>
                     <th>Property</th>
-                    <th>Requested By</th>
-                    <th>Client Notes</th>
-                    <th>Admin Notes</th>
-                    <th>Change Status</th>
+                    <th>Booked By</th>
+                    <th>Notes</th>
                     <th>Delete</th>
                 </tr>
             </thead>
@@ -71,27 +77,13 @@
                 <tr>
                     <td>{{ item.slot_date }}</td>
                     <td>{{ item.start_time }} - {{ item.end_time }}</td>
-                    <td>{{ item.job_type or "Other" }}</td>
-                    <td>
-                        <span class="status-pill status-{{ item.status|lower }}">{{ item.status }}</span>
-                    </td>
+                    <td>{{ item.job_type or "-" }}</td>
+                    <td>{{ item.status }}</td>
                     <td>{{ item.property.name if item.property else "-" }}</td>
                     <td>{{ item.booked_by_client.name if item.booked_by_client else "-" }}</td>
-                    <td>{{ item.client_notes or "-" }}</td>
                     <td>{{ item.notes or "-" }}</td>
                     <td>
-                        <form method="post" action="/schedule/status" class="inline-form">
-                            <input type="hidden" name="id" value="{{ item.id }}">
-                            <select name="status">
-                                {% for status in slot_statuses %}
-                                <option value="{{ status }}" {% if item.status == status %}selected{% endif %}>{{ status }}</option>
-                                {% endfor %}
-                            </select>
-                            <button type="submit">Save</button>
-                        </form>
-                    </td>
-                    <td>
-                        <form method="post" action="/schedule/delete" onsubmit="return confirm('Delete this schedule slot?');">
+                        <form method="post" action="/schedule/delete">
                             <input type="hidden" name="id" value="{{ item.id }}">
                             <button type="submit" class="danger-btn">Delete</button>
                         </form>
@@ -99,7 +91,7 @@
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="10">No schedule slots yet.</td>
+                    <td colspan="8">No schedule slots yet.</td>
                 </tr>
                 {% endfor %}
             </tbody>
