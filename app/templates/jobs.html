@@ -1,11 +1,12 @@
 {% extends "base.html" %}
 
 {% block content %}
+
 <div class="page-header">
     <div>
         <div class="eyebrow">PoolOps Pro</div>
         <h1>Jobs</h1>
-        <p>Manage job status, billing, and payments.</p>
+        <p>Manage jobs, billing, and payments</p>
     </div>
 
     <a href="/jobs/new" class="button">Add Job</a>
@@ -48,15 +49,16 @@
                     <td>${{ "%.2f"|format(balance) }}</td>
 
                     <td>
-                        <form method="post" action="/jobs/{{ job.id }}/invoice" style="display:inline;">
-                            <button type="submit">Invoice</button>
+                        <form method="post" action="/jobs/{{ job.id }}/invoice" class="inline-form">
+                            <button type="submit" class="small-button">Invoice</button>
                         </form>
 
-                        <form method="post" action="/jobs/{{ job.id }}/mark-paid" style="display:inline;">
-                            <button type="submit">Paid</button>
+                        <form method="post" action="/jobs/{{ job.id }}/mark-paid" class="inline-form">
+                            <button type="submit" class="small-button">Paid</button>
                         </form>
                     </td>
                 </tr>
+
                 {% endfor %}
             </tbody>
         </table>
@@ -64,9 +66,8 @@
 </div>
 {% else %}
 <div class="card">
-    <p>No jobs found.</p>
+    <p class="empty-state">No jobs found.</p>
 </div>
 {% endif %}
-cd "C:\Users\Heinl\OneDrive\Documents\GitHub\HC-Pool-Ops"
-notepad app\templates\jobs.html
+
 {% endblock %}
