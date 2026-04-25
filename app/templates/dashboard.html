@@ -1,130 +1,122 @@
 {% extends "base.html" %}
 
 {% block content %}
-{% if user.role == ROLE_ADMIN %}
-<div class="stats-grid">
-    <div class="card stat-card">
-        <div class="stat-label">Clients</div>
-        <div class="stat-value">{{ client_count }}</div>
-    </div>
-    <div class="card stat-card">
-        <div class="stat-label">Properties</div>
-        <div class="stat-value">{{ property_count }}</div>
-    </div>
-    <div class="card stat-card">
-        <div class="stat-label">Jobs</div>
-        <div class="stat-value">{{ job_count }}</div>
-    </div>
-    <div class="card stat-card">
-        <div class="stat-label">Open Slots</div>
-        <div class="stat-value">{{ open_slot_count }}</div>
+<div class="page-header">
+    <div>
+        <div class="eyebrow">PoolOps Pro</div>
+        <h1>Dashboard</h1>
+        <p>Overview of jobs, billing, crew activity, and open work.</p>
     </div>
 </div>
 
+<div class="dashboard-grid">
+
+    <div class="card stat-card">
+        <div class="stat-label">Total Jobs</div>
+        <div class="stat-number">{{ total_jobs or 0 }}</div>
+    </div>
+
+    <div class="card stat-card">
+        <div class="stat-label">Open Jobs</div>
+        <div class="stat-number">{{ open_jobs or 0 }}</div>
+    </div>
+
+    <div class="card stat-card">
+        <div class="stat-label">Completed Jobs</div>
+        <div class="stat-number">{{ completed_jobs or 0 }}</div>
+    </div>
+
+    <div class="card stat-card">
+        <div class="stat-label">Billing Total</div>
+        <div class="stat-number">${{ "%.2f"|format(billing_total or 0) }}</div>
+    </div>
+
+    <div class="card stat-card">
+        <div class="stat-label">Paid</div>
+        <div class="stat-number">${{ "%.2f"|format(paid_total or 0) }}</div>
+    </div>
+
+    <div class="card stat-card">
+        <div class="stat-label">Outstanding</div>
+        <div class="stat-number">${{ "%.2f"|format(outstanding_total or 0) }}</div>
+    </div>
+
+</div>
+
 <div class="card">
-    <h2>Recent Jobs</h2>
+    <div class="section-header">
+        <div>
+            <h2>Recent Jobs</h2>
+            <p>Latest job activity in PoolOps.</p>
+        </div>
+        <a href="/jobs" class="button">View Jobs</a>
+    </div>
+
+    {% if recent_jobs %}
     <div class="table-wrap">
         <table>
             <thead>
                 <tr>
                     <th>Job</th>
-                    <th>Property</th>
+                    <th>Client</th>
                     <th>Status</th>
-                    <th>Scheduled</th>
-                    <th>Crew</th>
+                    <th>Amount</th>
+                    <th>Billing</th>
                 </tr>
             </thead>
             <tbody>
                 {% for job in recent_jobs %}
                 <tr>
-                    <td>{{ job.title }}</td>
-                    <td>{{ job.property.name if job.property else "-" }}</td>
-                    <td>{{ job.status }}</td>
-                    <td>{{ job.scheduled_for or "-" }}</td>
-                    <td>{{ job.crew_user.full_name if job.crew_user else "-" }}</td>
-                </tr>
-                {% else %}
-                <tr>
-                    <td colspan="5">No jobs yet.</td>
+                    <td>{{ job.title or job.name or "Untitled Job" }}</td>
+                    <td>{{ job.client_name or job.client or "—" }}</td>
+                    <td>{{ job.status or "Open" }}</td>
+                    <td>${{ "%.2f"|format(job.amount or job.price or job.total or 0) }}</td>
+                    <td>{{ job.billing_status or "Unbilled" }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
-</div>
-{% endif %}
-
-{% if user.role == ROLE_CREW %}
-<div class="card">
-    <h1>Crew Dashboard</h1>
-    <p>Use My Day to clock in and manage your assigned work.</p>
-    <a class="button-link" href="/my-day">Go to My Day</a>
+    {% else %}
+        <p class="empty-state">No recent jobs found.</p>
+    {% endif %}
 </div>
 
 <div class="card">
-    <h2>Assigned Jobs</h2>
+    <div class="section-header">
+        <div>
+            <h2>Billing Snapshot</h2>
+            <p>Quick look at invoices and payment status.</p>
+        </div>
+    </div>
+
+    {% if invoices %}
     <div class="table-wrap">
         <table>
             <thead>
                 <tr>
+                    <th>Invoice</th>
                     <th>Job</th>
-                    <th>Property</th>
+                    <th>Client</th>
+                    <th>Total</th>
                     <th>Status</th>
-                    <th>Scheduled</th>
                 </tr>
             </thead>
             <tbody>
-                {% for job in today_jobs %}
+                {% for invoice in invoices %}
                 <tr>
-                    <td>{{ job.title }}</td>
-                    <td>{{ job.property.name if job.property else "-" }}</td>
-                    <td>{{ job.status }}</td>
-                    <td>{{ job.scheduled_for or "-" }}</td>
-                </tr>
-                {% else %}
-                <tr>
-                    <td colspan="4">No assigned jobs.</td>
+                    <td>#{{ invoice.id }}</td>
+                    <td>{{ invoice.job_title or invoice.job_name or "—" }}</td>
+                    <td>{{ invoice.client_name or "—" }}</td>
+                    <td>${{ "%.2f"|format(invoice.total or invoice.amount or 0) }}</td>
+                    <td>{{ invoice.status or "Unpaid" }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
-
-    {% if open_clock %}
-    <div class="success">You are clocked in.</div>
     {% else %}
-    <div class="warning">You are not clocked in.</div>
+        <p class="empty-state">No billing records found.</p>
     {% endif %}
 </div>
-{% endif %}
-
-{% if user.role == ROLE_CLIENT %}
-<div class="card">
-    <h1>Client Dashboard</h1>
-    <p>Use the client portal to view your property and request open schedule slots.</p>
-    <a class="button-link" href="/client-portal">Go to Client Portal</a>
-</div>
-
-<div class="card">
-    <h2>Your Properties</h2>
-    <ul>
-        {% for property in properties %}
-        <li>{{ property.name }} - {{ property.address }} {{ property.city }}</li>
-        {% else %}
-        <li>No properties linked yet.</li>
-        {% endfor %}
-    </ul>
-</div>
-
-<div class="card">
-    <h2>Open Booking Slots</h2>
-    <ul>
-        {% for slot in open_slots %}
-        <li>{{ slot.slot_date }} | {{ slot.start_time }} - {{ slot.end_time }}</li>
-        {% else %}
-        <li>No open slots right now.</li>
-        {% endfor %}
-    </ul>
-</div>
-{% endif %}
 {% endblock %}
