@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="card" style="max-width: 800px; margin: auto;">
+
+    <h1>Invoice</h1>
+
+    <div style="margin-bottom:20px;">
+        <strong>Job:</strong> {{ job.title }}<br>
+        <strong>Status:</strong> {{ job.status }}<br>
+        <strong>Date:</strong> {{ job.scheduled_date or "N/A" }}
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Description</th>
+                <th>Amount</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>{{ job.title }}</td>
+                <td>$0.00</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div style="margin-top:20px; text-align:right;">
+        <h3>Total: $0.00</h3>
+    </div>
+
+    <button onclick="window.print()" class="button">
+        Print Invoice
+    </button>
+
+</div>
+
+{% endblock %}

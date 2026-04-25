@@ -1,4 +1,3 @@
-@'
 {% extends "base.html" %}
 
 {% block content %}
@@ -7,13 +6,13 @@
     <div>
         <div class="eyebrow">PoolOps Pro</div>
         <h1>Jobs</h1>
-        <p>Manage jobs, billing, and payments</p>
+        <p>Job list, billing status, invoices, and payments.</p>
     </div>
 
-    <a href="/jobs/new" class="button">Add Job</a>
+    <a href="/jobs/new" class="button">+ Add Job</a>
 </div>
 
-{% if jobs %}
+{% if jobs and jobs|length > 0 %}
 <div class="card">
     <div class="table-wrap">
         <table>
@@ -21,12 +20,13 @@
                 <tr>
                     <th>Job</th>
                     <th>Client</th>
-                    <th>Address</th>
+                    <th>Property</th>
                     <th>Status</th>
-                    <th>Billing</th>
+                    <th>Scheduled</th>
                     <th>Amount</th>
                     <th>Paid</th>
                     <th>Balance</th>
+                    <th>Billing</th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -36,21 +36,40 @@
                 {% set amount = job.amount or 0 %}
                 {% set paid = job.paid_amount or 0 %}
                 {% set balance = amount - paid %}
+
                 <tr>
-                    <td><strong>{{ job.title }}</strong></td>
+                    <td>
+                        <strong>{{ job.title }}</strong>
+                        {% if job.description %}
+                            <div class="sub">{{ job.description }}</div>
+                        {% endif %}
+                    </td>
+
                     <td>{{ job.client_name or "-" }}</td>
-                    <td>{{ job.address or "-" }}</td>
-                    <td>{{ job.status }}</td>
-                    <td>{{ job.billing_status }}</td>
+
+                    <td>
+                        {{ job.property_name or "-" }}
+                        {% if job.address %}
+                            <div class="sub">{{ job.address }}</div>
+                        {% endif %}
+                    </td>
+
+                    <td>{{ job.status or "-" }}</td>
+                    <td>{{ job.scheduled_date or "-" }}</td>
                     <td>${{ "%.2f"|format(amount) }}</td>
                     <td>${{ "%.2f"|format(paid) }}</td>
                     <td>${{ "%.2f"|format(balance) }}</td>
+                    <td>{{ job.billing_status or "Unbilled" }}</td>
+
                     <td>
-                        <form method="post" action="/jobs/{{ job.id }}/invoice" class="inline-form">
-                            <button type="submit" class="small-button">Invoice</button>
+                        <a href="/jobs/{{ job.id }}" class="button small">View</a>
+
+                        <form method="post" action="/jobs/{{ job.id }}/invoice" style="display:inline;">
+                            <button type="submit" class="button small secondary">Invoice</button>
                         </form>
-                        <form method="post" action="/jobs/{{ job.id }}/mark-paid" class="inline-form">
-                            <button type="submit" class="small-button">Paid</button>
+
+                        <form method="post" action="/jobs/{{ job.id }}/mark-paid" style="display:inline;">
+                            <button type="submit" class="button small success">Paid</button>
                         </form>
                     </td>
                 </tr>
@@ -62,8 +81,8 @@
 {% else %}
 <div class="card">
     <p class="empty-state">No jobs found.</p>
+    <a href="/jobs/new" class="button">Create First Job</a>
 </div>
 {% endif %}
 
 {% endblock %}
-'@ | Set-Content -Path "app\templates\jobs.html" -Encoding UTF8

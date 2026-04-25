@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="page-header">
+    <div>
+        <div class="eyebrow">PoolOps Pro</div>
+        <h1>Add Job</h1>
+        <p>Create a new job, assign property, crew, schedule, and amount.</p>
+    </div>
+
+    <a href="/jobs" class="button secondary">Back to Jobs</a>
+</div>
+
+<div class="card form-card">
+    <form method="post" action="/jobs/new">
+
+        <label>Client</label>
+        <select name="client_id">
+            <option value="">-- none --</option>
+            {% for client in clients %}
+                <option value="{{ client.id }}">{{ client.name }}</option>
+            {% endfor %}
+        </select>
+
+        <label>Property</label>
+        <select name="property_id">
+            <option value="">-- none --</option>
+            {% for property in properties %}
+                <option value="{{ property.id }}">
+                    {{ property.name }}{% if property.address %} — {{ property.address }}{% endif %}
+                </option>
+            {% endfor %}
+        </select>
+
+        <label>Job Title</label>
+        <input type="text" name="title" required>
+
+        <label>Description / Notes</label>
+        <textarea name="description" rows="4"></textarea>
+
+        <label>Status</label>
+        <select name="status">
+            <option value="Scheduled">Scheduled</option>
+            <option value="In Progress">In Progress</option>
+            <option value="Complete">Complete</option>
+        </select>
+
+        <label>Scheduled Date</label>
+        <input type="date" name="scheduled_date">
+
+        <label>Assigned Crew</label>
+        <input type="text" name="crew" placeholder="Example: Jake Crew">
+
+        <label>Job Amount</label>
+        <input type="number" name="amount" step="0.01" min="0" value="0">
+
+        <button type="submit" class="button">Save Job</button>
+
+    </form>
+</div>
+
+{% endblock %}
