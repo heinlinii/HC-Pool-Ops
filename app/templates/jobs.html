@@ -1,3 +1,4 @@
+@'
 {% extends "base.html" %}
 
 {% block content %}
@@ -35,30 +36,24 @@
                 {% set amount = job.amount or 0 %}
                 {% set paid = job.paid_amount or 0 %}
                 {% set balance = amount - paid %}
-
                 <tr>
                     <td><strong>{{ job.title }}</strong></td>
                     <td>{{ job.client_name or "-" }}</td>
                     <td>{{ job.address or "-" }}</td>
-
                     <td>{{ job.status }}</td>
                     <td>{{ job.billing_status }}</td>
-
                     <td>${{ "%.2f"|format(amount) }}</td>
                     <td>${{ "%.2f"|format(paid) }}</td>
                     <td>${{ "%.2f"|format(balance) }}</td>
-
                     <td>
                         <form method="post" action="/jobs/{{ job.id }}/invoice" class="inline-form">
                             <button type="submit" class="small-button">Invoice</button>
                         </form>
-
                         <form method="post" action="/jobs/{{ job.id }}/mark-paid" class="inline-form">
                             <button type="submit" class="small-button">Paid</button>
                         </form>
                     </td>
                 </tr>
-
                 {% endfor %}
             </tbody>
         </table>
@@ -71,3 +66,4 @@
 {% endif %}
 
 {% endblock %}
+'@ | Set-Content -Path "app\templates\jobs.html" -Encoding UTF8
