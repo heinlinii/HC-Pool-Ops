@@ -19,6 +19,7 @@ app.add_middleware(
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 templates = Jinja2Templates(directory="app/templates")
 
+
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
@@ -147,7 +148,7 @@ def create_tables():
 
 
 def migrate_tables():
-    columns = [
+    migrations = [
         "ALTER TABLE jobs ADD COLUMN IF NOT EXISTS amount NUMERIC DEFAULT 0",
         "ALTER TABLE jobs ADD COLUMN IF NOT EXISTS paid_amount NUMERIC DEFAULT 0",
         "ALTER TABLE jobs ADD COLUMN IF NOT EXISTS billing_status TEXT DEFAULT 'Unbilled'",
@@ -156,7 +157,7 @@ def migrate_tables():
         "ALTER TABLE jobs ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP",
     ]
 
-    for sql in columns:
+    for sql in migrations:
         try:
             run(sql)
         except Exception:
@@ -207,7 +208,10 @@ def home(request: Request):
 
 @app.get("/login", response_class=HTMLResponse)
 def login_page(request: Request):
-    return templates.TemplateResponse("login.html", {"request": request, "error": None})
+    return templates.TemplateResponse("login.html", {
+        "request": request,
+        "error": None,
+    })
 
 
 @app.post("/login")
@@ -216,13 +220,16 @@ def login(request: Request, username: str = Form(...), password: str = Form(...)
         SELECT id, username, name, role
         FROM users
         WHERE username = :username AND password = :password
-    """, {"username": username, "password": password})
+    """, {
+        "username": username,
+        "password": password,
+    })
 
     if not user:
-        return templates.TemplateResponse(
-            "login.html",
-            {"request": request, "error": "Invalid username or password"},
-        )
+        return templates.TemplateResponse("login.html", {
+            "request": request,
+            "error": "Invalid username or password",
+        })
 
     request.session["user"] = user
     return RedirectResponse("/dashboard", status_code=303)
@@ -243,7 +250,7 @@ def dashboard(request: Request, user=Depends(require_login)):
     total_properties = one("SELECT COUNT(*) AS count FROM properties")["count"]
 
     billing = one("""
-        SELECT 
+        SELECT
             COALESCE(SUM(amount), 0) AS billing_total,
             COALESCE(SUM(paid_amount), 0) AS paid_total
         FROM jobs
@@ -254,7 +261,7 @@ def dashboard(request: Request, user=Depends(require_login)):
     outstanding_total = billing_total - paid_total
 
     recent_jobs = rows("""
-        SELECT 
+        SELECT
             jobs.*,
             clients.name AS client_name,
             properties.name AS property_name,
@@ -267,7 +274,7 @@ def dashboard(request: Request, user=Depends(require_login)):
     """)
 
     invoices = rows("""
-        SELECT 
+        SELECT
             invoices.*,
             jobs.title AS job_title,
             clients.name AS client_name
@@ -299,7 +306,7 @@ def dashboard(request: Request, user=Depends(require_login)):
 @app.get("/jobs", response_class=HTMLResponse)
 def jobs_page(request: Request, user=Depends(require_login)):
     jobs = rows("""
-        SELECT 
+        SELECT
             jobs.*,
             clients.name AS client_name,
             properties.name AS property_name,
@@ -310,90 +317,450 @@ def jobs_page(request: Request, user=Depends(require_login)):
         ORDER BY jobs.scheduled_date DESC NULLS LAST, jobs.id DESC
     """)
 
-    rows_html = ""
+    return templates.TemplateResponse("jobs.html", {
+        "request": request,
+        "user": user,
+        "jobs": jobs,
+    })
 
-    for job in jobs:
-        amount = money(job.get("amount"))
-        paid = money(job.get("paid_amount"))
-        balance = amount - paid
 
-        rows_html += f"""
-        <tr>
-            <td><strong>{job.get("title") or ""}</strong></td>
-            <td>{job.get("client_name") or "-"}</td>
-            <td>{job.get("address") or "-"}</td>
-            <td>{job.get("status") or "-"}</td>
-            <td>{job.get("billing_status") or "Unbilled"}</td>
-            <td>${amount:,.2f}</td>
-            <td>${paid:,.2f}</td>
-            <td>${balance:,.2f}</td>
-            <td>
-                <form method="post" action="/jobs/{job.get("id")}/invoice" style="display:inline;">
-                    <button type="submit">Invoice</button>
-                </form>
-                <form method="post" action="/jobs/{job.get("id")}/mark-paid" style="display:inline;">
-                    <button type="submit">Paid</button>
-                </form>
-            </td>
-        </tr>
-        """
+@app.get("/jobs/new", response_class=HTMLResponse)
+def new_job_page(request: Request, user=Depends(require_login)):
+    clients = rows("SELECT * FROM clients ORDER BY name")
+    properties = rows("SELECT * FROM properties ORDER BY name")
 
-    if not rows_html:
-        rows_html = """
-        <tr>
-            <td colspan="9">No jobs found.</td>
-        </tr>
-        """
+    return templates.TemplateResponse("job_form.html", {
+        "request": request,
+        "user": user,
+        "clients": clients,
+        "properties": properties,
+    })
 
-    html = f"""
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <title>Jobs • HG Pool Ops</title>
-        <link rel="stylesheet" href="/static/style.css">
-        <style>
-            body {{
-                font-family: Arial, sans-serif;
-                background: #f5f7fb;
-                margin: 0;
-            }}
-            .topbar {{
-                background: #0b4aa2;
-                color: white;
-                padding: 14px 28px;
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-            }}
-            .topbar a {{
-                color: white;
-                text-decoration: none;
-                margin-left: 16px;
-                font-weight: bold;
-            }}
-            .container {{
-                max-width: 1200px;
-                margin: 30px auto;
-                padding: 0 20px;
-            }}
-            .card {{
-                background: white;
-                border-radius: 12px;
-                padding: 22px;
-                box-shadow: 0 4px 16px rgba(0,0,0,.08);
-            }}
-            .page-header {{
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                margin-bottom: 22px;
-            }}
-            table {{
-                width: 100%;
-                border-collapse: collapse;
-            }}
-            th, td {{
-                text-align: left;
-                padding: 12px;
-                border-bottom: 1px solid #e5e7eb;
-            }}
+
+@app.post("/jobs/new")
+def create_job(
+    request: Request,
+    title: str = Form(...),
+    description: str = Form(""),
+    client_id: int = Form(None),
+    property_id: int = Form(None),
+    status: str = Form("Scheduled"),
+    scheduled_date: str = Form(None),
+    crew: str = Form(""),
+    amount: float = Form(0),
+    user=Depends(require_login),
+):
+    run("""
+        INSERT INTO jobs
+        (title, description, client_id, property_id, status, scheduled_date, crew, amount, paid_amount, billing_status)
+        VALUES
+        (:title, :description, :client_id, :property_id, :status, :scheduled_date, :crew, :amount, 0, 'Unbilled')
+    """, {
+        "title": title,
+        "description": description,
+        "client_id": client_id,
+        "property_id": property_id,
+        "status": status,
+        "scheduled_date": scheduled_date or None,
+        "crew": crew,
+        "amount": amount,
+    })
+
+    return RedirectResponse("/jobs", status_code=303)
+
+
+@app.get("/jobs/{job_id}", response_class=HTMLResponse)
+def job_detail(job_id: int, request: Request, user=Depends(require_login)):
+    job = one("""
+        SELECT
+            jobs.*,
+            clients.name AS client_name,
+            properties.name AS property_name,
+            properties.address AS address
+        FROM jobs
+        LEFT JOIN clients ON clients.id = jobs.client_id
+        LEFT JOIN properties ON properties.id = jobs.property_id
+        WHERE jobs.id = :job_id
+    """, {"job_id": job_id})
+
+    if not job:
+        return RedirectResponse("/jobs", status_code=303)
+
+    invoice = one("""
+        SELECT *
+        FROM invoices
+        WHERE job_id = :job_id
+        ORDER BY id DESC
+        LIMIT 1
+    """, {"job_id": job_id})
+
+    return templates.TemplateResponse("job_detail.html", {
+        "request": request,
+        "user": user,
+        "job": job,
+        "invoice": invoice,
+    })
+
+
+@app.post("/jobs/{job_id}/start")
+def start_job(job_id: int, request: Request, user=Depends(require_login)):
+    run("""
+        UPDATE jobs
+        SET status = 'In Progress',
+            started_at = CURRENT_TIMESTAMP
+        WHERE id = :job_id
+    """, {"job_id": job_id})
+
+    return RedirectResponse("/my-day", status_code=303)
+
+
+@app.post("/jobs/{job_id}/complete")
+def complete_job(job_id: int, request: Request, user=Depends(require_login)):
+    run("""
+        UPDATE jobs
+        SET status = 'Complete',
+            completed_at = CURRENT_TIMESTAMP
+        WHERE id = :job_id
+    """, {"job_id": job_id})
+
+    return RedirectResponse("/my-day", status_code=303)
+
+
+@app.post("/jobs/{job_id}/invoice")
+def create_invoice(job_id: int, request: Request, user=Depends(require_login)):
+    job = one("SELECT * FROM jobs WHERE id = :job_id", {"job_id": job_id})
+
+    if not job:
+        return RedirectResponse("/jobs", status_code=303)
+
+    amount = money(job["amount"])
+    paid = money(job["paid_amount"])
+
+    invoice_status = "Paid" if amount > 0 and paid >= amount else "Unpaid"
+
+    existing = one("""
+        SELECT id
+        FROM invoices
+        WHERE job_id = :job_id
+        ORDER BY id DESC
+        LIMIT 1
+    """, {"job_id": job_id})
+
+    if existing:
+        run("""
+            UPDATE invoices
+            SET total = :total,
+                paid_amount = :paid_amount,
+                status = :status
+            WHERE id = :invoice_id
+        """, {
+            "invoice_id": existing["id"],
+            "total": amount,
+            "paid_amount": paid,
+            "status": invoice_status,
+        })
+    else:
+        run("""
+            INSERT INTO invoices (job_id, client_id, total, paid_amount, status)
+            VALUES (:job_id, :client_id, :total, :paid_amount, :status)
+        """, {
+            "job_id": job_id,
+            "client_id": job["client_id"],
+            "total": amount,
+            "paid_amount": paid,
+            "status": invoice_status,
+        })
+
+    run("""
+        UPDATE jobs
+        SET billing_status = :billing_status
+        WHERE id = :job_id
+    """, {
+        "job_id": job_id,
+        "billing_status": "Paid" if invoice_status == "Paid" else "Invoiced",
+    })
+
+    return RedirectResponse(f"/invoice/{job_id}", status_code=303)
+
+
+@app.post("/jobs/{job_id}/mark-paid")
+def mark_job_paid(job_id: int, request: Request, user=Depends(require_login)):
+    job = one("SELECT * FROM jobs WHERE id = :job_id", {"job_id": job_id})
+
+    if not job:
+        return RedirectResponse("/jobs", status_code=303)
+
+    amount = money(job["amount"])
+
+    run("""
+        UPDATE jobs
+        SET paid_amount = :amount,
+            billing_status = 'Paid'
+        WHERE id = :job_id
+    """, {
+        "amount": amount,
+        "job_id": job_id,
+    })
+
+    invoice = one("""
+        SELECT id
+        FROM invoices
+        WHERE job_id = :job_id
+        ORDER BY id DESC
+        LIMIT 1
+    """, {"job_id": job_id})
+
+    if invoice:
+        run("""
+            UPDATE invoices
+            SET total = :amount,
+                paid_amount = :amount,
+                status = 'Paid',
+                paid_at = CURRENT_TIMESTAMP
+            WHERE id = :invoice_id
+        """, {
+            "amount": amount,
+            "invoice_id": invoice["id"],
+        })
+    else:
+        run("""
+            INSERT INTO invoices (job_id, client_id, total, paid_amount, status, paid_at)
+            VALUES (:job_id, :client_id, :total, :paid_amount, 'Paid', CURRENT_TIMESTAMP)
+        """, {
+            "job_id": job_id,
+            "client_id": job["client_id"],
+            "total": amount,
+            "paid_amount": amount,
+        })
+
+    return RedirectResponse(f"/invoice/{job_id}", status_code=303)
+
+
+@app.get("/invoice/{job_id}", response_class=HTMLResponse)
+def view_invoice(job_id: int, request: Request, user=Depends(require_login)):
+    job = one("""
+        SELECT
+            jobs.*,
+            clients.name AS client_name,
+            clients.phone AS client_phone,
+            clients.email AS client_email,
+            properties.name AS property_name,
+            properties.address AS address,
+            properties.city AS city,
+            properties.state AS state,
+            properties.zip AS zip
+        FROM jobs
+        LEFT JOIN clients ON clients.id = jobs.client_id
+        LEFT JOIN properties ON properties.id = jobs.property_id
+        WHERE jobs.id = :job_id
+    """, {"job_id": job_id})
+
+    if not job:
+        return RedirectResponse("/jobs", status_code=303)
+
+    invoice = one("""
+        SELECT *
+        FROM invoices
+        WHERE job_id = :job_id
+        ORDER BY id DESC
+        LIMIT 1
+    """, {"job_id": job_id})
+
+    if not invoice:
+        amount = money(job["amount"])
+        paid = money(job["paid_amount"])
+        status = "Paid" if amount > 0 and paid >= amount else "Unpaid"
+
+        run("""
+            INSERT INTO invoices (job_id, client_id, total, paid_amount, status)
+            VALUES (:job_id, :client_id, :total, :paid_amount, :status)
+        """, {
+            "job_id": job_id,
+            "client_id": job["client_id"],
+            "total": amount,
+            "paid_amount": paid,
+            "status": status,
+        })
+
+        invoice = one("""
+            SELECT *
+            FROM invoices
+            WHERE job_id = :job_id
+            ORDER BY id DESC
+            LIMIT 1
+        """, {"job_id": job_id})
+
+    amount = money(job["amount"])
+    paid = money(job["paid_amount"])
+    balance = amount - paid
+
+    return templates.TemplateResponse("invoice.html", {
+        "request": request,
+        "user": user,
+        "job": job,
+        "invoice": invoice,
+        "amount": amount,
+        "paid": paid,
+        "balance": balance,
+    })
+
+
+@app.get("/billing", response_class=HTMLResponse)
+def billing_page(request: Request, user=Depends(require_login)):
+    invoices = rows("""
+        SELECT
+            invoices.*,
+            jobs.title AS job_title,
+            jobs.amount AS job_amount,
+            jobs.paid_amount AS job_paid_amount,
+            jobs.billing_status AS billing_status,
+            clients.name AS client_name
+        FROM invoices
+        LEFT JOIN jobs ON jobs.id = invoices.job_id
+        LEFT JOIN clients ON clients.id = invoices.client_id
+        ORDER BY invoices.id DESC
+    """)
+
+    return templates.TemplateResponse("billing.html", {
+        "request": request,
+        "user": user,
+        "invoices": invoices,
+    })
+
+
+@app.get("/my-day", response_class=HTMLResponse)
+def my_day(request: Request, user=Depends(require_login)):
+    jobs = rows("""
+        SELECT
+            jobs.*,
+            properties.name AS property_name,
+            properties.address AS address,
+            clients.name AS client_name
+        FROM jobs
+        LEFT JOIN properties ON properties.id = jobs.property_id
+        LEFT JOIN clients ON clients.id = jobs.client_id
+        WHERE jobs.status != 'Complete'
+        ORDER BY jobs.scheduled_date ASC NULLS LAST, jobs.id ASC
+    """)
+
+    active_clock = one("""
+        SELECT *
+        FROM time_clock
+        WHERE username = :username AND clock_out IS NULL
+        ORDER BY id DESC
+        LIMIT 1
+    """, {"username": user["username"]})
+
+    return templates.TemplateResponse("my_day.html", {
+        "request": request,
+        "user": user,
+        "jobs": jobs,
+        "active_clock": active_clock,
+    })
+
+
+@app.post("/clock-in")
+def clock_in(request: Request, user=Depends(require_login)):
+    active = one("""
+        SELECT id
+        FROM time_clock
+        WHERE username = :username AND clock_out IS NULL
+        LIMIT 1
+    """, {"username": user["username"]})
+
+    if not active:
+        run("""
+            INSERT INTO time_clock (user_id, username, clock_in)
+            VALUES (:user_id, :username, CURRENT_TIMESTAMP)
+        """, {
+            "user_id": user["id"],
+            "username": user["username"],
+        })
+
+    return RedirectResponse("/my-day", status_code=303)
+
+
+@app.post("/clock-out")
+def clock_out(request: Request, user=Depends(require_login)):
+    active = one("""
+        SELECT id
+        FROM time_clock
+        WHERE username = :username AND clock_out IS NULL
+        ORDER BY id DESC
+        LIMIT 1
+    """, {"username": user["username"]})
+
+    if active:
+        run("""
+            UPDATE time_clock
+            SET clock_out = CURRENT_TIMESTAMP
+            WHERE id = :id
+        """, {"id": active["id"]})
+
+    return RedirectResponse("/my-day", status_code=303)
+
+
+@app.get("/clients", response_class=HTMLResponse)
+def clients_page(request: Request, user=Depends(require_login)):
+    clients = rows("SELECT * FROM clients ORDER BY name")
+
+    return templates.TemplateResponse("clients.html", {
+        "request": request,
+        "user": user,
+        "clients": clients,
+    })
+
+
+@app.get("/properties", response_class=HTMLResponse)
+def properties_page(request: Request, user=Depends(require_login)):
+    properties = rows("""
+        SELECT
+            properties.*,
+            clients.name AS client_name
+        FROM properties
+        LEFT JOIN clients ON clients.id = properties.client_id
+        ORDER BY properties.name
+    """)
+
+    return templates.TemplateResponse("properties.html", {
+        "request": request,
+        "user": user,
+        "properties": properties,
+    })
+
+
+@app.get("/users", response_class=HTMLResponse)
+def users_page(request: Request, user=Depends(require_login)):
+    users = rows("SELECT id, username, name, role FROM users ORDER BY id")
+
+    return templates.TemplateResponse("users.html", {
+        "request": request,
+        "user": user,
+        "users": users,
+    })
+
+
+@app.get("/schedule", response_class=HTMLResponse)
+def schedule_page(request: Request, user=Depends(require_login)):
+    jobs = rows("""
+        SELECT
+            jobs.*,
+            properties.name AS property_name,
+            properties.address AS address,
+            clients.name AS client_name
+        FROM jobs
+        LEFT JOIN properties ON properties.id = jobs.property_id
+        LEFT JOIN clients ON clients.id = jobs.client_id
+        ORDER BY jobs.scheduled_date ASC NULLS LAST, jobs.id ASC
+    """)
+
+    return templates.TemplateResponse("schedule.html", {
+        "request": request,
+        "user": user,
+        "jobs": jobs,
+    })
+
+
+@app.get("/health")
+def health():
+    return {"status": "ok", "app": "HG Pool Ops"}
