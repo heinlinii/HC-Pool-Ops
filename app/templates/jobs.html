@@ -1,89 +1,72 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="card">
-    <h1>Jobs</h1>
+<div class="page-header">
+    <div>
+        <div class="eyebrow">PoolOps Pro</div>
+        <h1>Jobs</h1>
+        <p>Manage job status, billing, and payments.</p>
+    </div>
 
-    {% if error %}
-    <div class="error">{{ error }}</div>
-    {% endif %}
-
-    {% if properties|length == 0 %}
-    <div class="warning">Add a property first.</div>
-    {% endif %}
-
-    <form method="post" action="/jobs" class="form">
-        <label>Property</label>
-        <select name="property_id" {% if properties|length == 0 %}disabled{% endif %} required>
-            {% for item in properties %}
-            <option value="{{ item.id }}">{{ item.name }}</option>
-            {% endfor %}
-        </select>
-
-        <label>Job Title</label>
-        <input type="text" name="title" {% if properties|length == 0 %}disabled{% endif %} required>
-
-        <label>Status</label>
-        <select name="status" {% if properties|length == 0 %}disabled{% endif %} required>
-            {% for status in statuses %}
-            <option value="{{ status }}">{{ status }}</option>
-            {% endfor %}
-        </select>
-
-        <label>Scheduled Date</label>
-        <input type="date" name="scheduled_for" {% if properties|length == 0 %}disabled{% endif %}>
-
-        <label>Assigned Crew</label>
-        <select name="crew_user_id" {% if properties|length == 0 %}disabled{% endif %}>
-            <option value="">-- none --</option>
-            {% for item in crew_users %}
-            <option value="{{ item.id }}">{{ item.full_name }}</option>
-            {% endfor %}
-        </select>
-
-        <label>Notes</label>
-        <input type="text" name="notes" {% if properties|length == 0 %}disabled{% endif %}>
-
-        <button type="submit" {% if properties|length == 0 %}disabled{% endif %}>Add Job</button>
-    </form>
+    <a href="/jobs/new" class="button">Add Job</a>
 </div>
 
+{% if jobs %}
 <div class="card">
-    <h2>Job List</h2>
     <div class="table-wrap">
         <table>
             <thead>
                 <tr>
                     <th>Job</th>
-                    <th>Property</th>
+                    <th>Client</th>
+                    <th>Address</th>
                     <th>Status</th>
-                    <th>Scheduled</th>
-                    <th>Crew</th>
-                    <th>Delete</th>
+                    <th>Billing</th>
+                    <th>Amount</th>
+                    <th>Paid</th>
+                    <th>Balance</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
+
             <tbody>
-                {% for item in jobs %}
+                {% for job in jobs %}
+                {% set amount = job.amount or 0 %}
+                {% set paid = job.paid_amount or 0 %}
+                {% set balance = amount - paid %}
+
                 <tr>
-                    <td>{{ item.title }}</td>
-                    <td>{{ item.property.name if item.property else "-" }}</td>
-                    <td>{{ item.status }}</td>
-                    <td>{{ item.scheduled_for or "-" }}</td>
-                    <td>{{ item.crew_user.full_name if item.crew_user else "-" }}</td>
+                    <td><strong>{{ job.title }}</strong></td>
+                    <td>{{ job.client_name or "-" }}</td>
+                    <td>{{ job.address or "-" }}</td>
+
+                    <td>{{ job.status }}</td>
+                    <td>{{ job.billing_status }}</td>
+
+                    <td>${{ "%.2f"|format(amount) }}</td>
+                    <td>${{ "%.2f"|format(paid) }}</td>
+                    <td>${{ "%.2f"|format(balance) }}</td>
+
                     <td>
-                        <form method="post" action="/jobs/delete">
-                            <input type="hidden" name="id" value="{{ item.id }}">
-                            <button type="submit" class="danger-btn">Delete</button>
+                        <form method="post" action="/jobs/{{ job.id }}/invoice" style="display:inline;">
+                            <button type="submit">Invoice</button>
+                        </form>
+
+                        <form method="post" action="/jobs/{{ job.id }}/mark-paid" style="display:inline;">
+                            <button type="submit">Paid</button>
                         </form>
                     </td>
-                </tr>
-                {% else %}
-                <tr>
-                    <td colspan="6">No jobs yet.</td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
 </div>
+{% else %}
+<div class="card">
+    <p>No jobs found.</p>
+</div>
+{% endif %}
+cd "C:\Users\Heinl\OneDrive\Documents\GitHub\HC-Pool-Ops"
+notepad app\templates\jobs.html
 {% endblock %}
