@@ -71,6 +71,8 @@
                         <form method="post" action="/jobs/{{ job.id }}/mark-paid" style="display:inline;">
                             <button type="submit" class="button small success">Paid</button>
                         </form>
+
+                        <a href="/invoice/{{ job.id }}" class="button small">Print</a>
                     </td>
                 </tr>
                 {% endfor %}
