@@ -203,13 +203,14 @@ def home(request: Request):
     if current_user(request):
         return RedirectResponse("/dashboard", status_code=303)
     return RedirectResponse("/login", status_code=303)
+
 @app.get("/login", response_class=HTMLResponse)
 def login_page(request: Request):
-    return templates.TemplateResponse(
+ return templates.TemplateResponse(
+    request,
     "login.html",
     {
-        "request": request,
-        "error": "Invalid username or password"
+        "error": None
     }
 )
 @app.post("/login")
