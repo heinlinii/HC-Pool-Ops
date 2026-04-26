@@ -765,17 +765,6 @@ def health():
         "status": "ok",
         "app": "HG Pool Ops",
         "version": "full-app-replacement-invoice-1"
-  
-  @app.get("/health")
-def health():
-    return {"status": "ok"}
-
-  @app.get("/health")
-def health():
-    return {"status": "ok"}
-@app.get("/health")
-def health():
-    return {
         "status": "ok",
         "app": "HG Pool Ops",
         "version": "full-app-replacement"
