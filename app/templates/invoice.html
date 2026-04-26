@@ -2,38 +2,90 @@
 
 {% block content %}
 
-<div class="card" style="max-width: 800px; margin: auto;">
-
-    <h1>Invoice</h1>
-
-    <div style="margin-bottom:20px;">
-        <strong>Job:</strong> {{ job.title }}<br>
-        <strong>Status:</strong> {{ job.status }}<br>
-        <strong>Date:</strong> {{ job.scheduled_date or "N/A" }}
+<div class="page-header no-print">
+    <div>
+        <div class="eyebrow">PoolOps Pro</div>
+        <h1>Invoice</h1>
+        <p>Printable job invoice</p>
     </div>
+
+    <div>
+        <a href="/jobs" class="button secondary">Back to Jobs</a>
+        <button onclick="window.print()" class="button">Print Invoice</button>
+    </div>
+</div>
+
+<div class="card invoice-card">
+
+    <div class="invoice-header">
+        <div>
+            <h1>HG Pool Ops</h1>
+            <p>Heinlin Concrete LLC</p>
+            <p>Evansville, Indiana</p>
+        </div>
+
+        <div class="invoice-meta">
+            <h2>INVOICE</h2>
+            <p><strong>Invoice #:</strong> {{ invoice.id }}</p>
+            <p><strong>Date:</strong> {{ invoice.created_at }}</p>
+            <p><strong>Status:</strong> {{ invoice.status }}</p>
+        </div>
+    </div>
+
+    <hr>
+
+    <div class="invoice-grid">
+        <div>
+            <h3>Bill To</h3>
+            <p><strong>{{ job.client_name or "Client" }}</strong></p>
+            <p>{{ job.client_phone or "" }}</p>
+            <p>{{ job.client_email or "" }}</p>
+        </div>
+
+        <div>
+            <h3>Job Location</h3>
+            <p><strong>{{ job.property_name or "Property" }}</strong></p>
+            <p>{{ job.address or "" }}</p>
+            <p>
+                {{ job.city or "" }}
+                {{ job.state or "" }}
+                {{ job.zip or "" }}
+            </p>
+        </div>
+    </div>
+
+    <h3>Job Details</h3>
 
     <table>
         <thead>
             <tr>
                 <th>Description</th>
+                <th>Status</th>
+                <th>Scheduled</th>
                 <th>Amount</th>
             </tr>
         </thead>
+
         <tbody>
             <tr>
-                <td>{{ job.title }}</td>
-                <td>$0.00</td>
+                <td>
+                    <strong>{{ job.title }}</strong>
+                    {% if job.description %}
+                        <div class="sub">{{ job.description }}</div>
+                    {% endif %}
+                </td>
+                <td>{{ job.status }}</td>
+                <td>{{ job.scheduled_date or "-" }}</td>
+                <td>${{ "%.2f"|format(amount or 0) }}</td>
             </tr>
         </tbody>
     </table>
 
-    <div style="margin-top:20px; text-align:right;">
-        <h3>Total: $0.00</h3>
+    <div class="invoice-total-box">
+        <p><strong>Total:</strong> ${{ "%.2f"|format(amount or 0) }}</p>
+        <p><strong>Paid:</strong> ${{ "%.2f"|format(paid or 0) }}</p>
+        <h2>Balance Due: ${{ "%.2f"|format(balance or 0) }}</h2>
     </div>
-
-    <button onclick="window.print()" class="button">
-        Print Invoice
-    </button>
 
 </div>
 
