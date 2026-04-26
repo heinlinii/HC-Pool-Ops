@@ -6,8 +6,10 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
 from sqlalchemy import create_engine, text
-app = FastAPI(title="HG Pool Ops")
-
+app = FastAPI(title="HC Pool Ops")
+@app.get("/health")
+def health():
+    return {"status": "ok"}
 app.add_middleware(
     SessionMiddleware,
     secret_key=os.getenv("SECRET_KEY", "poolops-secret-key-change-later"),
