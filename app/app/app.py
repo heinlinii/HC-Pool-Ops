@@ -770,16 +770,15 @@ def health():
 def health():
     return {"status": "ok"}
 
-@app.get("/invoice/{job_id}")
-def test_invoice(job_id: int):
-    return {"invoice": job_id}
-
   @app.get("/health")
 def health():
     return {"status": "ok"}
-
-@app.get("/invoice/{invoice_number}")
-def invoice_test(invoice_number: str):
-    return {"invoice": invoice_number}
+@app.get("/health")
+def health():
+    return {
+        "status": "ok",
+        "app": "HG Pool Ops",
+        "version": "full-app-replacement"
+    }
  }
 
