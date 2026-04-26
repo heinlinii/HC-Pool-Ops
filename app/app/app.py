@@ -762,4 +762,8 @@ def schedule_page(request: Request, user=Depends(require_login)):
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "app": "HG Pool Ops"}
+    return {
+        "status": "ok",
+        "app": "HG Pool Ops",
+        "version": "full-app-replacement-invoice-1"
+    }
