@@ -1,13 +1,17 @@
 import os
 from decimal import Decimal
-
+@app.get("/health")
+def health():
+    return {"status": "ok"}
 from fastapi import FastAPI, Request, Form, Depends, HTTPException
 from fastapi.responses import RedirectResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
 from sqlalchemy import create_engine, text
-
+@app.get("/invoice/{job_id}")
+def invoice(job_id: int):
+    return {"invoice": job_id}
 
 app = FastAPI(title="HG Pool Ops")
 
@@ -767,3 +771,10 @@ def health():
         "app": "HG Pool Ops",
         "version": "full-app-replacement-invoice-1"
     }
+@app.get("/health")
+def health():
+    return {"status": "ok"}
+
+@app.get("/invoice/{job_id}")
+def test_invoice(job_id: int):
+    return {"invoice": job_id}
