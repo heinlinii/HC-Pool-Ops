@@ -224,15 +224,19 @@ def login(request: Request, username: str = Form(...), password: str = Form(...)
     })
 
     request.session["user"] = user
-    return RedirectResponse("/dashboard", status_code=303)
-return templates.TemplateResponse(
-    "login.html",
-    {
-        "request": request,
-        "error": "Invalid username or password"
-    }
-)
 
+
+    if not user:
+        return templates.TemplateResponse(
+            "login.html",
+            {
+                "request": request,
+                "error": "Invalid username or password"
+            }
+        )
+
+    request.session["user"] = user
+    return RedirectResponse("/dashboard", status_code=303)
 @app.get("/logout")
 def logout(request: Request):
     request.session.clear()
