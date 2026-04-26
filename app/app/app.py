@@ -203,16 +203,15 @@ def home(request: Request):
     if current_user(request):
         return RedirectResponse("/dashboard", status_code=303)
     return RedirectResponse("/login", status_code=303)
-
-
 @app.get("/login", response_class=HTMLResponse)
 def login_page(request: Request):
-    return templates.TemplateResponse("login.html", {
+    return templates.TemplateResponse(
+    "login.html",
+    {
         "request": request,
-        "error": None,
-    })
-
-
+        "error": "Invalid username or password"
+    }
+)
 @app.post("/login")
 def login(request: Request, username: str = Form(...), password: str = Form(...)):
     user = one("""
@@ -224,15 +223,15 @@ def login(request: Request, username: str = Form(...), password: str = Form(...)
         "password": password,
     })
 
-    if not user:
-        return templates.TemplateResponse("login.html", {
-            "request": request,
-            "error": "Invalid username or password",
-        })
-
     request.session["user"] = user
     return RedirectResponse("/dashboard", status_code=303)
-
+return templates.TemplateResponse(
+    "login.html",
+    {
+        "request": request,
+        "error": "Invalid username or password"
+    }
+)
 
 @app.get("/logout")
 def logout(request: Request):
