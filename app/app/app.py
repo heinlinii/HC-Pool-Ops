@@ -435,7 +435,6 @@ def create_invoice(job_id: int, request: Request, user=Depends(require_login)):
 
     amount = money(job["amount"])
     paid = money(job["paid_amount"])
-
     invoice_status = "Paid" if amount > 0 and paid >= amount else "Unpaid"
 
     existing = one("""
@@ -535,43 +534,6 @@ def mark_job_paid(job_id: int, request: Request, user=Depends(require_login)):
 
     return RedirectResponse(f"/invoice/{job_id}", status_code=303)
 
-from fastapi import Request
-from fastapi.responses import HTMLResponse
-
-@app.get("/invoice/{job_id}", response_class=HTMLResponse)
-def invoice_page(request: Request, job_id: int):
-
-    job = None
-    for j in jobs:
-        if j["id"] == job_id:
-            job = j
-            break
-
-    if not job:
-        return {"detail": "Job not found"}
-
-    # simple placeholder numbers for now
-    amount = job.get("price", 0)
-    paid = job.get("paid", 0)
-    balance = amount - paid
-
-    invoice = {
-        "id": job_id,
-        "created_at": job.get("scheduled_date", ""),
-        "status": job.get("status", "Pending")
-    }
-
-    return templates.TemplateResponse(
-        "invoice.html",
-        {
-            "request": request,
-            "job": job,
-            "invoice": invoice,
-            "amount": amount,
-            "paid": paid,
-            "balance": balance
-        }
-    )
 
 @app.get("/invoice/{job_id}", response_class=HTMLResponse)
 def view_invoice(job_id: int, request: Request, user=Depends(require_login)):
