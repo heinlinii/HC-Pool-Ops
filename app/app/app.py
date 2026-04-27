@@ -247,8 +247,8 @@ def add_user(
     user=Depends(require_user),
 ):
     db_execute(
-        "INSERT INTO users (name, username, password, role) VALUES (:name, :username, :password, :role)",
-        {"name": name, "username": username, "password": password, "role": role},
+        "INSERT INTO users (username, password, role) VALUES (:name, :username, :password, :role)",
+        {"username": username, "password": password, "role": role},
     )
     return RedirectResponse("/users", status_code=303)
 
