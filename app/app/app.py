@@ -245,7 +245,7 @@ def add_user(
     role: str = Form("user"),
     user=Depends(require_user),
 ):
-   db_execute(
+    db_execute(
     "INSERT INTO users (username, password, role) VALUES (:username, :password, :role)",
     {
         "username": username,
