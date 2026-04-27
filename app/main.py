@@ -81,7 +81,7 @@ def init_db():
             role TEXT DEFAULT '',
             active TEXT DEFAULT 'Yes'
         )
-    """)
+     """)
 @app.get("/login", response_class=HTMLResponse)
 def login_page(request: Request):
     return HTMLResponse("""
