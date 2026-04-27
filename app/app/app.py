@@ -119,14 +119,13 @@ def init_db():
     existing = db_one("SELECT id FROM users WHERE username = :username", {"username": "admin"})
     if not existing:
         db_execute(
-            "INSERT INTO users (name, username, password, role) VALUES (:name, :username, :password, :role)",
-            {
-                "name": "Mike Heinlin",
-                "username": "admin",
-                "password": "admin",
-                "role": "admin",
-            },
-        )
+    "INSERT INTO users (username, password, role) VALUES (:username, :password, :role)",
+    {
+        "username": "admin",
+        "password": "admin",
+        "role": "admin",
+    },
+)
 
     prop = db_one("SELECT id FROM properties LIMIT 1")
     if not prop:
@@ -246,10 +245,11 @@ def add_user(
     role: str = Form("user"),
     user=Depends(require_user),
 ):
-    db_execute(
-        "INSERT INTO users (username, password, role) VALUES (:name, :username, :password, :role)",
-        {"username": username, "password": password, "role": role},
-    )
+   db_execute(
+   db_execute(
+    "INSERT INTO users (username, password, role) VALUES (:username, :password, :role)",
+    {"username": "admin", "password": "admin", "role": "admin"},
+)
     return RedirectResponse("/users", status_code=303)
 
 
