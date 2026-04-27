@@ -118,9 +118,11 @@ def init_db():
 
     existing = db_one("SELECT id FROM users WHERE username = :username", {"username": "admin"})
     if not existing:
-        db_execute(
-    "INSERT INTO users (username, password, role) VALUES (:username, :password, :role)",
+    
+   db_execute(
+    "INSERT INTO users (full_name, username, password, role) VALUES (:full_name, :username, :password, :role)",
     {
+        "full_name": "Mike Heinlin",
         "username": "admin",
         "password": "admin",
         "role": "admin",
@@ -246,12 +248,14 @@ def add_user(
     user=Depends(require_user),
 ):
     db_execute(
-    "INSERT INTO users (username, password, role) VALUES (:username, :password, :role)",
+    "INSERT INTO users (full_name, username, password, role) VALUES (:full_name, :username, :password, :role)",
     {
-        "username": username,
-        "password": password,
-        "role": role,
+        "full_name": "Mike Heinlin",
+        "username": "admin",
+        "password": "admin",
+        "role": "admin",
     },
+)
 )
    
 @app.post("/users/delete")
