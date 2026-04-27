@@ -84,18 +84,21 @@ def root(request: Request):
 
 @app.get("/login", response_class=HTMLResponse)
 def login_page(request: Request):
-    if get_current_user(request):
-        return RedirectResponse(url="/dashboard", status_code=303)
-
-    return templates.TemplateResponse(
-        "login.html",
-        {
-            "request": request,
-            "title": "Login",
-            "user": None,
-            "error": None,
-        },
-    )
+    return HTMLResponse("""
+    <html>
+    <head><title>Login</title></head>
+    <body style="font-family:Arial;max-width:400px;margin:80px auto;">
+        <h1>HC Pool Ops Login</h1>
+        <form method="post" action="/login">
+            <label>Username</label><br>
+            <input name="username" style="width:100%;padding:10px;"><br><br>
+            <label>Password</label><br>
+            <input name="password" type="password" style="width:100%;padding:10px;"><br><br>
+            <button type="submit" style="width:100%;padding:12px;">Login</button>
+        </form>
+    </body>
+    </html>
+    """)
 
 
 @app.post("/login", response_class=HTMLResponse)
