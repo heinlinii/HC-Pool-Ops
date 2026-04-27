@@ -246,13 +246,14 @@ def add_user(
     user=Depends(require_user),
 ):
    db_execute(
-   db_execute(
     "INSERT INTO users (username, password, role) VALUES (:username, :password, :role)",
-    {"username": "admin", "password": "admin", "role": "admin"},
+    {
+        "username": username,
+        "password": password,
+        "role": role,
+    },
 )
-    return RedirectResponse("/users", status_code=303)
-
-
+   
 @app.post("/users/delete")
 def delete_user(id: int = Form(...), user=Depends(require_user)):
     db_execute("DELETE FROM users WHERE id = :id", {"id": id})
