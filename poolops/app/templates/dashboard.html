@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="eyebrow">Operations</div>
+    <h1>Dashboard</h1>
+    <p>Jobs, billing, schedule, weather alerts, and client activity.</p>
+  </div>
+  <div class="actions"><a class="button" href="/jobs">Add / Manage Jobs</a><a class="button secondary" href="/calendar">Monthly Calendar</a></div>
+</div>
+
+<section class="stat-grid">
+  <div class="stat"><span>Clients</span><strong>{{ stats.clients }}</strong></div>
+  <div class="stat"><span>Properties</span><strong>{{ stats.properties }}</strong></div>
+  <div class="stat"><span>Total Jobs</span><strong>{{ stats.jobs }}</strong></div>
+  <div class="stat"><span>Scheduled</span><strong>{{ stats.scheduled }}</strong></div>
+  <div class="stat"><span>Ready To Bill</span><strong>{{ stats.ready_to_bill }}</strong></div>
+  <div class="stat"><span>Outstanding</span><strong>{{ money(stats.outstanding) }}</strong></div>
+</section>
+
+<div class="grid two">
+  <section class="card">
+    <div class="section-title"><h2>Recent Jobs</h2><a href="/jobs">View all</a></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Job</th><th>Client</th><th>Status</th><th>Billing</th><th>Total</th></tr></thead>
+        <tbody>
+          {% for job in recent_jobs %}
+          <tr><td><strong>{{ job.title }}</strong><div class="sub">{{ job.property_name or '' }}</div></td><td>{{ job.client_name or '-' }}</td><td>{{ job.status }}</td><td>{{ job.billing_status }}</td><td>{{ money(job.invoice_total) }}</td></tr>
+          {% else %}<tr><td colspan="5">No jobs yet.</td></tr>{% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="section-title"><h2>Upcoming Schedule</h2><a href="/calendar">Calendar</a></div>
+    {% for item in upcoming %}
+      <div class="list-item"><strong>{{ item.scheduled_date }} {{ item.scheduled_time }}</strong><span>{{ item.job_title or 'Scheduled item' }}</span><small>{{ item.crew_name or '' }}</small></div>
+    {% else %}<p class="muted">No upcoming schedule items.</p>{% endfor %}
+  </section>
+</div>
+
+<section class="card">
+  <div class="section-title"><h2>Weather Alerts</h2><a href="/weather">Refresh / manage</a></div>
+  <div class="pill-row">
+  {% for alert in alerts %}
+    <div class="weather-pill {{ 'warning' if alert.severity == 'Warning' else '' }}"><strong>{{ alert.alert_date }}</strong> {{ alert.message }} <span>{{ alert.location }}</span></div>
+  {% else %}<p class="muted">No weather alerts right now.</p>{% endfor %}
+  </div>
+</section>
+{% endblock %}

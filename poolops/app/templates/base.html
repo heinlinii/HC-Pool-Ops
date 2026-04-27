@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ title or app_title or 'PoolOps Pro' }}</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header class="topbar no-print">
+    <a class="brand" href="/dashboard">
+      <span class="brand-mark">H</span>
+      <span>PoolOps Pro</span>
+    </a>
+    {% if user %}
+    <nav class="nav">
+      <a href="/dashboard">Dashboard</a>
+      <a href="/calendar">Calendar</a>
+      <a href="/schedule">Schedule</a>
+      <a href="/my-day">My Day</a>
+      <a href="/clients">Clients</a>
+      <a href="/properties">Properties</a>
+      <a href="/jobs">Jobs</a>
+      <a href="/weather">Weather</a>
+      <a href="/quickbooks">QuickBooks</a>
+      <a href="/users">Users</a>
+    </nav>
+    <div class="user-chip">
+      <span>{{ user.full_name or user.username }}</span>
+      <a href="/logout">Logout</a>
+    </div>
+    {% endif %}
+  </header>
+  <main class="page">
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>

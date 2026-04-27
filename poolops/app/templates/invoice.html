@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-header no-print"><div><div class="eyebrow">Billing</div><h1>Invoice</h1><p>Printable invoice for {{ job.title }}</p></div><div class="actions"><a class="button secondary" href="/jobs">Back</a><button class="button" onclick="window.print()">Print</button></div></div>
+<section class="card invoice-card">
+  <div class="invoice-head"><div><h1>Heinlin Concrete LLC</h1><p>PoolOps Pro</p><p>Evansville, Indiana</p></div><div class="invoice-meta"><h2>INVOICE</h2><p><strong>#:</strong> {{ job.invoice_number or ('INV-%04d' % job.id) }}</p><p><strong>Status:</strong> {{ job.paid_status }}</p><p><strong>Date:</strong> {{ job.created_at }}</p></div></div>
+  <hr>
+  <div class="grid two"><div><h3>Bill To</h3><p><strong>{{ job.client_name or 'Client' }}</strong></p><p>{{ job.client_phone or '' }}</p><p>{{ job.client_email or '' }}</p></div><div><h3>Job Location</h3><p><strong>{{ job.property_name or 'Property' }}</strong></p><p>{{ job.property_address or '' }}</p><p>{{ job.property_city or '' }} {{ job.property_state or '' }} {{ job.property_zip or '' }}</p></div></div>
+  <table><thead><tr><th>Description</th><th>Type</th><th>Status</th><th>Amount</th></tr></thead><tbody><tr><td><strong>{{ job.title }}</strong><div class="sub">{{ job.notes }}</div></td><td>{{ job.job_type }}</td><td>{{ job.billing_status }}</td><td>{{ money(job.invoice_total) }}</td></tr></tbody></table>
+  <div class="total-box"><p>Total</p><h2>{{ money(job.invoice_total) }}</h2></div>
+</section>
+{% endblock %}

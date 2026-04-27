@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Login • PoolOps Pro</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="login-body">
+  <main class="login-card">
+    <div class="brand-login"><span class="brand-mark">H</span><strong>PoolOps Pro</strong></div>
+    <h1>Login</h1>
+    <p class="muted">Use your admin, crew, or client login.</p>
+    {% if error %}<div class="alert danger">{{ error }}</div>{% endif %}
+    <form method="post" action="/login" class="stack">
+      <label>Username</label>
+      <input type="text" name="username" autocomplete="username" required>
+      <label>Password</label>
+      <input type="password" name="password" autocomplete="current-password" required>
+      <button type="submit" class="button full">Login</button>
+    </form>
+    <div class="hint">
+      <strong>Defaults:</strong> admin/admin, mike/1234, jake/1234, smith/1234
+    </div>
+  </main>
+</body>
+</html>

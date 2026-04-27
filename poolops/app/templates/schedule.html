@@ -1,0 +1,5 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-header"><div><div class="eyebrow">Schedule</div><h1>Schedule</h1><p>All scheduled jobs in date order.</p></div><a class="button" href="/calendar">Month View</a></div>
+<section class="card"><div class="table-wrap"><table><thead><tr><th>Date</th><th>Job</th><th>Client</th><th>Property</th><th>Crew</th><th>Status</th></tr></thead><tbody>{% for job in jobs %}<tr><td>{{ job.scheduled_date }}</td><td><strong>{{ job.title }}</strong></td><td>{{ job.client_name or '-' }}</td><td>{{ job.property_name or '-' }}</td><td>{{ job.assigned_crew }}</td><td>{{ job.status }}</td></tr>{% else %}<tr><td colspan="6">No scheduled jobs.</td></tr>{% endfor %}</tbody></table></div></section>
+{% endblock %}

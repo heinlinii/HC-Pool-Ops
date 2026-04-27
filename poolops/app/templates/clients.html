@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-header"><div><div class="eyebrow">CRM</div><h1>Clients</h1><p>Manual clients and QuickBooks-imported customers.</p></div><a class="button secondary" href="/quickbooks">QuickBooks Import</a></div>
+<div class="grid two">
+<section class="card"><h2>Add Client</h2><form method="post" action="/clients" class="form-grid">
+<label>Name<input name="name" required></label><label>Phone<input name="phone"></label><label>Email<input name="email" type="email"></label><label>QuickBooks ID<input name="qb_customer_id"></label>
+<label>Portal User<select name="portal_user_id"><option value="">None</option>{% for u in users %}<option value="{{ u.id }}">{{ u.full_name }} ({{ u.username }})</option>{% endfor %}</select></label>
+<label class="wide">Notes<textarea name="notes"></textarea></label><button class="button">Save Client</button></form></section>
+<section class="card"><h2>Clients</h2><div class="table-wrap"><table><thead><tr><th>Name</th><th>Phone</th><th>Email</th><th>QB</th><th></th></tr></thead><tbody>{% for c in clients %}<tr><td><strong>{{ c.name }}</strong></td><td>{{ c.phone }}</td><td>{{ c.email }}</td><td>{{ c.qb_customer_id or '-' }}</td><td><form method="post" action="/clients/delete"><input type="hidden" name="id" value="{{ c.id }}"><button class="button danger small">Delete</button></form></td></tr>{% else %}<tr><td colspan="5">No clients yet.</td></tr>{% endfor %}</tbody></table></div></section>
+</div>
+{% endblock %}

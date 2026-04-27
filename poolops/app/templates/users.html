@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-header"><div><div class="eyebrow">Admin</div><h1>Users</h1><p>Manage admin, crew, and client logins.</p></div></div>
+<div class="grid two">
+<section class="card"><h2>Add User</h2><form method="post" action="/users" class="form-grid">
+<label>Full Name<input name="full_name" required></label>
+<label>Username<input name="username" required></label>
+<label>Password<input name="password" required></label>
+<label>Role<select name="role"><option>admin</option><option>crew</option><option>client</option><option>user</option></select></label>
+<button class="button">Save User</button></form></section>
+<section class="card"><h2>Current Users</h2><div class="table-wrap"><table><thead><tr><th>Name</th><th>Username</th><th>Role</th><th></th></tr></thead><tbody>{% for u in users %}<tr><td>{{ u.full_name }}</td><td>{{ u.username }}</td><td>{{ u.role }}</td><td><form method="post" action="/users/delete"><input type="hidden" name="id" value="{{ u.id }}"><button class="button danger small">Delete</button></form></td></tr>{% endfor %}</tbody></table></div></section>
+</div>
+{% endblock %}

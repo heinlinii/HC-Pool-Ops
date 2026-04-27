@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-header"><div><div class="eyebrow">Jobsites</div><h1>Properties</h1><p>Pool properties and job locations.</p></div></div>
+<div class="grid two">
+<section class="card"><h2>Add Property</h2><form method="post" action="/properties" class="form-grid">
+<label>Client<select name="client_id"><option value="">None</option>{% for c in clients %}<option value="{{ c.id }}">{{ c.name }}</option>{% endfor %}</select></label>
+<label>Property Name<input name="name" required></label><label>Address<input name="address"></label><label>City<input name="city" value="Evansville"></label><label>State<input name="state" value="IN"></label><label>Zip<input name="zip_code"></label><label>Latitude<input name="latitude"></label><label>Longitude<input name="longitude"></label><label class="wide">Notes<textarea name="notes"></textarea></label><button class="button">Save Property</button></form></section>
+<section class="card"><h2>Properties</h2><div class="table-wrap"><table><thead><tr><th>Property</th><th>Client</th><th>Address</th><th></th></tr></thead><tbody>{% for p in properties %}<tr><td><strong>{{ p.name }}</strong></td><td>{{ p.client_name or '-' }}</td><td>{{ p.address }} {{ p.city }} {{ p.state }}</td><td><form method="post" action="/properties/delete"><input type="hidden" name="id" value="{{ p.id }}"><button class="button danger small">Delete</button></form></td></tr>{% else %}<tr><td colspan="4">No properties yet.</td></tr>{% endfor %}</tbody></table></div></section>
+</div>
+{% endblock %}
