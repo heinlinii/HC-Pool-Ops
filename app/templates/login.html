@@ -1,28 +1,32 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="card login-card">
-    <h1>Login</h1>
 
-    {% if error %}
-    <div class="error">{{ error }}</div>
-    {% endif %}
+<div style="max-width: 400px; margin: 60px auto;">
+    <div class="card">
 
-    <form method="post" action="/login" class="form">
-        <label for="username">Username</label>
-        <input id="username" type="text" name="username" required>
+        <h2 style="margin-top: 0;">Login</h2>
 
-        <label for="password">Password</label>
-        <input id="password" type="password" name="password" required>
+        {% if error %}
+            <div class="error">{{ error }}</div>
+        {% endif %}
 
-        <button type="submit">Login</button>
-    </form>
+        <form method="post" action="/login">
+            <label>Username</label>
+            <input type="text" name="username" required>
 
-    <div class="note">
-        Demo logins:<br>
-        mike / 1234 (admin)<br>
-        jake / 1234 (crew)<br>
-        smith / 1234 (client)
+            <label>Password</label>
+            <input type="password" name="password" required>
+
+            <button type="submit">Login</button>
+        </form>
+
+        <div style="margin-top: 10px; font-size: 12px; color: #9ca3af;">
+            Default login: <br>
+            <strong>admin / admin</strong>
+        </div>
+
     </div>
 </div>
+
 {% endblock %}

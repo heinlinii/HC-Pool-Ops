@@ -2,89 +2,117 @@
 
 {% block content %}
 
-<div class="page-header">
-    <div>
-        <div class="eyebrow">PoolOps Pro</div>
-        <h1>Jobs</h1>
-        <p>Job list, billing status, invoices, and payments.</p>
-    </div>
+<h2>Jobs</h2>
 
-    <a href="/jobs/new" class="button">+ Add Job</a>
-</div>
-
-{% if jobs and jobs|length > 0 %}
 <div class="card">
-    <div class="table-wrap">
-        <table>
-            <thead>
-                <tr>
-                    <th>Job</th>
-                    <th>Client</th>
-                    <th>Property</th>
-                    <th>Status</th>
-                    <th>Scheduled</th>
-                    <th>Amount</th>
-                    <th>Paid</th>
-                    <th>Balance</th>
-                    <th>Billing</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
+    <h3>Add Job</h3>
 
-            <tbody>
-                {% for job in jobs %}
-                {% set amount = job.amount or 0 %}
-                {% set paid = job.paid_amount or 0 %}
-                {% set balance = amount - paid %}
+    <form method="post" action="/jobs">
+        <label>Property</label>
+        <select name="property_id" required>
+            {% for property in properties %}
+                <option value="{{ property.id }}">{{ property.name }}</option>
+            {% endfor %}
+        </select>
 
-                <tr>
-                    <td>
-                        <strong>{{ job.title }}</strong>
-                        {% if job.description %}
-                            <div class="sub">{{ job.description }}</div>
-                        {% endif %}
-                    </td>
+        <label>Job Title</label>
+        <input type="text" name="title" required>
 
-                    <td>{{ job.client_name or "-" }}</td>
+        <label>Status</label>
+        <select name="status">
+            <option value="Scheduled">Scheduled</option>
+            <option value="In Progress">In Progress</option>
+            <option value="Completed">Completed</option>
+        </select>
 
-                    <td>
-                        {{ job.property_name or "-" }}
-                        {% if job.address %}
-                            <div class="sub">{{ job.address }}</div>
-                        {% endif %}
-                    </td>
+        <label>Scheduled Date</label>
+        <input type="date" name="scheduled_date">
 
-                    <td>{{ job.status or "-" }}</td>
-                    <td>{{ job.scheduled_date or "-" }}</td>
-                    <td>${{ "%.2f"|format(amount) }}</td>
-                    <td>${{ "%.2f"|format(paid) }}</td>
-                    <td>${{ "%.2f"|format(balance) }}</td>
-                    <td>{{ job.billing_status or "Unbilled" }}</td>
+        <label>Assigned Crew</label>
+        <input type="text" name="assigned_crew">
 
-                    <td>
-                        <a href="/jobs/{{ job.id }}" class="button small">View</a>
+        <label>Notes</label>
+        <textarea name="notes"></textarea>
 
-                        <form method="post" action="/jobs/{{ job.id }}/invoice" style="display:inline;">
-                            <button type="submit" class="button small secondary">Invoice</button>
-                        </form>
-
-                        <form method="post" action="/jobs/{{ job.id }}/mark-paid" style="display:inline;">
-                            <button type="submit" class="button small success">Paid</button>
-                        </form>
-
-                        <a href="/invoice/{{ job.id }}" class="button small">Print</a>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
+        <button type="submit">Add Job</button>
+    </form>
 </div>
-{% else %}
+
 <div class="card">
-    <p class="empty-state">No jobs found.</p>
-    <a href="/jobs/new" class="button">Create First Job</a>
+    <h3>Job List</h3>
+
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Property</th>
+                <th>Title</th>
+                <th>Status</th>
+                <th>Date</th>
+                <th>Crew</th>
+                <th>Billing</th>
+                <th>Total</th>
+                <th>Paid</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for job in jobs %}
+            <tr>
+                <td>{{ job.id }}</td>
+                <td>{{ job.property_name or "-" }}</td>
+                <td>{{ job.title }}</td>
+                <td>
+                    <form method="post" action="/jobs/status">
+                        <input type="hidden" name="id" value="{{ job.id }}">
+                        <select name="status">
+                            <option value="Scheduled" {% if job.status == "Scheduled" %}selected{% endif %}>Scheduled</option>
+                            <option value="In Progress" {% if job.status == "In Progress" %}selected{% endif %}>In Progress</option>
+                            <option value="Completed" {% if job.status == "Completed" %}selected{% endif %}>Completed</option>
+                        </select>
+                        <button type="submit">Save</button>
+                    </form>
+                </td>
+                <td>{{ job.scheduled_date or "-" }}</td>
+                <td>{{ job.assigned_crew or "-" }}</td>
+
+                <td>
+                    <form method="post" action="/jobs/billing">
+                        <input type="hidden" name="id" value="{{ job.id }}">
+
+                        <select name="billing_status">
+                            <option value="Not Invoiced" {% if job.billing_status == "Not Invoiced" %}selected{% endif %}>Not Invoiced</option>
+                            <option value="Invoiced" {% if job.billing_status == "Invoiced" %}selected{% endif %}>Invoiced</option>
+                        </select>
+
+                        <input type="text" name="invoice_total" value="{{ job.invoice_total or '0' }}" placeholder="Total">
+
+                        <select name="paid_status">
+                            <option value="Unpaid" {% if job.paid_status == "Unpaid" %}selected{% endif %}>Unpaid</option>
+                            <option value="Paid" {% if job.paid_status == "Paid" %}selected{% endif %}>Paid</option>
+                        </select>
+
+                        <button type="submit">Save Billing</button>
+                    </form>
+                </td>
+
+                <td>${{ job.invoice_total or "0" }}</td>
+                <td>{{ job.paid_status or "Unpaid" }}</td>
+
+                <td>
+                    <a href="/jobs/{{ job.id }}">View</a><br>
+                    <a href="/jobs/{{ job.id }}/invoice">Invoice</a>
+
+                    <form method="post" action="/jobs/delete" onsubmit="return confirm('Delete this job?');">
+                        <input type="hidden" name="id" value="{{ job.id }}">
+                        <button type="submit">Delete</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 </div>
-{% endif %}
 
 {% endblock %}

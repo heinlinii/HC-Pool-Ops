@@ -1,122 +1,61 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="page-header">
-    <div>
-        <div class="eyebrow">PoolOps Pro</div>
-        <h1>Dashboard</h1>
-        <p>Overview of jobs, billing, crew activity, and open work.</p>
+
+<h2>Dashboard</h2>
+
+<div class="card">
+    <h3>Overview</h3>
+
+    <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+        <div class="card" style="flex: 1;">
+            <strong>Clients</strong>
+            <div>{{ stats.clients }}</div>
+        </div>
+
+        <div class="card" style="flex: 1;">
+            <strong>Properties</strong>
+            <div>{{ stats.properties }}</div>
+        </div>
+
+        <div class="card" style="flex: 1;">
+            <strong>Jobs</strong>
+            <div>{{ stats.jobs }}</div>
+        </div>
+
+        <div class="card" style="flex: 1;">
+            <strong>Crew</strong>
+            <div>{{ stats.employees }}</div>
+        </div>
     </div>
-</div>
-
-<div class="dashboard-grid">
-
-    <div class="card stat-card">
-        <div class="stat-label">Total Jobs</div>
-        <div class="stat-number">{{ total_jobs or 0 }}</div>
-    </div>
-
-    <div class="card stat-card">
-        <div class="stat-label">Open Jobs</div>
-        <div class="stat-number">{{ open_jobs or 0 }}</div>
-    </div>
-
-    <div class="card stat-card">
-        <div class="stat-label">Completed Jobs</div>
-        <div class="stat-number">{{ completed_jobs or 0 }}</div>
-    </div>
-
-    <div class="card stat-card">
-        <div class="stat-label">Billing Total</div>
-        <div class="stat-number">${{ "%.2f"|format(billing_total or 0) }}</div>
-    </div>
-
-    <div class="card stat-card">
-        <div class="stat-label">Paid</div>
-        <div class="stat-number">${{ "%.2f"|format(paid_total or 0) }}</div>
-    </div>
-
-    <div class="card stat-card">
-        <div class="stat-label">Outstanding</div>
-        <div class="stat-number">${{ "%.2f"|format(outstanding_total or 0) }}</div>
-    </div>
-
 </div>
 
 <div class="card">
-    <div class="section-header">
-        <div>
-            <h2>Recent Jobs</h2>
-            <p>Latest job activity in PoolOps.</p>
-        </div>
-        <a href="/jobs" class="button">View Jobs</a>
-    </div>
+    <h3>Recent Jobs</h3>
 
-    {% if recent_jobs %}
-    <div class="table-wrap">
-        <table>
-            <thead>
-                <tr>
-                    <th>Job</th>
-                    <th>Client</th>
-                    <th>Status</th>
-                    <th>Amount</th>
-                    <th>Billing</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for job in recent_jobs %}
-                <tr>
-                    <td>{{ job.title or job.name or "Untitled Job" }}</td>
-                    <td>{{ job.client_name or job.client or "—" }}</td>
-                    <td>{{ job.status or "Open" }}</td>
-                    <td>${{ "%.2f"|format(job.amount or job.price or job.total or 0) }}</td>
-                    <td>{{ job.billing_status or "Unbilled" }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-    {% else %}
-        <p class="empty-state">No recent jobs found.</p>
-    {% endif %}
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Property</th>
+                <th>Title</th>
+                <th>Status</th>
+                <th>Date</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for job in jobs %}
+            <tr>
+                <td>{{ job.id }}</td>
+                <td>{{ job.property_name or "-" }}</td>
+                <td>{{ job.title }}</td>
+                <td>{{ job.status }}</td>
+                <td>{{ job.scheduled_date or "-" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 </div>
 
-<div class="card">
-    <div class="section-header">
-        <div>
-            <h2>Billing Snapshot</h2>
-            <p>Quick look at invoices and payment status.</p>
-        </div>
-    </div>
-
-    {% if invoices %}
-    <div class="table-wrap">
-        <table>
-            <thead>
-                <tr>
-                    <th>Invoice</th>
-                    <th>Job</th>
-                    <th>Client</th>
-                    <th>Total</th>
-                    <th>Status</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for invoice in invoices %}
-                <tr>
-                    <td>#{{ invoice.id }}</td>
-                    <td>{{ invoice.job_title or invoice.job_name or "—" }}</td>
-                    <td>{{ invoice.client_name or "—" }}</td>
-                    <td>${{ "%.2f"|format(invoice.total or invoice.amount or 0) }}</td>
-                    <td>{{ invoice.status or "Unpaid" }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-    {% else %}
-        <p class="empty-state">No billing records found.</p>
-    {% endif %}
-</div>
 {% endblock %}
