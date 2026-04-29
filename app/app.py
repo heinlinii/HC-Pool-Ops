@@ -19,9 +19,9 @@ templates = Jinja2Templates(directory="app/app/templates")
 
 # Fake users (for now)
 users = {
-    "mike": {"password": "1234", "role": "admin"},
-    "jake": {"password": "1234", "role": "crew"},
-    "smith": {"password": "1234", "role": "client"},
+    "mike": {"password": "5500", "role": "admin"},
+    "randy": {"password": "0318", "role": "crew"},
+    "traylor": {"password": "8899", "role": "client"},
 }
 
 # HEALTH
