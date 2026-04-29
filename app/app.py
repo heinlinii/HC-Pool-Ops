@@ -14,8 +14,8 @@ app.add_middleware(
 )
 
 # Static + Templates
-app.mount("/static", StaticFiles(directory="app/static"), name="static")
-templates = Jinja2Templates(directory="app/templates")
+app.mount("/static", StaticFiles(directory="app/app/static"), name="static")
+templates = Jinja2Templates(directory="app/app/templates")
 
 # Fake users (for now)
 users = {
