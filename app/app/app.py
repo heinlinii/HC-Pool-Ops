@@ -1,188 +1,73 @@
-import os
-
 from fastapi import FastAPI, Request, Form
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
+from fastapi.templating import Jinja2Templates
+import os
 
+app = FastAPI()
 
-app = FastAPI(title="PoolOps Pro")
-
-
-# REQUIRED FOR request.session
+# Sessions
 app.add_middleware(
     SessionMiddleware,
-    secret_key=os.getenv("SESSION_SECRET", "poolops-dev-secret-key"),
-    same_site="lax",
-    https_only=False,
+    secret_key="poolops-secret-key"
 )
 
+# Static + Templates
+app.mount("/static", StaticFiles(directory="app/static"), name="static")
+templates = Jinja2Templates(directory="app/templates")
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-TEMPLATES_DIR = os.path.abspath(os.path.join(BASE_DIR, "..", "templates"))
-STATIC_DIR = os.path.abspath(os.path.join(BASE_DIR, "..", "static"))
-
-templates = Jinja2Templates(directory=TEMPLATES_DIR)
-
-if os.path.isdir(STATIC_DIR):
-    app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
-
-
-USERS = {
-    "mike": {"password": "1234", "role": "admin", "name": "Mike"},
-    "jake": {"password": "1234", "role": "crew", "name": "Jake"},
-    "smith": {"password": "1234", "role": "client", "name": "Smith"},
+# Fake users (for now)
+users = {
+    "mike": {"password": "1234", "role": "admin"},
+    "jake": {"password": "1234", "role": "crew"},
+    "smith": {"password": "1234", "role": "client"},
 }
 
-
-def get_current_user(request: Request):
-    username = request.session.get("username")
-    if not username:
-        return None
-
-    user = USERS.get(username)
-    if not user:
-        request.session.clear()
-        return None
-
-    return {
-        "username": username,
-        "name": user["name"],
-        "role": user["role"],
-    }
-
-
-def require_login(request: Request):
-    user = get_current_user(request)
-    if not user:
-        return RedirectResponse("/", status_code=303)
-    return user
-
-
+# HEALTH
 @app.get("/health")
 def health():
     return {"status": "ok", "app": "PoolOps Pro"}
 
-
+# HOME
 @app.get("/", response_class=HTMLResponse)
-def login_page(request: Request):
-    user = get_current_user(request)
-    if user:
-        return RedirectResponse("/dashboard", status_code=303)
+def home():
+    return "<h1>PoolOps Pro is LIVE</h1><a href='/login'>Go to Login</a>"
 
-    return templates.TemplateResponse(
-        "login.html",
-        {
-            "request": request,
-            "error": None,
-        },
-    )
-
-
+# LOGIN PAGE
 @app.get("/login", response_class=HTMLResponse)
-def login_get(request: Request):
-    return login_page(request)
+def login_page(request: Request):
+    return templates.TemplateResponse("login.html", {"request": request})
 
-
+# LOGIN SUBMIT
 @app.post("/login")
-def login_submit(
-    request: Request,
-    username: str = Form(...),
-    password: str = Form(...),
-):
-    username_clean = username.strip().lower()
-    password_clean = password.strip()
+def login(request: Request, username: str = Form(...), password: str = Form(...)):
+    user = users.get(username)
 
-    user = USERS.get(username_clean)
-
-    if not user or user["password"] != password_clean:
+    if not user or user["password"] != password:
         return templates.TemplateResponse(
             "login.html",
-            {
-                "request": request,
-                "error": "Invalid username or password.",
-            },
-            status_code=401,
+            {"request": request, "error": "Invalid login"}
         )
 
-    request.session.clear()
-    request.session["username"] = username_clean
+    request.session["user"] = username
     request.session["role"] = user["role"]
 
-    return RedirectResponse("/dashboard", status_code=303)
+    return RedirectResponse("/dashboard", status_code=302)
 
-
-@app.get("/logout")
-def logout(request: Request):
-    request.session.clear()
-    return RedirectResponse("/", status_code=303)
-
-
+# DASHBOARD
 @app.get("/dashboard", response_class=HTMLResponse)
 def dashboard(request: Request):
-    user = require_login(request)
-    if isinstance(user, RedirectResponse):
-        return user
+    user = request.session.get("user")
+
+    if not user:
+        return RedirectResponse("/login")
 
     return templates.TemplateResponse(
         "dashboard.html",
         {
             "request": request,
             "user": user,
-            "role": user["role"],
-        },
-    )
-
-
-@app.get("/jobs", response_class=HTMLResponse)
-def jobs(request: Request):
-    user = require_login(request)
-    if isinstance(user, RedirectResponse):
-        return user
-
-    jobs_data = [
-        {
-            "id": 1,
-            "customer": "Smith",
-            "job_name": "Pool Service",
-            "status": "Scheduled",
-            "billing_status": "Unbilled",
-            "amount": 450,
-        },
-        {
-            "id": 2,
-            "customer": "Johnson",
-            "job_name": "Cover Repair",
-            "status": "Completed",
-            "billing_status": "Ready to Bill",
-            "amount": 1200,
-        },
-    ]
-
-    return templates.TemplateResponse(
-        "jobs.html",
-        {
-            "request": request,
-            "user": user,
-            "role": user["role"],
-            "jobs": jobs_data,
-        },
-    )
-
-
-@app.get("/my-day", response_class=HTMLResponse)
-def my_day(request: Request):
-    user = require_login(request)
-    if isinstance(user, RedirectResponse):
-        return user
-
-    return templates.TemplateResponse(
-        "jobs.html",
-        {
-            "request": request,
-            "user": user,
-            "role": user["role"],
-            "jobs": [],
-        },
+            "role": request.session.get("role")
+        }
     )
