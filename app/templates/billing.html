@@ -3,20 +3,14 @@
 {% block content %}
 <section class="hero">
     <div>
-        <h2>Welcome, {{ user.name }}</h2>
-        <p>Role: {{ user.role }}</p>
+        <h2>Billing</h2>
+        <p>Quick billing overview for office/admin use.</p>
     </div>
-    <div class="badge">System Online</div>
 </section>
 
 <section class="grid">
     <div class="card">
-        <h3>Total Jobs</h3>
-        <div class="big">{{ billing.job_count }}</div>
-    </div>
-
-    <div class="card">
-        <h3>Total Work Value</h3>
+        <h3>Total Work</h3>
         <div class="big">{{ billing.total }}</div>
     </div>
 
@@ -29,22 +23,22 @@
         <h3>Unbilled</h3>
         <div class="big">{{ billing.unbilled }}</div>
     </div>
+
+    <div class="card">
+        <h3>Deposits Needed</h3>
+        <div class="big">{{ billing.deposits }}</div>
+    </div>
 </section>
 
 <section class="card">
-    <h3>Today’s Command Center</h3>
-    <p>This clean reset is stable. From here we build jobs, scheduling, billing, QuickBooks export, client portal, and photo tracking without breaking the foundation.</p>
-</section>
-
-<section class="card">
-    <h3>Recent Jobs</h3>
+    <h3>Billing Queue</h3>
     <table>
         <thead>
             <tr>
                 <th>Client</th>
                 <th>Job</th>
                 <th>Status</th>
-                <th>Billing</th>
+                <th>Billing Status</th>
                 <th>Amount</th>
             </tr>
         </thead>

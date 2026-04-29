@@ -2,116 +2,29 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>HC Pool Ops</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <style>
-        body {
-            margin: 0;
-            font-family: Arial, sans-serif;
-            background: #0f172a;
-            color: #e5e7eb;
-        }
-
-        header {
-            background: #111827;
-            padding: 15px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid #1f2937;
-        }
-
-        header h1 {
-            margin: 0;
-            font-size: 20px;
-        }
-
-        nav a {
-            color: #9ca3af;
-            text-decoration: none;
-            margin-left: 15px;
-            font-size: 14px;
-        }
-
-        nav a:hover {
-            color: #ffffff;
-        }
-
-        .container {
-            padding: 20px;
-        }
-
-        .card {
-            background: #1f2937;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-        }
-
-        input, select, textarea, button {
-            padding: 8px;
-            margin-top: 5px;
-            margin-bottom: 10px;
-            width: 100%;
-            border-radius: 5px;
-            border: none;
-        }
-
-        input, select, textarea {
-            background: #111827;
-            color: #e5e7eb;
-        }
-
-        button {
-            background: #2563eb;
-            color: white;
-            cursor: pointer;
-        }
-
-        button:hover {
-            background: #1d4ed8;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        table th, table td {
-            padding: 10px;
-            border-bottom: 1px solid #374151;
-            text-align: left;
-        }
-
-        .error {
-            color: #ef4444;
-            margin-bottom: 10px;
-        }
-    </style>
+    <title>{{ title if title else "PoolOps Pro" }}</title>
+    <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
+    <header class="topbar">
+        <div>
+            <h1>PoolOps Pro</h1>
+            <p>Heinlin Concrete Operations System</p>
+        </div>
 
-<header>
-    <h1>HC Pool Ops</h1>
+        {% if user %}
+        <nav>
+            <a href="/dashboard">Dashboard</a>
+            <a href="/jobs">Jobs</a>
+            <a href="/my-day">My Day</a>
+            <a href="/billing">Billing</a>
+            <a href="/logout" class="logout">Logout</a>
+        </nav>
+        {% endif %}
+    </header>
 
-    {% if user %}
-    <nav>
-        <a href="/dashboard">Dashboard</a>
-        <a href="/jobs">Jobs</a>
-        <a href="/clients">Clients</a>
-        <a href="/properties">Properties</a>
-        <a href="/employees">Crew</a>
-        <a href="/schedule">Schedule</a>
-        <a href="/my-day">My Day</a>
-        <a href="/logout">Logout</a>
-    </nav>
-    {% endif %}
-</header>
-
-<div class="container">
-    {% block content %}{% endblock %}
-</div>
-
+    <main class="page">
+        {% block content %}{% endblock %}
+    </main>
 </body>
 </html>

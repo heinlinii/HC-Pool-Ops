@@ -1,98 +1,55 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="crew-header card">
-    <h1>My Day</h1>
-    <p>Today’s assigned work and time clock.</p>
+<section class="hero">
+    <div>
+        <h2>My Day</h2>
+        <p>Crew workflow for today.</p>
+    </div>
 
-    {% if open_clock %}
-    <div class="success">Clocked in since {{ open_clock.clock_in_at }}</div>
-    <form method="post" action="/clock/out">
-        <button type="submit" class="danger-btn big-button">Clock Out</button>
+    <form method="post" action="/clock-toggle">
+        {% if clock.clocked_in %}
+            <button class="danger" type="submit">Clock Out</button>
+        {% else %}
+            <button type="submit">Clock In</button>
+        {% endif %}
     </form>
+</section>
+
+<section class="card">
+    <h3>Clock Status</h3>
+    {% if clock.clocked_in %}
+        <p class="good">Clocked In</p>
     {% else %}
-    <div class="warning">You are not clocked in.</div>
-    <form method="post" action="/clock/in" class="form">
-        <input type="text" name="notes" placeholder="Clock-in note optional">
-        <button type="submit" class="big-button">Clock In</button>
-    </form>
+        <p class="muted">Clocked Out</p>
     {% endif %}
-</div>
 
-<div class="card">
-    <h2>Assigned Jobs</h2>
+    {% if clock.last_action %}
+        <p>Last action: {{ clock.last_action }}</p>
+    {% endif %}
+</section>
 
-    <div class="crew-job-list">
-        {% for item in jobs %}
-        <div class="crew-job-card">
-            <div class="crew-job-top">
-                <h3>{{ item.title }}</h3>
-                <span class="status-pill status-{{ item.status|lower|replace(' ', '-') }}">
-                    {{ item.status }}
-                </span>
-            </div>
+<section class="card">
+    <h3>Assigned Jobs</h3>
 
-            <div class="crew-job-detail">
-                <strong>Property:</strong>
-                {{ item.property.name if item.property else "-" }}
-            </div>
+    {% for job in jobs %}
+        <div class="job-card">
+            <h4>{{ job.title }}</h4>
+            <p><strong>Client:</strong> {{ job.client }}</p>
+            <p><strong>Property:</strong> {{ job.property }}</p>
+            <p><strong>Status:</strong> {{ job.status }}</p>
+            <p><strong>Notes:</strong> {{ job.notes }}</p>
 
-            <div class="crew-job-detail">
-                <strong>Scheduled:</strong>
-                {{ item.scheduled_for or "-" }}
-            </div>
-
-            {% if item.notes %}
-            <div class="crew-job-detail">
-                <strong>Notes:</strong>
-                {{ item.notes }}
-            </div>
-            {% endif %}
-
-            <div class="crew-actions">
-                {% if item.status != "In Progress" and item.status != "Complete" %}
-                <form method="post" action="/jobs/start">
-                    <input type="hidden" name="id" value="{{ item.id }}">
-                    <button type="submit" class="big-button">Start Job</button>
+            <div class="actions">
+                <form method="post" action="/jobs/{{ job.id }}/start">
+                    <button type="submit">Start Job</button>
                 </form>
-                {% endif %}
 
-                {% if item.status == "In Progress" %}
-                <form method="post" action="/jobs/complete">
-                    <input type="hidden" name="id" value="{{ item.id }}">
-                    <button type="submit" class="big-button complete-button">Complete Job</button>
-                </form>
-                {% endif %}
-
-                <form method="post" action="/jobs/status" class="inline-form">
-                    <input type="hidden" name="id" value="{{ item.id }}">
-                    <select name="status">
-                        <option value="Scheduled" {% if item.status == "Scheduled" %}selected{% endif %}>Scheduled</option>
-                        <option value="In Progress" {% if item.status == "In Progress" %}selected{% endif %}>In Progress</option>
-                        <option value="Complete" {% if item.status == "Complete" %}selected{% endif %}>Complete</option>
-                    </select>
-                    <button type="submit">Save</button>
+                <form method="post" action="/jobs/{{ job.id }}/complete">
+                    <button class="success" type="submit">Complete Job</button>
                 </form>
             </div>
         </div>
-        {% else %}
-        <p>No assigned jobs.</p>
-        {% endfor %}
-    </div>
-</div>
-
-<div class="card">
-    <h2>Recent Clock Entries</h2>
-    <ul>
-        {% for item in today_entries %}
-        <li>
-            In: {{ item.clock_in_at }} |
-            Out: {{ item.clock_out_at or "still clocked in" }} |
-            {{ item.notes or "" }}
-        </li>
-        {% else %}
-        <li>No entries yet.</li>
-        {% endfor %}
-    </ul>
-</div>
+    {% endfor %}
+</section>
 {% endblock %}
