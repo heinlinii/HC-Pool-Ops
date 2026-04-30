@@ -1,208 +1,543 @@
+/* =========================
+   RESET
+========================= */
+
 * {
+    margin: 0;
+    padding: 0;
     box-sizing: border-box;
 }
 
+
+/* =========================
+   BODY
+========================= */
+
 body {
-    margin: 0;
     font-family: Arial, Helvetica, sans-serif;
-    background: #0f172a;
-    color: #f8fafc;
+    background: #111827;
+    color: #f3f4f6;
 }
 
-a {
-    color: #38bdf8;
-    text-decoration: none;
-}
 
-.topbar {
-    background: #020617;
-    border-bottom: 1px solid #334155;
-    padding: 20px 28px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.topbar h1 {
-    margin: 0;
-    font-size: 24px;
-}
-
-.topbar p {
-    margin: 4px 0 0;
-    color: #94a3b8;
-}
-
-nav {
-    display: flex;
-    gap: 16px;
-    flex-wrap: wrap;
-}
-
-.logout {
-    color: #f87171;
-}
-
-.page {
-    padding: 28px;
-}
+/* =========================
+   LOGIN
+========================= */
 
 .login-body {
     min-height: 100vh;
-    display: grid;
-    place-items: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background:
+        linear-gradient(
+            135deg,
+            #0f172a,
+            #111827,
+            #1e293b
+        );
 }
 
-.login-wrap {
+.login-container {
     width: 100%;
     max-width: 420px;
     padding: 20px;
 }
 
-.login-card,
-.card {
-    background: #111827;
-    border: 1px solid #334155;
-    border-radius: 16px;
-    padding: 24px;
-    box-shadow: 0 24px 80px rgba(0, 0, 0, 0.35);
+.login-card {
+    background: #1f2937;
+    border-radius: 20px;
+    padding: 40px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.4);
 }
 
-.login-card h1 {
-    margin-bottom: 4px;
+.logo-area {
+    text-align: center;
+    margin-bottom: 30px;
 }
 
-label {
+.logo-area h1 {
+    font-size: 42px;
+    letter-spacing: 2px;
+    margin-bottom: 10px;
+}
+
+.logo-area p {
+    color: #9ca3af;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
     display: block;
-    margin-top: 16px;
-    margin-bottom: 6px;
-    color: #cbd5e1;
+    margin-bottom: 8px;
+    color: #d1d5db;
+    font-size: 14px;
 }
 
-input {
+.form-group input,
+.form-group select,
+.form-group textarea {
     width: 100%;
-    padding: 12px;
-    border: 1px solid #475569;
-    border-radius: 10px;
-    background: #020617;
+    padding: 14px;
+    border-radius: 12px;
+    border: none;
+    background: #374151;
     color: white;
+    font-size: 15px;
 }
 
-button {
-    background: #38bdf8;
-    color: #020617;
-    border: 0;
-    border-radius: 10px;
-    padding: 11px 16px;
-    font-weight: bold;
+.form-group textarea {
+    resize: vertical;
+}
+
+.login-button,
+.primary-button,
+.success-button,
+.danger-button,
+.logout-button {
+    display: inline-block;
+    border: none;
+    border-radius: 12px;
+    padding: 14px 20px;
     cursor: pointer;
-}
-
-.login-card button {
-    width: 100%;
-    margin-top: 20px;
-}
-
-button.success {
-    background: #22c55e;
-}
-
-button.danger {
-    background: #f87171;
-}
-
-.error {
-    background: #7f1d1d;
-    border: 1px solid #ef4444;
-    color: white;
-    padding: 10px;
-    border-radius: 10px;
-    margin: 16px 0;
-}
-
-.hint,
-.muted {
-    color: #94a3b8;
-}
-
-.good {
-    color: #22c55e;
+    text-decoration: none;
     font-weight: bold;
+    transition: 0.2s;
 }
 
-.hero {
-    background: #111827;
-    border: 1px solid #334155;
-    border-radius: 16px;
-    padding: 24px;
-    margin-bottom: 22px;
+.login-button,
+.primary-button {
+    background: #2563eb;
+    color: white;
+    width: 100%;
+}
+
+.login-button:hover,
+.primary-button:hover {
+    background: #1d4ed8;
+}
+
+.success-button {
+    background: #16a34a;
+    color: white;
+}
+
+.success-button:hover {
+    background: #15803d;
+}
+
+.danger-button {
+    background: #dc2626;
+    color: white;
+}
+
+.danger-button:hover {
+    background: #b91c1c;
+}
+
+.logout-button {
+    background: #374151;
+    color: white;
+    margin-top: 15px;
+    text-align: center;
+}
+
+.logout-button:hover {
+    background: #4b5563;
+}
+
+.error-box {
+    background: #7f1d1d;
+    color: #fecaca;
+    padding: 12px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+}
+
+.demo-users {
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid #374151;
+}
+
+.demo-users h3 {
+    margin-bottom: 15px;
+}
+
+.demo-row {
     display: flex;
     justify-content: space-between;
-    gap: 20px;
-    align-items: center;
+    margin-bottom: 10px;
+    color: #d1d5db;
 }
 
-.hero h2 {
-    margin: 0 0 6px;
+
+/* =========================
+   APP LAYOUT
+========================= */
+
+.app-layout {
+    display: flex;
+    min-height: 100vh;
 }
 
-.hero p {
-    margin: 0;
-    color: #cbd5e1;
+.sidebar {
+    width: 260px;
+    background: #0f172a;
+    padding: 30px 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
 }
 
-.badge {
-    background: #064e3b;
-    color: #86efac;
-    padding: 10px 14px;
-    border-radius: 999px;
+.sidebar-top h1 {
+    font-size: 30px;
+    margin-bottom: 8px;
+}
+
+.sidebar-top p {
+    color: #9ca3af;
+    font-size: 14px;
+}
+
+.sidebar-nav {
+    margin-top: 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.sidebar-nav a {
+    text-decoration: none;
+    color: #d1d5db;
+    padding: 14px;
+    border-radius: 12px;
+    transition: 0.2s;
+}
+
+.sidebar-nav a:hover {
+    background: #1e293b;
+}
+
+.sidebar-nav a.active {
+    background: #2563eb;
+    color: white;
+}
+
+.sidebar-bottom p {
     font-weight: bold;
 }
 
-.grid {
+.sidebar-bottom span {
+    display: block;
+    color: #9ca3af;
+    margin-top: 4px;
+}
+
+
+/* =========================
+   MAIN CONTENT
+========================= */
+
+.main-content {
+    flex: 1;
+    padding: 30px;
+}
+
+.topbar {
+    margin-bottom: 30px;
+}
+
+.topbar h2 {
+    font-size: 34px;
+    margin-bottom: 5px;
+}
+
+.topbar p {
+    color: #9ca3af;
+}
+
+
+/* =========================
+   STATS
+========================= */
+
+.stats-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 18px;
-    margin-bottom: 22px;
+    gap: 20px;
+    margin-bottom: 30px;
 }
 
-.big {
-    font-size: 32px;
+.stat-card {
+    background: #1f2937;
+    padding: 25px;
+    border-radius: 18px;
+}
+
+.stat-card h3 {
+    color: #9ca3af;
+    margin-bottom: 15px;
+}
+
+.stat-number {
+    font-size: 42px;
     font-weight: bold;
-    color: #38bdf8;
+}
+
+
+/* =========================
+   CARDS
+========================= */
+
+.content-card {
+    background: #1f2937;
+    border-radius: 20px;
+    padding: 25px;
+    margin-bottom: 30px;
+}
+
+.card-header {
+    margin-bottom: 25px;
+}
+
+.card-header h3 {
+    font-size: 24px;
+}
+
+
+/* =========================
+   TABLES
+========================= */
+
+.table-wrapper {
+    overflow-x: auto;
 }
 
 table {
     width: 100%;
     border-collapse: collapse;
-    overflow-x: auto;
+}
+
+thead {
+    background: #111827;
 }
 
 th,
 td {
+    padding: 16px;
     text-align: left;
-    padding: 12px;
-    border-bottom: 1px solid #334155;
 }
 
-th {
-    color: #94a3b8;
+tbody tr {
+    border-bottom: 1px solid #374151;
+}
+
+
+/* =========================
+   STATUS
+========================= */
+
+.status-pill {
+    display: inline-block;
+    background: #2563eb;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 999px;
+    font-size: 13px;
+}
+
+
+/* =========================
+   JOBS
+========================= */
+
+.jobs-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    gap: 20px;
 }
 
 .job-card {
-    border: 1px solid #334155;
-    border-radius: 14px;
-    padding: 18px;
-    margin-bottom: 16px;
-    background: #020617;
+    background: #111827;
+    border-radius: 18px;
+    padding: 20px;
 }
 
-.job-card h4 {
-    margin-top: 0;
-}
-
-.actions {
+.job-top {
     display: flex;
-    gap: 12px;
+    justify-content: space-between;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.job-top h3 {
+    margin-bottom: 8px;
+}
+
+.job-top p {
+    color: #9ca3af;
+}
+
+.job-details {
+    margin-bottom: 20px;
+}
+
+.detail-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.job-notes {
+    color: #d1d5db;
+    line-height: 1.5;
+    margin-bottom: 20px;
+}
+
+.job-form {
+    margin-top: 20px;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 20px;
+}
+
+.form-full {
+    grid-column: 1 / -1;
+}
+
+
+/* =========================
+   SCHEDULE
+========================= */
+
+.schedule-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.schedule-column {
+    background: #1f2937;
+    border-radius: 20px;
+    padding: 20px;
+}
+
+.schedule-header {
+    font-size: 20px;
+    font-weight: bold;
+    margin-bottom: 20px;
+}
+
+.schedule-card {
+    background: #111827;
+    border-radius: 16px;
+    padding: 18px;
+    margin-bottom: 15px;
+}
+
+.schedule-card h3 {
+    margin: 10px 0;
+}
+
+.schedule-card p {
+    color: #9ca3af;
+    margin-bottom: 15px;
+}
+
+.schedule-status {
+    display: inline-block;
+    background: #2563eb;
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+}
+
+.schedule-meta {
+    display: flex;
+    justify-content: space-between;
+    color: #d1d5db;
+    font-size: 14px;
+}
+
+.upcoming-date {
+    margin-top: 15px;
+    color: #60a5fa;
+}
+
+
+/* =========================
+   CREW
+========================= */
+
+.crew-status-bar {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.crew-status-card {
+    background: #1f2937;
+    border-radius: 20px;
+    padding: 25px;
+}
+
+.status-title {
+    color: #9ca3af;
+    margin-bottom: 15px;
+}
+
+.status-live {
+    font-size: 30px;
+    font-weight: bold;
+    color: #22c55e;
+    margin-bottom: 20px;
+}
+
+.status-off {
+    font-size: 30px;
+    font-weight: bold;
+    color: #ef4444;
+    margin-bottom: 20px;
+}
+
+.crew-actions {
+    display: flex;
+    gap: 10px;
     flex-wrap: wrap;
+}
+
+
+/* =========================
+   MOBILE
+========================= */
+
+@media (max-width: 900px) {
+
+    .app-layout {
+        flex-direction: column;
+    }
+
+    .sidebar {
+        width: 100%;
+    }
+
+    .main-content {
+        padding: 20px;
+    }
+
+    .job-top,
+    .detail-row,
+    .schedule-meta {
+        flex-direction: column;
+        gap: 8px;
+    }
+
 }

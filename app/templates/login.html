@@ -2,35 +2,73 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Login | PoolOps Pro</title>
-    <link rel="stylesheet" href="/static/style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PoolOps2 Login</title>
+    <link rel="stylesheet" href="/static/style.css?v=1">
 </head>
-<body class="login-body">
-    <main class="login-wrap">
-        <section class="login-card">
-            <h1>PoolOps Pro</h1>
-            <p>Heinlin Concrete Operations System</p>
 
-            {% if error %}
-                <div class="error">{{ error }}</div>
-            {% endif %}
+<body class="login-body">
+
+    <div class="login-container">
+
+        <div class="login-card">
+
+            <div class="logo-area">
+                <h1>POOLOPS2</h1>
+                <p>Heinlin Concrete LLC</p>
+            </div>
 
             <form method="post" action="/login">
-                <label>Username</label>
-                <input type="text" name="username" placeholder="mike" required>
 
-                <label>Password</label>
-                <input type="password" name="password" placeholder="1234" required>
+                <div class="form-group">
+                    <label>Username</label>
+                    <input
+                        type="text"
+                        name="username"
+                        placeholder="Enter username"
+                        required
+                    >
+                </div>
 
-                <button type="submit">Login</button>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input
+                        type="password"
+                        name="password"
+                        placeholder="Enter password"
+                        required
+                    >
+                </div>
+
+                {% if error %}
+                <div class="error-box">
+                    {{ error }}
+                </div>
+                {% endif %}
+
+                <button type="submit" class="login-button">
+                    Login
+                </button>
+
             </form>
-            <div class="hint">
-    <strong>Test logins</strong><br>
-    mike / 5500 = admin<br>
-    randy / 0318 = crew<br>
-    traylor / 8899 = client
-</div>
-        </section>
-    </main>
+
+            <div class="demo-users">
+                <h3>Demo Accounts</h3>
+
+                <div class="demo-row">
+                    <span>Admin</span>
+                    <span>mike / 5500</span>
+                </div>
+
+                <div class="demo-row">
+                    <span>Crew</span>
+                    <span>randy / 0318</span>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
 </body>
 </html>

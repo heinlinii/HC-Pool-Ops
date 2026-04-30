@@ -1,64 +1,136 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PoolOps2 Dashboard</title>
+    <link rel="stylesheet" href="/static/style.css?v=1">
+</head>
 
-{% block content %}
-<section class="hero">
-    <div>
-        <h2>Welcome, {{ user.name }}</h2>
-        <p>Role: {{ user.role }}</p>
+<body>
+
+    <div class="app-layout">
+
+        <aside class="sidebar">
+
+            <div class="sidebar-top">
+                <h1>POOLOPS2</h1>
+                <p>Heinlin Concrete LLC</p>
+            </div>
+
+            <nav class="sidebar-nav">
+                <a href="/dashboard" class="active">Dashboard</a>
+                <a href="/jobs">Jobs</a>
+                <a href="/schedule">Schedule</a>
+                <a href="/crew">Crew View</a>
+                <a href="/health">Health</a>
+            </nav>
+
+            <div class="sidebar-bottom">
+                <p>{{ user.name }}</p>
+                <span>{{ user.role }}</span>
+
+                <a href="/logout" class="logout-button">
+                    Logout
+                </a>
+            </div>
+
+        </aside>
+
+        <main class="main-content">
+
+            <div class="topbar">
+                <div>
+                    <h2>Dashboard</h2>
+                    <p>Welcome back, {{ user.name }}</p>
+                </div>
+            </div>
+
+            <section class="stats-grid">
+
+                <div class="stat-card">
+                    <h3>Total Jobs</h3>
+                    <div class="stat-number">
+                        {{ stats.total_jobs }}
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <h3>Scheduled</h3>
+                    <div class="stat-number">
+                        {{ stats.scheduled }}
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <h3>Pending</h3>
+                    <div class="stat-number">
+                        {{ stats.pending }}
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <h3>Completed</h3>
+                    <div class="stat-number">
+                        {{ stats.completed }}
+                    </div>
+                </div>
+
+            </section>
+
+            <section class="content-card">
+
+                <div class="card-header">
+                    <h3>Current Jobs</h3>
+                </div>
+
+                <div class="table-wrapper">
+
+                    <table>
+
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Client</th>
+                                <th>Address</th>
+                                <th>Type</th>
+                                <th>Status</th>
+                                <th>Crew</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+
+                            {% for job in jobs %}
+
+                            <tr>
+                                <td>#{{ job.id }}</td>
+                                <td>{{ job.client }}</td>
+                                <td>{{ job.address }}</td>
+                                <td>{{ job.job_type }}</td>
+                                <td>
+                                    <span class="status-pill">
+                                        {{ job.status }}
+                                    </span>
+                                </td>
+                                <td>{{ job.crew }}</td>
+                                <td>{{ job.date }}</td>
+                            </tr>
+
+                            {% endfor %}
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </section>
+
+        </main>
+
     </div>
-    <div class="badge">System Online</div>
-</section>
 
-<section class="grid">
-    <div class="card">
-        <h3>Total Jobs</h3>
-        <div class="big">{{ billing.job_count }}</div>
-    </div>
-
-    <div class="card">
-        <h3>Total Work Value</h3>
-        <div class="big">{{ billing.total }}</div>
-    </div>
-
-    <div class="card">
-        <h3>Ready to Bill</h3>
-        <div class="big">{{ billing.ready }}</div>
-    </div>
-
-    <div class="card">
-        <h3>Unbilled</h3>
-        <div class="big">{{ billing.unbilled }}</div>
-    </div>
-</section>
-
-<section class="card">
-    <h3>Today’s Command Center</h3>
-    <p>This clean reset is stable. From here we build jobs, scheduling, billing, QuickBooks export, client portal, and photo tracking without breaking the foundation.</p>
-</section>
-
-<section class="card">
-    <h3>Recent Jobs</h3>
-    <table>
-        <thead>
-            <tr>
-                <th>Client</th>
-                <th>Job</th>
-                <th>Status</th>
-                <th>Billing</th>
-                <th>Amount</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for job in jobs %}
-            <tr>
-                <td>{{ job.client }}</td>
-                <td>{{ job.title }}</td>
-                <td>{{ job.status }}</td>
-                <td>{{ job.billing_status }}</td>
-                <td>${{ "%.2f"|format(job.amount) }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</section>
-{% endblock %}
+</body>
+</html>
