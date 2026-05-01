@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PoolOps2 Crew</title>
+    <link rel="stylesheet" href="/static/style.css?v=1">
+</head>
+
+<body>
+
+    <div class="app-layout">
+
+        <aside class="sidebar">
+
+            <div class="sidebar-top">
+                <h1>POOLOPS2</h1>
+                <p>Heinlin Concrete LLC</p>
+            </div>
+
+            <nav class="sidebar-nav">
+                <a href="/dashboard">Dashboard</a>
+                <a href="/jobs">Jobs</a>
+                <a href="/schedule">Schedule</a>
+                <a href="/crew" class="active">Crew View</a>
+                <a href="/health">Health</a>
+            </nav>
+
+            <div class="sidebar-bottom">
+                <p>{{ user.name }}</p>
+                <span>{{ user.role }}</span>
+
+                <a href="/logout" class="logout-button">
+                    Logout
+                </a>
+            </div>
+
+        </aside>
+
+        <main class="main-content">
+
+            <div class="topbar">
+                <div>
+                    <h2>My Day</h2>
+                    <p>Field workflow and active jobs.</p>
+                </div>
+            </div>
+
+            <section class="crew-status-bar">
+
+                <div class="crew-status-card">
+
+                    <div class="status-title">
+                        Clock Status
+                    </div>
+
+                    {% if clock.clocked_in %}
+
+                    <div class="status-live">
+                        CLOCKED IN
+                    </div>
+
+                    <form method="post" action="/crew/clock-out">
+                        <button class="danger-button">
+                            Clock Out
+                        </button>
+                    </form>
+
+                    {% else %}
+
+                    <div class="status-off">
+                        CLOCKED OUT
+                    </div>
+
+                    <form method="post" action="/crew/clock-in">
+                        <button class="primary-button">
+                            Clock In
+                        </button>
+                    </form>
+
+                    {% endif %}
+
+                </div>
+
+                <div class="crew-status-card">
+
+                    <div class="status-title">
+                        Active Job
+                    </div>
+
+                    {% if clock.current_job %}
+                        <div class="status-live">
+                            JOB #{{ clock.current_job }}
+                        </div>
+                    {% else %}
+                        <div class="status-off">
+                            NO ACTIVE JOB
+                        </div>
+                    {% endif %}
+
+                </div>
+
+            </section>
+
+            <section class="jobs-grid">
+
+                {% for job in jobs %}
+
+                <div class="job-card">
+
+                    <div class="job-top">
+
+                        <div>
+                            <h3>{{ job.client }}</h3>
+                            <p>{{ job.address }}</p>
+                        </div>
+
+                        <span class="status-pill">
+                            {{ job.status }}
+                        </span>
+
+                    </div>
+
+                    <div class="job-details">
+
+                        <div class="detail-row">
+                            <strong>Type:</strong>
+                            <span>{{ job.job_type }}</span>
+                        </div>
+
+                        <div class="detail-row">
+                            <strong>Crew:</strong>
+                            <span>{{ job.crew }}</span>
+                        </div>
+
+                        <div class="detail-row">
+                            <strong>Date:</strong>
+                            <span>{{ job.date }}</span>
+                        </div>
+
+                    </div>
+
+                    <div class="job-notes">
+                        {{ job.notes }}
+                    </div>
+
+                    <div class="crew-actions">
+
+                        {% if job.status != "In Progress" and job.status != "Completed" %}
+
+                        <form method="post" action="/crew/start-job/{{ job.id }}">
+                            <button class="primary-button">
+                                Start Job
+                            </button>
+                        </form>
+
+                        {% endif %}
+
+                        {% if job.status != "Completed" %}
+
+                        <form method="post" action="/crew/complete-job/{{ job.id }}">
+                            <button class="success-button">
+                                Complete Job
+                            </button>
+                        </form>
+
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+                {% endfor %}
+
+            </section>
+
+        </main>
+
+    </div>
+
+</body>
+</html>

@@ -1,101 +1,161 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PoolOps2 Schedule</title>
+    <link rel="stylesheet" href="/static/style.css?v=1">
+</head>
 
-{% block content %}
-<div class="card">
-    <h1>Schedule</h1>
+<body>
 
-    {% if error %}
-    <div class="error">{{ error }}</div>
-    {% endif %}
+    <div class="app-layout">
 
-    <form method="post" action="/schedule" class="form">
-        <label>Date</label>
-        <input type="date" name="slot_date" required>
+        <aside class="sidebar">
 
-        <label>Start Time</label>
-        <input type="text" name="start_time" placeholder="8am" required>
+            <div class="sidebar-top">
+                <h1>POOLOPS2</h1>
+                <p>Heinlin Concrete LLC</p>
+            </div>
 
-        <label>End Time</label>
-        <input type="text" name="end_time" placeholder="9am" required>
+            <nav class="sidebar-nav">
+                <a href="/dashboard">Dashboard</a>
+                <a href="/jobs">Jobs</a>
+                <a href="/schedule" class="active">Schedule</a>
+                <a href="/crew">Crew View</a>
+                <a href="/health">Health</a>
+            </nav>
 
-        <label>Job Type</label>
-        <select name="job_type" required>
-            <option value="Opening">Opening</option>
-            <option value="Closing">Closing</option>
-            <option value="Service">Service</option>
-            <option value="Repair">Repair</option>
-            <option value="Estimate">Estimate</option>
-            <option value="Cover Service">Cover Service</option>
-            <option value="Leak Check">Leak Check</option>
-            <option value="Tile/Coping">Tile/Coping</option>
-            <option value="Other">Other</option>
-        </select>
+            <div class="sidebar-bottom">
+                <p>{{ user.name }}</p>
+                <span>{{ user.role }}</span>
 
-        <label>Status</label>
-        <select name="status" required>
-            <option value="Open">Open</option>
-            <option value="Booked">Booked</option>
-            <option value="Blocked">Blocked</option>
-        </select>
+                <a href="/logout" class="logout-button">
+                    Logout
+                </a>
+            </div>
 
-        <label>Property optional</label>
-        <select name="property_id">
-            <option value="">-- none --</option>
-            {% for item in properties %}
-            <option value="{{ item.id }}">
-                {{ item.name }}{% if item.client %} - {{ item.client.name }}{% endif %}
-            </option>
-            {% endfor %}
-        </select>
+        </aside>
 
-        <label>Admin Notes</label>
-        <input type="text" name="notes" placeholder="Example: Morning opening slot, west side only">
+        <main class="main-content">
 
-        <button type="submit">Add Schedule Slot</button>
-    </form>
-</div>
+            <div class="topbar">
+                <div>
+                    <h2>Schedule Board</h2>
+                    <p>Current scheduled jobs and crew assignments.</p>
+                </div>
+            </div>
 
-<div class="card">
-    <h2>Schedule Slots</h2>
+            <section class="schedule-grid">
 
-    <div class="table-wrap">
-        <table>
-            <thead>
-                <tr>
-                    <th>Date</th>
-                    <th>Time</th>
-                    <th>Job Type</th>
-                    <th>Status</th>
-                    <th>Property</th>
-                    <th>Booked By</th>
-                    <th>Notes</th>
-                    <th>Delete</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for item in slots %}
-                <tr>
-                    <td>{{ item.slot_date }}</td>
-                    <td>{{ item.start_time }} - {{ item.end_time }}</td>
-                    <td>{{ item.job_type or "-" }}</td>
-                    <td>{{ item.status }}</td>
-                    <td>{{ item.property.name if item.property else "-" }}</td>
-                    <td>{{ item.booked_by_client.name if item.booked_by_client else "-" }}</td>
-                    <td>{{ item.notes or "-" }}</td>
-                    <td>
-                        <form method="post" action="/schedule/delete">
-                            <input type="hidden" name="id" value="{{ item.id }}">
-                            <button type="submit" class="danger-btn">Delete</button>
-                        </form>
-                    </td>
-                </tr>
-                {% else %}
-                <tr>
-                    <td colspan="8">No schedule slots yet.</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+                <div class="schedule-column">
+
+                    <div class="schedule-header">
+                        Today
+                    </div>
+
+                    {% for job in jobs %}
+
+                        {% if job.date == "Today" %}
+
+                        <div class="schedule-card">
+
+                            <div class="schedule-status">
+                                {{ job.status }}
+                            </div>
+
+                            <h3>{{ job.client }}</h3>
+
+                            <p>{{ job.address }}</p>
+
+                            <div class="schedule-meta">
+                                <span>{{ job.job_type }}</span>
+                                <span>{{ job.crew }}</span>
+                            </div>
+
+                        </div>
+
+                        {% endif %}
+
+                    {% endfor %}
+
+                </div>
+
+                <div class="schedule-column">
+
+                    <div class="schedule-header">
+                        Tomorrow
+                    </div>
+
+                    {% for job in jobs %}
+
+                        {% if job.date == "Tomorrow" %}
+
+                        <div class="schedule-card">
+
+                            <div class="schedule-status">
+                                {{ job.status }}
+                            </div>
+
+                            <h3>{{ job.client }}</h3>
+
+                            <p>{{ job.address }}</p>
+
+                            <div class="schedule-meta">
+                                <span>{{ job.job_type }}</span>
+                                <span>{{ job.crew }}</span>
+                            </div>
+
+                        </div>
+
+                        {% endif %}
+
+                    {% endfor %}
+
+                </div>
+
+                <div class="schedule-column">
+
+                    <div class="schedule-header">
+                        Upcoming
+                    </div>
+
+                    {% for job in jobs %}
+
+                        {% if job.date != "Today" and job.date != "Tomorrow" %}
+
+                        <div class="schedule-card">
+
+                            <div class="schedule-status">
+                                {{ job.status }}
+                            </div>
+
+                            <h3>{{ job.client }}</h3>
+
+                            <p>{{ job.address }}</p>
+
+                            <div class="schedule-meta">
+                                <span>{{ job.job_type }}</span>
+                                <span>{{ job.crew }}</span>
+                            </div>
+
+                            <div class="upcoming-date">
+                                {{ job.date }}
+                            </div>
+
+                        </div>
+
+                        {% endif %}
+
+                    {% endfor %}
+
+                </div>
+
+            </section>
+
+        </main>
+
     </div>
-</div>
-{% endblock %}
+
+</body>
+</html>
