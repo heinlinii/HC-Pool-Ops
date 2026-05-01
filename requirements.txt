@@ -3,6 +3,5 @@ uvicorn[standard]
 jinja2
 python-multipart
 itsdangerous
-sqlalchemy
-psycopg2-binary
+starlette==0.46.2
 gunicorn

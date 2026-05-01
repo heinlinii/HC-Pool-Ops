@@ -1,15 +1,10 @@
 from fastapi import FastAPI, Request, Form
-from fastapi.responses import RedirectResponse
-from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
+from fastapi.responses import RedirectResponse, HTMLResponse
 from starlette.middleware.sessions import SessionMiddleware
 
 app = FastAPI(title="PoolOps2")
 
 app.add_middleware(SessionMiddleware, secret_key="poolops2-phase1-secret")
-
-app.mount("/static", StaticFiles(directory="app/static"), name="static")
-templates = Jinja2Templates(directory="app/templates")
 
 
 USERS = {
@@ -17,105 +12,198 @@ USERS = {
     "randy": {"password": "0318", "role": "crew", "name": "Randy"},
 }
 
-
 JOBS = [
     {
         "id": 1,
-        "client": "Sample Client",
-        "address": "123 Poolside Drive",
-        "job_type": "Pool Remodel",
+        "client": "Smith Residence",
+        "address": "Evansville, IN",
+        "job_type": "Concrete Pool",
         "status": "Scheduled",
         "crew": "Randy",
         "date": "Today",
-        "notes": "Phase 1 demo job.",
+        "notes": "20x40 rectangle pool",
     },
     {
         "id": 2,
-        "client": "Heinlin Test Pool",
-        "address": "456 Concrete Lane",
-        "job_type": "Service / Layout",
+        "client": "Johnson Backyard",
+        "address": "Newburgh, IN",
+        "job_type": "Pool Remodel",
         "status": "Pending",
         "crew": "Unassigned",
         "date": "Tomorrow",
-        "notes": "Use this to test schedule and dashboard pages.",
+        "notes": "Tile and coping replacement",
     },
 ]
-
 
 TIME_CLOCK = {
     "randy": {"clocked_in": False, "current_job": None}
 }
 
 
-def current_user(request: Request):
+def page(title, body):
+    return HTMLResponse(f"""
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{title}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body {{
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #111827;
+            color: white;
+        }}
+        .wrap {{
+            max-width: 1100px;
+            margin: auto;
+            padding: 24px;
+        }}
+        .card {{
+            background: #1f2937;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 20px;
+        }}
+        input, select, textarea {{
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0 16px;
+            border-radius: 10px;
+            border: 0;
+            background: #374151;
+            color: white;
+        }}
+        button, a.btn {{
+            display: inline-block;
+            background: #2563eb;
+            color: white;
+            padding: 12px 16px;
+            border-radius: 10px;
+            border: 0;
+            text-decoration: none;
+            font-weight: bold;
+            margin: 4px;
+            cursor: pointer;
+        }}
+        .danger {{ background: #dc2626; }}
+        .success {{ background: #16a34a; }}
+        .nav a {{
+            color: white;
+            margin-right: 12px;
+            text-decoration: none;
+            font-weight: bold;
+        }}
+        .job {{
+            border: 1px solid #374151;
+            border-radius: 14px;
+            padding: 16px;
+            margin: 12px 0;
+            background: #111827;
+        }}
+        .pill {{
+            background: #2563eb;
+            border-radius: 999px;
+            padding: 6px 10px;
+            font-size: 13px;
+        }}
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        {body}
+    </div>
+</body>
+</html>
+""")
+
+
+def get_user(request: Request):
     username = request.session.get("username")
     if not username:
         return None
-
-    user = USERS.get(username)
-    if not user:
+    record = USERS.get(username)
+    if not record:
         return None
-
     return {
         "username": username,
-        "name": user["name"],
-        "role": user["role"],
+        "name": record["name"],
+        "role": record["role"],
     }
 
 
-def require_login(request: Request):
-    user = current_user(request)
-    if not user:
-        return RedirectResponse("/", status_code=303)
-    return user
+def nav(user):
+    return f"""
+    <div class="card nav">
+        <h1>PoolOps2</h1>
+        <p>Logged in as {user["name"]} / {user["role"]}</p>
+        <a href="/dashboard">Dashboard</a>
+        <a href="/jobs">Jobs</a>
+        <a href="/schedule">Schedule</a>
+        <a href="/crew">Crew</a>
+        <a href="/health">Health</a>
+        <a href="/logout">Logout</a>
+    </div>
+    """
 
 
 @app.get("/")
-def login_page(request: Request):
-    user = current_user(request)
+async def login_page(request: Request):
+    user = get_user(request)
     if user:
         if user["role"] == "crew":
             return RedirectResponse("/crew", status_code=303)
         return RedirectResponse("/dashboard", status_code=303)
 
-    return templates.TemplateResponse(
-        "login.html",
-        {"request": request, "error": None},
-    )
+    return page("Login", """
+    <div class="card">
+        <h1>PoolOps2</h1>
+        <p>Heinlin Concrete LLC</p>
+        <form method="post" action="/login">
+            <label>Username</label>
+            <input name="username" required>
+            <label>Password</label>
+            <input name="password" type="password" required>
+            <button type="submit">Login</button>
+        </form>
+        <p>Admin: mike / 5500</p>
+        <p>Crew: randy / 0318</p>
+    </div>
+    """)
 
 
 @app.post("/login")
-def login(
-    request: Request,
-    username: str = Form(...),
-    password: str = Form(...),
-):
+async def login(request: Request, username: str = Form(...), password: str = Form(...)):
     username = username.strip().lower()
-    user = USERS.get(username)
+    password = password.strip()
 
-    if not user or user["password"] != password.strip():
-        return templates.TemplateResponse(
-            "login.html",
-            {"request": request, "error": "Invalid username or password."},
-            status_code=401,
-        )
+    record = USERS.get(username)
+
+    if not record or record["password"] != password:
+        return page("Login Error", """
+        <div class="card">
+            <h1>Login Failed</h1>
+            <p>Invalid username or password.</p>
+            <a class="btn" href="/">Try Again</a>
+        </div>
+        """)
 
     request.session["username"] = username
 
-    if user["role"] == "crew":
+    if record["role"] == "crew":
         return RedirectResponse("/crew", status_code=303)
 
     return RedirectResponse("/dashboard", status_code=303)
 
 
 @app.get("/logout")
-def logout(request: Request):
+async def logout(request: Request):
     request.session.clear()
     return RedirectResponse("/", status_code=303)
 
 
 @app.get("/health")
-def health():
+async def health():
     return {
         "status": "ok",
         "app": "PoolOps2",
@@ -124,50 +212,115 @@ def health():
 
 
 @app.get("/dashboard")
-def dashboard(request: Request):
-    user = require_login(request)
-    if isinstance(user, RedirectResponse):
-        return user
+async def dashboard(request: Request):
+    user = get_user(request)
+    if not user:
+        return RedirectResponse("/", status_code=303)
 
-    if user["role"] != "admin":
-        return RedirectResponse("/crew", status_code=303)
+    total = len(JOBS)
+    scheduled = len([j for j in JOBS if j["status"] == "Scheduled"])
+    pending = len([j for j in JOBS if j["status"] == "Pending"])
+    completed = len([j for j in JOBS if j["status"] == "Completed"])
 
-    stats = {
-        "total_jobs": len(JOBS),
-        "scheduled": len([j for j in JOBS if j["status"] == "Scheduled"]),
-        "pending": len([j for j in JOBS if j["status"] == "Pending"]),
-        "completed": len([j for j in JOBS if j["status"] == "Completed"]),
-    }
-
-    return templates.TemplateResponse(
-        "dashboard.html",
-        {
-            "request": request,
-            "user": user,
-            "jobs": JOBS,
-            "stats": stats,
-        },
+    job_rows = "".join(
+        f"""
+        <div class="job">
+            <h3>{job["client"]}</h3>
+            <p>{job["address"]}</p>
+            <p><span class="pill">{job["status"]}</span></p>
+            <p>Type: {job["job_type"]}</p>
+            <p>Crew: {job["crew"]}</p>
+            <p>Date: {job["date"]}</p>
+        </div>
+        """
+        for job in JOBS
     )
+
+    return page("Dashboard", nav(user) + f"""
+    <div class="card">
+        <h2>Dashboard</h2>
+        <p>Total Jobs: {total}</p>
+        <p>Scheduled: {scheduled}</p>
+        <p>Pending: {pending}</p>
+        <p>Completed: {completed}</p>
+    </div>
+    <div class="card">
+        <h2>Current Jobs</h2>
+        {job_rows}
+    </div>
+    """)
 
 
 @app.get("/jobs")
-def jobs_page(request: Request):
-    user = require_login(request)
-    if isinstance(user, RedirectResponse):
-        return user
+async def jobs_page(request: Request):
+    user = get_user(request)
+    if not user:
+        return RedirectResponse("/", status_code=303)
 
-    return templates.TemplateResponse(
-        "jobs.html",
-        {
-            "request": request,
-            "user": user,
-            "jobs": JOBS,
-        },
+    add_form = ""
+    if user["role"] == "admin":
+        add_form = """
+        <div class="card">
+            <h2>Add Job</h2>
+            <form method="post" action="/jobs/add">
+                <label>Client</label>
+                <input name="client" required>
+
+                <label>Address</label>
+                <input name="address" required>
+
+                <label>Job Type</label>
+                <select name="job_type" required>
+                    <option>Concrete Pool</option>
+                    <option>Pool Remodel</option>
+                    <option>Auto Cover</option>
+                    <option>Tile / Coping</option>
+                    <option>EcoFinish</option>
+                    <option>Service</option>
+                </select>
+
+                <label>Date</label>
+                <input name="date" placeholder="Today / Tomorrow / Monday" required>
+
+                <label>Crew</label>
+                <select name="crew">
+                    <option>Randy</option>
+                    <option>Unassigned</option>
+                </select>
+
+                <label>Notes</label>
+                <textarea name="notes"></textarea>
+
+                <button type="submit">Create Job</button>
+            </form>
+        </div>
+        """
+
+    job_cards = "".join(
+        f"""
+        <div class="job">
+            <h3>{job["client"]}</h3>
+            <p>{job["address"]}</p>
+            <p><span class="pill">{job["status"]}</span></p>
+            <p>Type: {job["job_type"]}</p>
+            <p>Crew: {job["crew"]}</p>
+            <p>Date: {job["date"]}</p>
+            <p>{job["notes"]}</p>
+        </div>
+        """
+        for job in JOBS
     )
+
+    return page("Jobs", nav(user) + add_form + f"""
+    <div class="card">
+        <h2>Jobs</h2>
+        {job_cards}
+    </div>
+    """)
 
 
 @app.post("/jobs/add")
-def add_job(
+async def add_job(
     request: Request,
     client: str = Form(...),
     address: str = Form(...),
@@ -176,52 +329,73 @@ def add_job(
     crew: str = Form("Unassigned"),
     notes: str = Form(""),
 ):
-    user = require_login(request)
-    if isinstance(user, RedirectResponse):
-        return user
+    user = get_user(request)
+    if not user:
+        return RedirectResponse("/", status_code=303)
 
     if user["role"] != "admin":
         return RedirectResponse("/crew", status_code=303)
 
     next_id = max([job["id"] for job in JOBS], default=0) + 1
 
-    JOBS.append(
-        {
-            "id": next_id,
-            "client": client.strip(),
-            "address": address.strip(),
-            "job_type": job_type.strip(),
-            "status": "Scheduled",
-            "crew": crew.strip() or "Unassigned",
-            "date": date.strip(),
-            "notes": notes.strip(),
-        }
-    )
+    JOBS.append({
+        "id": next_id,
+        "client": client.strip(),
+        "address": address.strip(),
+        "job_type": job_type.strip(),
+        "status": "Scheduled",
+        "crew": crew.strip(),
+        "date": date.strip(),
+        "notes": notes.strip(),
+    })
 
     return RedirectResponse("/jobs", status_code=303)
 
 
 @app.get("/schedule")
-def schedule_page(request: Request):
-    user = require_login(request)
-    if isinstance(user, RedirectResponse):
-        return user
+async def schedule(request: Request):
+    user = get_user(request)
+    if not user:
+        return RedirectResponse("/", status_code=303)
 
-    return templates.TemplateResponse(
-        "schedule.html",
-        {
-            "request": request,
-            "user": user,
-            "jobs": JOBS,
-        },
+    job_cards = "".join(
+        f"""
+        <div class="job">
+            <h3>{job["date"]}: {job["client"]}</h3>
+            <p>{job["address"]}</p>
+            <p>{job["job_type"]} / {job["crew"]}</p>
+            <p><span class="pill">{job["status"]}</span></p>
+        </div>
+        """
+        for job in JOBS
     )
+
+    return page("Schedule", nav(user) + f"""
+    <div class="card">
+        <h2>Schedule</h2>
+        {job_cards}
+    </div>
+    """)
 
 
 @app.get("/crew")
-def crew_page(request: Request):
-    user = require_login(request)
-    if isinstance(user, RedirectResponse):
-        return user
+async def crew(request: Request):
+    user = get_user(request)
+    if not user:
+        return RedirectResponse("/", status_code=303)
+
+    clock = TIME_CLOCK.get(user["username"], {"clocked_in": False, "current_job": None})
+
+    clock_text = "CLOCKED IN" if clock["clocked_in"] else "CLOCKED OUT"
+    clock_button = """
+        <form method="post" action="/crew/clock-out">
+            <button class="danger">Clock Out</button>
+        </form>
+    """ if clock["clocked_in"] else """
+        <form method="post" action="/crew/clock-in">
+            <button>Clock In</button>
+        </form>
+    """
 
     crew_jobs = [
         job for job in JOBS
@@ -229,55 +403,68 @@ def crew_page(request: Request):
         or job["crew"].lower() == "unassigned"
     ]
 
-    clock_state = TIME_CLOCK.get(
-        user["username"],
-        {"clocked_in": False, "current_job": None},
+    job_cards = "".join(
+        f"""
+        <div class="job">
+            <h3>{job["client"]}</h3>
+            <p>{job["address"]}</p>
+            <p>{job["job_type"]} / {job["date"]}</p>
+            <p><span class="pill">{job["status"]}</span></p>
+
+            <form method="post" action="/crew/start-job/{job["id"]}">
+                <button>Start Job</button>
+            </form>
+
+            <form method="post" action="/crew/complete-job/{job["id"]}">
+                <button class="success">Complete Job</button>
+            </form>
+        </div>
+        """
+        for job in crew_jobs
     )
 
-    return templates.TemplateResponse(
-        "crew.html",
-        {
-            "request": request,
-            "user": user,
-            "jobs": crew_jobs,
-            "clock": clock_state,
-        },
-    )
+    return page("Crew", nav(user) + f"""
+    <div class="card">
+        <h2>My Day</h2>
+        <h3>{clock_text}</h3>
+        <p>Active Job: {clock["current_job"]}</p>
+        {clock_button}
+    </div>
+
+    <div class="card">
+        <h2>Crew Jobs</h2>
+        {job_cards}
+    </div>
+    """)
 
 
 @app.post("/crew/clock-in")
-def clock_in(request: Request):
-    user = require_login(request)
-    if isinstance(user, RedirectResponse):
-        return user
+async def clock_in(request: Request):
+    user = get_user(request)
+    if not user:
+        return RedirectResponse("/", status_code=303)
 
-    TIME_CLOCK[user["username"]] = {
-        "clocked_in": True,
-        "current_job": TIME_CLOCK.get(user["username"], {}).get("current_job"),
-    }
+    TIME_CLOCK[user["username"]] = {"clocked_in": True, "current_job": None}
 
     return RedirectResponse("/crew", status_code=303)
 
 
 @app.post("/crew/clock-out")
-def clock_out(request: Request):
-    user = require_login(request)
-    if isinstance(user, RedirectResponse):
-        return user
+async def clock_out(request: Request):
+    user = get_user(request)
+    if not user:
+        return RedirectResponse("/", status_code=303)
 
-    TIME_CLOCK[user["username"]] = {
-        "clocked_in": False,
-        "current_job": None,
-    }
+    TIME_CLOCK[user["username"]] = {"clocked_in": False, "current_job": None}
 
     return RedirectResponse("/crew", status_code=303)
 
 
 @app.post("/crew/start-job/{job_id}")
-def start_job(request: Request, job_id: int):
-    user = require_login(request)
-    if isinstance(user, RedirectResponse):
-        return user
+async def start_job(request: Request, job_id: int):
+    user = get_user(request)
+    if not user:
+        return RedirectResponse("/", status_code=303)
 
     for job in JOBS:
         if job["id"] == job_id:
@@ -292,10 +479,10 @@ def start_job(request: Request, job_id: int):
 
 
 @app.post("/crew/complete-job/{job_id}")
-def complete_job(request: Request, job_id: int):
-    user = require_login(request)
-    if isinstance(user, RedirectResponse):
-        return user
+async def complete_job(request: Request, job_id: int):
+    user = get_user(request)
+    if not user:
+        return RedirectResponse("/", status_code=303)
 
     for job in JOBS:
         if job["id"] == job_id:
