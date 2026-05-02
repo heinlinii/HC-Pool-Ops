@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PoolOps2 Dashboard</title>
-    <link rel="stylesheet" href="/static/style.css?v=2">
+    <link rel="stylesheet" href="/static/style.css?v=5">
 </head>
 
 <body>
@@ -17,7 +17,7 @@
 
                 <img
                     src="/static/logo.png"
-                    alt="Heinlin Logo"
+                    alt="Heinlin Concrete Logo"
                     class="sidebar-logo"
                 >
 
@@ -28,20 +28,51 @@
             </div>
 
             <nav class="sidebar-nav">
-                <a href="/dashboard" class="active">Dashboard</a>
-                <a href="/jobs">Jobs</a>
-                <a href="/schedule">Schedule</a>
-                <a href="/crew">Crew View</a>
-                <a href="/health">Health</a>
+
+                <a href="/dashboard" class="active">
+                    Dashboard
+                </a>
+
+                <a href="/jobs">
+                    Jobs
+                </a>
+
+                <a href="/schedule">
+                    Schedule
+                </a>
+
+                <a href="/clients">
+                    Clients
+                </a>
+
+                <a href="/properties">
+                    Properties
+                </a>
+
+                <a href="/employees">
+                    Employees
+                </a>
+
+                <a href="/crew">
+                    Crew View
+                </a>
+
+                <a href="/health">
+                    Health
+                </a>
+
             </nav>
 
             <div class="sidebar-bottom">
+
                 <p>{{ user.name }}</p>
+
                 <span>{{ user.role }}</span>
 
                 <a href="/logout" class="logout-button">
                     Logout
                 </a>
+
             </div>
 
         </aside>
@@ -49,10 +80,14 @@
         <main class="main-content">
 
             <div class="topbar">
+
                 <div>
                     <h2>Dashboard</h2>
-                    <p>Welcome back, {{ user.name }}</p>
+                    <p>
+                        Welcome back, {{ user.name }}
+                    </p>
                 </div>
+
             </div>
 
             <section class="stats-grid">
@@ -79,9 +114,37 @@
                 </div>
 
                 <div class="stat-card">
+                    <h3>In Progress</h3>
+                    <div class="stat-number">
+                        {{ stats.in_progress }}
+                    </div>
+                </div>
+
+                <div class="stat-card">
                     <h3>Completed</h3>
                     <div class="stat-number">
                         {{ stats.completed }}
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <h3>Clients</h3>
+                    <div class="stat-number">
+                        {{ stats.clients }}
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <h3>Properties</h3>
+                    <div class="stat-number">
+                        {{ stats.properties }}
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <h3>Employees</h3>
+                    <div class="stat-number">
+                        {{ stats.employees }}
                     </div>
                 </div>
 
@@ -90,48 +153,70 @@
             <section class="content-card">
 
                 <div class="card-header">
-                    <h3>Current Jobs</h3>
+
+                    <h3>
+                        Active Jobs
+                    </h3>
+
                 </div>
 
-                <div class="table-wrapper">
+                <div class="jobs-grid">
 
-                    <table>
+                    {% for job in jobs %}
 
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Client</th>
-                                <th>Address</th>
-                                <th>Type</th>
-                                <th>Status</th>
-                                <th>Crew</th>
-                                <th>Date</th>
-                            </tr>
-                        </thead>
+                    <div class="job-card">
 
-                        <tbody>
+                        <div class="job-top">
 
-                            {% for job in jobs %}
+                            <div>
 
-                            <tr>
-                                <td>#{{ job.id }}</td>
-                                <td>{{ job.client }}</td>
-                                <td>{{ job.address }}</td>
-                                <td>{{ job.job_type }}</td>
-                                <td>
-                                    <span class="status-pill">
-                                        {{ job.status }}
-                                    </span>
-                                </td>
-                                <td>{{ job.crew }}</td>
-                                <td>{{ job.date }}</td>
-                            </tr>
+                                <h3>
+                                    {{ job.client }}
+                                </h3>
 
-                            {% endfor %}
+                                <p>
+                                    {{ job.address }}
+                                </p>
 
-                        </tbody>
+                            </div>
 
-                    </table>
+                            <span class="status-pill">
+                                {{ job.status }}
+                            </span>
+
+                        </div>
+
+                        <div class="job-details">
+
+                            <div class="detail-row">
+                                <strong>Type:</strong>
+                                <span>{{ job.job_type }}</span>
+                            </div>
+
+                            <div class="detail-row">
+                                <strong>Crew:</strong>
+                                <span>{{ job.crew }}</span>
+                            </div>
+
+                            <div class="detail-row">
+                                <strong>Date:</strong>
+                                <span>{{ job.date }}</span>
+                            </div>
+
+                            <div class="detail-row">
+                                <strong>Priority:</strong>
+                                <span>{{ job.priority }}</span>
+                            </div>
+
+                        </div>
+
+                        <div class="job-notes">
+                            {{ job.notes }}
+                        </div>
+
+                    </div>
+
+                    {% endfor %}
 
                 </div>
 
