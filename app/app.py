@@ -1,14 +1,16 @@
 from fastapi import FastAPI, Request, Form
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
+import csv
+import io
 
 app = FastAPI(title="PoolOps2")
 
 app.add_middleware(
     SessionMiddleware,
-    secret_key="poolops2-phase-15-secret",
+    secret_key="poolops2-phase-2-secret",
 )
 
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
@@ -22,40 +24,14 @@ USERS = {
 
 
 EMPLOYEES = [
-    {
-        "id": 1,
-        "name": "Mike",
-        "role": "Admin",
-        "phone": "",
-        "email": "",
-        "active": True,
-    },
-    {
-        "id": 2,
-        "name": "Randy",
-        "role": "Crew",
-        "phone": "",
-        "email": "",
-        "active": True,
-    },
+    {"id": 1, "name": "Mike", "role": "Admin", "phone": "", "email": "", "active": True},
+    {"id": 2, "name": "Randy", "role": "Crew", "phone": "", "email": "", "active": True},
 ]
 
 
 CLIENTS = [
-    {
-        "id": 1,
-        "name": "Smith Residence",
-        "phone": "",
-        "email": "",
-        "notes": "Sample client.",
-    },
-    {
-        "id": 2,
-        "name": "Johnson Backyard",
-        "phone": "",
-        "email": "",
-        "notes": "Sample remodel client.",
-    },
+    {"id": 1, "name": "Smith Residence", "phone": "", "email": "", "notes": "Sample client."},
+    {"id": 2, "name": "Johnson Backyard", "phone": "", "email": "", "notes": "Sample remodel client."},
 ]
 
 
@@ -107,6 +83,37 @@ JOBS = [
 ]
 
 
+INVOICES = [
+    {
+        "id": 1,
+        "job_id": 1,
+        "client": "Smith Residence",
+        "description": "Deposit invoice",
+        "amount": 5000.00,
+        "status": "Draft",
+        "date": "Today",
+        "notes": "Sample billing record.",
+    }
+]
+
+
+JOB_COSTS = [
+    {
+        "id": 1,
+        "job_id": 1,
+        "client": "Smith Residence",
+        "labor": 1200.00,
+        "materials": 2500.00,
+        "subs": 0.00,
+        "equipment": 350.00,
+        "fuel": 125.00,
+        "other": 0.00,
+        "invoice_amount": 5000.00,
+        "notes": "Sample job cost record.",
+    }
+]
+
+
 TIME_CLOCK = {
     "randy": {"clocked_in": False, "current_job": None}
 }
@@ -114,12 +121,10 @@ TIME_CLOCK = {
 
 def get_current_user(request: Request):
     username = request.session.get("username")
-
     if not username:
         return None
 
     user = USERS.get(username)
-
     if not user:
         return None
 
@@ -136,13 +141,8 @@ def require_login(request: Request):
 
 def require_admin(request: Request):
     user = get_current_user(request)
-
-    if not user:
+    if not user or user["role"] != "admin":
         return None
-
-    if user["role"] != "admin":
-        return None
-
     return user
 
 
@@ -157,6 +157,41 @@ def find_by_id(items, item_id: int):
     return None
 
 
+def job_options():
+    return [
+        {
+            "id": job["id"],
+            "label": f'#{job["id"]} - {job["client"]} - {job["job_type"]}',
+            "client": job["client"],
+        }
+        for job in JOBS
+    ]
+
+
+def cost_totals(cost):
+    total_cost = (
+        float(cost["labor"])
+        + float(cost["materials"])
+        + float(cost["subs"])
+        + float(cost["equipment"])
+        + float(cost["fuel"])
+        + float(cost["other"])
+    )
+
+    invoice_amount = float(cost["invoice_amount"])
+    profit = invoice_amount - total_cost
+    margin = 0
+
+    if invoice_amount > 0:
+        margin = round((profit / invoice_amount) * 100, 2)
+
+    return {
+        "total_cost": round(total_cost, 2),
+        "profit": round(profit, 2),
+        "margin": margin,
+    }
+
+
 @app.get("/")
 async def login_page(request: Request):
     user = get_current_user(request)
@@ -164,24 +199,13 @@ async def login_page(request: Request):
     if user:
         if user["role"] == "crew":
             return RedirectResponse(url="/crew", status_code=303)
-
         return RedirectResponse(url="/dashboard", status_code=303)
 
-    return templates.TemplateResponse(
-        request,
-        "login.html",
-        {
-            "error": None,
-        },
-    )
+    return templates.TemplateResponse(request, "login.html", {"error": None})
 
 
 @app.post("/login")
-async def login(
-    request: Request,
-    username: str = Form(...),
-    password: str = Form(...),
-):
+async def login(request: Request, username: str = Form(...), password: str = Form(...)):
     username = username.lower().strip()
     password = password.strip()
 
@@ -191,9 +215,7 @@ async def login(
         return templates.TemplateResponse(
             request,
             "login.html",
-            {
-                "error": "Invalid username or password.",
-            },
+            {"error": "Invalid username or password."},
             status_code=401,
         )
 
@@ -216,19 +238,30 @@ async def health():
     return {
         "status": "ok",
         "app": "PoolOps2",
-        "phase": "1.5",
+        "phase": "2",
     }
 
 
 @app.get("/dashboard")
 async def dashboard(request: Request):
     user = require_login(request)
-
     if not user:
         return RedirectResponse(url="/", status_code=303)
 
     if user["role"] != "admin":
         return RedirectResponse(url="/crew", status_code=303)
+
+    total_invoice_amount = round(sum(float(invoice["amount"]) for invoice in INVOICES), 2)
+
+    total_cost = 0
+    total_revenue = 0
+
+    for cost in JOB_COSTS:
+        totals = cost_totals(cost)
+        total_cost += totals["total_cost"]
+        total_revenue += float(cost["invoice_amount"])
+
+    total_profit = round(total_revenue - total_cost, 2)
 
     stats = {
         "total_jobs": len(JOBS),
@@ -239,6 +272,9 @@ async def dashboard(request: Request):
         "clients": len(CLIENTS),
         "properties": len(PROPERTIES),
         "employees": len(EMPLOYEES),
+        "invoices": len(INVOICES),
+        "invoice_total": total_invoice_amount,
+        "tracked_profit": total_profit,
     }
 
     return templates.TemplateResponse(
@@ -258,7 +294,6 @@ async def dashboard(request: Request):
 @app.get("/jobs")
 async def jobs_page(request: Request):
     user = require_login(request)
-
     if not user:
         return RedirectResponse(url="/", status_code=303)
 
@@ -288,7 +323,6 @@ async def add_job(
     notes: str = Form(""),
 ):
     user = require_admin(request)
-
     if not user:
         return RedirectResponse(url="/", status_code=303)
 
@@ -326,7 +360,6 @@ async def update_job(
     notes: str = Form(""),
 ):
     user = require_admin(request)
-
     if not user:
         return RedirectResponse(url="/", status_code=303)
 
@@ -349,7 +382,6 @@ async def update_job(
 @app.post("/jobs/delete/{job_id}")
 async def delete_job(request: Request, job_id: int):
     user = require_admin(request)
-
     if not user:
         return RedirectResponse(url="/", status_code=303)
 
@@ -362,33 +394,19 @@ async def delete_job(request: Request, job_id: int):
 @app.get("/schedule")
 async def schedule_page(request: Request):
     user = require_login(request)
-
     if not user:
         return RedirectResponse(url="/", status_code=303)
 
-    return templates.TemplateResponse(
-        request,
-        "schedule.html",
-        {
-            "user": user,
-            "jobs": JOBS,
-        },
-    )
+    return templates.TemplateResponse(request, "schedule.html", {"user": user, "jobs": JOBS})
 
 
 @app.post("/schedule/status/{job_id}")
-async def update_schedule_status(
-    request: Request,
-    job_id: int,
-    status: str = Form(...),
-):
+async def update_schedule_status(request: Request, job_id: int, status: str = Form(...)):
     user = require_admin(request)
-
     if not user:
         return RedirectResponse(url="/", status_code=303)
 
     job = find_by_id(JOBS, job_id)
-
     if job:
         job["status"] = status.strip()
 
@@ -398,7 +416,6 @@ async def update_schedule_status(
 @app.get("/crew")
 async def crew_page(request: Request):
     user = require_login(request)
-
     if not user:
         return RedirectResponse(url="/", status_code=303)
 
@@ -410,39 +427,22 @@ async def crew_page(request: Request):
         or user["role"] == "admin"
     ]
 
-    clock = TIME_CLOCK.get(
-        user["username"],
-        {
-            "clocked_in": False,
-            "current_job": None,
-        },
-    )
+    clock = TIME_CLOCK.get(user["username"], {"clocked_in": False, "current_job": None})
 
     return templates.TemplateResponse(
         request,
         "crew.html",
-        {
-            "user": user,
-            "jobs": crew_jobs,
-            "clock": clock,
-        },
+        {"user": user, "jobs": crew_jobs, "clock": clock},
     )
 
 
 @app.post("/crew/clock-in")
 async def clock_in(request: Request):
     user = require_login(request)
-
     if not user:
         return RedirectResponse(url="/", status_code=303)
 
-    old_clock = TIME_CLOCK.get(
-        user["username"],
-        {
-            "clocked_in": False,
-            "current_job": None,
-        },
-    )
+    old_clock = TIME_CLOCK.get(user["username"], {"clocked_in": False, "current_job": None})
 
     TIME_CLOCK[user["username"]] = {
         "clocked_in": True,
@@ -455,25 +455,17 @@ async def clock_in(request: Request):
 @app.post("/crew/clock-out")
 async def clock_out(request: Request):
     user = require_login(request)
-
     if not user:
         return RedirectResponse(url="/", status_code=303)
 
-    TIME_CLOCK[user["username"]] = {
-        "clocked_in": False,
-        "current_job": None,
-    }
+    TIME_CLOCK[user["username"]] = {"clocked_in": False, "current_job": None}
 
     return RedirectResponse(url="/crew", status_code=303)
 
 
 @app.post("/crew/start-job/{job_id}")
-async def start_job(
-    request: Request,
-    job_id: int,
-):
+async def start_job(request: Request, job_id: int):
     user = require_login(request)
-
     if not user:
         return RedirectResponse(url="/", status_code=303)
 
@@ -481,22 +473,14 @@ async def start_job(
 
     if job:
         job["status"] = "In Progress"
-
-        TIME_CLOCK[user["username"]] = {
-            "clocked_in": True,
-            "current_job": job_id,
-        }
+        TIME_CLOCK[user["username"]] = {"clocked_in": True, "current_job": job_id}
 
     return RedirectResponse(url="/crew", status_code=303)
 
 
 @app.post("/crew/complete-job/{job_id}")
-async def complete_job(
-    request: Request,
-    job_id: int,
-):
+async def complete_job(request: Request, job_id: int):
     user = require_login(request)
-
     if not user:
         return RedirectResponse(url="/", status_code=303)
 
@@ -514,18 +498,10 @@ async def complete_job(
 @app.get("/clients")
 async def clients_page(request: Request):
     user = require_admin(request)
-
     if not user:
         return RedirectResponse(url="/", status_code=303)
 
-    return templates.TemplateResponse(
-        request,
-        "clients.html",
-        {
-            "user": user,
-            "clients": CLIENTS,
-        },
-    )
+    return templates.TemplateResponse(request, "clients.html", {"user": user, "clients": CLIENTS})
 
 
 @app.post("/clients/add")
@@ -537,7 +513,6 @@ async def add_client(
     notes: str = Form(""),
 ):
     user = require_admin(request)
-
     if not user:
         return RedirectResponse(url="/", status_code=303)
 
@@ -564,7 +539,6 @@ async def update_client(
     notes: str = Form(""),
 ):
     user = require_admin(request)
-
     if not user:
         return RedirectResponse(url="/", status_code=303)
 
@@ -591,7 +565,6 @@ async def update_client(
 @app.post("/clients/delete/{client_id}")
 async def delete_client(request: Request, client_id: int):
     user = require_admin(request)
-
     if not user:
         return RedirectResponse(url="/", status_code=303)
 
@@ -604,18 +577,13 @@ async def delete_client(request: Request, client_id: int):
 @app.get("/properties")
 async def properties_page(request: Request):
     user = require_admin(request)
-
     if not user:
         return RedirectResponse(url="/", status_code=303)
 
     return templates.TemplateResponse(
         request,
         "properties.html",
-        {
-            "user": user,
-            "clients": CLIENTS,
-            "properties": PROPERTIES,
-        },
+        {"user": user, "clients": CLIENTS, "properties": PROPERTIES},
     )
 
 
@@ -628,7 +596,6 @@ async def add_property(
     notes: str = Form(""),
 ):
     user = require_admin(request)
-
     if not user:
         return RedirectResponse(url="/", status_code=303)
 
@@ -663,7 +630,6 @@ async def update_property(
     notes: str = Form(""),
 ):
     user = require_admin(request)
-
     if not user:
         return RedirectResponse(url="/", status_code=303)
 
@@ -696,7 +662,6 @@ async def update_property(
 @app.post("/properties/delete/{property_id}")
 async def delete_property(request: Request, property_id: int):
     user = require_admin(request)
-
     if not user:
         return RedirectResponse(url="/", status_code=303)
 
@@ -709,17 +674,13 @@ async def delete_property(request: Request, property_id: int):
 @app.get("/employees")
 async def employees_page(request: Request):
     user = require_admin(request)
-
     if not user:
         return RedirectResponse(url="/", status_code=303)
 
     return templates.TemplateResponse(
         request,
         "employees.html",
-        {
-            "user": user,
-            "employees": EMPLOYEES,
-        },
+        {"user": user, "employees": EMPLOYEES},
     )
 
 
@@ -733,7 +694,6 @@ async def add_employee(
     active: str = Form("true"),
 ):
     user = require_admin(request)
-
     if not user:
         return RedirectResponse(url="/", status_code=303)
 
@@ -762,7 +722,6 @@ async def update_employee(
     active: str = Form("true"),
 ):
     user = require_admin(request)
-
     if not user:
         return RedirectResponse(url="/", status_code=303)
 
@@ -770,7 +729,6 @@ async def update_employee(
 
     if employee:
         old_name = employee["name"]
-
         employee["name"] = name.strip()
         employee["role"] = role.strip()
         employee["phone"] = phone.strip()
@@ -787,7 +745,6 @@ async def update_employee(
 @app.post("/employees/delete/{employee_id}")
 async def delete_employee(request: Request, employee_id: int):
     user = require_admin(request)
-
     if not user:
         return RedirectResponse(url="/", status_code=303)
 
@@ -795,3 +752,315 @@ async def delete_employee(request: Request, employee_id: int):
     EMPLOYEES = [employee for employee in EMPLOYEES if employee["id"] != employee_id]
 
     return RedirectResponse(url="/employees", status_code=303)
+
+
+@app.get("/billing")
+async def billing_page(request: Request):
+    user = require_admin(request)
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    total_billed = round(sum(float(invoice["amount"]) for invoice in INVOICES), 2)
+    paid_total = round(
+        sum(float(invoice["amount"]) for invoice in INVOICES if invoice["status"] == "Paid"),
+        2,
+    )
+    open_total = round(total_billed - paid_total, 2)
+
+    return templates.TemplateResponse(
+        request,
+        "billing.html",
+        {
+            "user": user,
+            "invoices": INVOICES,
+            "jobs": job_options(),
+            "total_billed": total_billed,
+            "paid_total": paid_total,
+            "open_total": open_total,
+        },
+    )
+
+
+@app.post("/billing/add")
+async def add_invoice(
+    request: Request,
+    job_id: int = Form(...),
+    description: str = Form(...),
+    amount: float = Form(...),
+    status: str = Form("Draft"),
+    date: str = Form("Today"),
+    notes: str = Form(""),
+):
+    user = require_admin(request)
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    job = find_by_id(JOBS, job_id)
+    client_name = job["client"] if job else "Unknown Client"
+
+    INVOICES.append(
+        {
+            "id": next_id(INVOICES),
+            "job_id": job_id,
+            "client": client_name,
+            "description": description.strip(),
+            "amount": round(float(amount), 2),
+            "status": status.strip(),
+            "date": date.strip(),
+            "notes": notes.strip(),
+        }
+    )
+
+    return RedirectResponse(url="/billing", status_code=303)
+
+
+@app.post("/billing/update/{invoice_id}")
+async def update_invoice(
+    request: Request,
+    invoice_id: int,
+    description: str = Form(...),
+    amount: float = Form(...),
+    status: str = Form(...),
+    date: str = Form(...),
+    notes: str = Form(""),
+):
+    user = require_admin(request)
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    invoice = find_by_id(INVOICES, invoice_id)
+
+    if invoice:
+        invoice["description"] = description.strip()
+        invoice["amount"] = round(float(amount), 2)
+        invoice["status"] = status.strip()
+        invoice["date"] = date.strip()
+        invoice["notes"] = notes.strip()
+
+    return RedirectResponse(url="/billing", status_code=303)
+
+
+@app.post("/billing/delete/{invoice_id}")
+async def delete_invoice(request: Request, invoice_id: int):
+    user = require_admin(request)
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    global INVOICES
+    INVOICES = [invoice for invoice in INVOICES if invoice["id"] != invoice_id]
+
+    return RedirectResponse(url="/billing", status_code=303)
+
+
+@app.get("/billing/export")
+async def export_invoices(request: Request):
+    user = require_admin(request)
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+
+    writer.writerow(["Invoice ID", "Job ID", "Client", "Description", "Amount", "Status", "Date", "Notes"])
+
+    for invoice in INVOICES:
+        writer.writerow(
+            [
+                invoice["id"],
+                invoice["job_id"],
+                invoice["client"],
+                invoice["description"],
+                invoice["amount"],
+                invoice["status"],
+                invoice["date"],
+                invoice["notes"],
+            ]
+        )
+
+    output.seek(0)
+
+    return StreamingResponse(
+        iter([output.getvalue()]),
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=poolops2_invoices.csv"},
+    )
+
+
+@app.get("/job-costing")
+async def job_costing_page(request: Request):
+    user = require_admin(request)
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    enriched_costs = []
+
+    for cost in JOB_COSTS:
+        totals = cost_totals(cost)
+        enriched = dict(cost)
+        enriched["total_cost"] = totals["total_cost"]
+        enriched["profit"] = totals["profit"]
+        enriched["margin"] = totals["margin"]
+        enriched_costs.append(enriched)
+
+    total_revenue = round(sum(float(cost["invoice_amount"]) for cost in JOB_COSTS), 2)
+    total_cost = round(sum(float(cost["total_cost"]) for cost in enriched_costs), 2)
+    total_profit = round(total_revenue - total_cost, 2)
+
+    overall_margin = 0
+    if total_revenue > 0:
+        overall_margin = round((total_profit / total_revenue) * 100, 2)
+
+    return templates.TemplateResponse(
+        request,
+        "job_costing.html",
+        {
+            "user": user,
+            "costs": enriched_costs,
+            "jobs": job_options(),
+            "total_revenue": total_revenue,
+            "total_cost": total_cost,
+            "total_profit": total_profit,
+            "overall_margin": overall_margin,
+        },
+    )
+
+
+@app.post("/job-costing/add")
+async def add_job_cost(
+    request: Request,
+    job_id: int = Form(...),
+    labor: float = Form(0),
+    materials: float = Form(0),
+    subs: float = Form(0),
+    equipment: float = Form(0),
+    fuel: float = Form(0),
+    other: float = Form(0),
+    invoice_amount: float = Form(0),
+    notes: str = Form(""),
+):
+    user = require_admin(request)
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    job = find_by_id(JOBS, job_id)
+    client_name = job["client"] if job else "Unknown Client"
+
+    JOB_COSTS.append(
+        {
+            "id": next_id(JOB_COSTS),
+            "job_id": job_id,
+            "client": client_name,
+            "labor": round(float(labor), 2),
+            "materials": round(float(materials), 2),
+            "subs": round(float(subs), 2),
+            "equipment": round(float(equipment), 2),
+            "fuel": round(float(fuel), 2),
+            "other": round(float(other), 2),
+            "invoice_amount": round(float(invoice_amount), 2),
+            "notes": notes.strip(),
+        }
+    )
+
+    return RedirectResponse(url="/job-costing", status_code=303)
+
+
+@app.post("/job-costing/update/{cost_id}")
+async def update_job_cost(
+    request: Request,
+    cost_id: int,
+    labor: float = Form(0),
+    materials: float = Form(0),
+    subs: float = Form(0),
+    equipment: float = Form(0),
+    fuel: float = Form(0),
+    other: float = Form(0),
+    invoice_amount: float = Form(0),
+    notes: str = Form(""),
+):
+    user = require_admin(request)
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    cost = find_by_id(JOB_COSTS, cost_id)
+
+    if cost:
+        cost["labor"] = round(float(labor), 2)
+        cost["materials"] = round(float(materials), 2)
+        cost["subs"] = round(float(subs), 2)
+        cost["equipment"] = round(float(equipment), 2)
+        cost["fuel"] = round(float(fuel), 2)
+        cost["other"] = round(float(other), 2)
+        cost["invoice_amount"] = round(float(invoice_amount), 2)
+        cost["notes"] = notes.strip()
+
+    return RedirectResponse(url="/job-costing", status_code=303)
+
+
+@app.post("/job-costing/delete/{cost_id}")
+async def delete_job_cost(request: Request, cost_id: int):
+    user = require_admin(request)
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    global JOB_COSTS
+    JOB_COSTS = [cost for cost in JOB_COSTS if cost["id"] != cost_id]
+
+    return RedirectResponse(url="/job-costing", status_code=303)
+
+
+@app.get("/job-costing/export")
+async def export_job_costing(request: Request):
+    user = require_admin(request)
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+
+    writer.writerow(
+        [
+            "Cost ID",
+            "Job ID",
+            "Client",
+            "Labor",
+            "Materials",
+            "Subs",
+            "Equipment",
+            "Fuel",
+            "Other",
+            "Total Cost",
+            "Invoice Amount",
+            "Profit",
+            "Margin %",
+            "Notes",
+        ]
+    )
+
+    for cost in JOB_COSTS:
+        totals = cost_totals(cost)
+        writer.writerow(
+            [
+                cost["id"],
+                cost["job_id"],
+                cost["client"],
+                cost["labor"],
+                cost["materials"],
+                cost["subs"],
+                cost["equipment"],
+                cost["fuel"],
+                cost["other"],
+                totals["total_cost"],
+                cost["invoice_amount"],
+                totals["profit"],
+                totals["margin"],
+                cost["notes"],
+            ]
+        )
+
+    output.seek(0)
+
+    return StreamingResponse(
+        iter([output.getvalue()]),
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=poolops2_job_costing.csv"},
+    )
