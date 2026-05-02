@@ -4,190 +4,149 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PoolOps2 Dashboard</title>
-    <link rel="stylesheet" href="/static/style.css?v=5">
+    <link rel="stylesheet" href="/static/style.css?v=6">
 </head>
 
 <body>
-
     <div class="app-layout">
-
         <aside class="sidebar">
-
             <div class="sidebar-top">
-
-                <img
-                    src="/static/logo.png"
-                    alt="Heinlin Concrete Logo"
-                    class="sidebar-logo"
-                >
-
+                <img src="/static/logo.png" alt="Heinlin Concrete Logo" class="sidebar-logo">
                 <h1>POOLOPS2</h1>
-
                 <p>Heinlin Concrete LLC</p>
-
             </div>
 
             <nav class="sidebar-nav">
-
-                <a href="/dashboard" class="active">
-                    Dashboard
-                </a>
-
-                <a href="/jobs">
-                    Jobs
-                </a>
-
-                <a href="/schedule">
-                    Schedule
-                </a>
-
-                <a href="/clients">
-                    Clients
-                </a>
-
-                <a href="/properties">
-                    Properties
-                </a>
-
-                <a href="/employees">
-                    Employees
-                </a>
-
-                <a href="/crew">
-                    Crew View
-                </a>
-
-                <a href="/health">
-                    Health
-                </a>
-
+                <a href="/dashboard" class="active">Dashboard</a>
+                <a href="/jobs">Jobs</a>
+                <a href="/schedule">Schedule</a>
+                <a href="/clients">Clients</a>
+                <a href="/properties">Properties</a>
+                <a href="/employees">Employees</a>
+                <a href="/billing">Billing</a>
+                <a href="/job-costing">Job Costing</a>
+                <a href="/crew">Crew View</a>
+                <a href="/health">Health</a>
             </nav>
 
             <div class="sidebar-bottom">
-
                 <p>{{ user.name }}</p>
-
                 <span>{{ user.role }}</span>
-
-                <a href="/logout" class="logout-button">
-                    Logout
-                </a>
-
+                <a href="/logout" class="logout-button">Logout</a>
             </div>
-
         </aside>
 
         <main class="main-content">
-
             <div class="topbar">
-
                 <div>
                     <h2>Dashboard</h2>
-                    <p>
-                        Welcome back, {{ user.name }}
-                    </p>
+                    <p>Welcome back, {{ user.name }}</p>
                 </div>
-
             </div>
 
             <section class="stats-grid">
-
                 <div class="stat-card">
                     <h3>Total Jobs</h3>
-                    <div class="stat-number">
-                        {{ stats.total_jobs }}
-                    </div>
+                    <div class="stat-number">{{ stats.total_jobs }}</div>
                 </div>
 
                 <div class="stat-card">
                     <h3>Scheduled</h3>
-                    <div class="stat-number">
-                        {{ stats.scheduled }}
-                    </div>
+                    <div class="stat-number">{{ stats.scheduled }}</div>
                 </div>
 
                 <div class="stat-card">
                     <h3>Pending</h3>
-                    <div class="stat-number">
-                        {{ stats.pending }}
-                    </div>
+                    <div class="stat-number">{{ stats.pending }}</div>
                 </div>
 
                 <div class="stat-card">
                     <h3>In Progress</h3>
-                    <div class="stat-number">
-                        {{ stats.in_progress }}
-                    </div>
+                    <div class="stat-number">{{ stats.in_progress }}</div>
                 </div>
 
                 <div class="stat-card">
                     <h3>Completed</h3>
-                    <div class="stat-number">
-                        {{ stats.completed }}
-                    </div>
+                    <div class="stat-number">{{ stats.completed }}</div>
                 </div>
 
                 <div class="stat-card">
                     <h3>Clients</h3>
-                    <div class="stat-number">
-                        {{ stats.clients }}
-                    </div>
+                    <div class="stat-number">{{ stats.clients }}</div>
                 </div>
 
                 <div class="stat-card">
                     <h3>Properties</h3>
-                    <div class="stat-number">
-                        {{ stats.properties }}
-                    </div>
+                    <div class="stat-number">{{ stats.properties }}</div>
                 </div>
 
                 <div class="stat-card">
                     <h3>Employees</h3>
-                    <div class="stat-number">
-                        {{ stats.employees }}
-                    </div>
+                    <div class="stat-number">{{ stats.employees }}</div>
                 </div>
 
+                <div class="stat-card">
+                    <h3>Invoices</h3>
+                    <div class="stat-number">{{ stats.invoices }}</div>
+                </div>
+
+                <div class="stat-card money-card">
+                    <h3>Invoice Total</h3>
+                    <div class="stat-number">${{ "%.2f"|format(stats.invoice_total) }}</div>
+                </div>
+
+                <div class="stat-card money-card">
+                    <h3>Tracked Profit</h3>
+                    <div class="stat-number">${{ "%.2f"|format(stats.tracked_profit) }}</div>
+                </div>
             </section>
 
             <section class="content-card">
-
                 <div class="card-header">
+                    <h3>Phase 2 Quick Actions</h3>
+                </div>
 
-                    <h3>
-                        Active Jobs
-                    </h3>
+                <div class="quick-action-grid">
+                    <a href="/billing" class="quick-action-card">
+                        <h3>Billing</h3>
+                        <p>Create invoices, update payment status, and export CSV.</p>
+                    </a>
 
+                    <a href="/job-costing" class="quick-action-card">
+                        <h3>Job Costing</h3>
+                        <p>Track labor, materials, equipment, fuel, and profit.</p>
+                    </a>
+
+                    <a href="/jobs" class="quick-action-card">
+                        <h3>Jobs</h3>
+                        <p>Create and manage active pool projects.</p>
+                    </a>
+
+                    <a href="/schedule" class="quick-action-card">
+                        <h3>Schedule</h3>
+                        <p>Review job timing and crew assignments.</p>
+                    </a>
+                </div>
+            </section>
+
+            <section class="content-card">
+                <div class="card-header">
+                    <h3>Active Jobs</h3>
                 </div>
 
                 <div class="jobs-grid">
-
                     {% for job in jobs %}
-
                     <div class="job-card">
-
                         <div class="job-top">
-
                             <div>
-
-                                <h3>
-                                    {{ job.client }}
-                                </h3>
-
-                                <p>
-                                    {{ job.address }}
-                                </p>
-
+                                <h3>{{ job.client }}</h3>
+                                <p>{{ job.address }}</p>
                             </div>
 
-                            <span class="status-pill">
-                                {{ job.status }}
-                            </span>
-
+                            <span class="status-pill">{{ job.status }}</span>
                         </div>
 
                         <div class="job-details">
-
                             <div class="detail-row">
                                 <strong>Type:</strong>
                                 <span>{{ job.job_type }}</span>
@@ -207,24 +166,16 @@
                                 <strong>Priority:</strong>
                                 <span>{{ job.priority }}</span>
                             </div>
-
                         </div>
 
                         <div class="job-notes">
                             {{ job.notes }}
                         </div>
-
                     </div>
-
                     {% endfor %}
-
                 </div>
-
             </section>
-
         </main>
-
     </div>
-
 </body>
 </html>
