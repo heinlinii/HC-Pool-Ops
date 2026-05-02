@@ -46,9 +46,9 @@ body {
 
 .login-card {
     background: #1f2937;
-    border-radius: 20px;
+    border-radius: 22px;
     padding: 40px;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+    box-shadow: 0 10px 40px rgba(0,0,0,0.45);
 }
 
 .logo-area {
@@ -82,7 +82,7 @@ body {
 .form-group textarea {
     width: 100%;
     padding: 14px;
-    border-radius: 12px;
+    border-radius: 14px;
     border: none;
     background: #374151;
     color: white;
@@ -100,7 +100,7 @@ body {
 .logout-button {
     display: inline-block;
     border: none;
-    border-radius: 12px;
+    border-radius: 14px;
     padding: 14px 20px;
     cursor: pointer;
     text-decoration: none;
@@ -153,7 +153,7 @@ body {
     background: #7f1d1d;
     color: #fecaca;
     padding: 12px;
-    border-radius: 10px;
+    border-radius: 12px;
     margin-bottom: 20px;
 }
 
@@ -178,12 +178,6 @@ body {
 /* =========================
    APP LAYOUT
 ========================= */
-.sidebar-logo {
-    width: 100%;
-    max-width: 180px;
-    margin-bottom: 20px;
-    border-radius: 14px;
-}
 
 .app-layout {
     display: flex;
@@ -191,12 +185,21 @@ body {
 }
 
 .sidebar {
-    width: 260px;
+    width: 290px;
     background: #0f172a;
     padding: 30px 20px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+    border-right: 1px solid #1f2937;
+}
+
+.sidebar-logo {
+    width: 100%;
+    max-width: 190px;
+    margin-bottom: 20px;
+    border-radius: 18px;
+    display: block;
 }
 
 .sidebar-top h1 {
@@ -219,9 +222,10 @@ body {
 .sidebar-nav a {
     text-decoration: none;
     color: #d1d5db;
-    padding: 14px;
-    border-radius: 12px;
+    padding: 15px;
+    border-radius: 14px;
     transition: 0.2s;
+    font-weight: bold;
 }
 
 .sidebar-nav a:hover {
@@ -250,7 +254,7 @@ body {
 
 .main-content {
     flex: 1;
-    padding: 30px;
+    padding: 32px;
 }
 
 .topbar {
@@ -258,7 +262,7 @@ body {
 }
 
 .topbar h2 {
-    font-size: 34px;
+    font-size: 36px;
     margin-bottom: 5px;
 }
 
@@ -281,7 +285,8 @@ body {
 .stat-card {
     background: #1f2937;
     padding: 25px;
-    border-radius: 18px;
+    border-radius: 22px;
+    border: 1px solid #374151;
 }
 
 .stat-card h3 {
@@ -301,9 +306,10 @@ body {
 
 .content-card {
     background: #1f2937;
-    border-radius: 20px;
+    border-radius: 22px;
     padding: 25px;
     margin-bottom: 30px;
+    border: 1px solid #374151;
 }
 
 .card-header {
@@ -351,9 +357,38 @@ tbody tr {
     display: inline-block;
     background: #2563eb;
     color: white;
-    padding: 8px 12px;
+    padding: 8px 14px;
     border-radius: 999px;
     font-size: 13px;
+    font-weight: bold;
+}
+
+.priority-pill {
+    display: inline-block;
+    padding: 7px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.priority-low {
+    background: #374151;
+    color: #d1d5db;
+}
+
+.priority-normal {
+    background: #2563eb;
+    color: white;
+}
+
+.priority-high {
+    background: #ea580c;
+    color: white;
+}
+
+.priority-critical {
+    background: #dc2626;
+    color: white;
 }
 
 
@@ -363,14 +398,15 @@ tbody tr {
 
 .jobs-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
     gap: 20px;
 }
 
 .job-card {
     background: #111827;
-    border-radius: 18px;
-    padding: 20px;
+    border-radius: 22px;
+    padding: 22px;
+    border: 1px solid #374151;
 }
 
 .job-top {
@@ -420,36 +456,65 @@ tbody tr {
 
 
 /* =========================
+   EDIT PANELS
+========================= */
+
+.edit-panel {
+    margin-top: 20px;
+    border-top: 1px solid #374151;
+    padding-top: 20px;
+}
+
+.edit-panel summary {
+    cursor: pointer;
+    font-weight: bold;
+    margin-bottom: 20px;
+}
+
+.edit-form {
+    margin-bottom: 20px;
+}
+
+
+/* =========================
    SCHEDULE
 ========================= */
 
 .schedule-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
     gap: 20px;
 }
 
 .schedule-column {
     background: #1f2937;
-    border-radius: 20px;
+    border-radius: 22px;
     padding: 20px;
+    border: 1px solid #374151;
 }
 
 .schedule-header {
-    font-size: 20px;
+    font-size: 22px;
     font-weight: bold;
     margin-bottom: 20px;
 }
 
 .schedule-card {
     background: #111827;
-    border-radius: 16px;
+    border-radius: 20px;
     padding: 18px;
-    margin-bottom: 15px;
+    margin-bottom: 16px;
+    border: 1px solid #374151;
+}
+
+.schedule-top {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 14px;
 }
 
 .schedule-card h3 {
-    margin: 10px 0;
+    margin-bottom: 10px;
 }
 
 .schedule-card p {
@@ -457,24 +522,27 @@ tbody tr {
     margin-bottom: 15px;
 }
 
-.schedule-status {
-    display: inline-block;
-    background: #2563eb;
-    padding: 6px 10px;
-    border-radius: 999px;
-    font-size: 12px;
-}
-
 .schedule-meta {
     display: flex;
     justify-content: space-between;
     color: #d1d5db;
     font-size: 14px;
+    margin-bottom: 15px;
+}
+
+.schedule-notes {
+    margin-bottom: 18px;
+    line-height: 1.5;
+}
+
+.schedule-form {
+    margin-top: 15px;
 }
 
 .upcoming-date {
     margin-top: 15px;
     color: #60a5fa;
+    font-weight: bold;
 }
 
 
@@ -491,8 +559,9 @@ tbody tr {
 
 .crew-status-card {
     background: #1f2937;
-    border-radius: 20px;
+    border-radius: 22px;
     padding: 25px;
+    border: 1px solid #374151;
 }
 
 .status-title {
@@ -541,9 +610,17 @@ tbody tr {
 
     .job-top,
     .detail-row,
-    .schedule-meta {
+    .schedule-meta,
+    .schedule-top {
         flex-direction: column;
         gap: 8px;
+    }
+
+    .jobs-grid,
+    .schedule-grid,
+    .stats-grid,
+    .crew-status-bar {
+        grid-template-columns: 1fr;
     }
 
 }
