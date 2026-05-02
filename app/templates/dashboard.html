@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PoolOps2 Dashboard</title>
-    <link rel="stylesheet" href="/static/style.css?v=6">
+    <link rel="stylesheet" href="/static/style.css?v=7">
 </head>
 
 <body>
@@ -25,6 +25,7 @@
                 <a href="/employees">Employees</a>
                 <a href="/billing">Billing</a>
                 <a href="/job-costing">Job Costing</a>
+                <a href="/photos">Photos</a>
                 <a href="/crew">Crew View</a>
                 <a href="/health">Health</a>
             </nav>
@@ -90,6 +91,11 @@
                     <div class="stat-number">{{ stats.invoices }}</div>
                 </div>
 
+                <div class="stat-card">
+                    <h3>Photos</h3>
+                    <div class="stat-number">{{ stats.photos }}</div>
+                </div>
+
                 <div class="stat-card money-card">
                     <h3>Invoice Total</h3>
                     <div class="stat-number">${{ "%.2f"|format(stats.invoice_total) }}</div>
@@ -103,7 +109,7 @@
 
             <section class="content-card">
                 <div class="card-header">
-                    <h3>Phase 2 Quick Actions</h3>
+                    <h3>Phase 2.5 Quick Actions</h3>
                 </div>
 
                 <div class="quick-action-grid">
@@ -117,6 +123,11 @@
                         <p>Track labor, materials, equipment, fuel, and profit.</p>
                     </a>
 
+                    <a href="/photos" class="quick-action-card">
+                        <h3>Photo Log</h3>
+                        <p>Track before, progress, after, and issue photos by job.</p>
+                    </a>
+
                     <a href="/jobs" class="quick-action-card">
                         <h3>Jobs</h3>
                         <p>Create and manage active pool projects.</p>
@@ -125,6 +136,11 @@
                     <a href="/schedule" class="quick-action-card">
                         <h3>Schedule</h3>
                         <p>Review job timing and crew assignments.</p>
+                    </a>
+
+                    <a href="/crew" class="quick-action-card">
+                        <h3>Crew View</h3>
+                        <p>Start jobs, complete work, and track field activity.</p>
                     </a>
                 </div>
             </section>
