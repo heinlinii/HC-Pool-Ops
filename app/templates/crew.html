@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PoolOps2 Crew</title>
-    <link rel="stylesheet" href="/static/style.css?v=1">
+    <link rel="stylesheet" href="/static/style.css?v=5">
 </head>
 
 <body>
@@ -14,25 +14,65 @@
         <aside class="sidebar">
 
             <div class="sidebar-top">
+
+                <img
+                    src="/static/logo.png"
+                    alt="Heinlin Concrete Logo"
+                    class="sidebar-logo"
+                >
+
                 <h1>POOLOPS2</h1>
+
                 <p>Heinlin Concrete LLC</p>
+
             </div>
 
             <nav class="sidebar-nav">
-                <a href="/dashboard">Dashboard</a>
-                <a href="/jobs">Jobs</a>
-                <a href="/schedule">Schedule</a>
-                <a href="/crew" class="active">Crew View</a>
-                <a href="/health">Health</a>
+
+                <a href="/dashboard">
+                    Dashboard
+                </a>
+
+                <a href="/jobs">
+                    Jobs
+                </a>
+
+                <a href="/schedule">
+                    Schedule
+                </a>
+
+                <a href="/clients">
+                    Clients
+                </a>
+
+                <a href="/properties">
+                    Properties
+                </a>
+
+                <a href="/employees">
+                    Employees
+                </a>
+
+                <a href="/crew" class="active">
+                    Crew View
+                </a>
+
+                <a href="/health">
+                    Health
+                </a>
+
             </nav>
 
             <div class="sidebar-bottom">
+
                 <p>{{ user.name }}</p>
+
                 <span>{{ user.role }}</span>
 
                 <a href="/logout" class="logout-button">
                     Logout
                 </a>
+
             </div>
 
         </aside>
@@ -40,10 +80,12 @@
         <main class="main-content">
 
             <div class="topbar">
+
                 <div>
                     <h2>My Day</h2>
-                    <p>Field workflow and active jobs.</p>
+                    <p>Field workflow and active job tracking.</p>
                 </div>
+
             </div>
 
             <section class="crew-status-bar">
@@ -61,9 +103,11 @@
                     </div>
 
                     <form method="post" action="/crew/clock-out">
+
                         <button class="danger-button">
                             Clock Out
                         </button>
+
                     </form>
 
                     {% else %}
@@ -73,9 +117,11 @@
                     </div>
 
                     <form method="post" action="/crew/clock-in">
+
                         <button class="primary-button">
                             Clock In
                         </button>
+
                     </form>
 
                     {% endif %}
@@ -89,13 +135,17 @@
                     </div>
 
                     {% if clock.current_job %}
-                        <div class="status-live">
-                            JOB #{{ clock.current_job }}
-                        </div>
+
+                    <div class="status-live">
+                        JOB #{{ clock.current_job }}
+                    </div>
+
                     {% else %}
-                        <div class="status-off">
-                            NO ACTIVE JOB
-                        </div>
+
+                    <div class="status-off">
+                        NO ACTIVE JOB
+                    </div>
+
                     {% endif %}
 
                 </div>
@@ -111,8 +161,15 @@
                     <div class="job-top">
 
                         <div>
-                            <h3>{{ job.client }}</h3>
-                            <p>{{ job.address }}</p>
+
+                            <h3>
+                                {{ job.client }}
+                            </h3>
+
+                            <p>
+                                {{ job.address }}
+                            </p>
+
                         </div>
 
                         <span class="status-pill">
@@ -138,6 +195,11 @@
                             <span>{{ job.date }}</span>
                         </div>
 
+                        <div class="detail-row">
+                            <strong>Priority:</strong>
+                            <span>{{ job.priority }}</span>
+                        </div>
+
                     </div>
 
                     <div class="job-notes">
@@ -148,20 +210,30 @@
 
                         {% if job.status != "In Progress" and job.status != "Completed" %}
 
-                        <form method="post" action="/crew/start-job/{{ job.id }}">
+                        <form
+                            method="post"
+                            action="/crew/start-job/{{ job.id }}"
+                        >
+
                             <button class="primary-button">
                                 Start Job
                             </button>
+
                         </form>
 
                         {% endif %}
 
                         {% if job.status != "Completed" %}
 
-                        <form method="post" action="/crew/complete-job/{{ job.id }}">
+                        <form
+                            method="post"
+                            action="/crew/complete-job/{{ job.id }}"
+                        >
+
                             <button class="success-button">
                                 Complete Job
                             </button>
+
                         </form>
 
                         {% endif %}
