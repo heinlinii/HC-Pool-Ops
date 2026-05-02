@@ -624,3 +624,126 @@ tbody tr {
     }
 
 }
+/* =========================
+   PHASE 2.5 QUICK ACTIONS
+========================= */
+
+.quick-action-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 20px;
+}
+
+.quick-action-card {
+    display: block;
+    background: #111827;
+    border: 1px solid #374151;
+    border-radius: 22px;
+    padding: 22px;
+    text-decoration: none;
+    color: #f3f4f6;
+    transition: 0.2s;
+}
+
+.quick-action-card:hover {
+    background: #1e293b;
+    transform: translateY(-2px);
+}
+
+.quick-action-card h3 {
+    margin-bottom: 10px;
+}
+
+.quick-action-card p {
+    color: #9ca3af;
+    line-height: 1.5;
+}
+
+
+/* =========================
+   PHASE 2.5 MONEY / PROFIT
+========================= */
+
+.money-card {
+    border-color: #2563eb;
+}
+
+.profit-good {
+    background: #14532d;
+    color: #bbf7d0;
+}
+
+.profit-warning {
+    background: #78350f;
+    color: #fed7aa;
+}
+
+.profit-danger {
+    background: #7f1d1d;
+    color: #fecaca;
+}
+
+
+/* =========================
+   PHASE 2.5 PHOTO LOG
+========================= */
+
+.photo-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+    gap: 22px;
+}
+
+.photo-card {
+    background: #111827;
+    border: 1px solid #374151;
+    border-radius: 22px;
+    overflow: hidden;
+}
+
+.photo-preview {
+    width: 100%;
+    height: 240px;
+    object-fit: cover;
+    background: #0f172a;
+    border-bottom: 1px solid #374151;
+}
+
+.photo-content {
+    padding: 22px;
+}
+
+
+/* =========================
+   PHASE 2.5 TOPBAR ACTIONS
+========================= */
+
+.topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+}
+
+
+/* =========================
+   PHASE 2.5 MOBILE FIXES
+========================= */
+
+@media (max-width: 900px) {
+
+    .topbar {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .photo-grid,
+    .quick-action-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .photo-preview {
+        height: 200px;
+    }
+
+}
