@@ -10,7 +10,7 @@ app = FastAPI(title="PoolOps2")
 
 app.add_middleware(
     SessionMiddleware,
-    secret_key="poolops2-phase-2-secret",
+    secret_key="poolops2-phase-25-secret",
 )
 
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
@@ -114,6 +114,20 @@ JOB_COSTS = [
 ]
 
 
+PHOTO_LOGS = [
+    {
+        "id": 1,
+        "job_id": 1,
+        "client": "Smith Residence",
+        "photo_type": "Before",
+        "title": "Sample before photo",
+        "photo_url": "/static/logo.png",
+        "date": "Today",
+        "notes": "Temporary sample photo. Replace later with real uploads.",
+    }
+]
+
+
 TIME_CLOCK = {
     "randy": {"clocked_in": False, "current_job": None}
 }
@@ -192,6 +206,14 @@ def cost_totals(cost):
     }
 
 
+def profit_status(profit, margin):
+    if profit < 0:
+        return "danger"
+    if margin < 15:
+        return "warning"
+    return "good"
+
+
 @app.get("/")
 async def login_page(request: Request):
     user = get_current_user(request)
@@ -238,7 +260,7 @@ async def health():
     return {
         "status": "ok",
         "app": "PoolOps2",
-        "phase": "2",
+        "phase": "2.5",
     }
 
 
@@ -275,6 +297,7 @@ async def dashboard(request: Request):
         "invoices": len(INVOICES),
         "invoice_total": total_invoice_amount,
         "tracked_profit": total_profit,
+        "photos": len(PHOTO_LOGS),
     }
 
     return templates.TemplateResponse(
@@ -900,6 +923,7 @@ async def job_costing_page(request: Request):
         enriched["total_cost"] = totals["total_cost"]
         enriched["profit"] = totals["profit"]
         enriched["margin"] = totals["margin"]
+        enriched["profit_status"] = profit_status(totals["profit"], totals["margin"])
         enriched_costs.append(enriched)
 
     total_revenue = round(sum(float(cost["invoice_amount"]) for cost in JOB_COSTS), 2)
@@ -1064,3 +1088,95 @@ async def export_job_costing(request: Request):
         media_type="text/csv",
         headers={"Content-Disposition": "attachment; filename=poolops2_job_costing.csv"},
     )
+
+
+@app.get("/photos")
+async def photos_page(request: Request):
+    user = require_login(request)
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    return templates.TemplateResponse(
+        request,
+        "photos.html",
+        {
+            "user": user,
+            "photos": PHOTO_LOGS,
+            "jobs": job_options(),
+        },
+    )
+
+
+@app.post("/photos/add")
+async def add_photo_log(
+    request: Request,
+    job_id: int = Form(...),
+    photo_type: str = Form(...),
+    title: str = Form(...),
+    photo_url: str = Form(""),
+    date: str = Form("Today"),
+    notes: str = Form(""),
+):
+    user = require_admin(request)
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    job = find_by_id(JOBS, job_id)
+    client_name = job["client"] if job else "Unknown Client"
+
+    clean_photo_url = photo_url.strip()
+    if not clean_photo_url:
+        clean_photo_url = "/static/logo.png"
+
+    PHOTO_LOGS.append(
+        {
+            "id": next_id(PHOTO_LOGS),
+            "job_id": job_id,
+            "client": client_name,
+            "photo_type": photo_type.strip(),
+            "title": title.strip(),
+            "photo_url": clean_photo_url,
+            "date": date.strip(),
+            "notes": notes.strip(),
+        }
+    )
+
+    return RedirectResponse(url="/photos", status_code=303)
+
+
+@app.post("/photos/update/{photo_id}")
+async def update_photo_log(
+    request: Request,
+    photo_id: int,
+    photo_type: str = Form(...),
+    title: str = Form(...),
+    photo_url: str = Form(""),
+    date: str = Form("Today"),
+    notes: str = Form(""),
+):
+    user = require_admin(request)
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    photo = find_by_id(PHOTO_LOGS, photo_id)
+
+    if photo:
+        photo["photo_type"] = photo_type.strip()
+        photo["title"] = title.strip()
+        photo["photo_url"] = photo_url.strip() or "/static/logo.png"
+        photo["date"] = date.strip()
+        photo["notes"] = notes.strip()
+
+    return RedirectResponse(url="/photos", status_code=303)
+
+
+@app.post("/photos/delete/{photo_id}")
+async def delete_photo_log(request: Request, photo_id: int):
+    user = require_admin(request)
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    global PHOTO_LOGS
+    PHOTO_LOGS = [photo for photo in PHOTO_LOGS if photo["id"] != photo_id]
+
+    return RedirectResponse(url="/photos", status_code=303)
