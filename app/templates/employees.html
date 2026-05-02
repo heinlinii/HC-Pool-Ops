@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PoolOps2 Employees</title>
+    <link rel="stylesheet" href="/static/style.css?v=5">
+</head>
+
+<body>
+
+    <div class="app-layout">
+
+        <aside class="sidebar">
+
+            <div class="sidebar-top">
+
+                <img
+                    src="/static/logo.png"
+                    alt="Heinlin Concrete Logo"
+                    class="sidebar-logo"
+                >
+
+                <h1>POOLOPS2</h1>
+
+                <p>Heinlin Concrete LLC</p>
+
+            </div>
+
+            <nav class="sidebar-nav">
+
+                <a href="/dashboard">
+                    Dashboard
+                </a>
+
+                <a href="/jobs">
+                    Jobs
+                </a>
+
+                <a href="/schedule">
+                    Schedule
+                </a>
+
+                <a href="/clients">
+                    Clients
+                </a>
+
+                <a href="/properties">
+                    Properties
+                </a>
+
+                <a href="/employees" class="active">
+                    Employees
+                </a>
+
+                <a href="/crew">
+                    Crew View
+                </a>
+
+                <a href="/health">
+                    Health
+                </a>
+
+            </nav>
+
+            <div class="sidebar-bottom">
+
+                <p>{{ user.name }}</p>
+
+                <span>{{ user.role }}</span>
+
+                <a href="/logout" class="logout-button">
+                    Logout
+                </a>
+
+            </div>
+
+        </aside>
+
+        <main class="main-content">
+
+            <div class="topbar">
+
+                <div>
+                    <h2>Employees</h2>
+                    <p>Manage crew members and office staff.</p>
+                </div>
+
+            </div>
+
+            <section class="content-card">
+
+                <div class="card-header">
+                    <h3>Add Employee</h3>
+                </div>
+
+                <form method="post" action="/employees/add" class="job-form">
+
+                    <div class="form-grid">
+
+                        <div class="form-group">
+
+                            <label>Name</label>
+
+                            <input
+                                type="text"
+                                name="name"
+                                placeholder="Employee name"
+                                required
+                            >
+
+                        </div>
+
+                        <div class="form-group">
+
+                            <label>Role</label>
+
+                            <select name="role">
+
+                                <option>Admin</option>
+                                <option>Crew</option>
+                                <option>Office</option>
+                                <option>Service Tech</option>
+                                <option>Supervisor</option>
+
+                            </select>
+
+                        </div>
+
+                        <div class="form-group">
+
+                            <label>Phone</label>
+
+                            <input
+                                type="text"
+                                name="phone"
+                                placeholder="Phone number"
+                            >
+
+                        </div>
+
+                        <div class="form-group">
+
+                            <label>Email</label>
+
+                            <input
+                                type="email"
+                                name="email"
+                                placeholder="Email address"
+                            >
+
+                        </div>
+
+                        <div class="form-group">
+
+                            <label>Status</label>
+
+                            <select name="active">
+
+                                <option value="true">
+                                    Active
+                                </option>
+
+                                <option value="false">
+                                    Inactive
+                                </option>
+
+                            </select>
+
+                        </div>
+
+                    </div>
+
+                    <button type="submit" class="primary-button">
+                        Add Employee
+                    </button>
+
+                </form>
+
+            </section>
+
+            <section class="content-card">
+
+                <div class="card-header">
+                    <h3>Employee Database</h3>
+                </div>
+
+                <div class="jobs-grid">
+
+                    {% for employee in employees %}
+
+                    <div class="job-card">
+
+                        <div class="job-top">
+
+                            <div>
+
+                                <h3>
+                                    {{ employee.name }}
+                                </h3>
+
+                                <p>
+                                    Employee ID #{{ employee.id }}
+                                </p>
+
+                            </div>
+
+                            <span class="status-pill">
+
+                                {% if employee.active %}
+                                    Active
+                                {% else %}
+                                    Inactive
+                                {% endif %}
+
+                            </span>
+
+                        </div>
+
+                        <div class="job-details">
+
+                            <div class="detail-row">
+                                <strong>Role:</strong>
+                                <span>{{ employee.role }}</span>
+                            </div>
+
+                            <div class="detail-row">
+                                <strong>Phone:</strong>
+                                <span>{{ employee.phone }}</span>
+                            </div>
+
+                            <div class="detail-row">
+                                <strong>Email:</strong>
+                                <span>{{ employee.email }}</span>
+                            </div>
+
+                        </div>
+
+                        <details class="edit-panel">
+
+                            <summary>
+                                Edit Employee
+                            </summary>
+
+                            <form
+                                method="post"
+                                action="/employees/update/{{ employee.id }}"
+                                class="edit-form"
+                            >
+
+                                <div class="form-group">
+
+                                    <label>Name</label>
+
+                                    <input
+                                        type="text"
+                                        name="name"
+                                        value="{{ employee.name }}"
+                                        required
+                                    >
+
+                                </div>
+
+                                <div class="form-group">
+
+                                    <label>Role</label>
+
+                                    <input
+                                        type="text"
+                                        name="role"
+                                        value="{{ employee.role }}"
+                                        required
+                                    >
+
+                                </div>
+
+                                <div class="form-group">
+
+                                    <label>Phone</label>
+
+                                    <input
+                                        type="text"
+                                        name="phone"
+                                        value="{{ employee.phone }}"
+                                    >
+
+                                </div>
+
+                                <div class="form-group">
+
+                                    <label>Email</label>
+
+                                    <input
+                                        type="email"
+                                        name="email"
+                                        value="{{ employee.email }}"
+                                    >
+
+                                </div>
+
+                                <div class="form-group">
+
+                                    <label>Status</label>
+
+                                    <select name="active">
+
+                                        <option
+                                            value="true"
+                                            {% if employee.active %}
+                                            selected
+                                            {% endif %}
+                                        >
+                                            Active
+                                        </option>
+
+                                        <option
+                                            value="false"
+                                            {% if not employee.active %}
+                                            selected
+                                            {% endif %}
+                                        >
+                                            Inactive
+                                        </option>
+
+                                    </select>
+
+                                </div>
+
+                                <button
+                                    type="submit"
+                                    class="primary-button"
+                                >
+                                    Save Changes
+                                </button>
+
+                            </form>
+
+                            <form
+                                method="post"
+                                action="/employees/delete/{{ employee.id }}"
+                            >
+
+                                <button
+                                    type="submit"
+                                    class="danger-button"
+                                >
+                                    Delete Employee
+                                </button>
+
+                            </form>
+
+                        </details>
+
+                    </div>
+
+                    {% endfor %}
+
+                </div>
+
+            </section>
+
+        </main>
+
+    </div>
+
+</body>
+</html>
