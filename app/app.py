@@ -3,129 +3,65 @@ from fastapi.responses import RedirectResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
+
 import csv
 import io
+
+from app.database import Base, engine, SessionLocal
+from app.models import User, Employee, Client, Property, Job, Invoice, JobCost, PhotoLog
+
 
 app = FastAPI(title="PoolOps2")
 
 app.add_middleware(
     SessionMiddleware,
-    secret_key="poolops2-phase-25-secret",
+    secret_key="poolops2-phase-3-secret",
 )
 
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 templates = Jinja2Templates(directory="app/templates")
 
 
-USERS = {
-    "mike": {"password": "5500", "role": "admin", "name": "Mike"},
-    "randy": {"password": "0318", "role": "crew", "name": "Randy"},
-}
+@app.on_event("startup")
+def startup():
+    Base.metadata.create_all(bind=engine)
 
+    db = SessionLocal()
 
-EMPLOYEES = [
-    {"id": 1, "name": "Mike", "role": "Admin", "phone": "", "email": "", "active": True},
-    {"id": 2, "name": "Randy", "role": "Crew", "phone": "", "email": "", "active": True},
-]
+    try:
+        if db.query(User).count() == 0:
+            db.add(User(username="mike", password="5500", role="admin", name="Mike"))
+            db.add(User(username="randy", password="0318", role="crew", name="Randy"))
 
+        if db.query(Employee).count() == 0:
+            db.add(Employee(name="Mike", role="Admin", phone="", email="", active=True))
+            db.add(Employee(name="Randy", role="Crew", phone="", email="", active=True))
 
-CLIENTS = [
-    {"id": 1, "name": "Smith Residence", "phone": "", "email": "", "notes": "Sample client."},
-    {"id": 2, "name": "Johnson Backyard", "phone": "", "email": "", "notes": "Sample remodel client."},
-]
+        if db.query(Client).count() == 0:
+            db.add(Client(name="Smith Residence", phone="", email="", notes="Sample client."))
+            db.add(Client(name="Johnson Backyard", phone="", email="", notes="Sample remodel client."))
 
+        if db.query(Property).count() == 0:
+            db.add(Property(client_id=1, client="Smith Residence", address="Evansville, IN", pool_type="Concrete Pool", notes="20x40 rectangle pool."))
+            db.add(Property(client_id=2, client="Johnson Backyard", address="Newburgh, IN", pool_type="Pool Remodel", notes="Tile and coping replacement."))
 
-PROPERTIES = [
-    {
-        "id": 1,
-        "client_id": 1,
-        "client": "Smith Residence",
-        "address": "Evansville, IN",
-        "pool_type": "Concrete Pool",
-        "notes": "20x40 rectangle pool.",
-    },
-    {
-        "id": 2,
-        "client_id": 2,
-        "client": "Johnson Backyard",
-        "address": "Newburgh, IN",
-        "pool_type": "Pool Remodel",
-        "notes": "Tile and coping replacement.",
-    },
-]
+        if db.query(Job).count() == 0:
+            db.add(Job(client="Smith Residence", property="Evansville, IN", address="Evansville, IN", job_type="Concrete Pool", status="Scheduled", crew="Randy", date="Today", priority="Normal", notes="20x40 rectangle pool."))
+            db.add(Job(client="Johnson Backyard", property="Newburgh, IN", address="Newburgh, IN", job_type="Pool Remodel", status="Pending", crew="Unassigned", date="Tomorrow", priority="High", notes="Tile and coping replacement."))
 
+        if db.query(Invoice).count() == 0:
+            db.add(Invoice(job_id=1, client="Smith Residence", description="Deposit invoice", amount=5000.00, status="Draft", date="Today", notes="Sample billing record."))
 
-JOBS = [
-    {
-        "id": 1,
-        "client": "Smith Residence",
-        "property": "Evansville, IN",
-        "address": "Evansville, IN",
-        "job_type": "Concrete Pool",
-        "status": "Scheduled",
-        "crew": "Randy",
-        "date": "Today",
-        "priority": "Normal",
-        "notes": "20x40 rectangle pool.",
-    },
-    {
-        "id": 2,
-        "client": "Johnson Backyard",
-        "property": "Newburgh, IN",
-        "address": "Newburgh, IN",
-        "job_type": "Pool Remodel",
-        "status": "Pending",
-        "crew": "Unassigned",
-        "date": "Tomorrow",
-        "priority": "High",
-        "notes": "Tile and coping replacement.",
-    },
-]
+        if db.query(JobCost).count() == 0:
+            db.add(JobCost(job_id=1, client="Smith Residence", labor=1200.00, materials=2500.00, subs=0.00, equipment=350.00, fuel=125.00, other=0.00, invoice_amount=5000.00, notes="Sample job cost record."))
 
+        if db.query(PhotoLog).count() == 0:
+            db.add(PhotoLog(job_id=1, client="Smith Residence", photo_type="Before", title="Sample before photo", photo_url="/static/logo.png", date="Today", notes="Temporary sample photo."))
 
-INVOICES = [
-    {
-        "id": 1,
-        "job_id": 1,
-        "client": "Smith Residence",
-        "description": "Deposit invoice",
-        "amount": 5000.00,
-        "status": "Draft",
-        "date": "Today",
-        "notes": "Sample billing record.",
-    }
-]
+        db.commit()
 
-
-JOB_COSTS = [
-    {
-        "id": 1,
-        "job_id": 1,
-        "client": "Smith Residence",
-        "labor": 1200.00,
-        "materials": 2500.00,
-        "subs": 0.00,
-        "equipment": 350.00,
-        "fuel": 125.00,
-        "other": 0.00,
-        "invoice_amount": 5000.00,
-        "notes": "Sample job cost record.",
-    }
-]
-
-
-PHOTO_LOGS = [
-    {
-        "id": 1,
-        "job_id": 1,
-        "client": "Smith Residence",
-        "photo_type": "Before",
-        "title": "Sample before photo",
-        "photo_url": "/static/logo.png",
-        "date": "Today",
-        "notes": "Temporary sample photo. Replace later with real uploads.",
-    }
-]
+    finally:
+        db.close()
 
 
 TIME_CLOCK = {
@@ -133,20 +69,32 @@ TIME_CLOCK = {
 }
 
 
+def db_session():
+    return SessionLocal()
+
+
 def get_current_user(request: Request):
     username = request.session.get("username")
+
     if not username:
         return None
 
-    user = USERS.get(username)
-    if not user:
-        return None
+    db = db_session()
 
-    return {
-        "username": username,
-        "name": user["name"],
-        "role": user["role"],
-    }
+    try:
+        user = db.query(User).filter(User.username == username).first()
+
+        if not user:
+            return None
+
+        return {
+            "username": user.username,
+            "name": user.name,
+            "role": user.role,
+        }
+
+    finally:
+        db.close()
 
 
 def require_login(request: Request):
@@ -155,44 +103,27 @@ def require_login(request: Request):
 
 def require_admin(request: Request):
     user = get_current_user(request)
-    if not user or user["role"] != "admin":
+
+    if not user:
         return None
+
+    if user["role"] != "admin":
+        return None
+
     return user
-
-
-def next_id(items):
-    return max([item["id"] for item in items], default=0) + 1
-
-
-def find_by_id(items, item_id: int):
-    for item in items:
-        if item["id"] == item_id:
-            return item
-    return None
-
-
-def job_options():
-    return [
-        {
-            "id": job["id"],
-            "label": f'#{job["id"]} - {job["client"]} - {job["job_type"]}',
-            "client": job["client"],
-        }
-        for job in JOBS
-    ]
 
 
 def cost_totals(cost):
     total_cost = (
-        float(cost["labor"])
-        + float(cost["materials"])
-        + float(cost["subs"])
-        + float(cost["equipment"])
-        + float(cost["fuel"])
-        + float(cost["other"])
+        float(cost.labor or 0)
+        + float(cost.materials or 0)
+        + float(cost.subs or 0)
+        + float(cost.equipment or 0)
+        + float(cost.fuel or 0)
+        + float(cost.other or 0)
     )
 
-    invoice_amount = float(cost["invoice_amount"])
+    invoice_amount = float(cost.invoice_amount or 0)
     profit = invoice_amount - total_cost
     margin = 0
 
@@ -209,9 +140,24 @@ def cost_totals(cost):
 def profit_status(profit, margin):
     if profit < 0:
         return "danger"
+
     if margin < 15:
         return "warning"
+
     return "good"
+
+
+def job_options(db):
+    jobs = db.query(Job).order_by(Job.id.desc()).all()
+
+    return [
+        {
+            "id": job.id,
+            "label": f"#{job.id} - {job.client} - {job.job_type}",
+            "client": job.client,
+        }
+        for job in jobs
+    ]
 
 
 @app.get("/")
@@ -221,6 +167,7 @@ async def login_page(request: Request):
     if user:
         if user["role"] == "crew":
             return RedirectResponse(url="/crew", status_code=303)
+
         return RedirectResponse(url="/dashboard", status_code=303)
 
     return templates.TemplateResponse(request, "login.html", {"error": None})
@@ -231,22 +178,28 @@ async def login(request: Request, username: str = Form(...), password: str = For
     username = username.lower().strip()
     password = password.strip()
 
-    user = USERS.get(username)
+    db = db_session()
 
-    if not user or user["password"] != password:
-        return templates.TemplateResponse(
-            request,
-            "login.html",
-            {"error": "Invalid username or password."},
-            status_code=401,
-        )
+    try:
+        user = db.query(User).filter(User.username == username).first()
 
-    request.session["username"] = username
+        if not user or user.password != password:
+            return templates.TemplateResponse(
+                request,
+                "login.html",
+                {"error": "Invalid username or password."},
+                status_code=401,
+            )
 
-    if user["role"] == "crew":
-        return RedirectResponse(url="/crew", status_code=303)
+        request.session["username"] = username
 
-    return RedirectResponse(url="/dashboard", status_code=303)
+        if user.role == "crew":
+            return RedirectResponse(url="/crew", status_code=303)
+
+        return RedirectResponse(url="/dashboard", status_code=303)
+
+    finally:
+        db.close()
 
 
 @app.get("/logout")
@@ -260,77 +213,100 @@ async def health():
     return {
         "status": "ok",
         "app": "PoolOps2",
-        "phase": "2.5",
+        "phase": "3",
+        "database": "connected",
     }
 
 
 @app.get("/dashboard")
 async def dashboard(request: Request):
     user = require_login(request)
+
     if not user:
         return RedirectResponse(url="/", status_code=303)
 
     if user["role"] != "admin":
         return RedirectResponse(url="/crew", status_code=303)
 
-    total_invoice_amount = round(sum(float(invoice["amount"]) for invoice in INVOICES), 2)
+    db = db_session()
 
-    total_cost = 0
-    total_revenue = 0
+    try:
+        jobs = db.query(Job).order_by(Job.id.desc()).all()
+        clients = db.query(Client).order_by(Client.id.desc()).all()
+        properties = db.query(Property).order_by(Property.id.desc()).all()
+        employees = db.query(Employee).order_by(Employee.id.desc()).all()
+        invoices = db.query(Invoice).all()
+        costs = db.query(JobCost).all()
+        photos = db.query(PhotoLog).all()
 
-    for cost in JOB_COSTS:
-        totals = cost_totals(cost)
-        total_cost += totals["total_cost"]
-        total_revenue += float(cost["invoice_amount"])
+        total_invoice_amount = round(sum(float(invoice.amount or 0) for invoice in invoices), 2)
 
-    total_profit = round(total_revenue - total_cost, 2)
+        total_cost = 0
+        total_revenue = 0
 
-    stats = {
-        "total_jobs": len(JOBS),
-        "scheduled": len([job for job in JOBS if job["status"] == "Scheduled"]),
-        "pending": len([job for job in JOBS if job["status"] == "Pending"]),
-        "in_progress": len([job for job in JOBS if job["status"] == "In Progress"]),
-        "completed": len([job for job in JOBS if job["status"] == "Completed"]),
-        "clients": len(CLIENTS),
-        "properties": len(PROPERTIES),
-        "employees": len(EMPLOYEES),
-        "invoices": len(INVOICES),
-        "invoice_total": total_invoice_amount,
-        "tracked_profit": total_profit,
-        "photos": len(PHOTO_LOGS),
-    }
+        for cost in costs:
+            totals = cost_totals(cost)
+            total_cost += totals["total_cost"]
+            total_revenue += float(cost.invoice_amount or 0)
 
-    return templates.TemplateResponse(
-        request,
-        "dashboard.html",
-        {
-            "user": user,
-            "jobs": JOBS,
-            "clients": CLIENTS,
-            "properties": PROPERTIES,
-            "employees": EMPLOYEES,
-            "stats": stats,
-        },
-    )
+        total_profit = round(total_revenue - total_cost, 2)
+
+        stats = {
+            "total_jobs": len(jobs),
+            "scheduled": len([job for job in jobs if job.status == "Scheduled"]),
+            "pending": len([job for job in jobs if job.status == "Pending"]),
+            "in_progress": len([job for job in jobs if job.status == "In Progress"]),
+            "completed": len([job for job in jobs if job.status == "Completed"]),
+            "clients": len(clients),
+            "properties": len(properties),
+            "employees": len(employees),
+            "invoices": len(invoices),
+            "invoice_total": total_invoice_amount,
+            "tracked_profit": total_profit,
+            "photos": len(photos),
+        }
+
+        return templates.TemplateResponse(
+            request,
+            "dashboard.html",
+            {
+                "user": user,
+                "jobs": jobs,
+                "clients": clients,
+                "properties": properties,
+                "employees": employees,
+                "stats": stats,
+            },
+        )
+
+    finally:
+        db.close()
 
 
 @app.get("/jobs")
 async def jobs_page(request: Request):
     user = require_login(request)
+
     if not user:
         return RedirectResponse(url="/", status_code=303)
 
-    return templates.TemplateResponse(
-        request,
-        "jobs.html",
-        {
-            "user": user,
-            "jobs": JOBS,
-            "clients": CLIENTS,
-            "properties": PROPERTIES,
-            "employees": EMPLOYEES,
-        },
-    )
+    db = db_session()
+
+    try:
+        return templates.TemplateResponse(
+            request,
+            "jobs.html",
+            {
+                "user": user,
+                "jobs": db.query(Job).order_by(Job.id.desc()).all(),
+                "clients": db.query(Client).order_by(Client.name.asc()).all(),
+                "properties": db.query(Property).order_by(Property.address.asc()).all(),
+                "employees": db.query(Employee).order_by(Employee.name.asc()).all(),
+            },
+        )
+
+    finally:
+        db.close()
 
 
 @app.post("/jobs/add")
@@ -346,27 +322,35 @@ async def add_job(
     notes: str = Form(""),
 ):
     user = require_admin(request)
+
     if not user:
         return RedirectResponse(url="/", status_code=303)
 
-    clean_address = address.strip()
+    db = db_session()
 
-    JOBS.append(
-        {
-            "id": next_id(JOBS),
-            "client": client.strip(),
-            "property": clean_address,
-            "address": clean_address,
-            "job_type": job_type.strip(),
-            "status": status.strip(),
-            "crew": crew.strip() or "Unassigned",
-            "date": date.strip(),
-            "priority": priority.strip(),
-            "notes": notes.strip(),
-        }
-    )
+    try:
+        clean_address = address.strip()
 
-    return RedirectResponse(url="/jobs", status_code=303)
+        db.add(
+            Job(
+                client=client.strip(),
+                property=clean_address,
+                address=clean_address,
+                job_type=job_type.strip(),
+                status=status.strip(),
+                crew=crew.strip() or "Unassigned",
+                date=date.strip(),
+                priority=priority.strip(),
+                notes=notes.strip(),
+            )
+        )
+
+        db.commit()
+
+        return RedirectResponse(url="/jobs", status_code=303)
+
+    finally:
+        db.close()
 
 
 @app.post("/jobs/update/{job_id}")
@@ -383,89 +367,151 @@ async def update_job(
     notes: str = Form(""),
 ):
     user = require_admin(request)
+
     if not user:
         return RedirectResponse(url="/", status_code=303)
 
-    job = find_by_id(JOBS, job_id)
+    db = db_session()
 
-    if job:
-        job["client"] = client.strip()
-        job["property"] = address.strip()
-        job["address"] = address.strip()
-        job["job_type"] = job_type.strip()
-        job["date"] = date.strip()
-        job["crew"] = crew.strip()
-        job["status"] = status.strip()
-        job["priority"] = priority.strip()
-        job["notes"] = notes.strip()
+    try:
+        job = db.query(Job).filter(Job.id == job_id).first()
 
-    return RedirectResponse(url="/jobs", status_code=303)
+        if job:
+            job.client = client.strip()
+            job.property = address.strip()
+            job.address = address.strip()
+            job.job_type = job_type.strip()
+            job.date = date.strip()
+            job.crew = crew.strip()
+            job.status = status.strip()
+            job.priority = priority.strip()
+            job.notes = notes.strip()
+
+            db.commit()
+
+        return RedirectResponse(url="/jobs", status_code=303)
+
+    finally:
+        db.close()
 
 
 @app.post("/jobs/delete/{job_id}")
 async def delete_job(request: Request, job_id: int):
     user = require_admin(request)
+
     if not user:
         return RedirectResponse(url="/", status_code=303)
 
-    global JOBS
-    JOBS = [job for job in JOBS if job["id"] != job_id]
+    db = db_session()
 
-    return RedirectResponse(url="/jobs", status_code=303)
+    try:
+        job = db.query(Job).filter(Job.id == job_id).first()
+
+        if job:
+            db.delete(job)
+            db.commit()
+
+        return RedirectResponse(url="/jobs", status_code=303)
+
+    finally:
+        db.close()
 
 
 @app.get("/schedule")
 async def schedule_page(request: Request):
     user = require_login(request)
+
     if not user:
         return RedirectResponse(url="/", status_code=303)
 
-    return templates.TemplateResponse(request, "schedule.html", {"user": user, "jobs": JOBS})
+    db = db_session()
+
+    try:
+        return templates.TemplateResponse(
+            request,
+            "schedule.html",
+            {
+                "user": user,
+                "jobs": db.query(Job).order_by(Job.id.desc()).all(),
+            },
+        )
+
+    finally:
+        db.close()
 
 
 @app.post("/schedule/status/{job_id}")
 async def update_schedule_status(request: Request, job_id: int, status: str = Form(...)):
     user = require_admin(request)
+
     if not user:
         return RedirectResponse(url="/", status_code=303)
 
-    job = find_by_id(JOBS, job_id)
-    if job:
-        job["status"] = status.strip()
+    db = db_session()
 
-    return RedirectResponse(url="/schedule", status_code=303)
+    try:
+        job = db.query(Job).filter(Job.id == job_id).first()
+
+        if job:
+            job.status = status.strip()
+            db.commit()
+
+        return RedirectResponse(url="/schedule", status_code=303)
+
+    finally:
+        db.close()
 
 
 @app.get("/crew")
 async def crew_page(request: Request):
     user = require_login(request)
+
     if not user:
         return RedirectResponse(url="/", status_code=303)
 
-    crew_jobs = [
-        job
-        for job in JOBS
-        if job["crew"].lower() in [user["name"].lower(), user["username"].lower()]
-        or job["crew"].lower() == "unassigned"
-        or user["role"] == "admin"
-    ]
+    db = db_session()
 
-    clock = TIME_CLOCK.get(user["username"], {"clocked_in": False, "current_job": None})
+    try:
+        jobs = db.query(Job).order_by(Job.id.desc()).all()
 
-    return templates.TemplateResponse(
-        request,
-        "crew.html",
-        {"user": user, "jobs": crew_jobs, "clock": clock},
-    )
+        crew_jobs = [
+            job
+            for job in jobs
+            if job.crew.lower() in [user["name"].lower(), user["username"].lower()]
+            or job.crew.lower() == "unassigned"
+            or user["role"] == "admin"
+        ]
+
+        clock = TIME_CLOCK.get(
+            user["username"],
+            {"clocked_in": False, "current_job": None},
+        )
+
+        return templates.TemplateResponse(
+            request,
+            "crew.html",
+            {
+                "user": user,
+                "jobs": crew_jobs,
+                "clock": clock,
+            },
+        )
+
+    finally:
+        db.close()
 
 
 @app.post("/crew/clock-in")
 async def clock_in(request: Request):
     user = require_login(request)
+
     if not user:
         return RedirectResponse(url="/", status_code=303)
 
-    old_clock = TIME_CLOCK.get(user["username"], {"clocked_in": False, "current_job": None})
+    old_clock = TIME_CLOCK.get(
+        user["username"],
+        {"clocked_in": False, "current_job": None},
+    )
 
     TIME_CLOCK[user["username"]] = {
         "clocked_in": True,
@@ -478,10 +524,14 @@ async def clock_in(request: Request):
 @app.post("/crew/clock-out")
 async def clock_out(request: Request):
     user = require_login(request)
+
     if not user:
         return RedirectResponse(url="/", status_code=303)
 
-    TIME_CLOCK[user["username"]] = {"clocked_in": False, "current_job": None}
+    TIME_CLOCK[user["username"]] = {
+        "clocked_in": False,
+        "current_job": None,
+    }
 
     return RedirectResponse(url="/crew", status_code=303)
 
@@ -489,42 +539,76 @@ async def clock_out(request: Request):
 @app.post("/crew/start-job/{job_id}")
 async def start_job(request: Request, job_id: int):
     user = require_login(request)
+
     if not user:
         return RedirectResponse(url="/", status_code=303)
 
-    job = find_by_id(JOBS, job_id)
+    db = db_session()
 
-    if job:
-        job["status"] = "In Progress"
-        TIME_CLOCK[user["username"]] = {"clocked_in": True, "current_job": job_id}
+    try:
+        job = db.query(Job).filter(Job.id == job_id).first()
 
-    return RedirectResponse(url="/crew", status_code=303)
+        if job:
+            job.status = "In Progress"
+            db.commit()
+
+            TIME_CLOCK[user["username"]] = {
+                "clocked_in": True,
+                "current_job": job_id,
+            }
+
+        return RedirectResponse(url="/crew", status_code=303)
+
+    finally:
+        db.close()
 
 
 @app.post("/crew/complete-job/{job_id}")
 async def complete_job(request: Request, job_id: int):
     user = require_login(request)
+
     if not user:
         return RedirectResponse(url="/", status_code=303)
 
-    job = find_by_id(JOBS, job_id)
+    db = db_session()
 
-    if job:
-        job["status"] = "Completed"
+    try:
+        job = db.query(Job).filter(Job.id == job_id).first()
 
-        if TIME_CLOCK.get(user["username"], {}).get("current_job") == job_id:
-            TIME_CLOCK[user["username"]]["current_job"] = None
+        if job:
+            job.status = "Completed"
+            db.commit()
 
-    return RedirectResponse(url="/crew", status_code=303)
+            if TIME_CLOCK.get(user["username"], {}).get("current_job") == job_id:
+                TIME_CLOCK[user["username"]]["current_job"] = None
+
+        return RedirectResponse(url="/crew", status_code=303)
+
+    finally:
+        db.close()
 
 
 @app.get("/clients")
 async def clients_page(request: Request):
     user = require_admin(request)
+
     if not user:
         return RedirectResponse(url="/", status_code=303)
 
-    return templates.TemplateResponse(request, "clients.html", {"user": user, "clients": CLIENTS})
+    db = db_session()
+
+    try:
+        return templates.TemplateResponse(
+            request,
+            "clients.html",
+            {
+                "user": user,
+                "clients": db.query(Client).order_by(Client.id.desc()).all(),
+            },
+        )
+
+    finally:
+        db.close()
 
 
 @app.post("/clients/add")
@@ -536,20 +620,28 @@ async def add_client(
     notes: str = Form(""),
 ):
     user = require_admin(request)
+
     if not user:
         return RedirectResponse(url="/", status_code=303)
 
-    CLIENTS.append(
-        {
-            "id": next_id(CLIENTS),
-            "name": name.strip(),
-            "phone": phone.strip(),
-            "email": email.strip(),
-            "notes": notes.strip(),
-        }
-    )
+    db = db_session()
 
-    return RedirectResponse(url="/clients", status_code=303)
+    try:
+        db.add(
+            Client(
+                name=name.strip(),
+                phone=phone.strip(),
+                email=email.strip(),
+                notes=notes.strip(),
+            )
+        )
+
+        db.commit()
+
+        return RedirectResponse(url="/clients", status_code=303)
+
+    finally:
+        db.close()
 
 
 @app.post("/clients/update/{client_id}")
@@ -562,52 +654,84 @@ async def update_client(
     notes: str = Form(""),
 ):
     user = require_admin(request)
+
     if not user:
         return RedirectResponse(url="/", status_code=303)
 
-    client = find_by_id(CLIENTS, client_id)
+    db = db_session()
 
-    if client:
-        old_name = client["name"]
-        client["name"] = name.strip()
-        client["phone"] = phone.strip()
-        client["email"] = email.strip()
-        client["notes"] = notes.strip()
+    try:
+        client = db.query(Client).filter(Client.id == client_id).first()
 
-        for prop in PROPERTIES:
-            if prop["client"] == old_name:
-                prop["client"] = client["name"]
+        if client:
+            old_name = client.name
 
-        for job in JOBS:
-            if job["client"] == old_name:
-                job["client"] = client["name"]
+            client.name = name.strip()
+            client.phone = phone.strip()
+            client.email = email.strip()
+            client.notes = notes.strip()
 
-    return RedirectResponse(url="/clients", status_code=303)
+            properties = db.query(Property).filter(Property.client == old_name).all()
+            jobs = db.query(Job).filter(Job.client == old_name).all()
+
+            for prop in properties:
+                prop.client = client.name
+
+            for job in jobs:
+                job.client = client.name
+
+            db.commit()
+
+        return RedirectResponse(url="/clients", status_code=303)
+
+    finally:
+        db.close()
 
 
 @app.post("/clients/delete/{client_id}")
 async def delete_client(request: Request, client_id: int):
     user = require_admin(request)
+
     if not user:
         return RedirectResponse(url="/", status_code=303)
 
-    global CLIENTS
-    CLIENTS = [client for client in CLIENTS if client["id"] != client_id]
+    db = db_session()
 
-    return RedirectResponse(url="/clients", status_code=303)
+    try:
+        client = db.query(Client).filter(Client.id == client_id).first()
+
+        if client:
+            db.delete(client)
+            db.commit()
+
+        return RedirectResponse(url="/clients", status_code=303)
+
+    finally:
+        db.close()
 
 
 @app.get("/properties")
 async def properties_page(request: Request):
     user = require_admin(request)
+
     if not user:
         return RedirectResponse(url="/", status_code=303)
 
-    return templates.TemplateResponse(
-        request,
-        "properties.html",
-        {"user": user, "clients": CLIENTS, "properties": PROPERTIES},
-    )
+    db = db_session()
+
+    try:
+        return templates.TemplateResponse(
+            request,
+            "properties.html",
+            {
+                "user": user,
+                "clients": db.query(Client).order_by(Client.name.asc()).all(),
+                "properties": db.query(Property).order_by(Property.id.desc()).all(),
+            },
+        )
+
+    finally:
+        db.close()
 
 
 @app.post("/properties/add")
@@ -619,28 +743,31 @@ async def add_property(
     notes: str = Form(""),
 ):
     user = require_admin(request)
+
     if not user:
         return RedirectResponse(url="/", status_code=303)
 
-    selected_client = None
+    db = db_session()
 
-    for c in CLIENTS:
-        if c["name"] == client:
-            selected_client = c
-            break
+    try:
+        selected_client = db.query(Client).filter(Client.name == client).first()
 
-    PROPERTIES.append(
-        {
-            "id": next_id(PROPERTIES),
-            "client_id": selected_client["id"] if selected_client else None,
-            "client": client.strip(),
-            "address": address.strip(),
-            "pool_type": pool_type.strip(),
-            "notes": notes.strip(),
-        }
-    )
+        db.add(
+            Property(
+                client_id=selected_client.id if selected_client else None,
+                client=client.strip(),
+                address=address.strip(),
+                pool_type=pool_type.strip(),
+                notes=notes.strip(),
+            )
+        )
 
-    return RedirectResponse(url="/properties", status_code=303)
+        db.commit()
+
+        return RedirectResponse(url="/properties", status_code=303)
+
+    finally:
+        db.close()
 
 
 @app.post("/properties/update/{property_id}")
@@ -653,58 +780,83 @@ async def update_property(
     notes: str = Form(""),
 ):
     user = require_admin(request)
+
     if not user:
         return RedirectResponse(url="/", status_code=303)
 
-    prop = find_by_id(PROPERTIES, property_id)
+    db = db_session()
 
-    if prop:
-        old_address = prop["address"]
+    try:
+        prop = db.query(Property).filter(Property.id == property_id).first()
 
-        selected_client = None
-        for c in CLIENTS:
-            if c["name"] == client:
-                selected_client = c
-                break
+        if prop:
+            old_address = prop.address
+            selected_client = db.query(Client).filter(Client.name == client).first()
 
-        prop["client_id"] = selected_client["id"] if selected_client else None
-        prop["client"] = client.strip()
-        prop["address"] = address.strip()
-        prop["pool_type"] = pool_type.strip()
-        prop["notes"] = notes.strip()
+            prop.client_id = selected_client.id if selected_client else None
+            prop.client = client.strip()
+            prop.address = address.strip()
+            prop.pool_type = pool_type.strip()
+            prop.notes = notes.strip()
 
-        for job in JOBS:
-            if job["address"] == old_address:
-                job["property"] = prop["address"]
-                job["address"] = prop["address"]
-                job["client"] = prop["client"]
+            jobs = db.query(Job).filter(Job.address == old_address).all()
 
-    return RedirectResponse(url="/properties", status_code=303)
+            for job in jobs:
+                job.property = prop.address
+                job.address = prop.address
+                job.client = prop.client
+
+            db.commit()
+
+        return RedirectResponse(url="/properties", status_code=303)
+
+    finally:
+        db.close()
 
 
 @app.post("/properties/delete/{property_id}")
 async def delete_property(request: Request, property_id: int):
     user = require_admin(request)
+
     if not user:
         return RedirectResponse(url="/", status_code=303)
 
-    global PROPERTIES
-    PROPERTIES = [prop for prop in PROPERTIES if prop["id"] != property_id]
+    db = db_session()
 
-    return RedirectResponse(url="/properties", status_code=303)
+    try:
+        prop = db.query(Property).filter(Property.id == property_id).first()
+
+        if prop:
+            db.delete(prop)
+            db.commit()
+
+        return RedirectResponse(url="/properties", status_code=303)
+
+    finally:
+        db.close()
 
 
 @app.get("/employees")
 async def employees_page(request: Request):
     user = require_admin(request)
+
     if not user:
         return RedirectResponse(url="/", status_code=303)
 
-    return templates.TemplateResponse(
-        request,
-        "employees.html",
-        {"user": user, "employees": EMPLOYEES},
-    )
+    db = db_session()
+
+    try:
+        return templates.TemplateResponse(
+            request,
+            "employees.html",
+            {
+                "user": user,
+                "employees": db.query(Employee).order_by(Employee.id.desc()).all(),
+            },
+        )
+
+    finally:
+        db.close()
 
 
 @app.post("/employees/add")
@@ -717,21 +869,29 @@ async def add_employee(
     active: str = Form("true"),
 ):
     user = require_admin(request)
+
     if not user:
         return RedirectResponse(url="/", status_code=303)
 
-    EMPLOYEES.append(
-        {
-            "id": next_id(EMPLOYEES),
-            "name": name.strip(),
-            "role": role.strip(),
-            "phone": phone.strip(),
-            "email": email.strip(),
-            "active": active == "true",
-        }
-    )
+    db = db_session()
 
-    return RedirectResponse(url="/employees", status_code=303)
+    try:
+        db.add(
+            Employee(
+                name=name.strip(),
+                role=role.strip(),
+                phone=phone.strip(),
+                email=email.strip(),
+                active=active == "true",
+            )
+        )
+
+        db.commit()
+
+        return RedirectResponse(url="/employees", status_code=303)
+
+    finally:
+        db.close()
 
 
 @app.post("/employees/update/{employee_id}")
@@ -745,63 +905,90 @@ async def update_employee(
     active: str = Form("true"),
 ):
     user = require_admin(request)
+
     if not user:
         return RedirectResponse(url="/", status_code=303)
 
-    employee = find_by_id(EMPLOYEES, employee_id)
+    db = db_session()
 
-    if employee:
-        old_name = employee["name"]
-        employee["name"] = name.strip()
-        employee["role"] = role.strip()
-        employee["phone"] = phone.strip()
-        employee["email"] = email.strip()
-        employee["active"] = active == "true"
+    try:
+        employee = db.query(Employee).filter(Employee.id == employee_id).first()
 
-        for job in JOBS:
-            if job["crew"] == old_name:
-                job["crew"] = employee["name"]
+        if employee:
+            old_name = employee.name
 
-    return RedirectResponse(url="/employees", status_code=303)
+            employee.name = name.strip()
+            employee.role = role.strip()
+            employee.phone = phone.strip()
+            employee.email = email.strip()
+            employee.active = active == "true"
+
+            jobs = db.query(Job).filter(Job.crew == old_name).all()
+
+            for job in jobs:
+                job.crew = employee.name
+
+            db.commit()
+
+        return RedirectResponse(url="/employees", status_code=303)
+
+    finally:
+        db.close()
 
 
 @app.post("/employees/delete/{employee_id}")
 async def delete_employee(request: Request, employee_id: int):
     user = require_admin(request)
+
     if not user:
         return RedirectResponse(url="/", status_code=303)
 
-    global EMPLOYEES
-    EMPLOYEES = [employee for employee in EMPLOYEES if employee["id"] != employee_id]
+    db = db_session()
 
-    return RedirectResponse(url="/employees", status_code=303)
+    try:
+        employee = db.query(Employee).filter(Employee.id == employee_id).first()
+
+        if employee:
+            db.delete(employee)
+            db.commit()
+
+        return RedirectResponse(url="/employees", status_code=303)
+
+    finally:
+        db.close()
 
 
 @app.get("/billing")
 async def billing_page(request: Request):
     user = require_admin(request)
+
     if not user:
         return RedirectResponse(url="/", status_code=303)
 
-    total_billed = round(sum(float(invoice["amount"]) for invoice in INVOICES), 2)
-    paid_total = round(
-        sum(float(invoice["amount"]) for invoice in INVOICES if invoice["status"] == "Paid"),
-        2,
-    )
-    open_total = round(total_billed - paid_total, 2)
+    db = db_session()
 
-    return templates.TemplateResponse(
-        request,
-        "billing.html",
-        {
-            "user": user,
-            "invoices": INVOICES,
-            "jobs": job_options(),
-            "total_billed": total_billed,
-            "paid_total": paid_total,
-            "open_total": open_total,
-        },
-    )
+    try:
+        invoices = db.query(Invoice).order_by(Invoice.id.desc()).all()
+
+        total_billed = round(sum(float(invoice.amount or 0) for invoice in invoices), 2)
+        paid_total = round(sum(float(invoice.amount or 0) for invoice in invoices if invoice.status == "Paid"), 2)
+        open_total = round(total_billed - paid_total, 2)
+
+        return templates.TemplateResponse(
+            request,
+            "billing.html",
+            {
+                "user": user,
+                "invoices": invoices,
+                "jobs": job_options(db),
+                "total_billed": total_billed,
+                "paid_total": paid_total,
+                "open_total": open_total,
+            },
+        )
+
+    finally:
+        db.close()
 
 
 @app.post("/billing/add")
@@ -815,26 +1002,34 @@ async def add_invoice(
     notes: str = Form(""),
 ):
     user = require_admin(request)
+
     if not user:
         return RedirectResponse(url="/", status_code=303)
 
-    job = find_by_id(JOBS, job_id)
-    client_name = job["client"] if job else "Unknown Client"
+    db = db_session()
 
-    INVOICES.append(
-        {
-            "id": next_id(INVOICES),
-            "job_id": job_id,
-            "client": client_name,
-            "description": description.strip(),
-            "amount": round(float(amount), 2),
-            "status": status.strip(),
-            "date": date.strip(),
-            "notes": notes.strip(),
-        }
-    )
+    try:
+        job = db.query(Job).filter(Job.id == job_id).first()
+        client_name = job.client if job else "Unknown Client"
 
-    return RedirectResponse(url="/billing", status_code=303)
+        db.add(
+            Invoice(
+                job_id=job_id,
+                client=client_name,
+                description=description.strip(),
+                amount=round(float(amount), 2),
+                status=status.strip(),
+                date=date.strip(),
+                notes=notes.strip(),
+            )
+        )
+
+        db.commit()
+
+        return RedirectResponse(url="/billing", status_code=303)
+
+    finally:
+        db.close()
 
 
 @app.post("/billing/update/{invoice_id}")
@@ -848,105 +1043,156 @@ async def update_invoice(
     notes: str = Form(""),
 ):
     user = require_admin(request)
+
     if not user:
         return RedirectResponse(url="/", status_code=303)
 
-    invoice = find_by_id(INVOICES, invoice_id)
+    db = db_session()
 
-    if invoice:
-        invoice["description"] = description.strip()
-        invoice["amount"] = round(float(amount), 2)
-        invoice["status"] = status.strip()
-        invoice["date"] = date.strip()
-        invoice["notes"] = notes.strip()
+    try:
+        invoice = db.query(Invoice).filter(Invoice.id == invoice_id).first()
 
-    return RedirectResponse(url="/billing", status_code=303)
+        if invoice:
+            invoice.description = description.strip()
+            invoice.amount = round(float(amount), 2)
+            invoice.status = status.strip()
+            invoice.date = date.strip()
+            invoice.notes = notes.strip()
+
+            db.commit()
+
+        return RedirectResponse(url="/billing", status_code=303)
+
+    finally:
+        db.close()
 
 
 @app.post("/billing/delete/{invoice_id}")
 async def delete_invoice(request: Request, invoice_id: int):
     user = require_admin(request)
+
     if not user:
         return RedirectResponse(url="/", status_code=303)
 
-    global INVOICES
-    INVOICES = [invoice for invoice in INVOICES if invoice["id"] != invoice_id]
+    db = db_session()
 
-    return RedirectResponse(url="/billing", status_code=303)
+    try:
+        invoice = db.query(Invoice).filter(Invoice.id == invoice_id).first()
+
+        if invoice:
+            db.delete(invoice)
+            db.commit()
+
+        return RedirectResponse(url="/billing", status_code=303)
+
+    finally:
+        db.close()
 
 
 @app.get("/billing/export")
 async def export_invoices(request: Request):
     user = require_admin(request)
+
     if not user:
         return RedirectResponse(url="/", status_code=303)
 
-    output = io.StringIO()
-    writer = csv.writer(output)
+    db = db_session()
 
-    writer.writerow(["Invoice ID", "Job ID", "Client", "Description", "Amount", "Status", "Date", "Notes"])
+    try:
+        invoices = db.query(Invoice).order_by(Invoice.id.asc()).all()
 
-    for invoice in INVOICES:
-        writer.writerow(
-            [
-                invoice["id"],
-                invoice["job_id"],
-                invoice["client"],
-                invoice["description"],
-                invoice["amount"],
-                invoice["status"],
-                invoice["date"],
-                invoice["notes"],
-            ]
+        output = io.StringIO()
+        writer = csv.writer(output)
+
+        writer.writerow(["Invoice ID", "Job ID", "Client", "Description", "Amount", "Status", "Date", "Notes"])
+
+        for invoice in invoices:
+            writer.writerow(
+                [
+                    invoice.id,
+                    invoice.job_id,
+                    invoice.client,
+                    invoice.description,
+                    invoice.amount,
+                    invoice.status,
+                    invoice.date,
+                    invoice.notes,
+                ]
+            )
+
+        output.seek(0)
+
+        return StreamingResponse(
+            iter([output.getvalue()]),
+            media_type="text/csv",
+            headers={"Content-Disposition": "attachment; filename=poolops2_invoices.csv"},
         )
 
-    output.seek(0)
-
-    return StreamingResponse(
-        iter([output.getvalue()]),
-        media_type="text/csv",
-        headers={"Content-Disposition": "attachment; filename=poolops2_invoices.csv"},
-    )
+    finally:
+        db.close()
 
 
 @app.get("/job-costing")
 async def job_costing_page(request: Request):
     user = require_admin(request)
+
     if not user:
         return RedirectResponse(url="/", status_code=303)
 
-    enriched_costs = []
+    db = db_session()
 
-    for cost in JOB_COSTS:
-        totals = cost_totals(cost)
-        enriched = dict(cost)
-        enriched["total_cost"] = totals["total_cost"]
-        enriched["profit"] = totals["profit"]
-        enriched["margin"] = totals["margin"]
-        enriched["profit_status"] = profit_status(totals["profit"], totals["margin"])
-        enriched_costs.append(enriched)
+    try:
+        costs = db.query(JobCost).order_by(JobCost.id.desc()).all()
+        enriched_costs = []
 
-    total_revenue = round(sum(float(cost["invoice_amount"]) for cost in JOB_COSTS), 2)
-    total_cost = round(sum(float(cost["total_cost"]) for cost in enriched_costs), 2)
-    total_profit = round(total_revenue - total_cost, 2)
+        for cost in costs:
+            totals = cost_totals(cost)
 
-    overall_margin = 0
-    if total_revenue > 0:
-        overall_margin = round((total_profit / total_revenue) * 100, 2)
+            enriched = {
+                "id": cost.id,
+                "job_id": cost.job_id,
+                "client": cost.client,
+                "labor": cost.labor,
+                "materials": cost.materials,
+                "subs": cost.subs,
+                "equipment": cost.equipment,
+                "fuel": cost.fuel,
+                "other": cost.other,
+                "invoice_amount": cost.invoice_amount,
+                "notes": cost.notes,
+                "total_cost": totals["total_cost"],
+                "profit": totals["profit"],
+                "margin": totals["margin"],
+                "profit_status": profit_status(totals["profit"], totals["margin"]),
+            }
 
-    return templates.TemplateResponse(
-        request,
-        "job_costing.html",
-        {
-            "user": user,
-            "costs": enriched_costs,
-            "jobs": job_options(),
-            "total_revenue": total_revenue,
-            "total_cost": total_cost,
-            "total_profit": total_profit,
-            "overall_margin": overall_margin,
-        },
-    )
+            enriched_costs.append(enriched)
+
+        total_revenue = round(sum(float(cost.invoice_amount or 0) for cost in costs), 2)
+        total_cost = round(sum(float(cost["total_cost"]) for cost in enriched_costs), 2)
+        total_profit = round(total_revenue - total_cost, 2)
+
+        overall_margin = 0
+
+        if total_revenue > 0:
+            overall_margin = round((total_profit / total_revenue) * 100, 2)
+
+        return templates.TemplateResponse(
+            request,
+            "job_costing.html",
+            {
+                "user": user,
+                "costs": enriched_costs,
+                "jobs": job_options(db),
+                "total_revenue": total_revenue,
+                "total_cost": total_cost,
+                "total_profit": total_profit,
+                "overall_margin": overall_margin,
+            },
+        )
+
+    finally:
+        db.close()
 
 
 @app.post("/job-costing/add")
@@ -963,29 +1209,37 @@ async def add_job_cost(
     notes: str = Form(""),
 ):
     user = require_admin(request)
+
     if not user:
         return RedirectResponse(url="/", status_code=303)
 
-    job = find_by_id(JOBS, job_id)
-    client_name = job["client"] if job else "Unknown Client"
+    db = db_session()
 
-    JOB_COSTS.append(
-        {
-            "id": next_id(JOB_COSTS),
-            "job_id": job_id,
-            "client": client_name,
-            "labor": round(float(labor), 2),
-            "materials": round(float(materials), 2),
-            "subs": round(float(subs), 2),
-            "equipment": round(float(equipment), 2),
-            "fuel": round(float(fuel), 2),
-            "other": round(float(other), 2),
-            "invoice_amount": round(float(invoice_amount), 2),
-            "notes": notes.strip(),
-        }
-    )
+    try:
+        job = db.query(Job).filter(Job.id == job_id).first()
+        client_name = job.client if job else "Unknown Client"
 
-    return RedirectResponse(url="/job-costing", status_code=303)
+        db.add(
+            JobCost(
+                job_id=job_id,
+                client=client_name,
+                labor=round(float(labor), 2),
+                materials=round(float(materials), 2),
+                subs=round(float(subs), 2),
+                equipment=round(float(equipment), 2),
+                fuel=round(float(fuel), 2),
+                other=round(float(other), 2),
+                invoice_amount=round(float(invoice_amount), 2),
+                notes=notes.strip(),
+            )
+        )
+
+        db.commit()
+
+        return RedirectResponse(url="/job-costing", status_code=303)
+
+    finally:
+        db.close()
 
 
 @app.post("/job-costing/update/{cost_id}")
@@ -1002,109 +1256,145 @@ async def update_job_cost(
     notes: str = Form(""),
 ):
     user = require_admin(request)
+
     if not user:
         return RedirectResponse(url="/", status_code=303)
 
-    cost = find_by_id(JOB_COSTS, cost_id)
+    db = db_session()
 
-    if cost:
-        cost["labor"] = round(float(labor), 2)
-        cost["materials"] = round(float(materials), 2)
-        cost["subs"] = round(float(subs), 2)
-        cost["equipment"] = round(float(equipment), 2)
-        cost["fuel"] = round(float(fuel), 2)
-        cost["other"] = round(float(other), 2)
-        cost["invoice_amount"] = round(float(invoice_amount), 2)
-        cost["notes"] = notes.strip()
+    try:
+        cost = db.query(JobCost).filter(JobCost.id == cost_id).first()
 
-    return RedirectResponse(url="/job-costing", status_code=303)
+        if cost:
+            cost.labor = round(float(labor), 2)
+            cost.materials = round(float(materials), 2)
+            cost.subs = round(float(subs), 2)
+            cost.equipment = round(float(equipment), 2)
+            cost.fuel = round(float(fuel), 2)
+            cost.other = round(float(other), 2)
+            cost.invoice_amount = round(float(invoice_amount), 2)
+            cost.notes = notes.strip()
+
+            db.commit()
+
+        return RedirectResponse(url="/job-costing", status_code=303)
+
+    finally:
+        db.close()
 
 
 @app.post("/job-costing/delete/{cost_id}")
 async def delete_job_cost(request: Request, cost_id: int):
     user = require_admin(request)
+
     if not user:
         return RedirectResponse(url="/", status_code=303)
 
-    global JOB_COSTS
-    JOB_COSTS = [cost for cost in JOB_COSTS if cost["id"] != cost_id]
+    db = db_session()
 
-    return RedirectResponse(url="/job-costing", status_code=303)
+    try:
+        cost = db.query(JobCost).filter(JobCost.id == cost_id).first()
+
+        if cost:
+            db.delete(cost)
+            db.commit()
+
+        return RedirectResponse(url="/job-costing", status_code=303)
+
+    finally:
+        db.close()
 
 
 @app.get("/job-costing/export")
 async def export_job_costing(request: Request):
     user = require_admin(request)
+
     if not user:
         return RedirectResponse(url="/", status_code=303)
 
-    output = io.StringIO()
-    writer = csv.writer(output)
+    db = db_session()
 
-    writer.writerow(
-        [
-            "Cost ID",
-            "Job ID",
-            "Client",
-            "Labor",
-            "Materials",
-            "Subs",
-            "Equipment",
-            "Fuel",
-            "Other",
-            "Total Cost",
-            "Invoice Amount",
-            "Profit",
-            "Margin %",
-            "Notes",
-        ]
-    )
+    try:
+        costs = db.query(JobCost).order_by(JobCost.id.asc()).all()
 
-    for cost in JOB_COSTS:
-        totals = cost_totals(cost)
+        output = io.StringIO()
+        writer = csv.writer(output)
+
         writer.writerow(
             [
-                cost["id"],
-                cost["job_id"],
-                cost["client"],
-                cost["labor"],
-                cost["materials"],
-                cost["subs"],
-                cost["equipment"],
-                cost["fuel"],
-                cost["other"],
-                totals["total_cost"],
-                cost["invoice_amount"],
-                totals["profit"],
-                totals["margin"],
-                cost["notes"],
+                "Cost ID",
+                "Job ID",
+                "Client",
+                "Labor",
+                "Materials",
+                "Subs",
+                "Equipment",
+                "Fuel",
+                "Other",
+                "Total Cost",
+                "Invoice Amount",
+                "Profit",
+                "Margin %",
+                "Notes",
             ]
         )
 
-    output.seek(0)
+        for cost in costs:
+            totals = cost_totals(cost)
 
-    return StreamingResponse(
-        iter([output.getvalue()]),
-        media_type="text/csv",
-        headers={"Content-Disposition": "attachment; filename=poolops2_job_costing.csv"},
-    )
+            writer.writerow(
+                [
+                    cost.id,
+                    cost.job_id,
+                    cost.client,
+                    cost.labor,
+                    cost.materials,
+                    cost.subs,
+                    cost.equipment,
+                    cost.fuel,
+                    cost.other,
+                    totals["total_cost"],
+                    cost.invoice_amount,
+                    totals["profit"],
+                    totals["margin"],
+                    cost.notes,
+                ]
+            )
+
+        output.seek(0)
+
+        return StreamingResponse(
+            iter([output.getvalue()]),
+            media_type="text/csv",
+            headers={"Content-Disposition": "attachment; filename=poolops2_job_costing.csv"},
+        )
+
+    finally:
+        db.close()
 
 
 @app.get("/photos")
 async def photos_page(request: Request):
     user = require_login(request)
+
     if not user:
         return RedirectResponse(url="/", status_code=303)
 
-    return templates.TemplateResponse(
-        request,
-        "photos.html",
-        {
-            "user": user,
-            "photos": PHOTO_LOGS,
-            "jobs": job_options(),
-        },
-    )
+    db = db_session()
+
+    try:
+        return templates.TemplateResponse(
+            request,
+            "photos.html",
+            {
+                "user": user,
+                "photos": db.query(PhotoLog).order_by(PhotoLog.id.desc()).all(),
+                "jobs": job_options(db),
+            },
+        )
+
+    finally:
+        db.close()
 
 
 @app.post("/photos/add")
@@ -1118,30 +1408,39 @@ async def add_photo_log(
     notes: str = Form(""),
 ):
     user = require_admin(request)
+
     if not user:
         return RedirectResponse(url="/", status_code=303)
 
-    job = find_by_id(JOBS, job_id)
-    client_name = job["client"] if job else "Unknown Client"
+    db = db_session()
 
-    clean_photo_url = photo_url.strip()
-    if not clean_photo_url:
-        clean_photo_url = "/static/logo.png"
+    try:
+        job = db.query(Job).filter(Job.id == job_id).first()
+        client_name = job.client if job else "Unknown Client"
 
-    PHOTO_LOGS.append(
-        {
-            "id": next_id(PHOTO_LOGS),
-            "job_id": job_id,
-            "client": client_name,
-            "photo_type": photo_type.strip(),
-            "title": title.strip(),
-            "photo_url": clean_photo_url,
-            "date": date.strip(),
-            "notes": notes.strip(),
-        }
-    )
+        clean_photo_url = photo_url.strip()
 
-    return RedirectResponse(url="/photos", status_code=303)
+        if not clean_photo_url:
+            clean_photo_url = "/static/logo.png"
+
+        db.add(
+            PhotoLog(
+                job_id=job_id,
+                client=client_name,
+                photo_type=photo_type.strip(),
+                title=title.strip(),
+                photo_url=clean_photo_url,
+                date=date.strip(),
+                notes=notes.strip(),
+            )
+        )
+
+        db.commit()
+
+        return RedirectResponse(url="/photos", status_code=303)
+
+    finally:
+        db.close()
 
 
 @app.post("/photos/update/{photo_id}")
@@ -1155,28 +1454,47 @@ async def update_photo_log(
     notes: str = Form(""),
 ):
     user = require_admin(request)
+
     if not user:
         return RedirectResponse(url="/", status_code=303)
 
-    photo = find_by_id(PHOTO_LOGS, photo_id)
+    db = db_session()
 
-    if photo:
-        photo["photo_type"] = photo_type.strip()
-        photo["title"] = title.strip()
-        photo["photo_url"] = photo_url.strip() or "/static/logo.png"
-        photo["date"] = date.strip()
-        photo["notes"] = notes.strip()
+    try:
+        photo = db.query(PhotoLog).filter(PhotoLog.id == photo_id).first()
 
-    return RedirectResponse(url="/photos", status_code=303)
+        if photo:
+            photo.photo_type = photo_type.strip()
+            photo.title = title.strip()
+            photo.photo_url = photo_url.strip() or "/static/logo.png"
+            photo.date = date.strip()
+            photo.notes = notes.strip()
+
+            db.commit()
+
+        return RedirectResponse(url="/photos", status_code=303)
+
+    finally:
+        db.close()
 
 
 @app.post("/photos/delete/{photo_id}")
 async def delete_photo_log(request: Request, photo_id: int):
     user = require_admin(request)
+
     if not user:
         return RedirectResponse(url="/", status_code=303)
 
-    global PHOTO_LOGS
-    PHOTO_LOGS = [photo for photo in PHOTO_LOGS if photo["id"] != photo_id]
+    db = db_session()
 
-    return RedirectResponse(url="/photos", status_code=303)
+    try:
+        photo = db.query(PhotoLog).filter(PhotoLog.id == photo_id).first()
+
+        if photo:
+            db.delete(photo)
+            db.commit()
+
+        return RedirectResponse(url="/photos", status_code=303)
+
+    finally:
+        db.close()
