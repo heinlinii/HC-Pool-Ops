@@ -586,3 +586,271 @@ textarea {
         font-size: 32px;
     }
 }
+/* =========================================
+   PHASE 10B — MOBILE FIELD POLISH
+========================================= */
+
+@media (max-width: 700px) {
+
+    body {
+        background: #0b1120;
+    }
+
+    .main-content {
+        padding: 14px;
+    }
+
+    .sidebar-top {
+        padding: 18px;
+    }
+
+    .sidebar-logo {
+        max-width: 120px;
+    }
+
+    .sidebar-top h1 {
+        font-size: 20px;
+    }
+
+    .sidebar-nav {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+        padding: 12px;
+    }
+
+    .sidebar-nav a {
+        text-align: center;
+        padding: 12px 8px;
+        font-size: 13px;
+        border-radius: 12px;
+        background: #0f172a;
+    }
+
+    .sidebar-bottom {
+        padding: 16px;
+    }
+
+    .topbar h2 {
+        font-size: 26px;
+    }
+
+    .topbar p {
+        font-size: 14px;
+    }
+
+    .content-card {
+        padding: 18px;
+        border-radius: 20px;
+    }
+
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+
+    .stat-card {
+        padding: 16px;
+        border-radius: 18px;
+    }
+
+    .stat-card h3 {
+        font-size: 13px;
+        margin-bottom: 8px;
+    }
+
+    .stat-number {
+        font-size: 26px;
+    }
+
+    .jobs-grid {
+        grid-template-columns: 1fr;
+        gap: 14px;
+    }
+
+    .job-card {
+        padding: 18px;
+        border-radius: 18px;
+    }
+
+    .job-top h3 {
+        font-size: 19px;
+    }
+
+    .job-top p {
+        font-size: 14px;
+    }
+
+    .detail-row {
+        font-size: 14px;
+    }
+
+    .primary-button,
+    button,
+    .logout-button {
+        width: 100%;
+        text-align: center;
+        padding: 14px 16px;
+        font-size: 15px;
+    }
+
+    input,
+    select,
+    textarea {
+        font-size: 16px;
+        padding: 14px;
+    }
+
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .schedule-board {
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+    }
+
+    .schedule-column {
+        width: 100%;
+    }
+
+    .schedule-job-card {
+        padding: 18px;
+        border-radius: 18px;
+    }
+
+    .photo-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .photo-preview {
+        height: 220px;
+    }
+
+    .forecast-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .monthly-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .table-wrapper {
+        overflow-x: auto;
+    }
+
+    table {
+        min-width: 700px;
+    }
+}
+
+
+/* =========================================
+   PHASE 10B — TOUCH FRIENDLY FIELD BUTTONS
+========================================= */
+
+.field-action-row {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 16px;
+}
+
+.field-action-row a,
+.field-action-row button {
+    flex: 1;
+    min-width: 160px;
+}
+
+
+/* =========================================
+   PHASE 10B — BETTER SCHEDULE BOARD
+========================================= */
+
+.schedule-board {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(260px, 1fr));
+    gap: 20px;
+    align-items: start;
+}
+
+.schedule-column {
+    background: #111827;
+    border: 1px solid #1f2937;
+    border-radius: 22px;
+    padding: 18px;
+}
+
+.schedule-column-header {
+    font-size: 20px;
+    font-weight: 800;
+    margin-bottom: 18px;
+    padding: 12px 14px;
+    border-radius: 14px;
+}
+
+.requested-column {
+    background: rgba(217,119,6,0.18);
+    color: #fed7aa;
+}
+
+.scheduled-column {
+    background: rgba(37,99,235,0.18);
+    color: #bfdbfe;
+}
+
+.progress-column {
+    background: rgba(5,150,105,0.18);
+    color: #a7f3d0;
+}
+
+.completed-column {
+    background: rgba(107,114,128,0.18);
+    color: #d1d5db;
+}
+
+.schedule-job-card {
+    background: #0f172a;
+    border: 1px solid #1e293b;
+    border-radius: 18px;
+    padding: 18px;
+    margin-bottom: 16px;
+}
+
+.schedule-job-top {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.schedule-address {
+    color: #9ca3af;
+    margin-bottom: 14px;
+}
+
+.schedule-meta {
+    display: grid;
+    gap: 8px;
+    margin-bottom: 14px;
+    color: #d1d5db;
+}
+
+.schedule-notes {
+    color: #d1d5db;
+    line-height: 1.5;
+    margin-bottom: 16px;
+}
+
+@media (max-width: 1200px) {
+    .schedule-board {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 700px) {
+    .schedule-board {
+        grid-template-columns: 1fr;
+    }
+}
