@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PoolOps2 Weather Center</title>
+    <link rel="stylesheet" href="/static/style.css?v=13">
+</head>
+
+<body>
+
+<div class="app-layout">
+
+    <aside class="sidebar">
+
+        <div class="sidebar-top">
+            <img src="/static/logo.png" alt="Heinlin Concrete Logo" class="sidebar-logo">
+
+            <h1>POOLOPS2</h1>
+
+            <p>Heinlin Concrete LLC</p>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="/dashboard">Dashboard</a>
+            <a href="/jobs">Jobs</a>
+            <a href="/schedule/day">Daily Schedule</a>
+            <a href="/schedule/week">Weekly Schedule</a>
+            <a href="/schedule/month">Monthly Schedule</a>
+            <a href="/weather" class="active">Weather</a>
+            <a href="/clients">Clients</a>
+            <a href="/properties">Properties</a>
+            <a href="/employees">Employees</a>
+            <a href="/billing">Billing</a>
+            <a href="/job-costing">Job Costing</a>
+            <a href="/photos">Photos</a>
+            <a href="/imports">Imports</a>
+            <a href="/crew">Crew View</a>
+            <a href="/health">Health</a>
+        </nav>
+
+        <div class="sidebar-bottom">
+            <p>{{ user.name }}</p>
+            <span>{{ user.role }}</span>
+
+            <a href="/logout" class="logout-button">
+                Logout
+            </a>
+        </div>
+
+    </aside>
+
+    <main class="main-content">
+
+        <div class="topbar">
+            <div>
+                <h2>Weather Center</h2>
+                <p>Evansville area construction weather monitoring.</p>
+            </div>
+        </div>
+
+        <section class="stats-grid">
+
+            <div class="stat-card">
+                <h3>Current Temp</h3>
+
+                <div class="stat-number">
+                    {{ current.temperature_2m }}°
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <h3>Wind Speed</h3>
+
+                <div class="stat-number">
+                    {{ current.wind_speed_10m }}
+                </div>
+
+                <p>mph</p>
+            </div>
+
+            <div class="stat-card">
+                <h3>Rain Now</h3>
+
+                <div class="stat-number">
+                    {{ current.precipitation }}
+                </div>
+
+                <p>inches</p>
+            </div>
+
+        </section>
+
+        <section class="content-card">
+
+            <div class="card-header">
+                <h3>Construction Alerts</h3>
+            </div>
+
+            <div class="alerts-list">
+
+                {% for alert in alerts %}
+
+                <div class="weather-alert-card">
+                    {{ alert }}
+                </div>
+
+                {% endfor %}
+
+            </div>
+
+        </section>
+
+        <section class="content-card">
+
+            <div class="card-header">
+                <h3>7 Day Forecast</h3>
+            </div>
+
+            <div class="forecast-grid">
+
+                {% for i in range(daily.time|length) %}
+
+                <div class="forecast-card">
+
+                    <div class="forecast-date">
+                        {{ daily.time[i] }}
+                    </div>
+
+                    <div class="forecast-temp">
+                        {{ daily.temperature_2m_max[i] }}°
+                    </div>
+
+                    <div class="forecast-low">
+                        Low: {{ daily.temperature_2m_min[i] }}°
+                    </div>
+
+                    <div class="forecast-rain">
+                        Rain:
+                        {{ daily.precipitation_probability_max[i] }}%
+                    </div>
+
+                    <div class="forecast-total">
+                        {{ daily.precipitation_sum[i] }} in
+                    </div>
+
+                    <div class="forecast-wind">
+                        Wind:
+                        {{ daily.wind_speed_10m_max[i] }} mph
+                    </div>
+
+                </div>
+
+                {% endfor %}
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+</body>
+</html>
