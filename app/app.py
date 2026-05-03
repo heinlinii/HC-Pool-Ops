@@ -254,7 +254,7 @@ async def health():
     return {
         "status": "ok",
         "app": "PoolOps2",
-        "phase": "5",
+        "phase": "6",
         "database": "connected",
         "feature": "csv imports",
     }
