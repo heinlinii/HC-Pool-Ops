@@ -1,14 +1,13 @@
-from fastapi import FastAPI, Request, Form
+from fastapi import FastAPI, Request, Form, File, UploadFile
 from fastapi.responses import RedirectResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from fastapi import FastAPI, Request, Form, File, UploadFile
-import os
-import shutil
 from starlette.middleware.sessions import SessionMiddleware
 
 import csv
 import io
+import os
+import shutil
 
 from app.database import Base, engine, SessionLocal
 from app.models import User, Employee, Client, Property, Job, Invoice, JobCost, PhotoLog
@@ -18,7 +17,7 @@ app = FastAPI(title="PoolOps2")
 
 app.add_middleware(
     SessionMiddleware,
-    secret_key="poolops2-phase-35-secret",
+    secret_key="poolops2-phase-5-secret",
 )
 
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
@@ -27,18 +26,6 @@ templates = Jinja2Templates(directory="app/templates")
 UPLOAD_DIR = "app/static/uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-
-def save_uploaded_photo(upload: UploadFile):
-    if not upload or not upload.filename:
-        return "/static/logo.png"
-
-    clean_name = upload.filename.replace(" ", "_")
-    file_path = os.path.join(UPLOAD_DIR, clean_name)
-
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(upload.file, buffer)
-
-    return f"/static/uploads/{clean_name}"
 
 @app.on_event("startup")
 def startup():
@@ -55,27 +42,6 @@ def startup():
             db.add(Employee(name="Mike", role="Admin", phone="", email="", active=True))
             db.add(Employee(name="Randy", role="Crew", phone="", email="", active=True))
 
-        if db.query(Client).count() == 0:
-            db.add(Client(name="Smith Residence", phone="", email="", notes="Sample client."))
-            db.add(Client(name="Johnson Backyard", phone="", email="", notes="Sample remodel client."))
-
-        if db.query(Property).count() == 0:
-            db.add(Property(client_id=1, client="Smith Residence", address="Evansville, IN", pool_type="Concrete Pool", notes="20x40 rectangle pool."))
-            db.add(Property(client_id=2, client="Johnson Backyard", address="Newburgh, IN", pool_type="Pool Remodel", notes="Tile and coping replacement."))
-
-        if db.query(Job).count() == 0:
-            db.add(Job(client="Smith Residence", property="Evansville, IN", address="Evansville, IN", job_type="Concrete Pool", status="Scheduled", crew="Randy", date="Today", priority="Normal", notes="20x40 rectangle pool."))
-            db.add(Job(client="Johnson Backyard", property="Newburgh, IN", address="Newburgh, IN", job_type="Pool Remodel", status="Pending", crew="Unassigned", date="Tomorrow", priority="High", notes="Tile and coping replacement."))
-
-        if db.query(Invoice).count() == 0:
-            db.add(Invoice(job_id=1, client="Smith Residence", description="Deposit invoice", amount=5000.00, status="Draft", date="Today", notes="Sample billing record."))
-
-        if db.query(JobCost).count() == 0:
-            db.add(JobCost(job_id=1, client="Smith Residence", labor=1200.00, materials=2500.00, subs=0.00, equipment=350.00, fuel=125.00, other=0.00, invoice_amount=5000.00, notes="Sample job cost record."))
-
-        if db.query(PhotoLog).count() == 0:
-            db.add(PhotoLog(job_id=1, client="Smith Residence", photo_type="Before", title="Sample before photo", photo_url="/static/logo.png", date="Today", notes="Temporary sample photo."))
-
         db.commit()
 
     finally:
@@ -89,6 +55,33 @@ TIME_CLOCK = {
 
 def db_session():
     return SessionLocal()
+
+
+def save_uploaded_photo(upload: UploadFile):
+    if not upload or not upload.filename:
+        return "/static/logo.png"
+
+    clean_name = upload.filename.replace(" ", "_")
+    file_path = os.path.join(UPLOAD_DIR, clean_name)
+
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(upload.file, buffer)
+
+    return f"/static/uploads/{clean_name}"
+
+
+def read_csv_upload(upload: UploadFile):
+    raw = upload.file.read().decode("utf-8-sig")
+    stream = io.StringIO(raw)
+    return list(csv.DictReader(stream))
+
+
+def pick(row, *keys):
+    for key in keys:
+        for actual_key, value in row.items():
+            if actual_key and actual_key.strip().lower() == key.lower():
+                return (value or "").strip()
+    return ""
 
 
 def get_current_user(request: Request):
@@ -261,9 +254,9 @@ async def health():
     return {
         "status": "ok",
         "app": "PoolOps2",
-        "phase": "3.5",
+        "phase": "5",
         "database": "connected",
-        "feature": "job hub",
+        "feature": "csv imports",
     }
 
 
@@ -1580,7 +1573,6 @@ async def add_photo_log(
 
     try:
         job = db.query(Job).filter(Job.id == job_id).first()
-
         client_name = job.client if job else "Unknown Client"
 
         photo_url = save_uploaded_photo(photo_file)
@@ -1604,52 +1596,6 @@ async def add_photo_log(
     finally:
         db.close()
 
-@app.post("/jobs/{job_id}/upload-photo")
-async def upload_job_photo(
-    request: Request,
-    job_id: int,
-    photo_type: str = Form(...),
-    title: str = Form(...),
-    photo_file: UploadFile = File(None),
-    date: str = Form("Today"),
-    notes: str = Form(""),
-):
-    user = require_admin(request)
-
-    if not user:
-        return RedirectResponse(url="/", status_code=303)
-
-    db = db_session()
-
-    try:
-        job = db.query(Job).filter(Job.id == job_id).first()
-
-        if not job:
-            return RedirectResponse(url="/jobs", status_code=303)
-
-        photo_url = save_uploaded_photo(photo_file)
-
-        db.add(
-            PhotoLog(
-                job_id=job.id,
-                client=job.client,
-                photo_type=photo_type.strip(),
-                title=title.strip(),
-                photo_url=photo_url,
-                date=date.strip(),
-                notes=notes.strip(),
-            )
-        )
-
-        db.commit()
-
-        return RedirectResponse(
-            url=f"/jobs/{job_id}",
-            status_code=303,
-        )
-
-    finally:
-        db.close()
 
 @app.post("/jobs/{job_id}/upload-photo")
 async def upload_job_photo(
@@ -1690,10 +1636,7 @@ async def upload_job_photo(
 
         db.commit()
 
-        return RedirectResponse(
-            url=f"/jobs/{job_id}",
-            status_code=303,
-        )
+        return RedirectResponse(url=f"/jobs/{job_id}", status_code=303)
 
     finally:
         db.close()
@@ -1754,3 +1697,184 @@ async def delete_photo_log(request: Request, photo_id: int):
 
     finally:
         db.close()
+
+
+@app.get("/imports")
+async def imports_page(request: Request, message: str = ""):
+    user = require_admin(request)
+
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    return templates.TemplateResponse(
+        request,
+        "import.html",
+        {
+            "user": user,
+            "message": message,
+        },
+    )
+
+
+@app.post("/imports/clients")
+async def import_clients(request: Request, csv_file: UploadFile = File(...)):
+    user = require_admin(request)
+
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    rows = read_csv_upload(csv_file)
+
+    db = db_session()
+
+    imported = 0
+    skipped = 0
+
+    try:
+        for row in rows:
+            name = pick(row, "name", "customer", "client", "display name", "company")
+
+            if not name:
+                skipped += 1
+                continue
+
+            existing = db.query(Client).filter(Client.name == name).first()
+
+            if existing:
+                skipped += 1
+                continue
+
+            db.add(
+                Client(
+                    name=name,
+                    phone=pick(row, "phone", "phone number", "mobile", "main phone"),
+                    email=pick(row, "email", "email address", "main email"),
+                    notes=pick(row, "notes", "memo", "description"),
+                )
+            )
+
+            imported += 1
+
+        db.commit()
+
+    finally:
+        db.close()
+
+    return RedirectResponse(
+        url=f"/imports?message=Imported {imported} clients. Skipped {skipped}.",
+        status_code=303,
+    )
+
+
+@app.post("/imports/properties")
+async def import_properties(request: Request, csv_file: UploadFile = File(...)):
+    user = require_admin(request)
+
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    rows = read_csv_upload(csv_file)
+
+    db = db_session()
+
+    imported = 0
+    skipped = 0
+
+    try:
+        for row in rows:
+            client_name = pick(row, "client", "customer", "name", "company")
+            address = pick(row, "address", "property", "jobsite", "job address", "billing address")
+
+            if not client_name or not address:
+                skipped += 1
+                continue
+
+            client = db.query(Client).filter(Client.name == client_name).first()
+
+            if not client:
+                client = Client(name=client_name, phone="", email="", notes="Imported with property.")
+                db.add(client)
+                db.flush()
+
+            existing = db.query(Property).filter(Property.address == address).first()
+
+            if existing:
+                skipped += 1
+                continue
+
+            db.add(
+                Property(
+                    client_id=client.id,
+                    client=client.name,
+                    address=address,
+                    pool_type=pick(row, "pool_type", "pool type", "type"),
+                    notes=pick(row, "notes", "memo", "description"),
+                )
+            )
+
+            imported += 1
+
+        db.commit()
+
+    finally:
+        db.close()
+
+    return RedirectResponse(
+        url=f"/imports?message=Imported {imported} properties. Skipped {skipped}.",
+        status_code=303,
+    )
+
+
+@app.post("/imports/invoices")
+async def import_invoices(request: Request, csv_file: UploadFile = File(...)):
+    user = require_admin(request)
+
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    rows = read_csv_upload(csv_file)
+
+    db = db_session()
+
+    imported = 0
+    skipped = 0
+
+    try:
+        for row in rows:
+            client_name = pick(row, "client", "customer", "name", "company")
+            description = pick(row, "description", "memo", "item", "product/service")
+            amount_raw = pick(row, "amount", "total", "balance", "invoice amount")
+
+            if not client_name or not amount_raw:
+                skipped += 1
+                continue
+
+            try:
+                amount = float(amount_raw.replace("$", "").replace(",", ""))
+            except ValueError:
+                skipped += 1
+                continue
+
+            db.add(
+                Invoice(
+                    job_id=None,
+                    client=client_name,
+                    description=description or "Imported invoice",
+                    amount=round(amount, 2),
+                    status=pick(row, "status") or "Imported",
+                    date=pick(row, "date", "invoice date", "txn date"),
+                    notes=pick(row, "notes", "memo"),
+                )
+            )
+
+            imported += 1
+
+        db.commit()
+
+    finally:
+        db.close()
+
+    return RedirectResponse(
+        url=f"/imports?message=Imported {imported} invoices. Skipped {skipped}.",
+        status_code=303,
+    )

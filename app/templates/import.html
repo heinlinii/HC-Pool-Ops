@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PoolOps2 Imports</title>
+    <link rel="stylesheet" href="/static/style.css?v=11">
+</head>
+
+<body>
+
+<div class="app-layout">
+
+    <aside class="sidebar">
+
+        <div class="sidebar-top">
+            <img src="/static/logo.png" alt="Heinlin Concrete Logo" class="sidebar-logo">
+            <h1>POOLOPS2</h1>
+            <p>Heinlin Concrete LLC</p>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="/dashboard">Dashboard</a>
+            <a href="/jobs">Jobs</a>
+            <a href="/schedule">Schedule</a>
+            <a href="/clients">Clients</a>
+            <a href="/properties">Properties</a>
+            <a href="/employees">Employees</a>
+            <a href="/billing">Billing</a>
+            <a href="/job-costing">Job Costing</a>
+            <a href="/photos">Photos</a>
+            <a href="/imports" class="active">Imports</a>
+            <a href="/crew">Crew View</a>
+            <a href="/health">Health</a>
+        </nav>
+
+        <div class="sidebar-bottom">
+            <p>{{ user.name }}</p>
+            <span>{{ user.role }}</span>
+            <a href="/logout" class="logout-button">Logout</a>
+        </div>
+
+    </aside>
+
+    <main class="main-content">
+
+        <div class="topbar">
+            <div>
+                <h2>QuickBooks / CSV Imports</h2>
+                <p>Import customers, properties, and invoice records from CSV files.</p>
+            </div>
+        </div>
+
+        {% if message %}
+        <section class="content-card">
+            <div class="success-message">
+                {{ message }}
+            </div>
+        </section>
+        {% endif %}
+
+        <section class="content-card">
+
+            <div class="card-header">
+                <h3>Import Clients</h3>
+            </div>
+
+            <p class="helper-text">
+                CSV columns supported: name, customer, client, phone, email, notes.
+            </p>
+
+            <form
+                method="post"
+                action="/imports/clients"
+                enctype="multipart/form-data"
+                class="job-form"
+            >
+
+                <div class="form-group">
+                    <label>Client CSV File</label>
+                    <input type="file" name="csv_file" accept=".csv" required>
+                </div>
+
+                <button type="submit" class="primary-button">
+                    Import Clients
+                </button>
+
+            </form>
+
+        </section>
+
+        <section class="content-card">
+
+            <div class="card-header">
+                <h3>Import Properties</h3>
+            </div>
+
+            <p class="helper-text">
+                CSV columns supported: client, customer, name, address, property, pool_type, notes.
+            </p>
+
+            <form
+                method="post"
+                action="/imports/properties"
+                enctype="multipart/form-data"
+                class="job-form"
+            >
+
+                <div class="form-group">
+                    <label>Property CSV File</label>
+                    <input type="file" name="csv_file" accept=".csv" required>
+                </div>
+
+                <button type="submit" class="primary-button">
+                    Import Properties
+                </button>
+
+            </form>
+
+        </section>
+
+        <section class="content-card">
+
+            <div class="card-header">
+                <h3>Import Invoices</h3>
+            </div>
+
+            <p class="helper-text">
+                CSV columns supported: client, customer, description, amount, status, date, notes.
+            </p>
+
+            <form
+                method="post"
+                action="/imports/invoices"
+                enctype="multipart/form-data"
+                class="job-form"
+            >
+
+                <div class="form-group">
+                    <label>Invoice CSV File</label>
+                    <input type="file" name="csv_file" accept=".csv" required>
+                </div>
+
+                <button type="submit" class="primary-button">
+                    Import Invoices
+                </button>
+
+            </form>
+
+        </section>
+
+        <section class="content-card">
+
+            <div class="card-header">
+                <h3>Recommended QuickBooks CSV Prep</h3>
+            </div>
+
+            <div class="jobs-grid">
+
+                <div class="job-card">
+                    <h3>Clients</h3>
+                    <p>Use one row per customer.</p>
+                    <div class="job-notes">
+                        Best columns: name, phone, email, notes.
+                    </div>
+                </div>
+
+                <div class="job-card">
+                    <h3>Properties</h3>
+                    <p>Use one row per jobsite/address.</p>
+                    <div class="job-notes">
+                        Best columns: client, address, pool_type, notes.
+                    </div>
+                </div>
+
+                <div class="job-card">
+                    <h3>Invoices</h3>
+                    <p>Use one row per invoice.</p>
+                    <div class="job-notes">
+                        Best columns: client, description, amount, status, date, notes.
+                    </div>
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+</body>
+</html>
