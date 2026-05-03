@@ -8,6 +8,8 @@ import csv
 import io
 import os
 import shutil
+import json
+import urllib.request
 
 from app.database import Base, engine, SessionLocal
 from app.models import User, Employee, Client, Property, Job, Invoice, JobCost, PhotoLog
@@ -254,9 +256,9 @@ async def health():
     return {
         "status": "ok",
         "app": "PoolOps2",
-        "phase": "6",
+        "phase": "7",
         "database": "connected",
-        "feature": "csv imports",
+        "feature": "weather alerts",
     }
 
 
@@ -2152,4 +2154,99 @@ async def client_logout(request: Request):
     return RedirectResponse(
         url=f"/imports?message=Imported {imported} invoices. Skipped {skipped}.",
         status_code=303,
+    )
+# =========================
+# PHASE 7 WEATHER
+# =========================
+
+def get_evansville_weather():
+    url = (
+        "https://api.open-meteo.com/v1/forecast"
+        "?latitude=37.9716"
+        "&longitude=-87.5711"
+        "&current=temperature_2m,precipitation,wind_speed_10m"
+        "&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,precipitation_sum,wind_speed_10m_max"
+        "&temperature_unit=fahrenheit"
+        "&wind_speed_unit=mph"
+        "&precipitation_unit=inch"
+        "&timezone=America%2FChicago"
+    )
+
+    try:
+        with urllib.request.urlopen(url, timeout=10) as response:
+            data = json.loads(response.read().decode())
+
+        return data
+
+    except Exception:
+        return None
+
+
+def build_weather_alerts(weather):
+    alerts = []
+
+    if not weather:
+        alerts.append("Weather data is currently unavailable.")
+        return alerts
+
+    current = weather.get("current", {})
+    daily = weather.get("daily", {})
+
+    temp = current.get("temperature_2m", 0)
+    rain_now = current.get("precipitation", 0)
+    wind_now = current.get("wind_speed_10m", 0)
+
+    if rain_now and rain_now > 0:
+        alerts.append("Rain is currently active. Check open excavation, tile work, EcoFinish prep, and cover work.")
+
+    if wind_now and wind_now >= 20:
+        alerts.append("High wind warning. Be careful with forms, covers, liners, tarps, dust, and spraying work.")
+
+    if temp and temp >= 90:
+        alerts.append("Heat warning. Watch crew hydration, concrete timing, EcoFinish surface temps, and employee fatigue.")
+
+    if temp and temp <= 35:
+        alerts.append("Cold warning. Protect concrete, plumbing, tile materials, and coatings.")
+
+    rain_chances = daily.get("precipitation_probability_max", [])
+    dates = daily.get("time", [])
+
+    for index, chance in enumerate(rain_chances[:3]):
+        if chance and chance >= 50:
+            day = dates[index] if index < len(dates) else "upcoming day"
+            alerts.append(f"Rain chance {chance}% on {day}. Consider schedule risk.")
+
+    if not alerts:
+        alerts.append("No major weather warnings right now.")
+
+    return alerts
+
+
+@app.get("/weather")
+async def weather_page(request: Request):
+    user = require_login(request)
+
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    weather = get_evansville_weather()
+    alerts = build_weather_alerts(weather)
+
+    current = {}
+    daily = {}
+
+    if weather:
+        current = weather.get("current", {})
+        daily = weather.get("daily", {})
+
+    return templates.TemplateResponse(
+        request,
+        "weather.html",
+        {
+            "user": user,
+            "weather": weather,
+            "current": current,
+            "daily": daily,
+            "alerts": alerts,
+        },
     )
