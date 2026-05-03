@@ -4,504 +4,297 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PoolOps2 Jobs</title>
-    <link rel="stylesheet" href="/static/style.css?v=5">
+    <link rel="stylesheet" href="/static/style.css?v=18">
 </head>
 
 <body>
 
-    <div class="app-layout">
+<div class="app-layout">
 
-        <aside class="sidebar">
+    <aside class="sidebar">
 
-            <div class="sidebar-top">
+        <div class="sidebar-top">
+            <img src="/static/logo.png" alt="Heinlin Concrete Logo" class="sidebar-logo">
 
-                <img
-                    src="/static/logo.png"
-                    alt="Heinlin Concrete Logo"
-                    class="sidebar-logo"
-                >
+            <h1>POOLOPS2</h1>
 
-                <h1>POOLOPS2</h1>
+            <p>Heinlin Concrete LLC</p>
+        </div>
 
-                <p>Heinlin Concrete LLC</p>
+        <nav class="sidebar-nav">
 
+            <a href="/dashboard">Dashboard</a>
+
+            <a href="/jobs" class="active">
+                Jobs
+            </a>
+
+            <a href="/schedule/day">Daily Schedule</a>
+            <a href="/schedule/week">Weekly Schedule</a>
+            <a href="/schedule/month">Monthly Schedule</a>
+
+            <a href="/weather">Weather</a>
+
+            <a href="/clients">Clients</a>
+            <a href="/properties">Properties</a>
+            <a href="/employees">Employees</a>
+
+            <a href="/billing">Billing</a>
+            <a href="/job-costing">Job Costing</a>
+
+            <a href="/photos">Photos</a>
+
+            <a href="/imports">Imports</a>
+
+            <a href="/quickbooks">QuickBooks</a>
+
+            <a href="/communication">Communication</a>
+
+            <a href="/backups">Backups</a>
+
+            <a href="/crew">Crew View</a>
+
+            <a href="/health">Health</a>
+
+        </nav>
+
+        <div class="sidebar-bottom">
+
+            <p>{{ user.name }}</p>
+
+            <span>{{ user.role }}</span>
+
+            <a href="/logout" class="logout-button">
+                Logout
+            </a>
+
+        </div>
+
+    </aside>
+
+    <main class="main-content">
+
+        <div class="topbar">
+
+            <div>
+                <h2>Jobs Command Center</h2>
+
+                <p>
+                    Manage scheduling, crews, production, and project status.
+                </p>
             </div>
 
-            <nav class="sidebar-nav">
+        </div>
 
-                <a href="/dashboard">
-                    Dashboard
-                </a>
+        <section class="content-card">
 
-                <a href="/jobs" class="active">
-                    Jobs
-                </a>
-
-                <a href="/schedule">
-                    Schedule
-                </a>
-
-                <a href="/clients">
-                    Clients
-                </a>
-
-                <a href="/properties">
-                    Properties
-                </a>
-
-                <a href="/employees">
-                    Employees
-                </a>
-
-                <a href="/crew">
-                    Crew View
-                </a>
-
-                <a href="/health">
-                    Health
-                </a>
-
-            </nav>
-
-            <div class="sidebar-bottom">
-
-                <p>{{ user.name }}</p>
-
-                <span>{{ user.role }}</span>
-
-                <a href="/logout" class="logout-button">
-                    Logout
-                </a>
-
+            <div class="card-header">
+                <h3>Create New Job</h3>
             </div>
 
-        </aside>
+            <form
+                method="post"
+                action="/jobs/add"
+                class="job-form"
+            >
 
-        <main class="main-content">
+                <div class="form-grid">
 
-            <div class="topbar">
+                    <div class="form-group">
+                        <label>Client</label>
 
-                <div>
-                    <h2>Jobs</h2>
-                    <p>Create, edit, and manage projects.</p>
+                        <input
+                            type="text"
+                            name="client"
+                            required
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label>Property</label>
+
+                        <input
+                            type="text"
+                            name="property"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label>Address</label>
+
+                        <input
+                            type="text"
+                            name="address"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label>Job Type</label>
+
+                        <select name="job_type">
+
+                            <option>Pool Build</option>
+                            <option>Pool Remodel</option>
+                            <option>Concrete Deck</option>
+                            <option>Auto Cover</option>
+                            <option>Tile / Coping</option>
+                            <option>EcoFinish</option>
+                            <option>Service</option>
+                            <option>Estimate</option>
+
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Status</label>
+
+                        <select name="status">
+
+                            <option>Requested</option>
+                            <option>Scheduled</option>
+                            <option>In Progress</option>
+                            <option>Completed</option>
+
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Crew</label>
+
+                        <input
+                            type="text"
+                            name="crew"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label>Date</label>
+
+                        <input
+                            type="text"
+                            name="date"
+                            placeholder="MM/DD/YYYY"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label>Priority</label>
+
+                        <select name="priority">
+
+                            <option>Low</option>
+                            <option selected>Medium</option>
+                            <option>High</option>
+
+                        </select>
+                    </div>
+
+                    <div class="form-group form-full">
+                        <label>Notes</label>
+
+                        <textarea
+                            rows="5"
+                            name="notes"
+                        ></textarea>
+                    </div>
+
                 </div>
 
+                <button type="submit">
+                    Create Job
+                </button>
+
+            </form>
+
+        </section>
+
+        <section class="content-card">
+
+            <div class="card-header">
+                <h3>All Jobs</h3>
             </div>
 
-            {% if user.role == "admin" %}
+            <div class="jobs-grid">
 
-            <section class="content-card">
+                {% for job in jobs %}
 
-                <div class="card-header">
-                    <h3>Add New Job</h3>
-                </div>
+                <div class="job-card">
 
-                <form method="post" action="/jobs/add" class="job-form">
+                    <div class="job-top">
 
-                    <div class="form-grid">
+                        <div>
 
-                        <div class="form-group">
-                            <label>Client</label>
+                            <h3>{{ job.client }}</h3>
 
-                            <select name="client" required>
-
-                                {% for client in clients %}
-
-                                <option value="{{ client.name }}">
-                                    {{ client.name }}
-                                </option>
-
-                                {% endfor %}
-
-                            </select>
-                        </div>
-
-                        <div class="form-group">
-                            <label>Address</label>
-
-                            <input
-                                type="text"
-                                name="address"
-                                placeholder="Job address"
-                                required
-                            >
-                        </div>
-
-                        <div class="form-group">
-                            <label>Job Type</label>
-
-                            <select name="job_type" required>
-
-                                <option>Concrete Pool</option>
-                                <option>Pool Remodel</option>
-                                <option>Auto Cover</option>
-                                <option>Tile / Coping</option>
-                                <option>EcoFinish</option>
-                                <option>Service</option>
-
-                            </select>
-                        </div>
-
-                        <div class="form-group">
-                            <label>Date</label>
-
-                            <input
-                                type="text"
-                                name="date"
-                                placeholder="Today / Tomorrow / Monday"
-                                required
-                            >
-                        </div>
-
-                        <div class="form-group">
-                            <label>Crew</label>
-
-                            <select name="crew">
-
-                                <option>Unassigned</option>
-
-                                {% for employee in employees %}
-
-                                <option value="{{ employee.name }}">
-                                    {{ employee.name }}
-                                </option>
-
-                                {% endfor %}
-
-                            </select>
-                        </div>
-
-                        <div class="form-group">
-                            <label>Status</label>
-
-                            <select name="status">
-
-                                <option>Scheduled</option>
-                                <option>Pending</option>
-                                <option>In Progress</option>
-                                <option>Completed</option>
-
-                            </select>
-                        </div>
-
-                        <div class="form-group">
-                            <label>Priority</label>
-
-                            <select name="priority">
-
-                                <option>Low</option>
-                                <option selected>Normal</option>
-                                <option>High</option>
-                                <option>Critical</option>
-
-                            </select>
-                        </div>
-
-                        <div class="form-group form-full">
-
-                            <label>Notes</label>
-
-                            <textarea
-                                name="notes"
-                                rows="4"
-                                placeholder="Project notes..."
-                            ></textarea>
+                            <p>{{ job.address }}</p>
 
                         </div>
+
+                        <span class="status-pill">
+                            {{ job.status }}
+                        </span>
 
                     </div>
 
-                    <button type="submit" class="primary-button">
-                        Create Job
-                    </button>
+                    <div class="job-details">
 
-                </form>
+                        <div class="detail-row">
+                            <strong>Property:</strong>
 
-            </section>
+                            <span>{{ job.property }}</span>
+                        </div>
 
-            {% endif %}
+                        <div class="detail-row">
+                            <strong>Type:</strong>
 
-            <section class="content-card">
+                            <span>{{ job.job_type }}</span>
+                        </div>
 
-                <div class="card-header">
-                    <h3>All Jobs</h3>
-                </div>
+                        <div class="detail-row">
+                            <strong>Crew:</strong>
 
-                <div class="jobs-grid">
+                            <span>{{ job.crew }}</span>
+                        </div>
 
-                    {% for job in jobs %}
+                        <div class="detail-row">
+                            <strong>Date:</strong>
 
-                    <div class="job-card">
+                            <span>{{ job.date }}</span>
+                        </div>
 
-                        <div class="job-top">
+                        <div class="detail-row">
+                            <strong>Priority:</strong>
 
-                            <div>
-
-                                <h3>
-                                    {{ job.client }}
-                                </h3>
-
-                                <p>
-                                    {{ job.address }}
-                                </p>
-
-                            </div>
-
-                            <span class="status-pill">
-                                {{ job.status }}
+                            <span class="priority-pill priority-{{ job.priority|lower }}">
+                                {{ job.priority }}
                             </span>
-
                         </div>
-
-                        <div class="job-details">
-
-                            <div class="detail-row">
-                                <strong>Type:</strong>
-                                <span>{{ job.job_type }}</span>
-                            </div>
-
-                            <div class="detail-row">
-                                <strong>Crew:</strong>
-                                <span>{{ job.crew }}</span>
-                            </div>
-
-                            <div class="detail-row">
-                                <strong>Date:</strong>
-                                <span>{{ job.date }}</span>
-                            </div>
-
-                            <div class="detail-row">
-                                <strong>Priority:</strong>
-                                <span>{{ job.priority }}</span>
-                            </div>
-
-                        </div>
-
-                        <div class="job-notes">
-                            {{ job.notes }}
-                        </div>
-
-                        <div style="margin-top:18px;">
-    <a
-        href="/jobs/{{ job.id }}"
-        class="primary-button"
-        style="text-decoration:none; display:inline-block;"
-    >
-        Open Job Hub
-    </a>
-</div>
-                        {% if user.role == "admin" %}
-
-                        <details class="edit-panel">
-
-                            <summary>
-                                Edit Job
-                            </summary>
-
-                            <form
-                                method="post"
-                                action="/jobs/update/{{ job.id }}"
-                                class="edit-form"
-                            >
-
-                                <div class="form-group">
-
-                                    <label>Client</label>
-
-                                    <input
-                                        type="text"
-                                        name="client"
-                                        value="{{ job.client }}"
-                                        required
-                                    >
-
-                                </div>
-
-                                <div class="form-group">
-
-                                    <label>Address</label>
-
-                                    <input
-                                        type="text"
-                                        name="address"
-                                        value="{{ job.address }}"
-                                        required
-                                    >
-
-                                </div>
-
-                                <div class="form-group">
-
-                                    <label>Job Type</label>
-
-                                    <input
-                                        type="text"
-                                        name="job_type"
-                                        value="{{ job.job_type }}"
-                                        required
-                                    >
-
-                                </div>
-
-                                <div class="form-group">
-
-                                    <label>Date</label>
-
-                                    <input
-                                        type="text"
-                                        name="date"
-                                        value="{{ job.date }}"
-                                        required
-                                    >
-
-                                </div>
-
-                                <div class="form-group">
-
-                                    <label>Crew</label>
-
-                                    <input
-                                        type="text"
-                                        name="crew"
-                                        value="{{ job.crew }}"
-                                        required
-                                    >
-
-                                </div>
-
-                                <div class="form-group">
-
-                                    <label>Status</label>
-
-                                    <select name="status">
-
-                                        <option
-                                            {% if job.status == "Scheduled" %}
-                                            selected
-                                            {% endif %}
-                                        >
-                                            Scheduled
-                                        </option>
-
-                                        <option
-                                            {% if job.status == "Pending" %}
-                                            selected
-                                            {% endif %}
-                                        >
-                                            Pending
-                                        </option>
-
-                                        <option
-                                            {% if job.status == "In Progress" %}
-                                            selected
-                                            {% endif %}
-                                        >
-                                            In Progress
-                                        </option>
-
-                                        <option
-                                            {% if job.status == "Completed" %}
-                                            selected
-                                            {% endif %}
-                                        >
-                                            Completed
-                                        </option>
-
-                                    </select>
-
-                                </div>
-
-                                <div class="form-group">
-
-                                    <label>Priority</label>
-
-                                    <select name="priority">
-
-                                        <option
-                                            {% if job.priority == "Low" %}
-                                            selected
-                                            {% endif %}
-                                        >
-                                            Low
-                                        </option>
-
-                                        <option
-                                            {% if job.priority == "Normal" %}
-                                            selected
-                                            {% endif %}
-                                        >
-                                            Normal
-                                        </option>
-
-                                        <option
-                                            {% if job.priority == "High" %}
-                                            selected
-                                            {% endif %}
-                                        >
-                                            High
-                                        </option>
-
-                                        <option
-                                            {% if job.priority == "Critical" %}
-                                            selected
-                                            {% endif %}
-                                        >
-                                            Critical
-                                        </option>
-
-                                    </select>
-
-                                </div>
-
-                                <div class="form-group">
-
-                                    <label>Notes</label>
-
-                                    <textarea
-                                        name="notes"
-                                        rows="4"
-                                    >{{ job.notes }}</textarea>
-
-                                </div>
-
-                                <button
-                                    type="submit"
-                                    class="primary-button"
-                                >
-                                    Save Changes
-                                </button>
-
-                            </form>
-
-                            <form
-                                method="post"
-                                action="/jobs/delete/{{ job.id }}"
-                            >
-
-                                <button
-                                    type="submit"
-                                    class="danger-button"
-                                >
-                                    Delete Job
-                                </button>
-
-                            </form>
-
-                        </details>
-
-                        {% endif %}
 
                     </div>
 
-                    {% endfor %}
+                    <div class="job-notes">
+                        {{ job.notes }}
+                    </div>
+
+                    <a
+                        href="/jobs/{{ job.id }}"
+                        class="primary-button"
+                        style="text-decoration:none;"
+                    >
+                        Open Job Hub
+                    </a>
 
                 </div>
 
-            </section>
+                {% endfor %}
 
-        </main>
+            </div>
 
-    </div>
+        </section>
+
+    </main>
+
+</div>
 
 </body>
 </html>

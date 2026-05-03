@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PoolOps2 Weekly Schedule</title>
-    <link rel="stylesheet" href="/static/style.css?v=12">
+    <link rel="stylesheet" href="/static/style.css?v=19">
 </head>
 
 <body>
@@ -14,32 +14,75 @@
     <aside class="sidebar">
 
         <div class="sidebar-top">
-            <img src="/static/logo.png" alt="Heinlin Concrete Logo" class="sidebar-logo">
+
+            <img
+                src="/static/logo.png"
+                alt="Heinlin Concrete Logo"
+                class="sidebar-logo"
+            >
+
             <h1>POOLOPS2</h1>
+
             <p>Heinlin Concrete LLC</p>
+
         </div>
 
         <nav class="sidebar-nav">
+
             <a href="/dashboard">Dashboard</a>
+
             <a href="/jobs">Jobs</a>
-            <a href="/schedule/day">Daily Schedule</a>
-            <a href="/schedule/week" class="active">Weekly Schedule</a>
-            <a href="/schedule/month">Monthly Schedule</a>
+
+            <a href="/schedule/day">
+                Daily Schedule
+            </a>
+
+            <a href="/schedule/week" class="active">
+                Weekly Schedule
+            </a>
+
+            <a href="/schedule/month">
+                Monthly Schedule
+            </a>
+
+            <a href="/weather">Weather</a>
+
             <a href="/clients">Clients</a>
+
             <a href="/properties">Properties</a>
+
             <a href="/employees">Employees</a>
+
             <a href="/billing">Billing</a>
+
             <a href="/job-costing">Job Costing</a>
+
             <a href="/photos">Photos</a>
+
             <a href="/imports">Imports</a>
+
+            <a href="/quickbooks">QuickBooks</a>
+
+            <a href="/communication">Communication</a>
+
+            <a href="/backups">Backups</a>
+
             <a href="/crew">Crew View</a>
+
             <a href="/health">Health</a>
+
         </nav>
 
         <div class="sidebar-bottom">
+
             <p>{{ user.name }}</p>
+
             <span>{{ user.role }}</span>
-            <a href="/logout" class="logout-button">Logout</a>
+
+            <a href="/logout" class="logout-button">
+                Logout
+            </a>
+
         </div>
 
     </aside>
@@ -47,136 +90,285 @@
     <main class="main-content">
 
         <div class="topbar">
+
             <div>
-                <h2>{{ view_title }}</h2>
-                <p>{{ view_subtitle }}</p>
+                <h2>Weekly Production Board</h2>
+
+                <p>
+                    Requested, scheduled, active, and completed work.
+                </p>
             </div>
+
         </div>
 
-        <section class="schedule-grid">
+        <section class="schedule-board">
+
+            <!-- REQUESTED -->
 
             <div class="schedule-column">
-                <div class="schedule-header">Requested</div>
+
+                <div class="schedule-column-header requested-column">
+                    Requested
+                </div>
 
                 {% for job in jobs %}
+
                     {% if job.status == "Requested" %}
-                    <div class="schedule-card">
-                        <div class="schedule-top">
-                            <span class="status-pill">{{ job.status }}</span>
-                            <span class="priority-pill priority-{{ job.priority|lower }}">{{ job.priority }}</span>
+
+                    <div class="schedule-job-card">
+
+                        <div class="schedule-job-top">
+
+                            <h3>{{ job.client }}</h3>
+
+                            <span class="priority-pill priority-{{ job.priority|lower }}">
+                                {{ job.priority }}
+                            </span>
+
                         </div>
 
-                        <h3>{{ job.client }}</h3>
-                        <p>{{ job.address }}</p>
+                        <p class="schedule-address">
+                            {{ job.address }}
+                        </p>
 
                         <div class="schedule-meta">
-                            <span>{{ job.job_type }}</span>
-                            <span>{{ job.crew }}</span>
+
+                            <div>
+                                <strong>Type:</strong>
+                                {{ job.job_type }}
+                            </div>
+
+                            <div>
+                                <strong>Date:</strong>
+                                {{ job.date }}
+                            </div>
+
+                            <div>
+                                <strong>Crew:</strong>
+                                {{ job.crew }}
+                            </div>
+
                         </div>
 
                         <div class="schedule-notes">
                             {{ job.notes }}
                         </div>
 
-                        <a href="/jobs/{{ job.id }}" class="primary-button" style="text-decoration:none; display:inline-block;">
+                        <a
+                            href="/jobs/{{ job.id }}"
+                            class="primary-button"
+                            style="text-decoration:none;"
+                        >
                             Open Job Hub
                         </a>
+
                     </div>
+
                     {% endif %}
+
                 {% endfor %}
+
             </div>
 
+            <!-- SCHEDULED -->
+
             <div class="schedule-column">
-                <div class="schedule-header">Scheduled</div>
+
+                <div class="schedule-column-header scheduled-column">
+                    Scheduled
+                </div>
 
                 {% for job in jobs %}
+
                     {% if job.status == "Scheduled" %}
-                    <div class="schedule-card">
-                        <div class="schedule-top">
-                            <span class="status-pill">{{ job.status }}</span>
-                            <span class="priority-pill priority-{{ job.priority|lower }}">{{ job.priority }}</span>
+
+                    <div class="schedule-job-card">
+
+                        <div class="schedule-job-top">
+
+                            <h3>{{ job.client }}</h3>
+
+                            <span class="priority-pill priority-{{ job.priority|lower }}">
+                                {{ job.priority }}
+                            </span>
+
                         </div>
 
-                        <h3>{{ job.client }}</h3>
-                        <p>{{ job.address }}</p>
+                        <p class="schedule-address">
+                            {{ job.address }}
+                        </p>
 
                         <div class="schedule-meta">
-                            <span>{{ job.job_type }}</span>
-                            <span>{{ job.crew }}</span>
+
+                            <div>
+                                <strong>Type:</strong>
+                                {{ job.job_type }}
+                            </div>
+
+                            <div>
+                                <strong>Date:</strong>
+                                {{ job.date }}
+                            </div>
+
+                            <div>
+                                <strong>Crew:</strong>
+                                {{ job.crew }}
+                            </div>
+
                         </div>
 
                         <div class="schedule-notes">
                             {{ job.notes }}
                         </div>
 
-                        <a href="/jobs/{{ job.id }}" class="primary-button" style="text-decoration:none; display:inline-block;">
+                        <a
+                            href="/jobs/{{ job.id }}"
+                            class="primary-button"
+                            style="text-decoration:none;"
+                        >
                             Open Job Hub
                         </a>
+
                     </div>
+
                     {% endif %}
+
                 {% endfor %}
+
             </div>
 
+            <!-- IN PROGRESS -->
+
             <div class="schedule-column">
-                <div class="schedule-header">In Progress</div>
+
+                <div class="schedule-column-header progress-column">
+                    In Progress
+                </div>
 
                 {% for job in jobs %}
+
                     {% if job.status == "In Progress" %}
-                    <div class="schedule-card">
-                        <div class="schedule-top">
-                            <span class="status-pill">{{ job.status }}</span>
-                            <span class="priority-pill priority-{{ job.priority|lower }}">{{ job.priority }}</span>
+
+                    <div class="schedule-job-card">
+
+                        <div class="schedule-job-top">
+
+                            <h3>{{ job.client }}</h3>
+
+                            <span class="priority-pill priority-{{ job.priority|lower }}">
+                                {{ job.priority }}
+                            </span>
+
                         </div>
 
-                        <h3>{{ job.client }}</h3>
-                        <p>{{ job.address }}</p>
+                        <p class="schedule-address">
+                            {{ job.address }}
+                        </p>
 
                         <div class="schedule-meta">
-                            <span>{{ job.job_type }}</span>
-                            <span>{{ job.crew }}</span>
+
+                            <div>
+                                <strong>Type:</strong>
+                                {{ job.job_type }}
+                            </div>
+
+                            <div>
+                                <strong>Date:</strong>
+                                {{ job.date }}
+                            </div>
+
+                            <div>
+                                <strong>Crew:</strong>
+                                {{ job.crew }}
+                            </div>
+
                         </div>
 
                         <div class="schedule-notes">
                             {{ job.notes }}
                         </div>
 
-                        <a href="/jobs/{{ job.id }}" class="primary-button" style="text-decoration:none; display:inline-block;">
+                        <a
+                            href="/jobs/{{ job.id }}"
+                            class="primary-button"
+                            style="text-decoration:none;"
+                        >
                             Open Job Hub
                         </a>
+
                     </div>
+
                     {% endif %}
+
                 {% endfor %}
+
             </div>
 
+            <!-- COMPLETED -->
+
             <div class="schedule-column">
-                <div class="schedule-header">Completed</div>
+
+                <div class="schedule-column-header completed-column">
+                    Completed
+                </div>
 
                 {% for job in jobs %}
+
                     {% if job.status == "Completed" %}
-                    <div class="schedule-card">
-                        <div class="schedule-top">
-                            <span class="status-pill">{{ job.status }}</span>
-                            <span class="priority-pill priority-{{ job.priority|lower }}">{{ job.priority }}</span>
+
+                    <div class="schedule-job-card">
+
+                        <div class="schedule-job-top">
+
+                            <h3>{{ job.client }}</h3>
+
+                            <span class="priority-pill priority-{{ job.priority|lower }}">
+                                {{ job.priority }}
+                            </span>
+
                         </div>
 
-                        <h3>{{ job.client }}</h3>
-                        <p>{{ job.address }}</p>
+                        <p class="schedule-address">
+                            {{ job.address }}
+                        </p>
 
                         <div class="schedule-meta">
-                            <span>{{ job.job_type }}</span>
-                            <span>{{ job.crew }}</span>
+
+                            <div>
+                                <strong>Type:</strong>
+                                {{ job.job_type }}
+                            </div>
+
+                            <div>
+                                <strong>Date:</strong>
+                                {{ job.date }}
+                            </div>
+
+                            <div>
+                                <strong>Crew:</strong>
+                                {{ job.crew }}
+                            </div>
+
                         </div>
 
                         <div class="schedule-notes">
                             {{ job.notes }}
                         </div>
 
-                        <a href="/jobs/{{ job.id }}" class="primary-button" style="text-decoration:none; display:inline-block;">
+                        <a
+                            href="/jobs/{{ job.id }}"
+                            class="primary-button"
+                            style="text-decoration:none;"
+                        >
                             Open Job Hub
                         </a>
+
                     </div>
+
                     {% endif %}
+
                 {% endfor %}
+
             </div>
 
         </section>
