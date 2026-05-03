@@ -4,198 +4,238 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PoolOps2 Dashboard</title>
-    <link rel="stylesheet" href="/static/style.css?v=7">
+    <link rel="stylesheet" href="/static/style.css?v=17">
 </head>
 
 <body>
-    <div class="app-layout">
-        <aside class="sidebar">
-            <div class="sidebar-top">
-                <img src="/static/logo.png" alt="Heinlin Concrete Logo" class="sidebar-logo">
-                <h1>POOLOPS2</h1>
-                <p>Heinlin Concrete LLC</p>
+
+<div class="app-layout">
+
+    <aside class="sidebar">
+
+        <div class="sidebar-top">
+            <img src="/static/logo.png" alt="Heinlin Concrete Logo" class="sidebar-logo">
+            <h1>POOLOPS2</h1>
+            <p>Heinlin Concrete LLC</p>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="/dashboard" class="active">Dashboard</a>
+            <a href="/jobs">Jobs</a>
+            <a href="/schedule/day">Daily Schedule</a>
+            <a href="/schedule/week">Weekly Schedule</a>
+            <a href="/schedule/month">Monthly Schedule</a>
+            <a href="/weather">Weather</a>
+            <a href="/clients">Clients</a>
+            <a href="/properties">Properties</a>
+            <a href="/employees">Employees</a>
+            <a href="/billing">Billing</a>
+            <a href="/job-costing">Job Costing</a>
+            <a href="/photos">Photos</a>
+            <a href="/imports">Imports</a>
+            <a href="/quickbooks">QuickBooks</a>
+            <a href="/communication">Communication</a>
+            <a href="/backups">Backups</a>
+            <a href="/crew">Crew View</a>
+            <a href="/health">Health</a>
+        </nav>
+
+        <div class="sidebar-bottom">
+            <p>{{ user.name }}</p>
+            <span>{{ user.role }}</span>
+            <a href="/logout" class="logout-button">Logout</a>
+        </div>
+
+    </aside>
+
+    <main class="main-content">
+
+        <div class="topbar">
+            <div>
+                <h2>Command Center</h2>
+                <p>Today’s Heinlin Concrete operations at a glance.</p>
             </div>
 
-            <nav class="sidebar-nav">
-                <a href="/dashboard" class="active">Dashboard</a>
-                <a href="/jobs">Jobs</a>
-                <a href="/schedule">Schedule</a>
-                <a href="/clients">Clients</a>
-                <a href="/properties">Properties</a>
-                <a href="/employees">Employees</a>
-                <a href="/billing">Billing</a>
-                <a href="/job-costing">Job Costing</a>
-                <a href="/photos">Photos</a>
-                <a href="/crew">Crew View</a>
-                <a href="/health">Health</a>
-                <a href="/quickbooks">QuickBooks</a>
-                <a href="/weather">Weather</a>
-                <a href="/photos">Photos</a>
-                <a href="/job-costing">Job Costing</a>
-            </nav>
+            <a href="/jobs" class="primary-button" style="text-decoration:none;">
+                Add / View Jobs
+            </a>
+        </div>
 
-            <div class="sidebar-bottom">
-                <p>{{ user.name }}</p>
-                <span>{{ user.role }}</span>
-                <a href="/logout" class="logout-button">Logout</a>
-            </div>
-        </aside>
+        <section class="stats-grid">
 
-        <main class="main-content">
-            <div class="topbar">
-                <div>
-                    <h2>Dashboard</h2>
-                    <p>Welcome back, {{ user.name }}</p>
-                </div>
+            <div class="stat-card">
+                <h3>Total Jobs</h3>
+                <div class="stat-number">{{ stats.total_jobs }}</div>
             </div>
 
-            <section class="stats-grid">
-                <div class="stat-card">
-                    <h3>Total Jobs</h3>
-                    <div class="stat-number">{{ stats.total_jobs }}</div>
-                </div>
+            <div class="stat-card">
+                <h3>Scheduled</h3>
+                <div class="stat-number">{{ stats.scheduled }}</div>
+            </div>
 
-                <div class="stat-card">
-                    <h3>Scheduled</h3>
-                    <div class="stat-number">{{ stats.scheduled }}</div>
-                </div>
+            <div class="stat-card">
+                <h3>Requested</h3>
+                <div class="stat-number">{{ stats.requested }}</div>
+            </div>
 
-                <div class="stat-card">
-                    <h3>Pending</h3>
-                    <div class="stat-number">{{ stats.pending }}</div>
-                </div>
+            <div class="stat-card">
+                <h3>In Progress</h3>
+                <div class="stat-number">{{ stats.in_progress }}</div>
+            </div>
 
-                <div class="stat-card">
-                    <h3>In Progress</h3>
-                    <div class="stat-number">{{ stats.in_progress }}</div>
-                </div>
+            <div class="stat-card">
+                <h3>Clients</h3>
+                <div class="stat-number">{{ stats.clients }}</div>
+            </div>
 
-                <div class="stat-card">
-                    <h3>Completed</h3>
-                    <div class="stat-number">{{ stats.completed }}</div>
-                </div>
+            <div class="stat-card">
+                <h3>Photos</h3>
+                <div class="stat-number">{{ stats.photos }}</div>
+            </div>
 
-                <div class="stat-card">
-                    <h3>Clients</h3>
-                    <div class="stat-number">{{ stats.clients }}</div>
-                </div>
+            <div class="stat-card">
+                <h3>Invoice Total</h3>
+                <div class="stat-number">${{ "%.2f"|format(stats.invoice_total) }}</div>
+            </div>
 
-                <div class="stat-card">
-                    <h3>Properties</h3>
-                    <div class="stat-number">{{ stats.properties }}</div>
-                </div>
+            <div class="stat-card">
+                <h3>Tracked Profit</h3>
+                <div class="stat-number">${{ "%.2f"|format(stats.tracked_profit) }}</div>
+            </div>
 
-                <div class="stat-card">
-                    <h3>Employees</h3>
-                    <div class="stat-number">{{ stats.employees }}</div>
-                </div>
+        </section>
 
-                <div class="stat-card">
-                    <h3>Invoices</h3>
-                    <div class="stat-number">{{ stats.invoices }}</div>
-                </div>
+        <section class="content-card">
 
-                <div class="stat-card">
-                    <h3>Photos</h3>
-                    <div class="stat-number">{{ stats.photos }}</div>
-                </div>
+            <div class="card-header">
+                <h3>Fast Actions</h3>
+            </div>
 
-                <div class="stat-card money-card">
-                    <h3>Invoice Total</h3>
-                    <div class="stat-number">${{ "%.2f"|format(stats.invoice_total) }}</div>
-                </div>
+            <div class="jobs-grid">
 
-                <div class="stat-card money-card">
-                    <h3>Tracked Profit</h3>
-                    <div class="stat-number">${{ "%.2f"|format(stats.tracked_profit) }}</div>
-                </div>
-            </section>
-
-            <section class="content-card">
-                <div class="card-header">
-                    <h3>Phase 2.5 Quick Actions</h3>
-                </div>
-
-                <div class="quick-action-grid">
-                    <a href="/billing" class="quick-action-card">
-                        <h3>Billing</h3>
-                        <p>Create invoices, update payment status, and export CSV.</p>
-                    </a>
-
-                    <a href="/job-costing" class="quick-action-card">
-                        <h3>Job Costing</h3>
-                        <p>Track labor, materials, equipment, fuel, and profit.</p>
-                    </a>
-
-                    <a href="/photos" class="quick-action-card">
-                        <h3>Photo Log</h3>
-                        <p>Track before, progress, after, and issue photos by job.</p>
-                    </a>
-
-                    <a href="/jobs" class="quick-action-card">
-                        <h3>Jobs</h3>
-                        <p>Create and manage active pool projects.</p>
-                    </a>
-
-                    <a href="/schedule" class="quick-action-card">
-                        <h3>Schedule</h3>
-                        <p>Review job timing and crew assignments.</p>
-                    </a>
-
-                    <a href="/crew" class="quick-action-card">
-                        <h3>Crew View</h3>
-                        <p>Start jobs, complete work, and track field activity.</p>
-                    </a>
-                </div>
-            </section>
-
-            <section class="content-card">
-                <div class="card-header">
-                    <h3>Active Jobs</h3>
-                </div>
-
-                <div class="jobs-grid">
-                    {% for job in jobs %}
-                    <div class="job-card">
-                        <div class="job-top">
-                            <div>
-                                <h3>{{ job.client }}</h3>
-                                <p>{{ job.address }}</p>
-                            </div>
-
-                            <span class="status-pill">{{ job.status }}</span>
+                <a href="/schedule/week" class="job-card" style="text-decoration:none; color:inherit;">
+                    <div class="job-top">
+                        <div>
+                            <h3>Weekly Schedule</h3>
+                            <p>See requested, scheduled, and active work.</p>
                         </div>
-
-                        <div class="job-details">
-                            <div class="detail-row">
-                                <strong>Type:</strong>
-                                <span>{{ job.job_type }}</span>
-                            </div>
-
-                            <div class="detail-row">
-                                <strong>Crew:</strong>
-                                <span>{{ job.crew }}</span>
-                            </div>
-
-                            <div class="detail-row">
-                                <strong>Date:</strong>
-                                <span>{{ job.date }}</span>
-                            </div>
-
-                            <div class="detail-row">
-                                <strong>Priority:</strong>
-                                <span>{{ job.priority }}</span>
-                            </div>
-                        </div>
-
-                        <div class="job-notes">
-                            {{ job.notes }}
-                        </div>
+                        <span class="status-pill">Schedule</span>
                     </div>
-                    {% endfor %}
+                </a>
+
+                <a href="/weather" class="job-card" style="text-decoration:none; color:inherit;">
+                    <div class="job-top">
+                        <div>
+                            <h3>Weather Center</h3>
+                            <p>Check rain, wind, and jobsite conditions.</p>
+                        </div>
+                        <span class="status-pill">Weather</span>
+                    </div>
+                </a>
+
+                <a href="/communication" class="job-card" style="text-decoration:none; color:inherit;">
+                    <div class="job-top">
+                        <div>
+                            <h3>Communication</h3>
+                            <p>Copy message templates and contact lists.</p>
+                        </div>
+                        <span class="status-pill">Messages</span>
+                    </div>
+                </a>
+
+                <a href="/quickbooks" class="job-card" style="text-decoration:none; color:inherit;">
+                    <div class="job-top">
+                        <div>
+                            <h3>QuickBooks</h3>
+                            <p>Export customers and invoices.</p>
+                        </div>
+                        <span class="status-pill">QBO</span>
+                    </div>
+                </a>
+
+                <a href="/backups" class="job-card" style="text-decoration:none; color:inherit;">
+                    <div class="job-top">
+                        <div>
+                            <h3>Backups</h3>
+                            <p>Download CSV safety copies.</p>
+                        </div>
+                        <span class="status-pill">Safe</span>
+                    </div>
+                </a>
+
+                <a href="/client-login" class="job-card" style="text-decoration:none; color:inherit;">
+                    <div class="job-top">
+                        <div>
+                            <h3>Client Portal</h3>
+                            <p>Client login and request center.</p>
+                        </div>
+                        <span class="status-pill">Portal</span>
+                    </div>
+                </a>
+
+            </div>
+
+        </section>
+
+        <section class="content-card">
+
+            <div class="card-header">
+                <h3>Recent Jobs</h3>
+            </div>
+
+            <div class="jobs-grid">
+
+                {% for job in jobs %}
+
+                <div class="job-card">
+
+                    <div class="job-top">
+                        <div>
+                            <h3>{{ job.client }}</h3>
+                            <p>{{ job.address }}</p>
+                        </div>
+
+                        <span class="status-pill">{{ job.status }}</span>
+                    </div>
+
+                    <div class="job-details">
+
+                        <div class="detail-row">
+                            <strong>Type:</strong>
+                            <span>{{ job.job_type }}</span>
+                        </div>
+
+                        <div class="detail-row">
+                            <strong>Crew:</strong>
+                            <span>{{ job.crew }}</span>
+                        </div>
+
+                        <div class="detail-row">
+                            <strong>Date:</strong>
+                            <span>{{ job.date }}</span>
+                        </div>
+
+                    </div>
+
+                    <div class="job-notes">
+                        {{ job.notes }}
+                    </div>
+
+                    <a href="/jobs/{{ job.id }}" class="primary-button" style="text-decoration:none;">
+                        Open Job Hub
+                    </a>
+
                 </div>
-            </section>
-        </main>
-    </div>
+
+                {% endfor %}
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
 </body>
 </html>
