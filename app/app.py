@@ -256,9 +256,9 @@ async def health():
     return {
         "status": "ok",
         "app": "PoolOps2",
-        "phase": "7B",
+        "phase": "9",
         "database": "connected",
-        "feature": "weather and QuickBooks CSV center",
+        "feature": "database backups",
     }
 
 
@@ -2417,6 +2417,267 @@ async def communication_center(request: Request):
                 "client_phones": client_phones,
                 "client_emails": client_emails,
                 "employee_phones": employee_phones,
+            },
+        )
+
+    finally:
+        db.close()
+        # =========================
+# PHASE 9 DATABASE BACKUPS
+# =========================
+
+@app.get("/backups")
+async def backups_page(request: Request):
+    user = require_admin(request)
+
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    return templates.TemplateResponse(
+        request,
+        "backups.html",
+        {
+            "user": user,
+        },
+    )
+
+
+@app.get("/backup/clients")
+async def backup_clients(request: Request):
+    user = require_admin(request)
+
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    db = db_session()
+
+    try:
+        clients = db.query(Client).all()
+
+        output = io.StringIO()
+        writer = csv.writer(output)
+
+        writer.writerow([
+            "ID",
+            "Name",
+            "Phone",
+            "Email",
+            "Notes",
+        ])
+
+        for client in clients:
+            writer.writerow([
+                client.id,
+                client.name,
+                client.phone,
+                client.email,
+                client.notes,
+            ])
+
+        output.seek(0)
+
+        return StreamingResponse(
+            iter([output.getvalue()]),
+            media_type="text/csv",
+            headers={
+                "Content-Disposition":
+                "attachment; filename=clients_backup.csv"
+            },
+        )
+
+    finally:
+        db.close()
+
+
+@app.get("/backup/jobs")
+async def backup_jobs(request: Request):
+    user = require_admin(request)
+
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    db = db_session()
+
+    try:
+        jobs = db.query(Job).all()
+
+        output = io.StringIO()
+        writer = csv.writer(output)
+
+        writer.writerow([
+            "ID",
+            "Client",
+            "Address",
+            "Description",
+            "Status",
+            "Crew",
+            "Date",
+        ])
+
+        for job in jobs:
+            writer.writerow([
+                job.id,
+                job.client,
+                job.address,
+                job.description,
+                job.status,
+                job.crew,
+                job.date,
+            ])
+
+        output.seek(0)
+
+        return StreamingResponse(
+            iter([output.getvalue()]),
+            media_type="text/csv",
+            headers={
+                "Content-Disposition":
+                "attachment; filename=jobs_backup.csv"
+            },
+        )
+
+    finally:
+        db.close()
+
+
+@app.get("/backup/employees")
+async def backup_employees(request: Request):
+    user = require_admin(request)
+
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    db = db_session()
+
+    try:
+        employees = db.query(Employee).all()
+
+        output = io.StringIO()
+        writer = csv.writer(output)
+
+        writer.writerow([
+            "ID",
+            "Name",
+            "Phone",
+            "Role",
+        ])
+
+        for employee in employees:
+            writer.writerow([
+                employee.id,
+                employee.name,
+                employee.phone,
+                employee.role,
+            ])
+
+        output.seek(0)
+
+        return StreamingResponse(
+            iter([output.getvalue()]),
+            media_type="text/csv",
+            headers={
+                "Content-Disposition":
+                "attachment; filename=employees_backup.csv"
+            },
+        )
+
+    finally:
+        db.close()
+
+
+@app.get("/backup/invoices")
+async def backup_invoices(request: Request):
+    user = require_admin(request)
+
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    db = db_session()
+
+    try:
+        invoices = db.query(Invoice).all()
+
+        output = io.StringIO()
+        writer = csv.writer(output)
+
+        writer.writerow([
+            "ID",
+            "Client",
+            "Description",
+            "Amount",
+            "Status",
+            "Date",
+        ])
+
+        for invoice in invoices:
+            writer.writerow([
+                invoice.id,
+                invoice.client,
+                invoice.description,
+                invoice.amount,
+                invoice.status,
+                invoice.date,
+            ])
+
+        output.seek(0)
+
+        return StreamingResponse(
+            iter([output.getvalue()]),
+            media_type="text/csv",
+            headers={
+                "Content-Disposition":
+                "attachment; filename=invoices_backup.csv"
+            },
+        )
+
+    finally:
+        db.close()
+
+
+@app.get("/backup/photos")
+async def backup_photos(request: Request):
+    user = require_admin(request)
+
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    db = db_session()
+
+    try:
+        photos = db.query(PhotoLog).all()
+
+        output = io.StringIO()
+        writer = csv.writer(output)
+
+        writer.writerow([
+            "ID",
+            "Job ID",
+            "Client",
+            "Phase",
+            "Title",
+            "Photo URL",
+            "Notes",
+        ])
+
+        for photo in photos:
+            writer.writerow([
+                photo.id,
+                photo.job_id,
+                photo.client_name,
+                photo.phase,
+                photo.title,
+                photo.photo_url,
+                photo.notes,
+            ])
+
+        output.seek(0)
+
+        return StreamingResponse(
+            iter([output.getvalue()]),
+            media_type="text/csv",
+            headers={
+                "Content-Disposition":
+                "attachment; filename=photos_backup.csv"
             },
         )
 
