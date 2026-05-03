@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Client Login • PoolOps2</title>
+    <link rel="stylesheet" href="/static/style.css?v=12">
+</head>
+
+<body class="login-body">
+
+    <div class="login-container">
+
+        <div class="login-card">
+
+            <div class="logo-area">
+                <img src="/static/logo.png" alt="Heinlin Concrete Logo" class="login-logo">
+                <h1>Client Portal</h1>
+                <p>Heinlin Concrete LLC</p>
+            </div>
+
+            <form method="post" action="/client-login">
+
+                <div class="form-group">
+                    <label>Email or Client Name</label>
+                    <input
+                        type="text"
+                        name="email_or_name"
+                        placeholder="Enter your email or client name"
+                        required
+                    >
+                </div>
+
+                {% if error %}
+                <div class="error-box">
+                    {{ error }}
+                </div>
+                {% endif %}
+
+                <button type="submit" class="login-button">
+                    Login
+                </button>
+
+            </form>
+
+            <div class="demo-users">
+                <p>Need help? Contact Heinlin Concrete.</p>
+                <p><a href="/" style="color:#60a5fa;">Staff Login</a></p>
+            </div>
+
+        </div>
+
+    </div>
+
+</body>
+</html>

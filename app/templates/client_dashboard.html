@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Client Dashboard • PoolOps2</title>
+    <link rel="stylesheet" href="/static/style.css?v=12">
+</head>
+
+<body>
+
+<div class="app-layout">
+
+    <aside class="sidebar">
+
+        <div class="sidebar-top">
+
+            <img
+                src="/static/logo.png"
+                alt="Heinlin Concrete Logo"
+                class="sidebar-logo"
+            >
+
+            <h1>CLIENT PORTAL</h1>
+
+            <p>Heinlin Concrete LLC</p>
+
+        </div>
+
+        <nav class="sidebar-nav">
+
+            <a href="/client-dashboard" class="active">
+                Dashboard
+            </a>
+
+            <a href="/client-request">
+                Request Service
+            </a>
+
+            <a href="/client-logout">
+                Logout
+            </a>
+
+        </nav>
+
+        <div class="sidebar-bottom">
+
+            <p>{{ client.name }}</p>
+
+            <span>Client Account</span>
+
+        </div>
+
+    </aside>
+
+    <main class="main-content">
+
+        <div class="topbar">
+
+            <div>
+                <h2>Welcome, {{ client.name }}</h2>
+                <p>View your projects, schedule, and service requests.</p>
+            </div>
+
+        </div>
+
+        <section class="stats-grid">
+
+            <div class="stat-card">
+                <h3>Your Jobs</h3>
+
+                <div class="stat-number">
+                    {{ jobs|length }}
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <h3>Your Properties</h3>
+
+                <div class="stat-number">
+                    {{ properties|length }}
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <h3>Company Schedule</h3>
+
+                <div class="stat-number">
+                    {{ public_schedule|length }}
+                </div>
+            </div>
+
+        </section>
+
+        <section class="content-card">
+
+            <div class="card-header">
+                <h3>Your Properties</h3>
+            </div>
+
+            <div class="jobs-grid">
+
+                {% for property in properties %}
+
+                <div class="job-card">
+
+                    <h3>{{ property.address }}</h3>
+
+                    <p>{{ property.pool_type }}</p>
+
+                    <div class="job-notes">
+                        {{ property.notes }}
+                    </div>
+
+                </div>
+
+                {% endfor %}
+
+            </div>
+
+        </section>
+
+        <section class="content-card">
+
+            <div class="card-header">
+                <h3>Your Jobs</h3>
+            </div>
+
+            <div class="jobs-grid">
+
+                {% for job in jobs %}
+
+                <div class="job-card">
+
+                    <div class="job-top">
+
+                        <div>
+                            <h3>{{ job.job_type }}</h3>
+                            <p>{{ job.address }}</p>
+                        </div>
+
+                        <span class="status-pill">
+                            {{ job.status }}
+                        </span>
+
+                    </div>
+
+                    <div class="job-details">
+
+                        <div class="detail-row">
+                            <strong>Date:</strong>
+                            <span>{{ job.date }}</span>
+                        </div>
+
+                        <div class="detail-row">
+                            <strong>Crew:</strong>
+                            <span>{{ job.crew }}</span>
+                        </div>
+
+                        <div class="detail-row">
+                            <strong>Priority:</strong>
+                            <span>{{ job.priority }}</span>
+                        </div>
+
+                    </div>
+
+                    <div class="job-notes">
+                        {{ job.notes }}
+                    </div>
+
+                </div>
+
+                {% endfor %}
+
+            </div>
+
+        </section>
+
+        <section class="content-card">
+
+            <div class="card-header">
+                <h3>Company Schedule</h3>
+            </div>
+
+            <div class="jobs-grid">
+
+                {% for job in public_schedule %}
+
+                <div class="job-card">
+
+                    <div class="job-top">
+
+                        <div>
+                            <h3>{{ job.job_type }}</h3>
+                            <p>{{ job.date }}</p>
+                        </div>
+
+                        <span class="status-pill">
+                            {{ job.status }}
+                        </span>
+
+                    </div>
+
+                    <div class="job-details">
+
+                        <div class="detail-row">
+                            <strong>Crew:</strong>
+                            <span>{{ job.crew }}</span>
+                        </div>
+
+                        <div class="detail-row">
+                            <strong>Priority:</strong>
+                            <span>{{ job.priority }}</span>
+                        </div>
+
+                    </div>
+
+                </div>
+
+                {% endfor %}
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+</body>
+</html>

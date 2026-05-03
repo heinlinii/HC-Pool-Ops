@@ -747,3 +747,94 @@ tbody tr {
     }
 
 }
+/* =========================
+   PHASE 6 CLIENT PORTAL
+========================= */
+
+.login-logo {
+    width: 100%;
+    max-width: 180px;
+    margin: 0 auto 20px;
+    display: block;
+    border-radius: 18px;
+}
+
+.success-message {
+    background: #14532d;
+    color: #bbf7d0;
+    border: 1px solid #22c55e;
+    padding: 16px;
+    border-radius: 14px;
+    font-weight: bold;
+}
+
+.helper-text {
+    color: #9ca3af;
+    line-height: 1.5;
+    margin-bottom: 18px;
+}
+
+.monthly-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    gap: 20px;
+}
+
+.monthly-card {
+    background: #111827;
+    border: 1px solid #374151;
+    border-radius: 22px;
+    padding: 22px;
+}
+
+.monthly-top {
+    display: flex;
+    justify-content: space-between;
+    gap: 15px;
+    margin-bottom: 18px;
+}
+
+.monthly-top h3 {
+    margin-bottom: 8px;
+}
+
+.monthly-top p {
+    color: #9ca3af;
+}
+
+.monthly-body {
+    margin-bottom: 18px;
+}
+
+.monthly-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 15px;
+    margin-bottom: 10px;
+}
+
+.monthly-notes {
+    color: #d1d5db;
+    line-height: 1.5;
+    margin-bottom: 18px;
+}
+
+.monthly-actions {
+    margin-top: 16px;
+}
+
+.small-stat {
+    font-size: 24px;
+}
+
+@media (max-width: 900px) {
+    .monthly-top,
+    .monthly-row {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .monthly-grid {
+        grid-template-columns: 1fr;
+    }
+}
