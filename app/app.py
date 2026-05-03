@@ -1651,7 +1651,54 @@ async def upload_job_photo(
     finally:
         db.close()
 
-        
+@app.post("/jobs/{job_id}/upload-photo")
+async def upload_job_photo(
+    request: Request,
+    job_id: int,
+    photo_type: str = Form(...),
+    title: str = Form(...),
+    photo_file: UploadFile = File(None),
+    date: str = Form("Today"),
+    notes: str = Form(""),
+):
+    user = require_admin(request)
+
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    db = db_session()
+
+    try:
+        job = db.query(Job).filter(Job.id == job_id).first()
+
+        if not job:
+            return RedirectResponse(url="/jobs", status_code=303)
+
+        photo_url = save_uploaded_photo(photo_file)
+
+        db.add(
+            PhotoLog(
+                job_id=job.id,
+                client=job.client,
+                photo_type=photo_type.strip(),
+                title=title.strip(),
+                photo_url=photo_url,
+                date=date.strip(),
+                notes=notes.strip(),
+            )
+        )
+
+        db.commit()
+
+        return RedirectResponse(
+            url=f"/jobs/{job_id}",
+            status_code=303,
+        )
+
+    finally:
+        db.close()
+
+
 @app.post("/photos/update/{photo_id}")
 async def update_photo_log(
     request: Request,
