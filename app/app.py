@@ -256,9 +256,9 @@ async def health():
     return {
         "status": "ok",
         "app": "PoolOps2",
-        "phase": "7",
+        "phase": "7B",
         "database": "connected",
-        "feature": "weather alerts",
+        "feature": "weather and QuickBooks CSV center",
     }
 
 
@@ -2250,3 +2250,137 @@ async def weather_page(request: Request):
             "alerts": alerts,
         },
     )
+# =========================
+# PHASE 7B QUICKBOOKS CENTER
+# =========================
+
+@app.get("/quickbooks")
+async def quickbooks_page(request: Request):
+    user = require_admin(request)
+
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    db = db_session()
+
+    try:
+        clients = db.query(Client).order_by(Client.name.asc()).all()
+        invoices = db.query(Invoice).order_by(Invoice.id.desc()).all()
+        jobs = db.query(Job).order_by(Job.id.desc()).all()
+
+        invoice_total = round(sum(float(invoice.amount or 0) for invoice in invoices), 2)
+
+        return templates.TemplateResponse(
+            request,
+            "quickbooks.html",
+            {
+                "user": user,
+                "clients": clients,
+                "invoices": invoices,
+                "jobs": jobs,
+                "invoice_total": invoice_total,
+            },
+        )
+
+    finally:
+        db.close()
+
+
+@app.get("/quickbooks/export/customers")
+async def quickbooks_export_customers(request: Request):
+    user = require_admin(request)
+
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    db = db_session()
+
+    try:
+        clients = db.query(Client).order_by(Client.name.asc()).all()
+
+        output = io.StringIO()
+        writer = csv.writer(output)
+
+        writer.writerow([
+            "Customer",
+            "Company",
+            "Phone",
+            "Email",
+            "Notes",
+        ])
+
+        for client in clients:
+            writer.writerow([
+                client.name,
+                client.name,
+                client.phone or "",
+                client.email or "",
+                client.notes or "",
+            ])
+
+        output.seek(0)
+
+        return StreamingResponse(
+            iter([output.getvalue()]),
+            media_type="text/csv",
+            headers={
+                "Content-Disposition": "attachment; filename=quickbooks_customers.csv"
+            },
+        )
+
+    finally:
+        db.close()
+
+
+@app.get("/quickbooks/export/invoices")
+async def quickbooks_export_invoices(request: Request):
+    user = require_admin(request)
+
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    db = db_session()
+
+    try:
+        invoices = db.query(Invoice).order_by(Invoice.id.asc()).all()
+
+        output = io.StringIO()
+        writer = csv.writer(output)
+
+        writer.writerow([
+            "Customer",
+            "Invoice Date",
+            "Due Date",
+            "Product/Service",
+            "Description",
+            "Qty",
+            "Rate",
+            "Amount",
+            "Memo",
+        ])
+
+        for invoice in invoices:
+            writer.writerow([
+                invoice.client,
+                invoice.date or "",
+                "",
+                "Pool / Concrete Service",
+                invoice.description,
+                1,
+                invoice.amount or 0,
+                invoice.amount or 0,
+                invoice.notes or "",
+            ])
+
+        output.seek(0)
+
+        return StreamingResponse(
+            iter([output.getvalue()]),
+            media_type="text/csv",
+            headers={
+                "Content-Disposition": "attachment; filename=quickbooks_invoices.csv"
+            },
+        )
+
+    finally:
+        db.close()
