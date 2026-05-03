@@ -2,6 +2,9 @@ from fastapi import FastAPI, Request, Form
 from fastapi.responses import RedirectResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from fastapi import FastAPI, Request, Form, File, UploadFile
+import os
+import shutil
 from starlette.middleware.sessions import SessionMiddleware
 
 import csv
@@ -21,6 +24,21 @@ app.add_middleware(
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 templates = Jinja2Templates(directory="app/templates")
 
+UPLOAD_DIR = "app/static/uploads"
+os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+
+def save_uploaded_photo(upload: UploadFile):
+    if not upload or not upload.filename:
+        return "/static/logo.png"
+
+    clean_name = upload.filename.replace(" ", "_")
+    file_path = os.path.join(UPLOAD_DIR, clean_name)
+
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(upload.file, buffer)
+
+    return f"/static/uploads/{clean_name}"
 
 @app.on_event("startup")
 def startup():
@@ -1549,7 +1567,7 @@ async def add_photo_log(
     job_id: int = Form(...),
     photo_type: str = Form(...),
     title: str = Form(...),
-    photo_url: str = Form(""),
+    photo_file: UploadFile = File(None),
     date: str = Form("Today"),
     notes: str = Form(""),
 ):
@@ -1562,12 +1580,10 @@ async def add_photo_log(
 
     try:
         job = db.query(Job).filter(Job.id == job_id).first()
+
         client_name = job.client if job else "Unknown Client"
 
-        clean_photo_url = photo_url.strip()
-
-        if not clean_photo_url:
-            clean_photo_url = "/static/logo.png"
+        photo_url = save_uploaded_photo(photo_file)
 
         db.add(
             PhotoLog(
@@ -1575,7 +1591,7 @@ async def add_photo_log(
                 client=client_name,
                 photo_type=photo_type.strip(),
                 title=title.strip(),
-                photo_url=clean_photo_url,
+                photo_url=photo_url,
                 date=date.strip(),
                 notes=notes.strip(),
             )
