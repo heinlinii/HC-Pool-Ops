@@ -2384,3 +2384,41 @@ async def quickbooks_export_invoices(request: Request):
 
     finally:
         db.close()
+        # =========================
+# PHASE 8 LITE COMMUNICATION CENTER
+# =========================
+
+@app.get("/communication")
+async def communication_center(request: Request):
+    user = require_admin(request)
+
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    db = db_session()
+
+    try:
+        clients = db.query(Client).order_by(Client.name.asc()).all()
+        employees = db.query(Employee).order_by(Employee.name.asc()).all()
+        jobs = db.query(Job).order_by(Job.id.desc()).all()
+
+        client_phones = [client.phone for client in clients if client.phone]
+        client_emails = [client.email for client in clients if client.email]
+        employee_phones = [employee.phone for employee in employees if employee.phone]
+
+        return templates.TemplateResponse(
+            request,
+            "communication.html",
+            {
+                "user": user,
+                "clients": clients,
+                "employees": employees,
+                "jobs": jobs,
+                "client_phones": client_phones,
+                "client_emails": client_emails,
+                "employee_phones": employee_phones,
+            },
+        )
+
+    finally:
+        db.close()
