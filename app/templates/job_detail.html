@@ -1,92 +1,408 @@
-                <div class="stat-card">
-                    <h3>Status</h3>
-                    <div class="stat-number small-stat">{{ job.status }}</div>
+# PoolOps2 — Phase 4.5 FULL FILE REPLACEMENTS
+
+These are FULL replacement files.
+
+---
+
+# FULL REPLACEMENT — `app/templates/job_detail.html`
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PoolOps2 Job Detail</title>
+    <link rel="stylesheet" href="/static/style.css?v=10">
+</head>
+
+<body>
+
+<div class="app-layout">
+
+    <aside class="sidebar">
+
+        <div class="sidebar-top">
+
+            <img
+                src="/static/logo.png"
+                alt="Heinlin Concrete Logo"
+                class="sidebar-logo"
+            >
+
+            <h1>POOLOPS2</h1>
+
+            <p>Heinlin Concrete LLC</p>
+
+        </div>
+
+        <nav class="sidebar-nav">
+
+            <a href="/dashboard">Dashboard</a>
+            <a href="/jobs" class="active">Jobs</a>
+            <a href="/schedule">Schedule</a>
+            <a href="/clients">Clients</a>
+            <a href="/properties">Properties</a>
+            <a href="/employees">Employees</a>
+            <a href="/billing">Billing</a>
+            <a href="/job-costing">Job Costing</a>
+            <a href="/photos">Photos</a>
+            <a href="/crew">Crew View</a>
+            <a href="/health">Health</a>
+
+        </nav>
+
+        <div class="sidebar-bottom">
+
+            <p>{{ user.name }}</p>
+            <span>{{ user.role }}</span>
+
+            <a href="/logout" class="logout-button">
+                Logout
+            </a>
+
+        </div>
+
+    </aside>
+
+    <main class="main-content">
+
+        <div class="topbar">
+
+            <div>
+                <h2>{{ job.client }}</h2>
+                <p>{{ job.address }} — {{ job.job_type }}</p>
+            </div>
+
+            <a
+                href="/jobs"
+                class="primary-button"
+                style="text-decoration:none;"
+            >
+                Back to Jobs
+            </a>
+
+        </div>
+
+        <section class="stats-grid">
+
+            <div class="stat-card">
+                <h3>Status</h3>
+                <div class="stat-number small-stat">
+                    {{ job.status }}
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <h3>Priority</h3>
+                <div class="stat-number small-stat">
+                    {{ job.priority }}
+                </div>
+            </div>
+
+            <div class="stat-card money-card">
+                <h3>Invoice Total</h3>
+                <div class="stat-number">
+                    ${{ "%.2f"|format(summary.invoice_total) }}
+                </div>
+            </div>
+
+            <div class="stat-card money-card">
+                <h3>Tracked Profit</h3>
+                <div class="stat-number">
+                    ${{ "%.2f"|format(summary.tracked_profit) }}
+                </div>
+            </div>
+
+        </section>
+
+        <section class="content-card">
+
+            <div class="card-header">
+                <h3>Job Notes</h3>
+            </div>
+
+            <form method="post" action="/jobs/{{ job.id }}/notes">
+
+                <div class="form-group">
+
+                    <textarea
+                        name="notes"
+                        rows="6"
+                    >{{ job.notes }}</textarea>
+
                 </div>
 
-                <div class="stat-card">
-                    <h3>Priority</h3>
-                    <div class="stat-number small-stat">{{ job.priority }}</div>
-                </div>
+                <button
+                    type="submit"
+                    class="primary-button"
+                >
+                    Save Notes
+                </button>
 
-                <div class="stat-card money-card">
-                    <h3>Invoice Total</h3>
-                    <div class="stat-number">${{ "%.2f"|format(summary.invoice_total) }}</div>
-                </div>
+            </form>
 
-                <div class="stat-card money-card">
-                    <h3>Tracked Profit</h3>
-                    <div class="stat-number">${{ "%.2f"|format(summary.tracked_profit) }}</div>
-                </div>
-            </section>
+        </section>
 
-            <section class="content-card">
-                <div class="card-header">
-                    <h3>Job Notes</h3>
-                </div>
+        <section class="content-card">
 
-                <form method="post" action="/jobs/{{ job.id }}/notes">
+            <div class="card-header">
+                <h3>Upload Job Photos</h3>
+            </div>
+
+            <form
+                method="post"
+                action="/jobs/{{ job.id }}/upload-photo"
+                class="job-form"
+                enctype="multipart/form-data"
+            >
+
+                <div class="form-grid">
+
                     <div class="form-group">
-                        <textarea name="notes" rows="6">{{ job.notes }}</textarea>
+
+                        <label>Photo Type</label>
+
+                        <select name="photo_type">
+                            <option>Before</option>
+                            <option>Progress</option>
+                            <option>After</option>
+                            <option>Issue</option>
+                        </select>
+
                     </div>
 
-                    <button type="submit" class="primary-button">Save Notes</button>
-                </form>
-            </section>
+                    <div class="form-group">
 
-            <section class="content-card">
-                <div class="card-header">
-                    <h3>Job Invoices</h3>
-                </div>
+                        <label>Title</label>
 
-                <div class="jobs-grid">
-                    {% for invoice in invoices %}
-                    <div class="job-card">
-                        <h3>{{ invoice.description }}</h3>
-                        <p>${{ "%.2f"|format(invoice.amount) }} — {{ invoice.status }}</p>
-                        <p>{{ invoice.date }}</p>
-                        <div class="job-notes">{{ invoice.notes }}</div>
+                        <input
+                            type="text"
+                            name="title"
+                            placeholder="Photo title"
+                            required
+                        >
+
                     </div>
-                    {% endfor %}
-                </div>
-            </section>
 
-            <section class="content-card">
-                <div class="card-header">
-                    <h3>Job Costing</h3>
-                </div>
+                    <div class="form-group">
 
-                <div class="jobs-grid">
-                    {% for cost in costs %}
-                    <div class="job-card">
-                        <h3>{{ cost.client }}</h3>
-                        <p>Total Cost: ${{ "%.2f"|format(cost.total_cost) }}</p>
-                        <p>Profit: ${{ "%.2f"|format(cost.profit) }}</p>
-                        <p>Margin: {{ cost.margin }}%</p>
-                        <div class="job-notes">{{ cost.notes }}</div>
+                        <label>Date</label>
+
+                        <input
+                            type="text"
+                            name="date"
+                            placeholder="Today"
+                        >
+
                     </div>
-                    {% endfor %}
-                </div>
-            </section>
 
-            <section class="content-card">
-                <div class="card-header">
-                    <h3>Job Photos</h3>
+                    <div class="form-group">
+
+                        <label>Upload Photo</label>
+
+                        <input
+                            type="file"
+                            name="photo_file"
+                            accept="image/*"
+                        >
+
+                    </div>
+
+                    <div class="form-group form-full">
+
+                        <label>Notes</label>
+
+                        <textarea
+                            name="notes"
+                            rows="4"
+                            placeholder="Photo notes..."
+                        ></textarea>
+
+                    </div>
+
                 </div>
 
-                <div class="photo-grid">
-                    {% for photo in photos %}
-                    <div class="photo-card">
-                        <img src="{{ photo.photo_url }}" alt="{{ photo.title }}" class="photo-preview">
-                        <div class="photo-content">
-                            <h3>{{ photo.title }}</h3>
-                            <p>{{ photo.photo_type }} — {{ photo.date }}</p>
-                            <div class="job-notes">{{ photo.notes }}</div>
+                <button
+                    type="submit"
+                    class="primary-button"
+                >
+                    Upload Photo
+                </button>
+
+            </form>
+
+        </section>
+
+        <section class="content-card">
+
+            <div class="card-header">
+                <h3>Job Photo Timeline</h3>
+            </div>
+
+            <div class="photo-grid">
+
+                {% for photo in photos %}
+
+                <div class="photo-card">
+
+                    <img
+                        src="{{ photo.photo_url }}"
+                        alt="{{ photo.title }}"
+                        class="photo-preview"
+                    >
+
+                    <div class="photo-content">
+
+                        <div class="job-top">
+
+                            <div>
+                                <h3>{{ photo.title }}</h3>
+                                <p>{{ photo.photo_type }}</p>
+                            </div>
+
+                            <span class="status-pill">
+                                {{ photo.date }}
+                            </span>
+
                         </div>
+
+                        <div class="job-notes">
+                            {{ photo.notes }}
+                        </div>
+
                     </div>
-                    {% endfor %}
+
                 </div>
-            </section>
-        </main>
-    </div>
+
+                {% endfor %}
+
+            </div>
+
+        </section>
+
+        <section class="content-card">
+
+            <div class="card-header">
+                <h3>Invoices</h3>
+            </div>
+
+            <div class="jobs-grid">
+
+                {% for invoice in invoices %}
+
+                <div class="job-card">
+
+                    <h3>{{ invoice.description }}</h3>
+
+                    <p>
+                        ${{ "%.2f"|format(invoice.amount) }}
+                    </p>
+
+                    <p>{{ invoice.status }}</p>
+
+                    <div class="job-notes">
+                        {{ invoice.notes }}
+                    </div>
+
+                </div>
+
+                {% endfor %}
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
 </body>
 </html>
+```
+
+---
+
+# FULL REPLACEMENT ROUTE — ADD TO `app/app.py`
+
+Place this directly UNDER your existing `/photos/add` route.
+
+```python
+@app.post("/jobs/{job_id}/upload-photo")
+async def upload_job_photo(
+    request: Request,
+    job_id: int,
+    photo_type: str = Form(...),
+    title: str = Form(...),
+    photo_file: UploadFile = File(None),
+    date: str = Form("Today"),
+    notes: str = Form(""),
+):
+    user = require_admin(request)
+
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    db = db_session()
+
+    try:
+        job = db.query(Job).filter(Job.id == job_id).first()
+
+        if not job:
+            return RedirectResponse(url="/jobs", status_code=303)
+
+        photo_url = save_uploaded_photo(photo_file)
+
+        db.add(
+            PhotoLog(
+                job_id=job.id,
+                client=job.client,
+                photo_type=photo_type.strip(),
+                title=title.strip(),
+                photo_url=photo_url,
+                date=date.strip(),
+                notes=notes.strip(),
+            )
+        )
+
+        db.commit()
+
+        return RedirectResponse(
+            url=f"/jobs/{job_id}",
+            status_code=303,
+        )
+
+    finally:
+        db.close()
+```
+
+---
+
+# DEPLOY
+
+```bash
+git add .
+git commit -m "Add Phase 4.5 embedded uploads"
+git push
+```
+
+Then Render:
+
+```text
+Clear build cache & deploy
+```
+
+Then test:
+
+```text
+/jobs/1
+```
+
+Upload:
+
+* before photos
+* progress photos
+* after photos
+* issue photos
+
+Now each job becomes its own live field timeline.
