@@ -1,0 +1,92 @@
+                <div class="stat-card">
+                    <h3>Status</h3>
+                    <div class="stat-number small-stat">{{ job.status }}</div>
+                </div>
+
+                <div class="stat-card">
+                    <h3>Priority</h3>
+                    <div class="stat-number small-stat">{{ job.priority }}</div>
+                </div>
+
+                <div class="stat-card money-card">
+                    <h3>Invoice Total</h3>
+                    <div class="stat-number">${{ "%.2f"|format(summary.invoice_total) }}</div>
+                </div>
+
+                <div class="stat-card money-card">
+                    <h3>Tracked Profit</h3>
+                    <div class="stat-number">${{ "%.2f"|format(summary.tracked_profit) }}</div>
+                </div>
+            </section>
+
+            <section class="content-card">
+                <div class="card-header">
+                    <h3>Job Notes</h3>
+                </div>
+
+                <form method="post" action="/jobs/{{ job.id }}/notes">
+                    <div class="form-group">
+                        <textarea name="notes" rows="6">{{ job.notes }}</textarea>
+                    </div>
+
+                    <button type="submit" class="primary-button">Save Notes</button>
+                </form>
+            </section>
+
+            <section class="content-card">
+                <div class="card-header">
+                    <h3>Job Invoices</h3>
+                </div>
+
+                <div class="jobs-grid">
+                    {% for invoice in invoices %}
+                    <div class="job-card">
+                        <h3>{{ invoice.description }}</h3>
+                        <p>${{ "%.2f"|format(invoice.amount) }} — {{ invoice.status }}</p>
+                        <p>{{ invoice.date }}</p>
+                        <div class="job-notes">{{ invoice.notes }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </section>
+
+            <section class="content-card">
+                <div class="card-header">
+                    <h3>Job Costing</h3>
+                </div>
+
+                <div class="jobs-grid">
+                    {% for cost in costs %}
+                    <div class="job-card">
+                        <h3>{{ cost.client }}</h3>
+                        <p>Total Cost: ${{ "%.2f"|format(cost.total_cost) }}</p>
+                        <p>Profit: ${{ "%.2f"|format(cost.profit) }}</p>
+                        <p>Margin: {{ cost.margin }}%</p>
+                        <div class="job-notes">{{ cost.notes }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </section>
+
+            <section class="content-card">
+                <div class="card-header">
+                    <h3>Job Photos</h3>
+                </div>
+
+                <div class="photo-grid">
+                    {% for photo in photos %}
+                    <div class="photo-card">
+                        <img src="{{ photo.photo_url }}" alt="{{ photo.title }}" class="photo-preview">
+                        <div class="photo-content">
+                            <h3>{{ photo.title }}</h3>
+                            <p>{{ photo.photo_type }} — {{ photo.date }}</p>
+                            <div class="job-notes">{{ photo.notes }}</div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </section>
+        </main>
+    </div>
+</body>
+</html>

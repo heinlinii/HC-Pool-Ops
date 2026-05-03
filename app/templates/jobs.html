@@ -281,6 +281,15 @@
                             {{ job.notes }}
                         </div>
 
+                        <div style="margin-top:18px;">
+    <a
+        href="/jobs/{{ job.id }}"
+        class="primary-button"
+        style="text-decoration:none; display:inline-block;"
+    >
+        Open Job Hub
+    </a>
+</div>
                         {% if user.role == "admin" %}
 
                         <details class="edit-panel">

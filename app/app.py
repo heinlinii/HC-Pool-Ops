@@ -15,7 +15,7 @@ app = FastAPI(title="PoolOps2")
 
 app.add_middleware(
     SessionMiddleware,
-    secret_key="poolops2-phase-3-secret",
+    secret_key="poolops2-phase-35-secret",
 )
 
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
@@ -160,6 +160,36 @@ def job_options(db):
     ]
 
 
+def job_financial_summary(job_id: int, db):
+    invoices = db.query(Invoice).filter(Invoice.job_id == job_id).all()
+    costs = db.query(JobCost).filter(JobCost.job_id == job_id).all()
+
+    invoice_total = round(sum(float(invoice.amount or 0) for invoice in invoices), 2)
+
+    cost_total = 0
+    cost_revenue_total = 0
+
+    for cost in costs:
+        totals = cost_totals(cost)
+        cost_total += totals["total_cost"]
+        cost_revenue_total += float(cost.invoice_amount or 0)
+
+    tracked_profit = round(cost_revenue_total - cost_total, 2)
+
+    tracked_margin = 0
+    if cost_revenue_total > 0:
+        tracked_margin = round((tracked_profit / cost_revenue_total) * 100, 2)
+
+    return {
+        "invoice_total": invoice_total,
+        "cost_total": round(cost_total, 2),
+        "tracked_revenue": round(cost_revenue_total, 2),
+        "tracked_profit": tracked_profit,
+        "tracked_margin": tracked_margin,
+        "profit_status": profit_status(tracked_profit, tracked_margin),
+    }
+
+
 @app.get("/")
 async def login_page(request: Request):
     user = get_current_user(request)
@@ -213,8 +243,9 @@ async def health():
     return {
         "status": "ok",
         "app": "PoolOps2",
-        "phase": "3",
+        "phase": "3.5",
         "database": "connected",
+        "feature": "job hub",
     }
 
 
@@ -304,6 +335,121 @@ async def jobs_page(request: Request):
                 "employees": db.query(Employee).order_by(Employee.name.asc()).all(),
             },
         )
+
+    finally:
+        db.close()
+
+
+@app.get("/jobs/{job_id}")
+async def job_detail_page(request: Request, job_id: int):
+    user = require_login(request)
+
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    db = db_session()
+
+    try:
+        job = db.query(Job).filter(Job.id == job_id).first()
+
+        if not job:
+            return RedirectResponse(url="/jobs", status_code=303)
+
+        invoices = db.query(Invoice).filter(Invoice.job_id == job_id).order_by(Invoice.id.desc()).all()
+        costs = db.query(JobCost).filter(JobCost.job_id == job_id).order_by(JobCost.id.desc()).all()
+        photos = db.query(PhotoLog).filter(PhotoLog.job_id == job_id).order_by(PhotoLog.id.desc()).all()
+
+        enriched_costs = []
+
+        for cost in costs:
+            totals = cost_totals(cost)
+
+            enriched_costs.append(
+                {
+                    "id": cost.id,
+                    "job_id": cost.job_id,
+                    "client": cost.client,
+                    "labor": cost.labor,
+                    "materials": cost.materials,
+                    "subs": cost.subs,
+                    "equipment": cost.equipment,
+                    "fuel": cost.fuel,
+                    "other": cost.other,
+                    "invoice_amount": cost.invoice_amount,
+                    "notes": cost.notes,
+                    "total_cost": totals["total_cost"],
+                    "profit": totals["profit"],
+                    "margin": totals["margin"],
+                    "profit_status": profit_status(totals["profit"], totals["margin"]),
+                }
+            )
+
+        summary = job_financial_summary(job_id, db)
+
+        return templates.TemplateResponse(
+            request,
+            "job_detail.html",
+            {
+                "user": user,
+                "job": job,
+                "invoices": invoices,
+                "costs": enriched_costs,
+                "photos": photos,
+                "summary": summary,
+            },
+        )
+
+    finally:
+        db.close()
+
+
+@app.post("/jobs/{job_id}/notes")
+async def update_job_notes(
+    request: Request,
+    job_id: int,
+    notes: str = Form(""),
+):
+    user = require_login(request)
+
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    db = db_session()
+
+    try:
+        job = db.query(Job).filter(Job.id == job_id).first()
+
+        if job:
+            job.notes = notes.strip()
+            db.commit()
+
+        return RedirectResponse(url=f"/jobs/{job_id}", status_code=303)
+
+    finally:
+        db.close()
+
+
+@app.post("/jobs/{job_id}/status")
+async def update_job_detail_status(
+    request: Request,
+    job_id: int,
+    status: str = Form(...),
+):
+    user = require_admin(request)
+
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    db = db_session()
+
+    try:
+        job = db.query(Job).filter(Job.id == job_id).first()
+
+        if job:
+            job.status = status.strip()
+            db.commit()
+
+        return RedirectResponse(url=f"/jobs/{job_id}", status_code=303)
 
     finally:
         db.close()
@@ -1148,25 +1294,25 @@ async def job_costing_page(request: Request):
         for cost in costs:
             totals = cost_totals(cost)
 
-            enriched = {
-                "id": cost.id,
-                "job_id": cost.job_id,
-                "client": cost.client,
-                "labor": cost.labor,
-                "materials": cost.materials,
-                "subs": cost.subs,
-                "equipment": cost.equipment,
-                "fuel": cost.fuel,
-                "other": cost.other,
-                "invoice_amount": cost.invoice_amount,
-                "notes": cost.notes,
-                "total_cost": totals["total_cost"],
-                "profit": totals["profit"],
-                "margin": totals["margin"],
-                "profit_status": profit_status(totals["profit"], totals["margin"]),
-            }
-
-            enriched_costs.append(enriched)
+            enriched_costs.append(
+                {
+                    "id": cost.id,
+                    "job_id": cost.job_id,
+                    "client": cost.client,
+                    "labor": cost.labor,
+                    "materials": cost.materials,
+                    "subs": cost.subs,
+                    "equipment": cost.equipment,
+                    "fuel": cost.fuel,
+                    "other": cost.other,
+                    "invoice_amount": cost.invoice_amount,
+                    "notes": cost.notes,
+                    "total_cost": totals["total_cost"],
+                    "profit": totals["profit"],
+                    "margin": totals["margin"],
+                    "profit_status": profit_status(totals["profit"], totals["margin"]),
+                }
+            )
 
         total_revenue = round(sum(float(cost.invoice_amount or 0) for cost in costs), 2)
         total_cost = round(sum(float(cost["total_cost"]) for cost in enriched_costs), 2)
