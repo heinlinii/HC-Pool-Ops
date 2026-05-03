@@ -2507,22 +2507,28 @@ async def backup_jobs(request: Request):
         writer.writerow([
             "ID",
             "Client",
+            "Property",
             "Address",
-            "Description",
+            "Job Type",
             "Status",
             "Crew",
             "Date",
+            "Priority",
+            "Notes",
         ])
 
         for job in jobs:
             writer.writerow([
                 job.id,
                 job.client,
+                job.property,
                 job.address,
-                job.description,
+                job.job_type,
                 job.status,
                 job.crew,
                 job.date,
+                job.priority,
+                job.notes,
             ])
 
         output.seek(0)
@@ -2531,8 +2537,7 @@ async def backup_jobs(request: Request):
             iter([output.getvalue()]),
             media_type="text/csv",
             headers={
-                "Content-Disposition":
-                "attachment; filename=jobs_backup.csv"
+                "Content-Disposition": "attachment; filename=jobs_backup.csv"
             },
         )
 
@@ -2653,9 +2658,10 @@ async def backup_photos(request: Request):
             "ID",
             "Job ID",
             "Client",
-            "Phase",
+            "Photo Type",
             "Title",
             "Photo URL",
+            "Date",
             "Notes",
         ])
 
@@ -2663,10 +2669,11 @@ async def backup_photos(request: Request):
             writer.writerow([
                 photo.id,
                 photo.job_id,
-                photo.client_name,
-                photo.phase,
+                photo.client,
+                photo.photo_type,
                 photo.title,
                 photo.photo_url,
+                photo.date,
                 photo.notes,
             ])
 
@@ -2676,8 +2683,7 @@ async def backup_photos(request: Request):
             iter([output.getvalue()]),
             media_type="text/csv",
             headers={
-                "Content-Disposition":
-                "attachment; filename=photos_backup.csv"
+                "Content-Disposition": "attachment; filename=photos_backup.csv"
             },
         )
 
