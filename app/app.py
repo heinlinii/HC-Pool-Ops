@@ -1874,6 +1874,281 @@ async def import_invoices(request: Request, csv_file: UploadFile = File(...)):
     finally:
         db.close()
 
+# =========================
+# PHASE 6 SCHEDULE ROUTES
+# =========================
+
+@app.get("/schedule/day", response_class=HTMLResponse)
+async def schedule_day(request: Request):
+
+    user = require_login(request)
+
+    if not user:
+        return RedirectResponse("/", status_code=303)
+
+    db = db_session()
+
+    try:
+        jobs = db.query(Job).all()
+
+        return templates.TemplateResponse(
+            "schedule_day.html",
+            {
+                "request": request,
+                "user": user,
+                "jobs": jobs,
+                "view_title": "Daily Schedule",
+                "view_subtitle": "Today's scheduled work"
+            }
+        )
+
+    finally:
+        db.close()
+
+
+@app.get("/schedule/week", response_class=HTMLResponse)
+async def schedule_week(request: Request):
+
+    user = require_login(request)
+
+    if not user:
+        return RedirectResponse("/", status_code=303)
+
+    db = db_session()
+
+    try:
+        jobs = db.query(Job).all()
+
+        return templates.TemplateResponse(
+            "schedule_week.html",
+            {
+                "request": request,
+                "user": user,
+                "jobs": jobs,
+                "view_title": "Weekly Schedule",
+                "view_subtitle": "Weekly production planning"
+            }
+        )
+
+    finally:
+        db.close()
+
+
+@app.get("/schedule/month", response_class=HTMLResponse)
+async def schedule_month(request: Request):
+
+    user = require_login(request)
+
+    if not user:
+        return RedirectResponse("/", status_code=303)
+
+    db = db_session()
+
+    try:
+        jobs = db.query(Job).all()
+
+        return templates.TemplateResponse(
+            "schedule_month.html",
+            {
+                "request": request,
+                "user": user,
+                "jobs": jobs,
+                "view_title": "Monthly Schedule",
+                "view_subtitle": "Long-range scheduling"
+            }
+        )
+
+    finally:
+        db.close()
+
+
+# =========================
+# CLIENT PORTAL
+# =========================
+
+@app.get("/client-login", response_class=HTMLResponse)
+async def client_login_page(request: Request):
+
+    return templates.TemplateResponse(
+        "client_login.html",
+        {
+            "request": request,
+            "error": None
+        }
+    )
+
+
+@app.post("/client-login", response_class=HTMLResponse)
+async def client_login(
+    request: Request,
+    email_or_name: str = Form(...)
+):
+
+    db = db_session()
+
+    try:
+
+        client = db.query(Client).filter(
+            Client.name == email_or_name
+        ).first()
+
+        if not client:
+
+            return templates.TemplateResponse(
+                "client_login.html",
+                {
+                    "request": request,
+                    "error": "Client not found"
+                }
+            )
+
+        request.session["client_id"] = client.id
+
+        return RedirectResponse(
+            "/client-dashboard",
+            status_code=303
+        )
+
+    finally:
+        db.close()
+
+
+@app.get("/client-dashboard", response_class=HTMLResponse)
+async def client_dashboard(request: Request):
+
+    client_id = request.session.get("client_id")
+
+    if not client_id:
+        return RedirectResponse("/client-login", status_code=303)
+
+    db = db_session()
+
+    try:
+
+        client = db.query(Client).filter(
+            Client.id == client_id
+        ).first()
+
+        jobs = db.query(Job).filter(
+            Job.client == client.name
+        ).all()
+
+        properties = db.query(Property).filter(
+            Property.client == client.name
+        ).all()
+
+        public_schedule = db.query(Job).all()
+
+        return templates.TemplateResponse(
+            "client_dashboard.html",
+            {
+                "request": request,
+                "client": client,
+                "jobs": jobs,
+                "properties": properties,
+                "public_schedule": public_schedule
+            }
+        )
+
+    finally:
+        db.close()
+
+
+@app.get("/client-request", response_class=HTMLResponse)
+async def client_request_page(request: Request):
+
+    client_id = request.session.get("client_id")
+
+    if not client_id:
+        return RedirectResponse("/client-login", status_code=303)
+
+    db = db_session()
+
+    try:
+
+        client = db.query(Client).filter(
+            Client.id == client_id
+        ).first()
+
+        properties = db.query(Property).filter(
+            Property.client == client.name
+        ).all()
+
+        return templates.TemplateResponse(
+            "client_requests.html",
+            {
+                "request": request,
+                "client": client,
+                "properties": properties,
+                "message": None
+            }
+        )
+
+    finally:
+        db.close()
+
+
+@app.post("/client-request", response_class=HTMLResponse)
+async def submit_client_request(
+    request: Request,
+    request_type: str = Form(...),
+    address: str = Form(""),
+    requested_date: str = Form(""),
+    message: str = Form("")
+):
+
+    client_id = request.session.get("client_id")
+
+    if not client_id:
+        return RedirectResponse("/client-login", status_code=303)
+
+    db = db_session()
+
+    try:
+
+        client = db.query(Client).filter(
+            Client.id == client_id
+        ).first()
+
+        properties = db.query(Property).filter(
+            Property.client == client.name
+        ).all()
+
+        new_job = Job(
+            client=client.name,
+            address=address,
+            job_type=request_type,
+            date=requested_date,
+            crew="Unassigned",
+            status="Requested",
+            priority="Medium",
+            notes=message
+        )
+
+        db.add(new_job)
+        db.commit()
+
+        return templates.TemplateResponse(
+            "client_requests.html",
+            {
+                "request": request,
+                "client": client,
+                "properties": properties,
+                "message": "Request submitted successfully."
+            }
+        )
+
+    finally:
+        db.close()
+
+
+@app.get("/client-logout")
+async def client_logout(request: Request):
+
+    request.session.clear()
+
+    return RedirectResponse("/", status_code=303)
+
     return RedirectResponse(
         url=f"/imports?message=Imported {imported} invoices. Skipped {skipped}.",
         status_code=303,
