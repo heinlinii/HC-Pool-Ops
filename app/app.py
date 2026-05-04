@@ -208,18 +208,109 @@ def job_financial_summary(job_id: int, db):
     }
 
 
-@app.get("/")
-async def login_page(request: Request):
-    user = get_current_user(request)
+@app.get("/users", response_class=HTMLResponse)
+async def users_page(request: Request):
+    user = require_login(request)
 
-    if user:
-        if user["role"] == "crew":
-            return RedirectResponse(url="/crew", status_code=303)
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
 
+    if user["role"] != "admin":
         return RedirectResponse(url="/dashboard", status_code=303)
 
-    return templates.TemplateResponse(request, "login.html", {"error": None})
+    db = SessionLocal()
 
+    try:
+        users = db.query(User).all()
+
+        return templates.TemplateResponse(
+            "users.html",
+            {
+                "request": request,
+                "user": user,
+                "users": users
+            }
+        )
+
+    finally:
+        db.close()
+
+
+@app.post("/users/add")
+async def add_user(
+    request: Request,
+    username: str = Form(...),
+    password: str = Form(...),
+    role: str = Form(...),
+    name: str = Form(...)
+):
+    user = require_login(request)
+
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    if user["role"] != "admin":
+        return RedirectResponse(url="/dashboard", status_code=303)
+
+    db = SessionLocal()
+
+    try:
+        existing = db.query(User).filter(User.username == username).first()
+
+        if not existing:
+            db.add(
+                User(
+                    username=username,
+                    password=password,
+                    role=role,
+                    name=name
+                )
+            )
+
+            db.add(
+                Employee(
+                    name=name,
+                    role=role.title(),
+                    phone="",
+                    email="",
+                    active=True
+                )
+            )
+
+            db.commit()
+
+    finally:
+        db.close()
+
+    return RedirectResponse(url="/users", status_code=303)
+
+
+@app.post("/users/delete/{user_id}")
+async def delete_user(
+    request: Request,
+    user_id: int
+):
+    user = require_login(request)
+
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    if user["role"] != "admin":
+        return RedirectResponse(url="/dashboard", status_code=303)
+
+    db = SessionLocal()
+
+    try:
+        delete_user = db.query(User).filter(User.id == user_id).first()
+
+        if delete_user:
+            db.delete(delete_user)
+            db.commit()
+
+    finally:
+        db.close()
+
+    return RedirectResponse(url="/users", status_code=303)
 
 @app.post("/login")
 async def login(request: Request, username: str = Form(...), password: str = Form(...)):
