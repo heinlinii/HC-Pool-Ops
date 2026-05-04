@@ -4,8 +4,9 @@ from sqlalchemy import (
     String,
     Text,
     Float,
-    DateTime
+    DateTime,
     Boolean
+)
 )
 from datetime import datetime
 from app.database import Base

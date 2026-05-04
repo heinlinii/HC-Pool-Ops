@@ -39,6 +39,7 @@ def startup():
         if db.query(User).count() == 0:
             db.add(User(username="mike", password="5500", role="admin", name="Mike"))
             db.add(User(username="randy", password="0318", role="crew", name="Randy"))
+            db.add(User(username="carrie", password="0127", role="office", name="Carrie"))
 
         if db.query(Employee).count() == 0:
             db.add(Employee(name="Mike", role="Admin", phone="", email="", active=True))
