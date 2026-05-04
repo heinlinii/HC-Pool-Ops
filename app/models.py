@@ -4,7 +4,7 @@ from sqlalchemy import Float
 from sqlalchemy import Integer
 from sqlalchemy import String
 from sqlalchemy import Text
-
+from datetime import datetime
 from app.database import Base
 
 
@@ -105,3 +105,47 @@ class User(Base):
     password = Column(String, nullable=False)
     role = Column(String, default="crew")
     name = Column(String, nullable=False)
+    # =========================================
+# PHASE 11 — DAILY FIELD LOGS
+# =========================================
+
+class FieldLog(Base):
+    __tablename__ = "field_logs"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    employee_name = Column(String, default="")
+    crew = Column(String, default="")
+
+    client = Column(String, default="")
+    property = Column(String, default="")
+    address = Column(String, default="")
+
+    date = Column(String, default="")
+
+    arrival_time = Column(String, default="")
+    departure_time = Column(String, default="")
+
+    total_hours = Column(Float, default=0)
+
+    truck = Column(String, default="")
+    trailer = Column(String, default="")
+
+    tools_used = Column(Text, default="")
+    materials_used = Column(Text, default="")
+    equipment_used = Column(Text, default="")
+
+    fuel_cost = Column(Float, default=0)
+
+    work_completed = Column(Text, default="")
+    issues = Column(Text, default="")
+    next_steps = Column(Text, default="")
+
+    weather = Column(String, default="")
+
+    photo_count = Column(Integer, default=0)
+
+    created_at = Column(
+        DateTime,
+        default=datetime.utcnow
+    )
