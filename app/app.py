@@ -36,15 +36,18 @@ def startup():
     db = SessionLocal()
 
     try:
-        if db.query(User).count() == 0:
+        if 
             db.add(User(username="mike", password="5500", role="admin", name="Mike"))
             db.add(User(username="randy", password="0318", role="crew", name="Randy"))
+            db.add(User(username="marty", password="0712", role="crew", name="Marty"))
             db.add(User(username="carrie", password="0127", role="office", name="Carrie"))
+
 
         if db.query(Employee).count() == 0:
             db.add(Employee(name="Mike", role="Admin", phone="", email="", active=True))
-            db.add(Employee(name="Randy", role="Crew", phone="", email="", active=True))
-            db.add(Employee(name="Carrie", role="Office", phone="", email="", active=True))
+            db.add(Employee(name="Randy", role="Foreman", phone="", email="", active=True))
+            db.add(Employee(name="Marty", role="Crew", phone="", email="", active=True))
+            db.add(Employee(name="Carrie", role="Office", phone="", email="", active=True)) 
 
         db.commit()
 
