@@ -63,45 +63,46 @@
 
         <section class="stats-grid">
 
-            <div class="stat-card">
-                <h3>Total Jobs</h3>
-                <div class="stat-number">{{ stats.total_jobs }}</div>
-            </div>
+            
+       <a href="/jobs" class="stat-card stat-link">
+    <h3>Total Jobs</h3>
+    <div class="stat-number">{{ stats.total_jobs }}</div>
+</a>
 
-            <div class="stat-card">
-                <h3>Scheduled</h3>
-                <div class="stat-number">{{ stats.scheduled }}</div>
-            </div>
+<a href="/schedule/week" class="stat-card stat-link">
+    <h3>Scheduled</h3>
+    <div class="stat-number">{{ stats.scheduled }}</div>
+</a>
 
-            <div class="stat-card">
-                <h3>Requested</h3>
-                <div class="stat-number">{{ stats.requested }}</div>
-            </div>
+<a href="/schedule/week" class="stat-card stat-link">
+    <h3>Requested</h3>
+    <div class="stat-number">{{ stats.requested }}</div>
+</a>
 
-            <div class="stat-card">
-                <h3>In Progress</h3>
-                <div class="stat-number">{{ stats.in_progress }}</div>
-            </div>
+<a href="/schedule/week" class="stat-card stat-link">
+    <h3>In Progress</h3>
+    <div class="stat-number">{{ stats.in_progress }}</div>
+</a>
 
-            <div class="stat-card">
-                <h3>Clients</h3>
-                <div class="stat-number">{{ stats.clients }}</div>
-            </div>
+<a href="/clients" class="stat-card stat-link">
+    <h3>Clients</h3>
+    <div class="stat-number">{{ stats.clients }}</div>
+</a>
 
-            <div class="stat-card">
-                <h3>Photos</h3>
-                <div class="stat-number">{{ stats.photos }}</div>
-            </div>
+<a href="/photos" class="stat-card stat-link">
+    <h3>Photos</h3>
+    <div class="stat-number">{{ stats.photos }}</div>
+</a>
 
-            <div class="stat-card">
-                <h3>Invoice Total</h3>
-                <div class="stat-number">${{ "%.2f"|format(stats.invoice_total) }}</div>
-            </div>
+<a href="/billing" class="stat-card stat-link">
+    <h3>Invoice Total</h3>
+    <div class="stat-number">${{ "%.2f"|format(stats.invoice_total) }}</div>
+</a>
 
-            <div class="stat-card">
-                <h3>Tracked Profit</h3>
-                <div class="stat-number">${{ "%.2f"|format(stats.tracked_profit) }}</div>
-            </div>
+<a href="/job-costing" class="stat-card stat-link">
+    <h3>Tracked Profit</h3>
+    <div class="stat-number">${{ "%.2f"|format(stats.tracked_profit) }}</div>
+</a>
 
         </section>
 

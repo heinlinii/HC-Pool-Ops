@@ -854,3 +854,14 @@ textarea {
         grid-template-columns: 1fr;
     }
 }
+.stat-link {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+}
+
+.stat-link:hover {
+    transform: translateY(-4px);
+    border-color: #60a5fa;
+    box-shadow: 0 16px 30px rgba(37, 99, 235, 0.22);
+}
