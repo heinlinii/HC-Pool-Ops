@@ -3,53 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PoolOps2 Login</title>
-    <link rel="stylesheet" href="/static/style.css?v=1">
+    <title>Login • PoolOps2</title>
+    <link rel="stylesheet" href="/static/style.css?v=20">
 </head>
-
 <body class="login-body">
 
-    <div class="login-container">
+<div class="login-container">
+    <div class="login-card">
 
-        <div class="login-card">
+        <div class="logo-area">
+            <img src="/static/logo.png" alt="Heinlin Concrete Logo" class="login-logo">
+            <h1>PoolOps2</h1>
+            <p>Heinlin Concrete LLC</p>
+        </div>
 
-            <div class="logo-area">
-                <h1>POOLOPS2</h1>
-                <p>Heinlin Concrete LLC</p>
+        <form method="post" action="/login">
+
+            <div class="form-group">
+                <label>Username</label>
+                <input type="text" name="username" required>
             </div>
 
-            <form method="post" action="/login">
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" name="password" required>
+            </div>
 
-                <div class="form-group">
-                    <label>Username</label>
-                    <input
-                        type="text"
-                        name="username"
-                        placeholder="Enter username"
-                        required
-                    >
-                </div>
+            {% if error %}
+            <div class="error-box">
+                {{ error }}
+            </div>
+            {% endif %}
 
-                <div class="form-group">
-                    <label>Password</label>
-                    <input
-                        type="password"
-                        name="password"
-                        placeholder="Enter password"
-                        required
-                    >
-                </div>
+            <button type="submit" class="login-button">
+                Login
+            </button>
 
-                {% if error %}
-                <div class="error-box">
-                    {{ error }}
-                </div>
-                {% endif %}
+        </form>
 
-                <button type="submit" class="login-button">
-                    Login
-                </button>
+    </div>
+</div>
 
-            </form>
 </body>
 </html>

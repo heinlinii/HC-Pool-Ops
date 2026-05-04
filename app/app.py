@@ -314,7 +314,6 @@ async def dashboard(request: Request):
             "tracked_profit": total_profit,
             "photos": len(photos),
         }
-
         return templates.TemplateResponse(
             request,
             "dashboard.html",
