@@ -7,7 +7,6 @@ from sqlalchemy import (
     DateTime,
     Boolean
 )
-)
 from datetime import datetime
 from app.database import Base
 
