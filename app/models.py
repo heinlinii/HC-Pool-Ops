@@ -1,9 +1,11 @@
-from sqlalchemy import Boolean
-from sqlalchemy import Column
-from sqlalchemy import Float
-from sqlalchemy import Integer
-from sqlalchemy import String
-from sqlalchemy import Text
+from sqlalchemy import (
+    Column,
+    Integer,
+    String,
+    Text,
+    Float,
+    DateTime
+)
 from datetime import datetime
 from app.database import Base
 
