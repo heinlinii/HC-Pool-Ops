@@ -5,6 +5,7 @@ from sqlalchemy import (
     Text,
     Float,
     DateTime
+    Boolean
 )
 from datetime import datetime
 from app.database import Base
