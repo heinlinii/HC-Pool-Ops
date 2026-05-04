@@ -12,7 +12,7 @@ import json
 import urllib.request
 
 from app.database import Base, engine, SessionLocal
-from app.models import User, Employee, Client, Property, Job, Invoice, JobCost, PhotoLog
+from app.models import User, Employee, Client, Property, Job, Invoice, JobCost, PhotoLog, FieldLog
 
 
 app = FastAPI(title="PoolOps2")
