@@ -44,6 +44,7 @@ def startup():
         if db.query(Employee).count() == 0:
             db.add(Employee(name="Mike", role="Admin", phone="", email="", active=True))
             db.add(Employee(name="Randy", role="Crew", phone="", email="", active=True))
+            db.add(Employee(name="Carrie", role="Office", phone="", email="", active=True))
 
         db.commit()
 
