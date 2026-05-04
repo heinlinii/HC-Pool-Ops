@@ -2689,3 +2689,134 @@ async def backup_photos(request: Request):
 
     finally:
         db.close()
+        # =========================================
+# PHASE 11 — DAILY FIELD LOGS
+# =========================================
+
+@app.get("/field-logs")
+async def field_logs_page(request: Request):
+    user = require_login(request)
+
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    db = db_session()
+
+    try:
+        logs = db.query(FieldLog).order_by(
+            FieldLog.id.desc()
+        ).all()
+
+        total_hours = round(
+            sum(log.total_hours or 0 for log in logs),
+            2
+        )
+
+        total_fuel = round(
+            sum(log.fuel_cost or 0 for log in logs),
+            2
+        )
+
+        return templates.TemplateResponse(
+            request,
+            "field_log.html",
+            {
+                "user": user,
+                "logs": logs,
+                "total_hours": total_hours,
+                "total_fuel": total_fuel,
+            },
+        )
+
+    finally:
+        db.close()
+
+
+@app.post("/field-logs/add")
+async def add_field_log(
+    request: Request,
+
+    employee_name: str = Form(...),
+    crew: str = Form(""),
+
+    client: str = Form(""),
+    property: str = Form(""),
+    address: str = Form(""),
+
+    date: str = Form(""),
+
+    arrival_time: str = Form(""),
+    departure_time: str = Form(""),
+
+    total_hours: float = Form(0),
+
+    truck: str = Form(""),
+    trailer: str = Form(""),
+
+    tools_used: str = Form(""),
+    materials_used: str = Form(""),
+    equipment_used: str = Form(""),
+
+    fuel_cost: float = Form(0),
+
+    work_completed: str = Form(""),
+    issues: str = Form(""),
+    next_steps: str = Form(""),
+
+    weather: str = Form(""),
+
+    photo_count: int = Form(0),
+):
+
+    user = require_login(request)
+
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    db = db_session()
+
+    try:
+
+        new_log = FieldLog(
+            employee_name=employee_name,
+            crew=crew,
+
+            client=client,
+            property=property,
+            address=address,
+
+            date=date,
+
+            arrival_time=arrival_time,
+            departure_time=departure_time,
+
+            total_hours=total_hours,
+
+            truck=truck,
+            trailer=trailer,
+
+            tools_used=tools_used,
+            materials_used=materials_used,
+            equipment_used=equipment_used,
+
+            fuel_cost=fuel_cost,
+
+            work_completed=work_completed,
+            issues=issues,
+            next_steps=next_steps,
+
+            weather=weather,
+
+            photo_count=photo_count,
+        )
+
+        db.add(new_log)
+        db.commit()
+
+        return RedirectResponse(
+            url="/field-logs",
+            status_code=303
+        )
+
+    finally:
+        db.close()
