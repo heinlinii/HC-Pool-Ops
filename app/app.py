@@ -36,7 +36,7 @@ def startup():
     db = SessionLocal()
 
     try:
-        if True:
+        if db.query(User).count() == 0:
             db.add(User(username="mike", password="5500", role="admin", name="Mike"))
             db.add(User(username="randy", password="0318", role="crew", name="Randy"))
             db.add(User(username="marty", password="0712", role="crew", name="Marty"))
