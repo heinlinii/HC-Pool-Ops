@@ -4,173 +4,229 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>PoolOps2 Command Center</title>
-  <link rel="stylesheet" href="/static/style.css?v=14a">
+  <link rel="stylesheet" href="/static/style.css?v=14b">
 
   <style>
     :root {
-      --bg: #071014;
-      --panel: #101b22;
-      --panel2: #13242d;
-      --card: #162832;
-      --line: rgba(255,255,255,.10);
-      --text: #f3f7f9;
-      --muted: #9fb2bd;
-      --blue: #24c8db;
-      --green: #60d394;
-      --orange: #ffb86b;
+      --bg: #050b0f;
+      --panel: rgba(12, 24, 31, .92);
+      --panel2: rgba(18, 36, 46, .92);
+      --card: rgba(255,255,255,.055);
+      --line: rgba(255,255,255,.12);
+      --text: #f4fbff;
+      --muted: #9db3c0;
+      --blue: #22d3ee;
+      --green: #65d493;
+      --orange: #ffbd6b;
       --red: #ff6b6b;
-      --shadow: 0 20px 50px rgba(0,0,0,.35);
+      --shadow: 0 24px 60px rgba(0,0,0,.42);
     }
+
+    * { box-sizing: border-box; }
 
     body {
       margin: 0;
+      color: var(--text);
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       background:
-        linear-gradient(rgba(7,16,20,.86), rgba(7,16,20,.96)),
+        linear-gradient(135deg, rgba(5,11,15,.92), rgba(5,11,15,.76), rgba(5,11,15,.96)),
         url("/static/pool-bg.jpg");
       background-size: cover;
       background-position: center;
       background-attachment: fixed;
-      color: var(--text);
-      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
 
-    .command-shell {
-      max-width: 1320px;
+    a { color: inherit; }
+
+    .shell {
+      max-width: 1380px;
       margin: 0 auto;
+      padding: 22px;
+      padding-bottom: 100px;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap: 18px;
+      margin-bottom: 18px;
+    }
+
+    .hero-main,
+    .hero-photo {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      border-radius: 30px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .hero-main {
+      padding: 24px;
+    }
+
+    .eyebrow {
+      color: var(--blue);
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(34px, 6vw, 62px);
+      line-height: .95;
+      letter-spacing: -2px;
+    }
+
+    .hero-main p {
+      color: var(--muted);
+      font-size: 16px;
+      max-width: 760px;
+      line-height: 1.5;
+      margin: 14px 0 0;
+    }
+
+    .system-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .pill {
+      border: 1px solid var(--line);
+      background: rgba(34,211,238,.10);
+      color: var(--blue);
+      border-radius: 999px;
+      padding: 9px 12px;
+      font-weight: 900;
+      font-size: 13px;
+    }
+
+    .hero-photo {
+      position: relative;
+      min-height: 260px;
+      background:
+        linear-gradient(rgba(0,0,0,.08), rgba(0,0,0,.72)),
+        url("/static/pool-hero.jpg");
+      background-size: cover;
+      background-position: center;
+      display: flex;
+      align-items: flex-end;
       padding: 22px;
     }
 
-    .topbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 16px;
-      margin-bottom: 22px;
-    }
-
-    .brand-block h1 {
+    .hero-photo h2 {
       margin: 0;
-      font-size: clamp(28px, 5vw, 52px);
-      letter-spacing: -1.5px;
+      font-size: 26px;
     }
 
-    .brand-block p {
+    .hero-photo p {
       margin: 6px 0 0;
-      color: var(--muted);
-      font-size: 15px;
-    }
-
-    .status-pill {
-      padding: 10px 14px;
-      border: 1px solid var(--line);
-      border-radius: 999px;
-      background: rgba(36,200,219,.10);
-      color: var(--blue);
-      font-weight: 800;
-      white-space: nowrap;
+      color: #d4e5ec;
     }
 
     .search-card {
-      background: linear-gradient(135deg, rgba(36,200,219,.18), rgba(19,36,45,.92));
+      background: linear-gradient(135deg, rgba(34,211,238,.18), rgba(18,36,46,.94));
       border: 1px solid var(--line);
-      box-shadow: var(--shadow);
       border-radius: 28px;
-      padding: 18px;
-      margin-bottom: 20px;
+      padding: 16px;
+      box-shadow: var(--shadow);
+      margin-bottom: 18px;
     }
 
-    .search-row {
-      display: flex;
-      gap: 12px;
-    }
-
-    .search-row input {
-      flex: 1;
+    .search-card input {
+      width: 100%;
       border: 1px solid var(--line);
-      border-radius: 18px;
-      background: rgba(0,0,0,.28);
+      background: rgba(0,0,0,.32);
       color: white;
-      padding: 18px 18px;
-      font-size: 18px;
       outline: none;
+      border-radius: 20px;
+      padding: 18px;
+      font-size: 18px;
     }
 
-    .search-row input:focus {
+    .search-card input:focus {
       border-color: var(--blue);
-      box-shadow: 0 0 0 4px rgba(36,200,219,.12);
+      box-shadow: 0 0 0 4px rgba(34,211,238,.13);
     }
 
     .search-results {
-      margin-top: 14px;
       display: none;
-      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
       gap: 12px;
+      margin-top: 14px;
     }
 
     .search-result {
-      display: block;
       text-decoration: none;
-      color: var(--text);
-      background: rgba(0,0,0,.24);
       border: 1px solid var(--line);
+      background: rgba(0,0,0,.24);
       border-radius: 18px;
       padding: 14px;
     }
 
     .search-result small {
       color: var(--blue);
+      display: block;
       font-weight: 900;
       text-transform: uppercase;
       letter-spacing: .08em;
+      margin-bottom: 5px;
     }
 
     .quick-grid {
       display: grid;
       grid-template-columns: repeat(4, minmax(0, 1fr));
       gap: 14px;
-      margin-bottom: 22px;
+      margin-bottom: 18px;
     }
 
     .quick-card {
       text-decoration: none;
-      color: var(--text);
-      background: rgba(16,27,34,.92);
+      background: var(--panel);
       border: 1px solid var(--line);
       border-radius: 24px;
-      padding: 20px;
+      padding: 18px;
+      min-height: 142px;
       box-shadow: var(--shadow);
       transition: .18s ease;
     }
 
     .quick-card:hover {
       transform: translateY(-3px);
-      border-color: rgba(36,200,219,.5);
+      border-color: rgba(34,211,238,.55);
+      background: var(--panel2);
     }
 
     .quick-card .icon {
       font-size: 30px;
-      margin-bottom: 10px;
+      margin-bottom: 12px;
     }
 
     .quick-card h3 {
       margin: 0;
-      font-size: 18px;
+      font-size: 19px;
     }
 
     .quick-card p {
       margin: 6px 0 0;
       color: var(--muted);
       font-size: 14px;
+      line-height: 1.35;
     }
 
-    .command-grid {
+    .content-grid {
       display: grid;
       grid-template-columns: 1.35fr .65fr;
       gap: 18px;
     }
 
     .panel {
-      background: rgba(16,27,34,.92);
+      background: var(--panel);
       border: 1px solid var(--line);
       border-radius: 28px;
       padding: 20px;
@@ -182,14 +238,17 @@
       font-size: 24px;
     }
 
-    .job-list {
+    .job-list,
+    .metric-grid,
+    .photo-grid {
       display: grid;
       gap: 12px;
     }
 
-    .job-card {
+    .job-card,
+    .metric {
       border: 1px solid var(--line);
-      background: rgba(255,255,255,.04);
+      background: var(--card);
       border-radius: 20px;
       padding: 16px;
     }
@@ -200,7 +259,8 @@
       margin-bottom: 5px;
     }
 
-    .job-card span {
+    .job-card span,
+    .metric span {
       color: var(--muted);
       font-size: 14px;
     }
@@ -214,82 +274,106 @@
 
     .tag {
       font-size: 12px;
-      font-weight: 800;
+      font-weight: 900;
       border-radius: 999px;
       padding: 6px 10px;
-      background: rgba(36,200,219,.12);
+      background: rgba(34,211,238,.12);
       color: var(--blue);
-    }
-
-    .metric-grid {
-      display: grid;
-      gap: 12px;
-    }
-
-    .metric {
-      border: 1px solid var(--line);
-      border-radius: 20px;
-      padding: 16px;
-      background: rgba(255,255,255,.04);
     }
 
     .metric b {
       display: block;
-      font-size: 30px;
+      font-size: 34px;
+      line-height: 1;
+      margin-bottom: 5px;
     }
 
-    .metric span {
-      color: var(--muted);
-      font-size: 13px;
+    .photo-card {
+      min-height: 135px;
+      border-radius: 20px;
+      border: 1px solid var(--line);
+      overflow: hidden;
+      background-size: cover;
+      background-position: center;
+      position: relative;
+    }
+
+    .photo-card::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(rgba(0,0,0,.06), rgba(0,0,0,.74));
+    }
+
+    .photo-card div {
+      position: absolute;
+      z-index: 2;
+      left: 14px;
+      right: 14px;
+      bottom: 14px;
+    }
+
+    .photo-card strong {
+      display: block;
+      font-size: 15px;
+    }
+
+    .photo-card span {
+      color: #d5e7ee;
+      font-size: 12px;
     }
 
     .mobile-nav {
       display: none;
       position: fixed;
-      left: 12px;
-      right: 12px;
-      bottom: 12px;
-      background: rgba(7,16,20,.94);
+      left: 10px;
+      right: 10px;
+      bottom: 10px;
+      background: rgba(5,11,15,.96);
       border: 1px solid var(--line);
       border-radius: 24px;
       padding: 10px;
       box-shadow: var(--shadow);
-      z-index: 99;
+      z-index: 100;
       grid-template-columns: repeat(5, 1fr);
       gap: 6px;
     }
 
     .mobile-nav a {
-      color: var(--text);
       text-decoration: none;
       text-align: center;
       font-size: 12px;
-      padding: 8px 4px;
+      color: var(--text);
       border-radius: 16px;
+      padding: 8px 4px;
     }
 
     .mobile-nav a:hover {
-      background: rgba(36,200,219,.14);
+      background: rgba(34,211,238,.14);
     }
 
-    @media (max-width: 900px) {
-      .command-shell {
-        padding: 16px 14px 100px;
+    @media (max-width: 950px) {
+      .shell {
+        padding: 14px;
+        padding-bottom: 100px;
       }
 
-      .topbar {
-        align-items: flex-start;
-        flex-direction: column;
-      }
-
-      .quick-grid,
-      .command-grid {
+      .hero,
+      .content-grid,
+      .quick-grid {
         grid-template-columns: 1fr;
       }
 
-      .search-row input {
-        font-size: 16px;
-        padding: 16px;
+      .hero-main {
+        padding: 20px;
+      }
+
+      .hero-photo {
+        min-height: 220px;
+      }
+
+      .quick-card {
+        min-height: auto;
       }
 
       .mobile-nav {
@@ -300,55 +384,70 @@
 </head>
 
 <body>
-  <main class="command-shell">
+  <main class="shell">
 
-    <section class="topbar">
-      <div class="brand-block">
-        <h1>PoolOps2 Command Center</h1>
-        <p>Heinlin Concrete operations, scheduling, field workflow, and pool project control.</p>
+    <section class="hero">
+      <div class="hero-main">
+        <div class="eyebrow">Heinlin Concrete • PoolOps2</div>
+        <h1>Command Center</h1>
+        <p>
+          One dashboard for jobs, schedules, clients, properties, field logs, weather, backups,
+          and the future QuickBooks workflow.
+        </p>
+
+        <div class="system-row">
+          <div class="pill">SYSTEM ONLINE</div>
+          <div class="pill">FASTAPI</div>
+          <div class="pill">POSTGRES CONNECTED</div>
+          <div class="pill">PHASE 14B</div>
+        </div>
       </div>
-      <div class="status-pill">SYSTEM ONLINE</div>
+
+      <div class="hero-photo">
+        <div>
+          <h2>Pool Builder Mode</h2>
+          <p>Modern field-first operations with real project branding.</p>
+        </div>
+      </div>
     </section>
 
     <section class="search-card">
-      <div class="search-row">
-        <input id="universalSearch" type="search" placeholder="Search clients, jobs, properties, schedules, field logs..." autocomplete="off">
-      </div>
+      <input id="universalSearch" type="search" placeholder="Search clients, jobs, properties, schedules, weather, field logs..." autocomplete="off">
       <div id="searchResults" class="search-results"></div>
     </section>
 
     <section class="quick-grid">
-      <a class="quick-card searchable" href="/jobs" data-type="Jobs" data-title="Jobs Schedule Work Orders">
+      <a class="quick-card searchable" href="/jobs" data-type="Jobs" data-title="Jobs Schedule Work Orders Active Projects">
         <div class="icon">🏗️</div>
         <h3>Jobs</h3>
-        <p>View, manage, and move active work.</p>
+        <p>Active work, job details, crews, and status.</p>
       </a>
 
-      <a class="quick-card searchable" href="/schedule" data-type="Schedule" data-title="Schedule Calendar Open Slots">
+      <a class="quick-card searchable" href="/schedule" data-type="Schedule" data-title="Schedule Calendar Open Slots Crew Planning">
         <div class="icon">📅</div>
         <h3>Schedule</h3>
-        <p>Calendar, crews, and open job slots.</p>
+        <p>Calendar control and open job slots.</p>
       </a>
 
-      <a class="quick-card searchable" href="/field-logs" data-type="Field Logs" data-title="Field Logs Photos Notes Crew">
+      <a class="quick-card searchable" href="/field-logs" data-type="Field Logs" data-title="Field Logs Photos Notes Crew Daily Progress">
         <div class="icon">📸</div>
         <h3>Field Logs</h3>
-        <p>Photos, notes, progress, and daily proof.</p>
+        <p>Photos, notes, daily proof, and job progress.</p>
       </a>
 
-      <a class="quick-card searchable" href="/weather" data-type="Weather" data-title="Weather Rain Wind Job Conditions">
+      <a class="quick-card searchable" href="/weather" data-type="Weather" data-title="Weather Rain Wind Temperature Job Conditions">
         <div class="icon">⛈️</div>
         <h3>Weather</h3>
-        <p>Jobsite conditions and planning.</p>
+        <p>Jobsite planning around real conditions.</p>
       </a>
 
-      <a class="quick-card searchable" href="/clients" data-type="Clients" data-title="Clients Homeowners Customers">
+      <a class="quick-card searchable" href="/clients" data-type="Clients" data-title="Clients Homeowners Customers Contacts">
         <div class="icon">👥</div>
         <h3>Clients</h3>
-        <p>Customer contacts and project history.</p>
+        <p>Customer records and contact info.</p>
       </a>
 
-      <a class="quick-card searchable" href="/properties" data-type="Properties" data-title="Properties Addresses Pools">
+      <a class="quick-card searchable" href="/properties" data-type="Properties" data-title="Properties Addresses Pools Homes Job Locations">
         <div class="icon">🏡</div>
         <h3>Properties</h3>
         <p>Addresses, pools, and job locations.</p>
@@ -357,17 +456,17 @@
       <a class="quick-card searchable" href="/backups" data-type="Backups" data-title="Backups Export Database Safety">
         <div class="icon">🛡️</div>
         <h3>Backups</h3>
-        <p>Export and protect company data.</p>
+        <p>Protect the company data.</p>
       </a>
 
-      <a class="quick-card searchable" href="/billing" data-type="Billing" data-title="Billing Invoices QuickBooks CSV">
+      <a class="quick-card searchable" href="/billing" data-type="Billing" data-title="Billing Invoices QuickBooks CSV Money">
         <div class="icon">💵</div>
         <h3>Billing</h3>
-        <p>Invoices and QuickBooks-ready workflow.</p>
+        <p>Invoice flow and QuickBooks CSV prep.</p>
       </a>
     </section>
 
-    <section class="command-grid">
+    <section class="content-grid">
       <div class="panel">
         <h2>Today’s Mission Board</h2>
 
@@ -390,8 +489,8 @@
             {% endfor %}
           {% else %}
             <div class="job-card">
-              <strong>No jobs loaded on this dashboard yet.</strong>
-              <span>The Command Center is ready. Once jobs are passed to this page, they will show here automatically.</span>
+              <strong>No dashboard jobs loaded yet.</strong>
+              <span>This page is ready. Once jobs are passed into the dashboard, they will show here.</span>
             </div>
           {% endif %}
         </div>
@@ -415,10 +514,30 @@
             <b>{{ properties|length if properties else 0 }}</b>
             <span>Properties visible</span>
           </div>
+        </div>
 
-          <div class="metric">
-            <b>14A</b>
-            <span>Current build phase</span>
+        <h2 style="margin-top:20px;">Project Look</h2>
+
+        <div class="photo-grid">
+          <div class="photo-card" style="background-image:url('/static/pool-1.jpg');">
+            <div>
+              <strong>Finished Pools</strong>
+              <span>Showcase completed work.</span>
+            </div>
+          </div>
+
+          <div class="photo-card" style="background-image:url('/static/pool-2.jpg');">
+            <div>
+              <strong>Remodels</strong>
+              <span>Before, during, and after.</span>
+            </div>
+          </div>
+
+          <div class="photo-card" style="background-image:url('/static/pool-3.jpg');">
+            <div>
+              <strong>Concrete + Craft</strong>
+              <span>Premium builder branding.</span>
+            </div>
           </div>
         </div>
       </aside>
@@ -443,8 +562,7 @@
         return {
           title: el.dataset.title || el.innerText || "Item",
           type: el.dataset.type || "Result",
-          href: el.getAttribute("href") || null,
-          element: el
+          href: el.getAttribute("href") || null
         };
       });
     }
@@ -452,7 +570,6 @@
     searchInput.addEventListener("input", function () {
       const query = this.value.trim().toLowerCase();
       const items = getSearchables();
-
       resultsBox.innerHTML = "";
 
       if (!query) {
@@ -463,20 +580,19 @@
       const matches = items.filter(item =>
         item.title.toLowerCase().includes(query) ||
         item.type.toLowerCase().includes(query)
-      ).slice(0, 8);
+      ).slice(0, 10);
+
+      resultsBox.style.display = "grid";
 
       if (!matches.length) {
-        resultsBox.style.display = "grid";
         resultsBox.innerHTML = `
           <div class="search-result">
             <small>No Match</small>
-            <div>No dashboard result found for “${query}”.</div>
+            <div>No dashboard match found for “${query}”.</div>
           </div>
         `;
         return;
       }
-
-      resultsBox.style.display = "grid";
 
       matches.forEach(item => {
         const node = document.createElement(item.href ? "a" : "div");
