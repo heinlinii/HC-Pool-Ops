@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <title>PoolOps2 Command Center</title>
-  <link rel="stylesheet" href="/static/style.css?v=15a">
+  <link rel="stylesheet" href="/static/style.css?v=15b">
 
   <style>
     :root {
@@ -42,7 +42,7 @@
     .shell {
       max-width: 1420px;
       margin: 0 auto;
-      padding: 22px 22px 110px;
+      padding: 22px 22px 120px;
     }
 
     .hero {
@@ -64,9 +64,7 @@
       box-shadow: var(--shadow);
     }
 
-    .hero-main {
-      padding: 24px;
-    }
+    .hero-main { padding: 24px; }
 
     .brand-row {
       display: flex;
@@ -160,13 +158,34 @@
       margin-bottom: 18px;
     }
 
+    .search-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
     .search-label {
       color: var(--blue);
       font-size: 12px;
       font-weight: 900;
       letter-spacing: .14em;
       text-transform: uppercase;
-      margin: 0 0 8px;
+    }
+
+    .shortcut {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .shortcut kbd {
+      border: 1px solid var(--line);
+      background: rgba(0,0,0,.35);
+      color: var(--text);
+      border-radius: 8px;
+      padding: 3px 7px;
+      font-weight: 900;
     }
 
     .search-card input {
@@ -199,6 +218,12 @@
       background: rgba(0,0,0,.26);
       border-radius: 18px;
       padding: 14px;
+    }
+
+    .search-result:hover,
+    .search-result.active-result {
+      border-color: rgba(34,211,238,.75);
+      background: rgba(34,211,238,.13);
     }
 
     .search-result small {
@@ -294,9 +319,7 @@
       gap: 18px;
     }
 
-    .panel {
-      padding: 20px;
-    }
+    .panel { padding: 20px; }
 
     .panel h2 {
       margin: 0 0 14px;
@@ -427,6 +450,22 @@
       background: rgba(34,211,238,.14);
     }
 
+    .floating-search {
+      display: none;
+      position: fixed;
+      right: 16px;
+      bottom: 92px;
+      z-index: 101;
+      width: 58px;
+      height: 58px;
+      border-radius: 20px;
+      border: 1px solid rgba(34,211,238,.55);
+      background: rgba(34,211,238,.18);
+      color: white;
+      font-size: 24px;
+      box-shadow: var(--shadow);
+    }
+
     @media (max-width: 1150px) {
       .action-grid {
         grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -439,7 +478,7 @@
 
     @media (max-width: 950px) {
       .shell {
-        padding: 14px 14px 110px;
+        padding: 14px 14px 120px;
       }
 
       .hero,
@@ -458,6 +497,10 @@
 
       .mobile-nav {
         display: grid;
+      }
+
+      .floating-search {
+        display: block;
       }
     }
 
@@ -478,6 +521,10 @@
 
       h1 {
         font-size: 38px;
+      }
+
+      .shortcut {
+        display: none;
       }
     }
   </style>
@@ -501,24 +548,55 @@
           weather, backups, billing, and future QuickBooks workflow.
         </p>
 
+  <section class="content-grid"></section>  
+      <section class="quick-grid">
+  <div class="quick-card searchable" data-type="Focus" data-title="Today Active Jobs Field Priorities">
+    <div class="icon">🎯</div>
+    <h3>Today</h3>
+    <p>Check today’s jobs, crew movement, and field priorities first.</p>
+  </div>
+
+  <div class="quick-card searchable" data-type="Focus" data-title="This Week Schedule Crew Jobs">
+    <div class="icon">📆</div>
+    <h3>This Week</h3>
+    <p>Review upcoming work, weather risk, and open schedule gaps.</p>
+  </div>
+
+  <div class="quick-card searchable" data-type="Focus" data-title="Needs Attention Problems Delays Missing Photos">
+    <div class="icon">⚠️</div>
+    <h3>Needs Attention</h3>
+    <p>Track jobs missing photos, notes, billing, or next scheduled action.</p>
+  </div>
+
+  <div class="quick-card searchable" data-type="Focus" data-title="Money Billing Invoices QuickBooks Profit">
+    <div class="icon">💰</div>
+    <h3>Money</h3>
+    <p>Keep billing, invoices, job costing, and QuickBooks exports visible.</p>
+  </div>
+</section>
+
         <div class="system-row">
           <div class="pill green">SYSTEM ONLINE</div>
           <div class="pill">FASTAPI</div>
           <div class="pill">POSTGRES CONNECTED</div>
-          <div class="pill">PHASE 15A</div>
+          <div class="pill">PHASE 15C</div>
         </div>
       </div>
 
       <div class="hero-photo">
         <div>
-          <h2>Jarvis for Pool Operations</h2>
-          <p>Fast field controls. Better documentation. Cleaner project command.</p>
+          <h2>Jarvis Command Launcher</h2>
+          <p>Press / to search. Press Enter to open the first result. Press Esc to clear.</p>
         </div>
       </div>
     </section>
 
-    <section class="search-card">
-      <div class="search-label">Universal Command Search</div>
+    <section class="search-card" id="searchSection">
+      <div class="search-top">
+        <div class="search-label">Universal Command Search</div>
+        <div class="shortcut"><kbd>/</kbd> focus search &nbsp; <kbd>Enter</kbd> open first &nbsp; <kbd>Esc</kbd> clear</div>
+      </div>
+
       <input id="universalSearch" type="search" placeholder="Type a client, job, property, schedule, weather, invoice, backup, or field log..." autocomplete="off">
       <div id="searchResults" class="search-results"></div>
     </section>
@@ -690,6 +768,8 @@
 
   </main>
 
+  <button class="floating-search" id="floatingSearch" type="button">⌕</button>
+
   <nav class="mobile-nav">
     <a href="/dashboard">🏠<br>Home</a>
     <a href="/jobs">🏗️<br>Jobs</a>
@@ -701,6 +781,8 @@
   <script>
     const searchInput = document.getElementById("universalSearch");
     const resultsBox = document.getElementById("searchResults");
+    const floatingSearch = document.getElementById("floatingSearch");
+    let currentMatches = [];
 
     function getSearchables() {
       return Array.from(document.querySelectorAll(".searchable")).map((el) => {
@@ -712,25 +794,26 @@
       });
     }
 
-    searchInput.addEventListener("input", function () {
-      const query = this.value.trim().toLowerCase();
+    function runSearch() {
+      const query = searchInput.value.trim().toLowerCase();
       const items = getSearchables();
 
       resultsBox.innerHTML = "";
+      currentMatches = [];
 
       if (!query) {
         resultsBox.style.display = "none";
         return;
       }
 
-      const matches = items.filter(item =>
+      currentMatches = items.filter(item =>
         item.title.toLowerCase().includes(query) ||
         item.type.toLowerCase().includes(query)
       ).slice(0, 12);
 
       resultsBox.style.display = "grid";
 
-      if (!matches.length) {
+      if (!currentMatches.length) {
         resultsBox.innerHTML = `
           <div class="search-result">
             <small>No Match</small>
@@ -740,9 +823,13 @@
         return;
       }
 
-      matches.forEach(item => {
+      currentMatches.forEach((item, index) => {
         const node = document.createElement(item.href ? "a" : "div");
         node.className = "search-result";
+
+        if (index === 0) {
+          node.classList.add("active-result");
+        }
 
         if (item.href) {
           node.href = item.href;
@@ -755,6 +842,35 @@
 
         resultsBox.appendChild(node);
       });
+    }
+
+    searchInput.addEventListener("input", runSearch);
+
+    searchInput.addEventListener("keydown", function(event) {
+      if (event.key === "Enter" && currentMatches.length && currentMatches[0].href) {
+        window.location.href = currentMatches[0].href;
+      }
+
+      if (event.key === "Escape") {
+        searchInput.value = "";
+        runSearch();
+        searchInput.blur();
+      }
+    });
+
+    document.addEventListener("keydown", function(event) {
+      const activeTag = document.activeElement.tagName.toLowerCase();
+
+      if (event.key === "/" && activeTag !== "input" && activeTag !== "textarea") {
+        event.preventDefault();
+        searchInput.focus();
+        searchInput.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    });
+
+    floatingSearch.addEventListener("click", function() {
+      searchInput.focus();
+      searchInput.scrollIntoView({ behavior: "smooth", block: "center" });
     });
   </script>
 </body>
