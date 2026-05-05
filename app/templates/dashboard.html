@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>PoolOps2 Command Center</title>
-  <link rel="stylesheet" href="/static/style.css?v=14b">
+  <link rel="stylesheet" href="/static/style.css?v=14c">
 
   <style>
     :root {
@@ -16,9 +16,6 @@
       --text: #f4fbff;
       --muted: #9db3c0;
       --blue: #22d3ee;
-      --green: #65d493;
-      --orange: #ffbd6b;
-      --red: #ff6b6b;
       --shadow: 0 24px 60px rgba(0,0,0,.42);
     }
 
@@ -29,20 +26,17 @@
       color: var(--text);
       font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       background:
-        linear-gradient(135deg, rgba(5,11,15,.92), rgba(5,11,15,.76), rgba(5,11,15,.96)),
+        linear-gradient(135deg, rgba(5,11,15,.92), rgba(5,11,15,.78), rgba(5,11,15,.96)),
         url("/static/pool-bg.jpg");
       background-size: cover;
       background-position: center;
       background-attachment: fixed;
     }
 
-    a { color: inherit; }
-
     .shell {
       max-width: 1380px;
       margin: 0 auto;
-      padding: 22px;
-      padding-bottom: 100px;
+      padding: 22px 22px 100px;
     }
 
     .hero {
@@ -53,16 +47,35 @@
     }
 
     .hero-main,
-    .hero-photo {
+    .hero-photo,
+    .panel,
+    .quick-card,
+    .search-card {
       border: 1px solid var(--line);
       background: var(--panel);
       border-radius: 30px;
       box-shadow: var(--shadow);
-      overflow: hidden;
     }
 
     .hero-main {
       padding: 24px;
+    }
+
+    .brand-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    .brand-logo {
+      width: 86px;
+      height: 86px;
+      object-fit: contain;
+      border-radius: 20px;
+      background: rgba(255,255,255,.08);
+      padding: 8px;
+      border: 1px solid var(--line);
     }
 
     .eyebrow {
@@ -71,7 +84,7 @@
       font-weight: 900;
       letter-spacing: .14em;
       text-transform: uppercase;
-      margin-bottom: 10px;
+      margin-bottom: 5px;
     }
 
     h1 {
@@ -107,7 +120,6 @@
     }
 
     .hero-photo {
-      position: relative;
       min-height: 260px;
       background:
         linear-gradient(rgba(0,0,0,.08), rgba(0,0,0,.72)),
@@ -117,6 +129,7 @@
       display: flex;
       align-items: flex-end;
       padding: 22px;
+      overflow: hidden;
     }
 
     .hero-photo h2 {
@@ -131,10 +144,7 @@
 
     .search-card {
       background: linear-gradient(135deg, rgba(34,211,238,.18), rgba(18,36,46,.94));
-      border: 1px solid var(--line);
-      border-radius: 28px;
       padding: 16px;
-      box-shadow: var(--shadow);
       margin-bottom: 18px;
     }
 
@@ -149,11 +159,6 @@
       font-size: 18px;
     }
 
-    .search-card input:focus {
-      border-color: var(--blue);
-      box-shadow: 0 0 0 4px rgba(34,211,238,.13);
-    }
-
     .search-results {
       display: none;
       grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -163,6 +168,7 @@
 
     .search-result {
       text-decoration: none;
+      color: var(--text);
       border: 1px solid var(--line);
       background: rgba(0,0,0,.24);
       border-radius: 18px;
@@ -187,12 +193,9 @@
 
     .quick-card {
       text-decoration: none;
-      background: var(--panel);
-      border: 1px solid var(--line);
-      border-radius: 24px;
+      color: var(--text);
       padding: 18px;
       min-height: 142px;
-      box-shadow: var(--shadow);
       transition: .18s ease;
     }
 
@@ -226,11 +229,7 @@
     }
 
     .panel {
-      background: var(--panel);
-      border: 1px solid var(--line);
-      border-radius: 28px;
       padding: 20px;
-      box-shadow: var(--shadow);
     }
 
     .panel h2 {
@@ -348,14 +347,9 @@
       padding: 8px 4px;
     }
 
-    .mobile-nav a:hover {
-      background: rgba(34,211,238,.14);
-    }
-
     @media (max-width: 950px) {
       .shell {
-        padding: 14px;
-        padding-bottom: 100px;
+        padding: 14px 14px 100px;
       }
 
       .hero,
@@ -364,8 +358,9 @@
         grid-template-columns: 1fr;
       }
 
-      .hero-main {
-        padding: 20px;
+      .brand-logo {
+        width: 70px;
+        height: 70px;
       }
 
       .hero-photo {
@@ -388,18 +383,24 @@
 
     <section class="hero">
       <div class="hero-main">
-        <div class="eyebrow">Heinlin Concrete • PoolOps2</div>
-        <h1>Command Center</h1>
+        <div class="brand-row">
+          <img class="brand-logo" src="/static/logo.png" alt="Heinlin Concrete Logo">
+          <div>
+            <div class="eyebrow">Heinlin Concrete • PoolOps2</div>
+            <h1>Command Center</h1>
+          </div>
+        </div>
+
         <p>
-          One dashboard for jobs, schedules, clients, properties, field logs, weather, backups,
-          and the future QuickBooks workflow.
+          One dashboard for jobs, schedules, clients, properties, field logs, weather,
+          backups, and the future QuickBooks workflow.
         </p>
 
         <div class="system-row">
           <div class="pill">SYSTEM ONLINE</div>
           <div class="pill">FASTAPI</div>
           <div class="pill">POSTGRES CONNECTED</div>
-          <div class="pill">PHASE 14B</div>
+          <div class="pill">PHASE 14C</div>
         </div>
       </div>
 
