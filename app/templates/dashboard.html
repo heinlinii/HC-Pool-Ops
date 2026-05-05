@@ -1,242 +1,499 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PoolOps2 Dashboard</title>
-    <link rel="stylesheet" href="/static/style.css?v=17">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PoolOps2 Command Center</title>
+  <link rel="stylesheet" href="/static/style.css?v=14a">
+
+  <style>
+    :root {
+      --bg: #071014;
+      --panel: #101b22;
+      --panel2: #13242d;
+      --card: #162832;
+      --line: rgba(255,255,255,.10);
+      --text: #f3f7f9;
+      --muted: #9fb2bd;
+      --blue: #24c8db;
+      --green: #60d394;
+      --orange: #ffb86b;
+      --red: #ff6b6b;
+      --shadow: 0 20px 50px rgba(0,0,0,.35);
+    }
+
+    body {
+      margin: 0;
+      background:
+        linear-gradient(rgba(7,16,20,.86), rgba(7,16,20,.96)),
+        url("/static/pool-bg.jpg");
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+      color: var(--text);
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    .command-shell {
+      max-width: 1320px;
+      margin: 0 auto;
+      padding: 22px;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 22px;
+    }
+
+    .brand-block h1 {
+      margin: 0;
+      font-size: clamp(28px, 5vw, 52px);
+      letter-spacing: -1.5px;
+    }
+
+    .brand-block p {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    .status-pill {
+      padding: 10px 14px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(36,200,219,.10);
+      color: var(--blue);
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .search-card {
+      background: linear-gradient(135deg, rgba(36,200,219,.18), rgba(19,36,45,.92));
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+      border-radius: 28px;
+      padding: 18px;
+      margin-bottom: 20px;
+    }
+
+    .search-row {
+      display: flex;
+      gap: 12px;
+    }
+
+    .search-row input {
+      flex: 1;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(0,0,0,.28);
+      color: white;
+      padding: 18px 18px;
+      font-size: 18px;
+      outline: none;
+    }
+
+    .search-row input:focus {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 4px rgba(36,200,219,.12);
+    }
+
+    .search-results {
+      margin-top: 14px;
+      display: none;
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      gap: 12px;
+    }
+
+    .search-result {
+      display: block;
+      text-decoration: none;
+      color: var(--text);
+      background: rgba(0,0,0,.24);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 14px;
+    }
+
+    .search-result small {
+      color: var(--blue);
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+
+    .quick-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      margin-bottom: 22px;
+    }
+
+    .quick-card {
+      text-decoration: none;
+      color: var(--text);
+      background: rgba(16,27,34,.92);
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      padding: 20px;
+      box-shadow: var(--shadow);
+      transition: .18s ease;
+    }
+
+    .quick-card:hover {
+      transform: translateY(-3px);
+      border-color: rgba(36,200,219,.5);
+    }
+
+    .quick-card .icon {
+      font-size: 30px;
+      margin-bottom: 10px;
+    }
+
+    .quick-card h3 {
+      margin: 0;
+      font-size: 18px;
+    }
+
+    .quick-card p {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .command-grid {
+      display: grid;
+      grid-template-columns: 1.35fr .65fr;
+      gap: 18px;
+    }
+
+    .panel {
+      background: rgba(16,27,34,.92);
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      padding: 20px;
+      box-shadow: var(--shadow);
+    }
+
+    .panel h2 {
+      margin: 0 0 14px;
+      font-size: 24px;
+    }
+
+    .job-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .job-card {
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.04);
+      border-radius: 20px;
+      padding: 16px;
+    }
+
+    .job-card strong {
+      display: block;
+      font-size: 17px;
+      margin-bottom: 5px;
+    }
+
+    .job-card span {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .tag-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .tag {
+      font-size: 12px;
+      font-weight: 800;
+      border-radius: 999px;
+      padding: 6px 10px;
+      background: rgba(36,200,219,.12);
+      color: var(--blue);
+    }
+
+    .metric-grid {
+      display: grid;
+      gap: 12px;
+    }
+
+    .metric {
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 16px;
+      background: rgba(255,255,255,.04);
+    }
+
+    .metric b {
+      display: block;
+      font-size: 30px;
+    }
+
+    .metric span {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .mobile-nav {
+      display: none;
+      position: fixed;
+      left: 12px;
+      right: 12px;
+      bottom: 12px;
+      background: rgba(7,16,20,.94);
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      padding: 10px;
+      box-shadow: var(--shadow);
+      z-index: 99;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 6px;
+    }
+
+    .mobile-nav a {
+      color: var(--text);
+      text-decoration: none;
+      text-align: center;
+      font-size: 12px;
+      padding: 8px 4px;
+      border-radius: 16px;
+    }
+
+    .mobile-nav a:hover {
+      background: rgba(36,200,219,.14);
+    }
+
+    @media (max-width: 900px) {
+      .command-shell {
+        padding: 16px 14px 100px;
+      }
+
+      .topbar {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .quick-grid,
+      .command-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .search-row input {
+        font-size: 16px;
+        padding: 16px;
+      }
+
+      .mobile-nav {
+        display: grid;
+      }
+    }
+  </style>
 </head>
 
 <body>
+  <main class="command-shell">
 
-<div class="app-layout">
+    <section class="topbar">
+      <div class="brand-block">
+        <h1>PoolOps2 Command Center</h1>
+        <p>Heinlin Concrete operations, scheduling, field workflow, and pool project control.</p>
+      </div>
+      <div class="status-pill">SYSTEM ONLINE</div>
+    </section>
 
-    <aside class="sidebar">
+    <section class="search-card">
+      <div class="search-row">
+        <input id="universalSearch" type="search" placeholder="Search clients, jobs, properties, schedules, field logs..." autocomplete="off">
+      </div>
+      <div id="searchResults" class="search-results"></div>
+    </section>
 
-        <div class="sidebar-top">
-            <img src="/static/logo.png" alt="Heinlin Concrete Logo" class="sidebar-logo">
-            <h1>POOLOPS2</h1>
-            <p>Heinlin Concrete LLC</p>
-        </div>
+    <section class="quick-grid">
+      <a class="quick-card searchable" href="/jobs" data-type="Jobs" data-title="Jobs Schedule Work Orders">
+        <div class="icon">🏗️</div>
+        <h3>Jobs</h3>
+        <p>View, manage, and move active work.</p>
+      </a>
 
-        <nav class="sidebar-nav">
-            <a href="/dashboard" class="active">Dashboard</a>
-            <a href="/jobs">Jobs</a>
-            <a href="/schedule/day">Daily Schedule</a>
-            <a href="/schedule/week">Weekly Schedule</a>
-            <a href="/schedule/month">Monthly Schedule</a>
-            <a href="/weather">Weather</a>
-            <a href="/clients">Clients</a>
-            <a href="/properties">Properties</a>
-            <a href="/employees">Employees</a>
-            <a href="/billing">Billing</a>
-            <a href="/job-costing">Job Costing</a>
-            <a href="/photos">Photos</a>
-            <a href="/imports">Imports</a>
-            <a href="/quickbooks">QuickBooks</a>
-            <a href="/communication">Communication</a>
-            <a href="/backups">Backups</a>
-            <a href="/crew">Crew View</a>
-            <a href="/health">Health</a>
-            <a href="/field-logs">Field Logs</a>
+      <a class="quick-card searchable" href="/schedule" data-type="Schedule" data-title="Schedule Calendar Open Slots">
+        <div class="icon">📅</div>
+        <h3>Schedule</h3>
+        <p>Calendar, crews, and open job slots.</p>
+      </a>
 
-        <div class="sidebar-bottom">
-            <p>{{ user.name }}</p>
-            <span>{{ user.role }}</span>
-            <a href="/logout" class="logout-button">Logout</a>
-        </div>
+      <a class="quick-card searchable" href="/field-logs" data-type="Field Logs" data-title="Field Logs Photos Notes Crew">
+        <div class="icon">📸</div>
+        <h3>Field Logs</h3>
+        <p>Photos, notes, progress, and daily proof.</p>
+      </a>
 
-    </aside>
+      <a class="quick-card searchable" href="/weather" data-type="Weather" data-title="Weather Rain Wind Job Conditions">
+        <div class="icon">⛈️</div>
+        <h3>Weather</h3>
+        <p>Jobsite conditions and planning.</p>
+      </a>
 
-    <main class="main-content">
+      <a class="quick-card searchable" href="/clients" data-type="Clients" data-title="Clients Homeowners Customers">
+        <div class="icon">👥</div>
+        <h3>Clients</h3>
+        <p>Customer contacts and project history.</p>
+      </a>
 
-        <div class="topbar">
-            <div>
-                <h2>Command Center</h2>
-                <p>Today’s Heinlin Concrete operations at a glance.</p>
-            </div>
+      <a class="quick-card searchable" href="/properties" data-type="Properties" data-title="Properties Addresses Pools">
+        <div class="icon">🏡</div>
+        <h3>Properties</h3>
+        <p>Addresses, pools, and job locations.</p>
+      </a>
 
-            <a href="/jobs" class="primary-button" style="text-decoration:none;">
-                Add / View Jobs
-            </a>
-        </div>
+      <a class="quick-card searchable" href="/backups" data-type="Backups" data-title="Backups Export Database Safety">
+        <div class="icon">🛡️</div>
+        <h3>Backups</h3>
+        <p>Export and protect company data.</p>
+      </a>
 
-        <section class="stats-grid">
+      <a class="quick-card searchable" href="/billing" data-type="Billing" data-title="Billing Invoices QuickBooks CSV">
+        <div class="icon">💵</div>
+        <h3>Billing</h3>
+        <p>Invoices and QuickBooks-ready workflow.</p>
+      </a>
+    </section>
 
-            
-       <a href="/jobs" class="stat-card stat-link">
-    <h3>Total Jobs</h3>
-    <div class="stat-number">{{ stats.total_jobs }}</div>
-</a>
+    <section class="command-grid">
+      <div class="panel">
+        <h2>Today’s Mission Board</h2>
 
-<a href="/schedule/week" class="stat-card stat-link">
-    <h3>Scheduled</h3>
-    <div class="stat-number">{{ stats.scheduled }}</div>
-</a>
-
-<a href="/schedule/week" class="stat-card stat-link">
-    <h3>Requested</h3>
-    <div class="stat-number">{{ stats.requested }}</div>
-</a>
-
-<a href="/schedule/week" class="stat-card stat-link">
-    <h3>In Progress</h3>
-    <div class="stat-number">{{ stats.in_progress }}</div>
-</a>
-
-<a href="/clients" class="stat-card stat-link">
-    <h3>Clients</h3>
-    <div class="stat-number">{{ stats.clients }}</div>
-</a>
-
-<a href="/photos" class="stat-card stat-link">
-    <h3>Photos</h3>
-    <div class="stat-number">{{ stats.photos }}</div>
-</a>
-
-<a href="/billing" class="stat-card stat-link">
-    <h3>Invoice Total</h3>
-    <div class="stat-number">${{ "%.2f"|format(stats.invoice_total) }}</div>
-</a>
-
-<a href="/job-costing" class="stat-card stat-link">
-    <h3>Tracked Profit</h3>
-    <div class="stat-number">${{ "%.2f"|format(stats.tracked_profit) }}</div>
-</a>
-
-        </section>
-
-        <section class="content-card">
-
-            <div class="card-header">
-                <h3>Fast Actions</h3>
-            </div>
-
-            <div class="jobs-grid">
-
-                <a href="/schedule/week" class="job-card" style="text-decoration:none; color:inherit;">
-                    <div class="job-top">
-                        <div>
-                            <h3>Weekly Schedule</h3>
-                            <p>See requested, scheduled, and active work.</p>
-                        </div>
-                        <span class="status-pill">Schedule</span>
-                    </div>
-                </a>
-
-                <a href="/weather" class="job-card" style="text-decoration:none; color:inherit;">
-                    <div class="job-top">
-                        <div>
-                            <h3>Weather Center</h3>
-                            <p>Check rain, wind, and jobsite conditions.</p>
-                        </div>
-                        <span class="status-pill">Weather</span>
-                    </div>
-                </a>
-
-                <a href="/communication" class="job-card" style="text-decoration:none; color:inherit;">
-                    <div class="job-top">
-                        <div>
-                            <h3>Communication</h3>
-                            <p>Copy message templates and contact lists.</p>
-                        </div>
-                        <span class="status-pill">Messages</span>
-                    </div>
-                </a>
-
-                <a href="/quickbooks" class="job-card" style="text-decoration:none; color:inherit;">
-                    <div class="job-top">
-                        <div>
-                            <h3>QuickBooks</h3>
-                            <p>Export customers and invoices.</p>
-                        </div>
-                        <span class="status-pill">QBO</span>
-                    </div>
-                </a>
-
-                <a href="/backups" class="job-card" style="text-decoration:none; color:inherit;">
-                    <div class="job-top">
-                        <div>
-                            <h3>Backups</h3>
-                            <p>Download CSV safety copies.</p>
-                        </div>
-                        <span class="status-pill">Safe</span>
-                    </div>
-                </a>
-
-                <a href="/client-login" class="job-card" style="text-decoration:none; color:inherit;">
-                    <div class="job-top">
-                        <div>
-                            <h3>Client Portal</h3>
-                            <p>Client login and request center.</p>
-                        </div>
-                        <span class="status-pill">Portal</span>
-                    </div>
-                </a>
-
-            </div>
-
-        </section>
-
-        <section class="content-card">
-
-            <div class="card-header">
-                <h3>Recent Jobs</h3>
-            </div>
-
-            <div class="jobs-grid">
-
-                {% for job in jobs %}
-
-                <div class="job-card">
-
-                    <div class="job-top">
-                        <div>
-                            <h3>{{ job.client }}</h3>
-                            <p>{{ job.address }}</p>
-                        </div>
-
-                        <span class="status-pill">{{ job.status }}</span>
-                    </div>
-
-                    <div class="job-details">
-
-                        <div class="detail-row">
-                            <strong>Type:</strong>
-                            <span>{{ job.job_type }}</span>
-                        </div>
-
-                        <div class="detail-row">
-                            <strong>Crew:</strong>
-                            <span>{{ job.crew }}</span>
-                        </div>
-
-                        <div class="detail-row">
-                            <strong>Date:</strong>
-                            <span>{{ job.date }}</span>
-                        </div>
-
-                    </div>
-
-                    <div class="job-notes">
-                        {{ job.notes }}
-                    </div>
-
-                    <a href="/jobs/{{ job.id }}" class="primary-button" style="text-decoration:none;">
-                        Open Job Hub
-                    </a>
-
+        <div class="job-list">
+          {% if jobs %}
+            {% for job in jobs[:8] %}
+              <div class="job-card searchable"
+                   data-type="Job"
+                   data-title="{{ job.title or job.name or job.job_name or 'Job' }} {{ job.client_name or '' }} {{ job.property_name or '' }} {{ job.address or '' }} {{ job.status or '' }}">
+                <strong>{{ job.title or job.name or job.job_name or "Untitled Job" }}</strong>
+                <span>
+                  {{ job.client_name or job.client or "Client not assigned" }}
+                  {% if job.address %} • {{ job.address }}{% endif %}
+                </span>
+                <div class="tag-row">
+                  <div class="tag">{{ job.status or "Active" }}</div>
+                  {% if job.scheduled_date %}<div class="tag">{{ job.scheduled_date }}</div>{% endif %}
                 </div>
-
-                {% endfor %}
-
+              </div>
+            {% endfor %}
+          {% else %}
+            <div class="job-card">
+              <strong>No jobs loaded on this dashboard yet.</strong>
+              <span>The Command Center is ready. Once jobs are passed to this page, they will show here automatically.</span>
             </div>
+          {% endif %}
+        </div>
+      </div>
 
-        </section>
+      <aside class="panel">
+        <h2>Ops Snapshot</h2>
 
-    </main>
+        <div class="metric-grid">
+          <div class="metric">
+            <b>{{ jobs|length if jobs else 0 }}</b>
+            <span>Jobs visible</span>
+          </div>
 
-</div>
+          <div class="metric">
+            <b>{{ clients|length if clients else 0 }}</b>
+            <span>Clients visible</span>
+          </div>
 
+          <div class="metric">
+            <b>{{ properties|length if properties else 0 }}</b>
+            <span>Properties visible</span>
+          </div>
+
+          <div class="metric">
+            <b>14A</b>
+            <span>Current build phase</span>
+          </div>
+        </div>
+      </aside>
+    </section>
+
+  </main>
+
+  <nav class="mobile-nav">
+    <a href="/dashboard">🏠<br>Home</a>
+    <a href="/jobs">🏗️<br>Jobs</a>
+    <a href="/schedule">📅<br>Sched</a>
+    <a href="/field-logs">📸<br>Logs</a>
+    <a href="/weather">⛈️<br>Weather</a>
+  </nav>
+
+  <script>
+    const searchInput = document.getElementById("universalSearch");
+    const resultsBox = document.getElementById("searchResults");
+
+    function getSearchables() {
+      return Array.from(document.querySelectorAll(".searchable")).map((el) => {
+        return {
+          title: el.dataset.title || el.innerText || "Item",
+          type: el.dataset.type || "Result",
+          href: el.getAttribute("href") || null,
+          element: el
+        };
+      });
+    }
+
+    searchInput.addEventListener("input", function () {
+      const query = this.value.trim().toLowerCase();
+      const items = getSearchables();
+
+      resultsBox.innerHTML = "";
+
+      if (!query) {
+        resultsBox.style.display = "none";
+        return;
+      }
+
+      const matches = items.filter(item =>
+        item.title.toLowerCase().includes(query) ||
+        item.type.toLowerCase().includes(query)
+      ).slice(0, 8);
+
+      if (!matches.length) {
+        resultsBox.style.display = "grid";
+        resultsBox.innerHTML = `
+          <div class="search-result">
+            <small>No Match</small>
+            <div>No dashboard result found for “${query}”.</div>
+          </div>
+        `;
+        return;
+      }
+
+      resultsBox.style.display = "grid";
+
+      matches.forEach(item => {
+        const node = document.createElement(item.href ? "a" : "div");
+        node.className = "search-result";
+
+        if (item.href) {
+          node.href = item.href;
+        }
+
+        node.innerHTML = `
+          <small>${item.type}</small>
+          <div>${item.title}</div>
+        `;
+
+        resultsBox.appendChild(node);
+      });
+    });
+  </script>
 </body>
 </html>
