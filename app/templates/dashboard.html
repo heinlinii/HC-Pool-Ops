@@ -3,19 +3,23 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
   <title>PoolOps2 Command Center</title>
-  <link rel="stylesheet" href="/static/style.css?v=14c">
+  <link rel="stylesheet" href="/static/style.css?v=15a">
 
   <style>
     :root {
       --bg: #050b0f;
-      --panel: rgba(12, 24, 31, .92);
-      --panel2: rgba(18, 36, 46, .92);
-      --card: rgba(255,255,255,.055);
+      --panel: rgba(12, 24, 31, .94);
+      --panel2: rgba(18, 36, 46, .94);
+      --card: rgba(255,255,255,.06);
       --line: rgba(255,255,255,.12);
       --text: #f4fbff;
       --muted: #9db3c0;
       --blue: #22d3ee;
+      --green: #65d493;
+      --orange: #ffbd6b;
+      --red: #ff6b6b;
       --shadow: 0 24px 60px rgba(0,0,0,.42);
     }
 
@@ -26,22 +30,24 @@
       color: var(--text);
       font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       background:
-        linear-gradient(135deg, rgba(5,11,15,.92), rgba(5,11,15,.78), rgba(5,11,15,.96)),
+        linear-gradient(135deg, rgba(5,11,15,.94), rgba(5,11,15,.78), rgba(5,11,15,.98)),
         url("/static/pool-bg.jpg");
       background-size: cover;
       background-position: center;
       background-attachment: fixed;
     }
 
+    a { color: inherit; }
+
     .shell {
-      max-width: 1380px;
+      max-width: 1420px;
       margin: 0 auto;
-      padding: 22px 22px 100px;
+      padding: 22px 22px 110px;
     }
 
     .hero {
       display: grid;
-      grid-template-columns: 1.2fr .8fr;
+      grid-template-columns: 1.15fr .85fr;
       gap: 18px;
       margin-bottom: 18px;
     }
@@ -50,7 +56,8 @@
     .hero-photo,
     .panel,
     .quick-card,
-    .search-card {
+    .search-card,
+    .action-card {
       border: 1px solid var(--line);
       background: var(--panel);
       border-radius: 30px;
@@ -97,7 +104,7 @@
     .hero-main p {
       color: var(--muted);
       font-size: 16px;
-      max-width: 760px;
+      max-width: 780px;
       line-height: 1.5;
       margin: 14px 0 0;
     }
@@ -119,10 +126,15 @@
       font-size: 13px;
     }
 
+    .pill.green {
+      color: var(--green);
+      background: rgba(101,212,147,.10);
+    }
+
     .hero-photo {
-      min-height: 260px;
+      min-height: 285px;
       background:
-        linear-gradient(rgba(0,0,0,.08), rgba(0,0,0,.72)),
+        linear-gradient(rgba(0,0,0,.05), rgba(0,0,0,.76)),
         url("/static/pool-hero.jpg");
       background-size: cover;
       background-position: center;
@@ -134,7 +146,7 @@
 
     .hero-photo h2 {
       margin: 0;
-      font-size: 26px;
+      font-size: 28px;
     }
 
     .hero-photo p {
@@ -143,20 +155,34 @@
     }
 
     .search-card {
-      background: linear-gradient(135deg, rgba(34,211,238,.18), rgba(18,36,46,.94));
+      background: linear-gradient(135deg, rgba(34,211,238,.18), rgba(18,36,46,.96));
       padding: 16px;
       margin-bottom: 18px;
+    }
+
+    .search-label {
+      color: var(--blue);
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      margin: 0 0 8px;
     }
 
     .search-card input {
       width: 100%;
       border: 1px solid var(--line);
-      background: rgba(0,0,0,.32);
+      background: rgba(0,0,0,.35);
       color: white;
       outline: none;
       border-radius: 20px;
       padding: 18px;
       font-size: 18px;
+    }
+
+    .search-card input:focus {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 4px rgba(34,211,238,.13);
     }
 
     .search-results {
@@ -170,7 +196,7 @@
       text-decoration: none;
       color: var(--text);
       border: 1px solid var(--line);
-      background: rgba(0,0,0,.24);
+      background: rgba(0,0,0,.26);
       border-radius: 18px;
       padding: 14px;
     }
@@ -182,6 +208,46 @@
       text-transform: uppercase;
       letter-spacing: .08em;
       margin-bottom: 5px;
+    }
+
+    .action-grid {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .action-card {
+      text-decoration: none;
+      color: var(--text);
+      padding: 16px;
+      min-height: 116px;
+      transition: .18s ease;
+      background: rgba(8, 18, 24, .93);
+    }
+
+    .action-card:hover {
+      transform: translateY(-3px);
+      border-color: rgba(34,211,238,.55);
+      background: var(--panel2);
+    }
+
+    .action-card .icon {
+      font-size: 26px;
+      margin-bottom: 9px;
+    }
+
+    .action-card strong {
+      display: block;
+      font-size: 15px;
+    }
+
+    .action-card span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 4px;
+      line-height: 1.35;
     }
 
     .quick-grid {
@@ -280,6 +346,16 @@
       color: var(--blue);
     }
 
+    .tag.green {
+      color: var(--green);
+      background: rgba(101,212,147,.12);
+    }
+
+    .tag.orange {
+      color: var(--orange);
+      background: rgba(255,189,107,.12);
+    }
+
     .metric b {
       display: block;
       font-size: 34px;
@@ -301,7 +377,7 @@
       content: "";
       position: absolute;
       inset: 0;
-      background: linear-gradient(rgba(0,0,0,.06), rgba(0,0,0,.74));
+      background: linear-gradient(rgba(0,0,0,.06), rgba(0,0,0,.76));
     }
 
     .photo-card div {
@@ -347,14 +423,27 @@
       padding: 8px 4px;
     }
 
+    .mobile-nav a:hover {
+      background: rgba(34,211,238,.14);
+    }
+
+    @media (max-width: 1150px) {
+      .action-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .quick-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
     @media (max-width: 950px) {
       .shell {
-        padding: 14px 14px 100px;
+        padding: 14px 14px 110px;
       }
 
       .hero,
-      .content-grid,
-      .quick-grid {
+      .content-grid {
         grid-template-columns: 1fr;
       }
 
@@ -367,12 +456,28 @@
         min-height: 220px;
       }
 
+      .mobile-nav {
+        display: grid;
+      }
+    }
+
+    @media (max-width: 620px) {
+      .action-grid,
+      .quick-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .action-card,
       .quick-card {
         min-height: auto;
       }
 
-      .mobile-nav {
-        display: grid;
+      .brand-row {
+        align-items: flex-start;
+      }
+
+      h1 {
+        font-size: 38px;
       }
     }
   </style>
@@ -392,75 +497,114 @@
         </div>
 
         <p>
-          One dashboard for jobs, schedules, clients, properties, field logs, weather,
-          backups, and the future QuickBooks workflow.
+          Your pool operations cockpit for jobs, schedules, clients, properties, field logs,
+          weather, backups, billing, and future QuickBooks workflow.
         </p>
 
         <div class="system-row">
-          <div class="pill">SYSTEM ONLINE</div>
+          <div class="pill green">SYSTEM ONLINE</div>
           <div class="pill">FASTAPI</div>
           <div class="pill">POSTGRES CONNECTED</div>
-          <div class="pill">PHASE 14C</div>
+          <div class="pill">PHASE 15A</div>
         </div>
       </div>
 
       <div class="hero-photo">
         <div>
-          <h2>Pool Builder Mode</h2>
-          <p>Modern field-first operations with real project branding.</p>
+          <h2>Jarvis for Pool Operations</h2>
+          <p>Fast field controls. Better documentation. Cleaner project command.</p>
         </div>
       </div>
     </section>
 
     <section class="search-card">
-      <input id="universalSearch" type="search" placeholder="Search clients, jobs, properties, schedules, weather, field logs..." autocomplete="off">
+      <div class="search-label">Universal Command Search</div>
+      <input id="universalSearch" type="search" placeholder="Type a client, job, property, schedule, weather, invoice, backup, or field log..." autocomplete="off">
       <div id="searchResults" class="search-results"></div>
     </section>
 
+    <section class="action-grid">
+      <a class="action-card searchable" href="/jobs" data-type="Command" data-title="Add Job New Job Create Work Order">
+        <div class="icon">➕</div>
+        <strong>Add Job</strong>
+        <span>Create or manage active work.</span>
+      </a>
+
+      <a class="action-card searchable" href="/field-logs" data-type="Command" data-title="Upload Photo Field Log Job Photo Daily Progress">
+        <div class="icon">📸</div>
+        <strong>Upload Photo</strong>
+        <span>Document today’s progress.</span>
+      </a>
+
+      <a class="action-card searchable" href="/field-logs" data-type="Command" data-title="Daily Note Crew Note Field Note">
+        <div class="icon">📝</div>
+        <strong>Daily Note</strong>
+        <span>Record field conditions.</span>
+      </a>
+
+      <a class="action-card searchable" href="/schedule" data-type="Command" data-title="Schedule Crew Calendar Add Slot">
+        <div class="icon">📅</div>
+        <strong>Schedule</strong>
+        <span>Plan crews and slots.</span>
+      </a>
+
+      <a class="action-card searchable" href="/weather" data-type="Command" data-title="Check Weather Rain Wind Temperature">
+        <div class="icon">⛈️</div>
+        <strong>Weather</strong>
+        <span>Check jobsite conditions.</span>
+      </a>
+
+      <a class="action-card searchable" href="/billing" data-type="Command" data-title="Invoice Billing QuickBooks CSV Money">
+        <div class="icon">💵</div>
+        <strong>Billing</strong>
+        <span>Invoices and CSV workflow.</span>
+      </a>
+    </section>
+
     <section class="quick-grid">
-      <a class="quick-card searchable" href="/jobs" data-type="Jobs" data-title="Jobs Schedule Work Orders Active Projects">
+      <a class="quick-card searchable" href="/jobs" data-type="Module" data-title="Jobs Schedule Work Orders Active Projects">
         <div class="icon">🏗️</div>
         <h3>Jobs</h3>
         <p>Active work, job details, crews, and status.</p>
       </a>
 
-      <a class="quick-card searchable" href="/schedule" data-type="Schedule" data-title="Schedule Calendar Open Slots Crew Planning">
+      <a class="quick-card searchable" href="/schedule" data-type="Module" data-title="Schedule Calendar Open Slots Crew Planning">
         <div class="icon">📅</div>
         <h3>Schedule</h3>
         <p>Calendar control and open job slots.</p>
       </a>
 
-      <a class="quick-card searchable" href="/field-logs" data-type="Field Logs" data-title="Field Logs Photos Notes Crew Daily Progress">
+      <a class="quick-card searchable" href="/field-logs" data-type="Module" data-title="Field Logs Photos Notes Crew Daily Progress">
         <div class="icon">📸</div>
         <h3>Field Logs</h3>
         <p>Photos, notes, daily proof, and job progress.</p>
       </a>
 
-      <a class="quick-card searchable" href="/weather" data-type="Weather" data-title="Weather Rain Wind Temperature Job Conditions">
+      <a class="quick-card searchable" href="/weather" data-type="Module" data-title="Weather Rain Wind Temperature Job Conditions">
         <div class="icon">⛈️</div>
         <h3>Weather</h3>
         <p>Jobsite planning around real conditions.</p>
       </a>
 
-      <a class="quick-card searchable" href="/clients" data-type="Clients" data-title="Clients Homeowners Customers Contacts">
+      <a class="quick-card searchable" href="/clients" data-type="Module" data-title="Clients Homeowners Customers Contacts">
         <div class="icon">👥</div>
         <h3>Clients</h3>
         <p>Customer records and contact info.</p>
       </a>
 
-      <a class="quick-card searchable" href="/properties" data-type="Properties" data-title="Properties Addresses Pools Homes Job Locations">
+      <a class="quick-card searchable" href="/properties" data-type="Module" data-title="Properties Addresses Pools Homes Job Locations">
         <div class="icon">🏡</div>
         <h3>Properties</h3>
         <p>Addresses, pools, and job locations.</p>
       </a>
 
-      <a class="quick-card searchable" href="/backups" data-type="Backups" data-title="Backups Export Database Safety">
+      <a class="quick-card searchable" href="/backups" data-type="Module" data-title="Backups Export Database Safety">
         <div class="icon">🛡️</div>
         <h3>Backups</h3>
         <p>Protect the company data.</p>
       </a>
 
-      <a class="quick-card searchable" href="/billing" data-type="Billing" data-title="Billing Invoices QuickBooks CSV Money">
+      <a class="quick-card searchable" href="/billing" data-type="Module" data-title="Billing Invoices QuickBooks CSV Money">
         <div class="icon">💵</div>
         <h3>Billing</h3>
         <p>Invoice flow and QuickBooks CSV prep.</p>
@@ -483,8 +627,8 @@
                   {% if job.address %} • {{ job.address }}{% endif %}
                 </span>
                 <div class="tag-row">
-                  <div class="tag">{{ job.status or "Active" }}</div>
-                  {% if job.scheduled_date %}<div class="tag">{{ job.scheduled_date }}</div>{% endif %}
+                  <div class="tag green">{{ job.status or "Active" }}</div>
+                  {% if job.scheduled_date %}<div class="tag orange">{{ job.scheduled_date }}</div>{% endif %}
                 </div>
               </div>
             {% endfor %}
@@ -571,6 +715,7 @@
     searchInput.addEventListener("input", function () {
       const query = this.value.trim().toLowerCase();
       const items = getSearchables();
+
       resultsBox.innerHTML = "";
 
       if (!query) {
@@ -581,7 +726,7 @@
       const matches = items.filter(item =>
         item.title.toLowerCase().includes(query) ||
         item.type.toLowerCase().includes(query)
-      ).slice(0, 10);
+      ).slice(0, 12);
 
       resultsBox.style.display = "grid";
 
