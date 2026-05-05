@@ -6,7 +6,7 @@
 
   <title>PoolOps2 Command Center</title>
 
-  <link rel="stylesheet" href="/static/style.css?v=15f">
+  <link rel="stylesheet" href="/static/style.css?v=15g">
 
   <style>
     :root{
@@ -23,9 +23,7 @@
       --shadow:0 24px 60px rgba(0,0,0,.42);
     }
 
-    *{
-      box-sizing:border-box;
-    }
+    *{box-sizing:border-box;}
 
     body{
       margin:0;
@@ -182,6 +180,36 @@
       border-radius:20px;
       padding:18px;
       font-size:18px;
+    }
+
+    .search-results{
+      display:none;
+      grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+      gap:12px;
+      margin-top:14px;
+    }
+
+    .search-result{
+      display:block;
+      border:1px solid var(--line);
+      background:rgba(0,0,0,.28);
+      border-radius:18px;
+      padding:14px;
+    }
+
+    .search-result:hover,
+    .search-result.active-result{
+      border-color:rgba(34,211,238,.65);
+      background:rgba(34,211,238,.13);
+    }
+
+    .search-result small{
+      color:var(--blue);
+      display:block;
+      font-weight:900;
+      text-transform:uppercase;
+      margin-bottom:5px;
+      letter-spacing:.08em;
     }
 
     .focus-grid,
@@ -475,7 +503,7 @@
         <div class="pill green">SYSTEM ONLINE</div>
         <div class="pill">FASTAPI</div>
         <div class="pill">POSTGRES CONNECTED</div>
-        <div class="pill">PHASE 15F</div>
+        <div class="pill">PHASE 15G</div>
       </div>
 
     </div>
@@ -489,35 +517,38 @@
 
   </section>
 
-  <section class="search-card">
+  <section class="search-card" id="searchSection">
     <div class="search-label">Universal Command Search</div>
 
-    <input type="search"
+    <input id="universalSearch"
+      type="search"
       placeholder="Search jobs, clients, field logs, billing..."
       autocomplete="off">
+
+    <div id="searchResults" class="search-results"></div>
   </section>
 
   <section class="focus-grid">
 
-    <div class="focus-card">
+    <div class="focus-card searchable" data-type="Focus" data-title="Today field priorities crew movement active jobs">
       <div class="icon">🎯</div>
       <h3>Today</h3>
       <p>Track field priorities and crew movement.</p>
     </div>
 
-    <div class="focus-card">
+    <div class="focus-card searchable" data-type="Focus" data-title="This Week schedule pressure open slots calendar">
       <div class="icon">📆</div>
       <h3>This Week</h3>
       <p>See upcoming schedule pressure points.</p>
     </div>
 
-    <div class="focus-card">
+    <div class="focus-card searchable" data-type="Focus" data-title="Needs Attention delayed jobs missing documentation notes photos">
       <div class="icon">⚠️</div>
       <h3>Needs Attention</h3>
       <p>Flag delayed jobs and missing documentation.</p>
     </div>
 
-    <div class="focus-card">
+    <div class="focus-card searchable" data-type="Focus" data-title="Money billing QuickBooks invoices exports profit">
       <div class="icon">💰</div>
       <h3>Money</h3>
       <p>Keep billing and QuickBooks visible.</p>
@@ -527,37 +558,37 @@
 
   <section class="action-grid">
 
-    <a class="action-card" href="/jobs">
+    <a class="action-card searchable" href="/jobs" data-type="Command" data-title="Add Job create work orders jobs">
       <div class="icon">➕</div>
       <strong>Add Job</strong>
       <span>Create work orders.</span>
     </a>
 
-    <a class="action-card" href="/field-logs">
+    <a class="action-card searchable" href="/field-logs" data-type="Command" data-title="Upload Photo field logs pictures progress">
       <div class="icon">📸</div>
       <strong>Upload Photo</strong>
       <span>Document progress.</span>
     </a>
 
-    <a class="action-card" href="/field-logs">
+    <a class="action-card searchable" href="/field-logs" data-type="Command" data-title="Daily Note field notes conditions logs">
       <div class="icon">📝</div>
       <strong>Daily Note</strong>
       <span>Record conditions.</span>
     </a>
 
-    <a class="action-card" href="/schedule">
+    <a class="action-card searchable" href="/schedule" data-type="Command" data-title="Schedule calendar crews planning">
       <div class="icon">📅</div>
       <strong>Schedule</strong>
       <span>Plan crews.</span>
     </a>
 
-    <a class="action-card" href="/weather">
+    <a class="action-card searchable" href="/weather" data-type="Command" data-title="Weather forecast rain wind conditions">
       <div class="icon">⛈️</div>
       <strong>Weather</strong>
       <span>Check conditions.</span>
     </a>
 
-    <a class="action-card" href="/billing">
+    <a class="action-card searchable" href="/billing" data-type="Command" data-title="Billing invoices QuickBooks exports CSV">
       <div class="icon">💵</div>
       <strong>Billing</strong>
       <span>Invoices and exports.</span>
@@ -567,49 +598,49 @@
 
   <section class="quick-grid">
 
-    <a class="quick-card" href="/jobs">
+    <a class="quick-card searchable" href="/jobs" data-type="Module" data-title="Jobs active work crews work orders">
       <div class="icon">🏗️</div>
       <h3>Jobs</h3>
       <p>Active work and crews.</p>
     </a>
 
-    <a class="quick-card" href="/schedule">
+    <a class="quick-card searchable" href="/schedule" data-type="Module" data-title="Schedule calendar planning open slots">
       <div class="icon">📅</div>
       <h3>Schedule</h3>
       <p>Calendar and planning.</p>
     </a>
 
-    <a class="quick-card" href="/field-logs">
+    <a class="quick-card searchable" href="/field-logs" data-type="Module" data-title="Field Logs photos progress notes daily">
       <div class="icon">📸</div>
       <h3>Field Logs</h3>
       <p>Photos and progress.</p>
     </a>
 
-    <a class="quick-card" href="/weather">
+    <a class="quick-card searchable" href="/weather" data-type="Module" data-title="Weather forecast rain wind jobsite conditions">
       <div class="icon">⛈️</div>
       <h3>Weather</h3>
       <p>Forecast planning.</p>
     </a>
 
-    <a class="quick-card" href="/clients">
+    <a class="quick-card searchable" href="/clients" data-type="Module" data-title="Clients customers homeowners contacts">
       <div class="icon">👥</div>
       <h3>Clients</h3>
       <p>Customer records.</p>
     </a>
 
-    <a class="quick-card" href="/properties">
+    <a class="quick-card searchable" href="/properties" data-type="Module" data-title="Properties addresses pools locations">
       <div class="icon">🏡</div>
       <h3>Properties</h3>
       <p>Addresses and pools.</p>
     </a>
 
-    <a class="quick-card" href="/backups">
+    <a class="quick-card searchable" href="/backups" data-type="Module" data-title="Backups database export company data">
       <div class="icon">🛡️</div>
       <h3>Backups</h3>
       <p>Protect company data.</p>
     </a>
 
-    <a class="quick-card" href="/billing">
+    <a class="quick-card searchable" href="/billing" data-type="Module" data-title="Billing QuickBooks workflow invoices CSV">
       <div class="icon">💵</div>
       <h3>Billing</h3>
       <p>QuickBooks workflow.</p>
@@ -627,7 +658,9 @@
 
         {% if jobs %}
           {% for job in jobs[:8] %}
-            <div class="job-card">
+            <div class="job-card searchable"
+              data-type="Job"
+              data-title="{{ job.title or job.name or 'Untitled Job' }} {{ job.client_name or '' }} {{ job.status or '' }}">
               <strong>{{ job.title or job.name or "Untitled Job" }}</strong>
 
               <span>
@@ -716,7 +749,7 @@
   <a href="/schedule">📅<br>Schedule</a>
 </div>
 
-<button class="floating-search">⌕</button>
+<button class="floating-search" id="floatingSearch" type="button">⌕</button>
 
 <nav class="mobile-nav">
   <a href="/dashboard">🏠<br>Home</a>
@@ -725,6 +758,102 @@
   <a href="/field-logs">📸<br>Logs</a>
   <a href="/weather">⛈️<br>Weather</a>
 </nav>
+
+<script>
+  const searchInput = document.getElementById("universalSearch");
+  const resultsBox = document.getElementById("searchResults");
+  const floatingSearch = document.getElementById("floatingSearch");
+  let currentMatches = [];
+
+  function getSearchables() {
+    return Array.from(document.querySelectorAll(".searchable")).map((el) => {
+      return {
+        title: el.dataset.title || el.innerText || "Item",
+        type: el.dataset.type || "Result",
+        href: el.getAttribute("href") || null
+      };
+    });
+  }
+
+  function runSearch() {
+    const query = searchInput.value.trim().toLowerCase();
+    const items = getSearchables();
+
+    resultsBox.innerHTML = "";
+    currentMatches = [];
+
+    if (!query) {
+      resultsBox.style.display = "none";
+      return;
+    }
+
+    currentMatches = items.filter(item =>
+      item.title.toLowerCase().includes(query) ||
+      item.type.toLowerCase().includes(query)
+    ).slice(0, 12);
+
+    resultsBox.style.display = "grid";
+
+    if (!currentMatches.length) {
+      resultsBox.innerHTML = `
+        <div class="search-result">
+          <small>No Match</small>
+          <div>No dashboard match found for “${query}”.</div>
+        </div>
+      `;
+      return;
+    }
+
+    currentMatches.forEach((item, index) => {
+      const node = document.createElement(item.href ? "a" : "div");
+      node.className = "search-result";
+
+      if (index === 0) {
+        node.classList.add("active-result");
+      }
+
+      if (item.href) {
+        node.href = item.href;
+      }
+
+      node.innerHTML = `
+        <small>${item.type}</small>
+        <div>${item.title}</div>
+      `;
+
+      resultsBox.appendChild(node);
+    });
+  }
+
+  searchInput.addEventListener("input", runSearch);
+
+  searchInput.addEventListener("keydown", function(event) {
+    if (event.key === "Enter" && currentMatches.length && currentMatches[0].href) {
+      window.location.href = currentMatches[0].href;
+    }
+
+    if (event.key === "Escape") {
+      searchInput.value = "";
+      runSearch();
+      searchInput.blur();
+    }
+  });
+
+  document.addEventListener("keydown", function(event) {
+    const activeTag = document.activeElement.tagName.toLowerCase();
+
+    if (event.key === "/" && activeTag !== "input" && activeTag !== "textarea") {
+      event.preventDefault();
+      searchInput.focus();
+      searchInput.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  });
+
+  floatingSearch.addEventListener("click", function() {
+    searchInput.focus();
+    searchInput.scrollIntoView({ behavior: "smooth", block: "center" });
+  });
+</script>
 
 </body>
 </html>
