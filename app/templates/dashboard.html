@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <title>PoolOps2 Command Center</title>
-  <link rel="stylesheet" href="/static/style.css?v=15b">
+  <link rel="stylesheet" href="/static/style.css?v=15d">
 
   <style>
     :root {
@@ -55,9 +55,10 @@
     .hero-main,
     .hero-photo,
     .panel,
-    .quick-card,
     .search-card,
-    .action-card {
+    .action-card,
+    .focus-card,
+    .quick-card {
       border: 1px solid var(--line);
       background: var(--panel);
       border-radius: 30px;
@@ -199,11 +200,6 @@
       font-size: 18px;
     }
 
-    .search-card input:focus {
-      border-color: var(--blue);
-      box-shadow: 0 0 0 4px rgba(34,211,238,.13);
-    }
-
     .search-results {
       display: none;
       grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -235,6 +231,54 @@
       margin-bottom: 5px;
     }
 
+    .section-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: end;
+      gap: 12px;
+      margin: 4px 0 12px;
+    }
+
+    .section-title h2 {
+      margin: 0;
+      font-size: 24px;
+    }
+
+    .section-title span {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .focus-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .focus-card {
+      padding: 18px;
+      min-height: 150px;
+      background: rgba(8,18,24,.94);
+    }
+
+    .focus-card .icon {
+      font-size: 28px;
+      margin-bottom: 12px;
+    }
+
+    .focus-card h3 {
+      margin: 0;
+      font-size: 19px;
+    }
+
+    .focus-card p {
+      margin: 7px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.4;
+    }
+
     .action-grid {
       display: grid;
       grid-template-columns: repeat(6, minmax(0, 1fr));
@@ -251,7 +295,8 @@
       background: rgba(8, 18, 24, .93);
     }
 
-    .action-card:hover {
+    .action-card:hover,
+    .quick-card:hover {
       transform: translateY(-3px);
       border-color: rgba(34,211,238,.55);
       background: var(--panel2);
@@ -286,30 +331,24 @@
       text-decoration: none;
       color: var(--text);
       padding: 18px;
-      min-height: 142px;
+      min-height: 130px;
       transition: .18s ease;
     }
 
-    .quick-card:hover {
-      transform: translateY(-3px);
-      border-color: rgba(34,211,238,.55);
-      background: var(--panel2);
-    }
-
     .quick-card .icon {
-      font-size: 30px;
-      margin-bottom: 12px;
+      font-size: 28px;
+      margin-bottom: 10px;
     }
 
     .quick-card h3 {
       margin: 0;
-      font-size: 19px;
+      font-size: 18px;
     }
 
     .quick-card p {
       margin: 6px 0 0;
       color: var(--muted);
-      font-size: 14px;
+      font-size: 13px;
       line-height: 1.35;
     }
 
@@ -467,65 +506,35 @@
     }
 
     @media (max-width: 1150px) {
-      .action-grid {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-      }
-
-      .quick-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
+      .action-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .quick-grid, .focus-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
 
     @media (max-width: 950px) {
-      .shell {
-        padding: 14px 14px 120px;
-      }
-
-      .hero,
-      .content-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .brand-logo {
-        width: 70px;
-        height: 70px;
-      }
-
-      .hero-photo {
-        min-height: 220px;
-      }
-
-      .mobile-nav {
-        display: grid;
-      }
-
-      .floating-search {
-        display: block;
-      }
+      .shell { padding: 14px 14px 120px; }
+      .hero, .content-grid { grid-template-columns: 1fr; }
+      .brand-logo { width: 70px; height: 70px; }
+      .hero-photo { min-height: 220px; }
+      .mobile-nav { display: grid; }
+      .floating-search { display: block; }
     }
 
     @media (max-width: 620px) {
       .action-grid,
-      .quick-grid {
+      .quick-grid,
+      .focus-grid {
         grid-template-columns: 1fr;
       }
 
       .action-card,
-      .quick-card {
+      .quick-card,
+      .focus-card {
         min-height: auto;
       }
 
-      .brand-row {
-        align-items: flex-start;
-      }
-
-      h1 {
-        font-size: 38px;
-      }
-
-      .shortcut {
-        display: none;
-      }
+      .brand-row { align-items: flex-start; }
+      h1 { font-size: 38px; }
+      .shortcut { display: none; }
     }
   </style>
 </head>
@@ -548,38 +557,11 @@
           weather, backups, billing, and future QuickBooks workflow.
         </p>
 
-  <section class="content-grid"></section>  
-      <section class="quick-grid">
-  <div class="quick-card searchable" data-type="Focus" data-title="Today Active Jobs Field Priorities">
-    <div class="icon">🎯</div>
-    <h3>Today</h3>
-    <p>Check today’s jobs, crew movement, and field priorities first.</p>
-  </div>
-
-  <div class="quick-card searchable" data-type="Focus" data-title="This Week Schedule Crew Jobs">
-    <div class="icon">📆</div>
-    <h3>This Week</h3>
-    <p>Review upcoming work, weather risk, and open schedule gaps.</p>
-  </div>
-
-  <div class="quick-card searchable" data-type="Focus" data-title="Needs Attention Problems Delays Missing Photos">
-    <div class="icon">⚠️</div>
-    <h3>Needs Attention</h3>
-    <p>Track jobs missing photos, notes, billing, or next scheduled action.</p>
-  </div>
-
-  <div class="quick-card searchable" data-type="Focus" data-title="Money Billing Invoices QuickBooks Profit">
-    <div class="icon">💰</div>
-    <h3>Money</h3>
-    <p>Keep billing, invoices, job costing, and QuickBooks exports visible.</p>
-  </div>
-</section>
-
         <div class="system-row">
           <div class="pill green">SYSTEM ONLINE</div>
           <div class="pill">FASTAPI</div>
           <div class="pill">POSTGRES CONNECTED</div>
-          <div class="pill">PHASE 15C</div>
+          <div class="pill">PHASE 15D</div>
         </div>
       </div>
 
@@ -597,9 +579,45 @@
         <div class="shortcut"><kbd>/</kbd> focus search &nbsp; <kbd>Enter</kbd> open first &nbsp; <kbd>Esc</kbd> clear</div>
       </div>
 
-      <input id="universalSearch" type="search" placeholder="Type a client, job, property, schedule, weather, invoice, backup, or field log..." autocomplete="off">
+      <input id="universalSearch" type="search" placeholder="Search jobs, clients, properties, field logs, schedule, weather, billing..." autocomplete="off">
       <div id="searchResults" class="search-results"></div>
     </section>
+
+    <div class="section-title">
+      <h2>Command Focus</h2>
+      <span>What needs your eyes first</span>
+    </div>
+
+    <section class="focus-grid">
+      <div class="focus-card searchable" data-type="Focus" data-title="Today Active Jobs Field Priorities">
+        <div class="icon">🎯</div>
+        <h3>Today</h3>
+        <p>Start here for today’s jobs, crew movement, weather risk, and jobsite priorities.</p>
+      </div>
+
+      <div class="focus-card searchable" data-type="Focus" data-title="This Week Schedule Crew Jobs Open Slots">
+        <div class="icon">📆</div>
+        <h3>This Week</h3>
+        <p>Look ahead at the work stack, available slots, and schedule pressure.</p>
+      </div>
+
+      <div class="focus-card searchable" data-type="Focus" data-title="Needs Attention Problems Delays Missing Photos Billing">
+        <div class="icon">⚠️</div>
+        <h3>Needs Attention</h3>
+        <p>Flag missing photos, notes, next steps, delayed jobs, or billing loose ends.</p>
+      </div>
+
+      <div class="focus-card searchable" data-type="Focus" data-title="Money Billing Invoices QuickBooks Profit Job Costing">
+        <div class="icon">💰</div>
+        <h3>Money</h3>
+        <p>Keep invoices, QuickBooks exports, job costing, and profit visibility front and center.</p>
+      </div>
+    </section>
+
+    <div class="section-title">
+      <h2>Fast Actions</h2>
+      <span>Field-first shortcuts</span>
+    </div>
 
     <section class="action-grid">
       <a class="action-card searchable" href="/jobs" data-type="Command" data-title="Add Job New Job Create Work Order">
@@ -638,6 +656,11 @@
         <span>Invoices and CSV workflow.</span>
       </a>
     </section>
+
+    <div class="section-title">
+      <h2>Modules</h2>
+      <span>Main system areas</span>
+    </div>
 
     <section class="quick-grid">
       <a class="quick-card searchable" href="/jobs" data-type="Module" data-title="Jobs Schedule Work Orders Active Projects">
