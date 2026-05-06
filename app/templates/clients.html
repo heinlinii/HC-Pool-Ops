@@ -19,7 +19,11 @@
 
     <a class="btn" href="/clients/new">+ Add New Client</a>
     <a class="btn" href="/dashboard">Dashboard</a>
-  </section>
+ <form method="post" action="/admin/wipe-clients"
+      onsubmit="return confirm('Delete ALL clients?');">
+  <button type="submit">Delete All Clients</button>
+</form>
+</section>
 
   <section class="card">
     <input id="clientSearch" type="search" placeholder="Search clients by name, phone, email, or notes...">
@@ -62,11 +66,6 @@
     });
   });
 </script>
-
-<form method="post" action="/admin/wipe-clients"
-      onsubmit="return confirm('Delete ALL clients?');">
-  <button type="submit">Delete All Clients</button>
-</form>
 
 </body>
 </html>
