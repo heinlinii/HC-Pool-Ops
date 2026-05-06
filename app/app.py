@@ -765,6 +765,25 @@ async def new_client_page(request: Request):
         },
     )
 
+@app.post("/admin/wipe-clients")
+async def wipe_clients(request: Request):
+
+    user = require_admin(request)
+
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    db = db_session()
+
+    try:
+        db.query(Client).delete()
+        db.commit()
+
+    finally:
+        db.close()
+
+    return RedirectResponse(url="/clients", status_code=303)
+
 @app.get("/clients")
 async def clients_page(request: Request):
     user = require_admin(request)
