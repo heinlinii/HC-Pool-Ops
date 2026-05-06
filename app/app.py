@@ -750,6 +750,30 @@ async def complete_job(request: Request, job_id: int):
     finally:
         db.close()
 
+@app.get("/clients")
+async def clients_page(request: Request):
+    user = require_login(request)
+
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    db = db_session()
+
+    try:
+        clients = db.query(Client).order_by(Client.name.asc()).all()
+
+        return templates.TemplateResponse(
+            "clients.html",
+            {
+                "request": request,
+                "user": user,
+                "clients": clients
+            }
+        )
+
+    finally:
+        db.close()
+
 @app.get("/clients/new")
 async def new_client_page(request: Request):
     user = require_admin(request)
@@ -810,7 +834,7 @@ async def new_property_page(request: Request):
 
 @app.get("/properties")
 async def properties_page(request: Request):
-    user = require_admin(request)
+    user = require_login(request)
 
     if not user:
         return RedirectResponse(url="/", status_code=303)
@@ -818,17 +842,15 @@ async def properties_page(request: Request):
     db = db_session()
 
     try:
-        properties = db.query(Property).order_by(Property.address.asc()).all()
-        clients = db.query(Client).order_by(Client.name.asc()).all()
+        properties = db.query(Property).order_by(Property.id.desc()).all()
 
         return templates.TemplateResponse(
-            request,
             "properties.html",
             {
+                "request": request,
                 "user": user,
-                "clients": clients,
-                "properties": properties,
-            },
+                "properties": properties
+            }
         )
 
     finally:
@@ -1740,65 +1762,38 @@ async def import_clients(request: Request, csv_file: UploadFile = File(...)):
         status_code=303,
     )
 
-
 @app.post("/imports/properties")
-async def import_properties(request: Request, csv_file: UploadFile = File(...)):
-    user = require_admin(request)
+async def import_properties(file: UploadFile = File(...), request: Request = None):
+    user = require_login(request)
 
     if not user:
         return RedirectResponse(url="/", status_code=303)
 
-    rows = read_csv_upload(csv_file)
-
     db = db_session()
 
-    imported = 0
-    skipped = 0
-
     try:
-        for row in rows:
-            client_name = pick(row, "client", "customer", "name", "company")
-            address = pick(row, "address", "property", "jobsite", "job address", "billing address")
+        contents = await file.read()
+        text = contents.decode("utf-8")
 
-            if not client_name or not address:
-                skipped += 1
-                continue
+        import csv
+        reader = csv.DictReader(text.splitlines())
 
-            client = db.query(Client).filter(Client.name == client_name).first()
-
-            if not client:
-                client = Client(name=client_name, phone="", email="", notes="Imported with property.")
-                db.add(client)
-                db.flush()
-
-            existing = db.query(Property).filter(Property.address == address).first()
-
-            if existing:
-                skipped += 1
-                continue
-
-            db.add(
-                Property(
-                    client_id=client.id,
-                    client=client.name,
-                    address=address,
-                    pool_type=pick(row, "pool_type", "pool type", "type"),
-                    notes=pick(row, "notes", "memo", "description"),
-                )
+        for row in reader:
+            new_property = Property(
+                client=row.get("client"),
+                address=row.get("address"),
+                pool_type=row.get("pool_type"),
+                notes=row.get("notes")
             )
 
-            imported += 1
+            db.add(new_property)
 
         db.commit()
 
+        return RedirectResponse(url="/properties", status_code=303)
+
     finally:
         db.close()
-
-    return RedirectResponse(
-        url=f"/imports?message=Imported {imported} properties. Skipped {skipped}.",
-        status_code=303,
-    )
-
 
 @app.post("/imports/invoices")
 async def import_invoices(request: Request, csv_file: UploadFile = File(...)):
@@ -2123,10 +2118,6 @@ async def client_logout(request: Request):
     request.session.clear()
 
     return RedirectResponse("/", status_code=303)
-
-    return RedirectResponse(
-        url=f"/imports?message=Imported {imported} invoices. Skipped {skipped}.",
-        status_code=303,
     )
 # =========================
 # PHASE 7 WEATHER
