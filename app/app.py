@@ -1794,7 +1794,6 @@ async def import_properties(file: UploadFile = File(...), request: Request = Non
 
     finally:
         db.close()
-
 @app.post("/imports/invoices")
 async def import_invoices(request: Request, csv_file: UploadFile = File(...)):
     user = require_admin(request)
