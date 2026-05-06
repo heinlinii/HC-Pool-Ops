@@ -792,9 +792,11 @@ async def clients_page(request: Request):
         return RedirectResponse(url="/", status_code=303)
 
     db = db_session()
+
 @app.get("/clients")
 async def clients_page(request: Request):
-    user = require_admin(request)
+
+    user = require_login(request)
 
     if not user:
         return RedirectResponse(url="/", status_code=303)
@@ -805,9 +807,9 @@ async def clients_page(request: Request):
         clients = db.query(Client).order_by(Client.name.asc()).all()
 
         return templates.TemplateResponse(
-            request,
             "clients.html",
             {
+                "request": request,
                 "user": user,
                 "clients": clients,
             },
