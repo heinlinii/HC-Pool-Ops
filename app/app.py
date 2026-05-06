@@ -760,14 +760,12 @@ async def new_client_page(request: Request):
     return templates.TemplateResponse(
         request,
         "client_new.html",
-        {
-            "user": user,
-        },
+        {"user": user},
     )
+
 
 @app.post("/admin/wipe-clients")
 async def wipe_clients(request: Request):
-
     user = require_admin(request)
 
     if not user:
@@ -784,19 +782,10 @@ async def wipe_clients(request: Request):
 
     return RedirectResponse(url="/clients", status_code=303)
 
+
 @app.get("/clients")
 async def clients_page(request: Request):
     user = require_admin(request)
-
-    if not user:
-        return RedirectResponse(url="/", status_code=303)
-
-    db = db_session()
-
-@app.get("/clients")
-async def clients_page(request: Request):
-
-    user = require_login(request)
 
     if not user:
         return RedirectResponse(url="/", status_code=303)
@@ -807,9 +796,9 @@ async def clients_page(request: Request):
         clients = db.query(Client).order_by(Client.name.asc()).all()
 
         return templates.TemplateResponse(
+            request,
             "clients.html",
             {
-                "request": request,
                 "user": user,
                 "clients": clients,
             },
@@ -817,7 +806,7 @@ async def clients_page(request: Request):
 
     finally:
         db.close()
-   
+
 
 @app.get("/clients/{client_id}")
 async def client_detail_page(request: Request, client_id: int):
@@ -852,6 +841,7 @@ async def client_detail_page(request: Request, client_id: int):
 
     finally:
         db.close()
+
 
 @app.post("/clients/add")
 async def add_client(
@@ -951,6 +941,29 @@ async def delete_client(request: Request, client_id: int):
     finally:
         db.close()
 
+@app.get("/clients")
+async def clients_page(request: Request):
+    user = require_admin(request)
+
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    db = db_session()
+
+    try:
+        clients = db.query(Client).order_by(Client.name.asc()).all()
+
+        return templates.TemplateResponse(
+            "clients.html",
+            {
+                "request": request,
+                "user": user,
+                "clients": clients,
+            },
+        )
+
+    finally:
+        db.close()
 
 @app.get("/properties")
 async def properties_page(request: Request):
