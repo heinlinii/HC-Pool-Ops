@@ -792,8 +792,18 @@ async def clients_page(request: Request):
         return RedirectResponse(url="/", status_code=303)
 
     db = db_session()
-clients = db.query(Client).order_by(Client.name.asc()).all()
+@app.get("/clients")
+async def clients_page(request: Request):
+    user = require_admin(request)
+
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    db = db_session()
+
     try:
+        clients = db.query(Client).order_by(Client.name.asc()).all()
+
         return templates.TemplateResponse(
             request,
             "clients.html",
@@ -805,6 +815,7 @@ clients = db.query(Client).order_by(Client.name.asc()).all()
 
     finally:
         db.close()
+   
 
 @app.get("/clients/{client_id}")
 async def client_detail_page(request: Request, client_id: int):
