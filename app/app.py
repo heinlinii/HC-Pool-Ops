@@ -2118,7 +2118,7 @@ async def client_logout(request: Request):
     request.session.clear()
 
     return RedirectResponse("/", status_code=303)
-    )
+
 # =========================
 # PHASE 7 WEATHER
 # =========================
