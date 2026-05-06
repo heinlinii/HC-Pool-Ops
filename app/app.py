@@ -281,8 +281,8 @@ async def dashboard(request: Request):
 
     try:
         jobs = db.query(Job).order_by(Job.id.desc()).all()
-        clients = db.query(Client).order_by(Client.id.desc()).all()
-        properties = db.query(Property).order_by(Property.id.desc()).all()
+       clients = db.query(Client).order_by(Client.name.asc()).all()
+        properties = db.query(Property).order_by(Property.id.desc())
         employees = db.query(Employee).order_by(Employee.id.desc()).all()
         invoices = db.query(Invoice).all()
         costs = db.query(JobCost).all()
@@ -792,14 +792,14 @@ async def clients_page(request: Request):
         return RedirectResponse(url="/", status_code=303)
 
     db = db_session()
-
+clients = db.query(Client).order_by(Client.name.asc()).all()
     try:
         return templates.TemplateResponse(
             request,
             "clients.html",
             {
                 "user": user,
-                "clients": db.query(Client).order_by(Client.id.desc()).all(),
+                "clients": clients,
             },
         )
 
