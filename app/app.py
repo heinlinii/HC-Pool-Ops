@@ -282,7 +282,7 @@ async def dashboard(request: Request):
     try:
         jobs = db.query(Job).order_by(Job.id.desc()).all()
         clients = db.query(Client).order_by(Client.name.asc()).all()
-        properties = db.query(Property).order_by(Property.id.desc())
+        properties = db.query(Property).order_by(Property.id.desc()).all()
         employees = db.query(Employee).order_by(Employee.id.desc()).all()
         invoices = db.query(Invoice).all()
         costs = db.query(JobCost).all()
