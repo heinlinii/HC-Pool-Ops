@@ -1807,7 +1807,8 @@ async def import_clients(request: Request, csv_file: UploadFile = File(...)):
     )
 
 @app.post("/imports/properties")
-async def import_properties(file: UploadFile = File(...), request: Request = None):
+async def import_properties(request: Request, file: UploadFile = File(...)):
+
     user = require_login(request)
 
     if not user:
@@ -1823,11 +1824,13 @@ async def import_properties(file: UploadFile = File(...), request: Request = Non
         reader = csv.DictReader(text.splitlines())
 
         for row in reader:
+            print("IMPORT ROW:", row)  # <-- DEBUG (shows in Render logs)
+
             new_property = Property(
-                client=row.get("client"),
-                address=row.get("address"),
-                pool_type=row.get("pool_type"),
-                notes=row.get("notes")
+                client = row.get("client") or row.get("Client") or "",
+                address = row.get("address") or row.get("Address") or "",
+                pool_type = row.get("pool_type") or row.get("Type") or "",
+                notes = row.get("notes") or row.get("Notes") or "",
             )
 
             db.add(new_property)
@@ -1835,54 +1838,6 @@ async def import_properties(file: UploadFile = File(...), request: Request = Non
         db.commit()
 
         return RedirectResponse(url="/properties", status_code=303)
-
-    finally:
-        db.close()
-@app.post("/imports/invoices")
-async def import_invoices(request: Request, csv_file: UploadFile = File(...)):
-    user = require_admin(request)
-
-    if not user:
-        return RedirectResponse(url="/", status_code=303)
-
-    rows = read_csv_upload(csv_file)
-
-    db = db_session()
-
-    imported = 0
-    skipped = 0
-
-    try:
-        for row in rows:
-            client_name = pick(row, "client", "customer", "name", "company")
-            description = pick(row, "description", "memo", "item", "product/service")
-            amount_raw = pick(row, "amount", "total", "balance", "invoice amount")
-
-            if not client_name or not amount_raw:
-                skipped += 1
-                continue
-
-            try:
-                amount = float(amount_raw.replace("$", "").replace(",", ""))
-            except ValueError:
-                skipped += 1
-                continue
-
-            db.add(
-                Invoice(
-                    job_id=None,
-                    client=client_name,
-                    description=description or "Imported invoice",
-                    amount=round(amount, 2),
-                    status=pick(row, "status") or "Imported",
-                    date=pick(row, "date", "invoice date", "txn date"),
-                    notes=pick(row, "notes", "memo"),
-                )
-            )
-
-            imported += 1
-
-        db.commit()
 
     finally:
         db.close()
