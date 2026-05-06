@@ -1,742 +1,240 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-  <title>PoolOps2 Command Center</title>
-  <link rel="stylesheet" href="/static/style.css?v=15e">
-
-  <style>
-    :root {
-      --bg: #050b0f;
-      --panel: rgba(12, 24, 31, .94);
-      --panel2: rgba(18, 36, 46, .94);
-      --card: rgba(255,255,255,.06);
-      --line: rgba(255,255,255,.12);
-      --text: #f4fbff;
-      --muted: #9db3c0;
-      --blue: #22d3ee;
-      --green: #65d493;
-      --orange: #ffbd6b;
-      --shadow: 0 24px 60px rgba(0,0,0,.42);
-    }
-
-    * { box-sizing: border-box; }
-
-    body {
-      margin: 0;
-      color: var(--text);
-      font-family: Inter, system-ui, sans-serif;
-      background:
-        linear-gradient(135deg, rgba(5,11,15,.94), rgba(5,11,15,.78), rgba(5,11,15,.98)),
-        url("/static/pool-bg.jpg");
-      background-size: cover;
-      background-position: center;
-      background-attachment: fixed;
-    }
-
-    a {
-      color: inherit;
-      text-decoration: none;
-    }
-
-    .shell {
-      max-width: 1420px;
-      margin: 0 auto;
-      padding: 22px 22px 130px;
-    }
-
-    .hero {
-      display: grid;
-      grid-template-columns: 1.15fr .85fr;
-      gap: 18px;
-      margin-bottom: 18px;
-    }
-
-    .hero-main,
-    .hero-photo,
-    .panel,
-    .search-card,
-    .focus-card,
-    .action-card,
-    .quick-card {
-      border: 1px solid var(--line);
-      background: var(--panel);
-      border-radius: 30px;
-      box-shadow: var(--shadow);
-    }
-
-    .hero-main {
-      padding: 24px;
-    }
-
-    .brand-row {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      margin-bottom: 18px;
-    }
-
-    .brand-logo {
-      width: 86px;
-      height: 86px;
-      object-fit: contain;
-      border-radius: 20px;
-      background: rgba(255,255,255,.08);
-      padding: 8px;
-      border: 1px solid var(--line);
-    }
-
-    .eyebrow {
-      color: var(--blue);
-      font-size: 12px;
-      font-weight: 900;
-      letter-spacing: .14em;
-      text-transform: uppercase;
-      margin-bottom: 5px;
-    }
-
-    h1 {
-      margin: 0;
-      font-size: clamp(34px, 6vw, 62px);
-      line-height: .95;
-      letter-spacing: -2px;
-    }
-
-    .hero-main p {
-      color: var(--muted);
-      font-size: 16px;
-      line-height: 1.5;
-      margin: 14px 0 0;
-    }
-
-    .system-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-top: 18px;
-    }
-
-    .pill {
-      border: 1px solid var(--line);
-      background: rgba(34,211,238,.10);
-      color: var(--blue);
-      border-radius: 999px;
-      padding: 9px 12px;
-      font-weight: 900;
-      font-size: 13px;
-    }
-
-    .pill.green {
-      color: var(--green);
-      background: rgba(101,212,147,.10);
-    }
-
-    .hero-photo {
-      min-height: 285px;
-      background:
-        linear-gradient(rgba(0,0,0,.05), rgba(0,0,0,.76)),
-        url("/static/pool-hero.jpg");
-      background-size: cover;
-      background-position: center;
-      display: flex;
-      align-items: flex-end;
-      padding: 22px;
-    }
-
-    .hero-photo h2 {
-      margin: 0;
-      font-size: 28px;
-    }
-
-    .hero-photo p {
-      margin: 6px 0 0;
-      color: #d4e5ec;
-    }
-
-    .search-card {
-      background: linear-gradient(135deg, rgba(34,211,238,.18), rgba(18,36,46,.96));
-      padding: 16px;
-      margin-bottom: 18px;
-    }
-
-    .search-label {
-      color: var(--blue);
-      font-size: 12px;
-      font-weight: 900;
-      letter-spacing: .14em;
-      text-transform: uppercase;
-      margin-bottom: 8px;
-    }
-
-    .search-card input {
-      width: 100%;
-      border: 1px solid var(--line);
-      background: rgba(0,0,0,.35);
-      color: white;
-      outline: none;
-      border-radius: 20px;
-      padding: 18px;
-      font-size: 18px;
-    }
-
-    .search-results {
-      display: none;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      gap: 12px;
-      margin-top: 14px;
-    }
-
-    .search-result {
-      border: 1px solid var(--line);
-      background: rgba(0,0,0,.26);
-      border-radius: 18px;
-      padding: 14px;
-    }
-
-    .search-result small {
-      color: var(--blue);
-      display: block;
-      font-weight: 900;
-      text-transform: uppercase;
-      margin-bottom: 5px;
-    }
-
-    .focus-grid,
-    .action-grid,
-    .quick-grid {
-      display: grid;
-      gap: 14px;
-      margin-bottom: 18px;
-    }
-
-    .focus-grid {
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-    }
-
-    .action-grid {
-      grid-template-columns: repeat(6, minmax(0, 1fr));
-    }
-
-    .quick-grid {
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-    }
-
-    .focus-card,
-    .action-card,
-    .quick-card {
-      padding: 18px;
-      transition: .18s ease;
-      background: rgba(8,18,24,.94);
-    }
-
-    .focus-card:hover,
-    .action-card:hover,
-    .quick-card:hover {
-      transform: translateY(-3px);
-      border-color: rgba(34,211,238,.55);
-      background: var(--panel2);
-    }
-
-    .icon {
-      font-size: 28px;
-      margin-bottom: 10px;
-    }
-
-    .focus-card h3,
-    .quick-card h3 {
-      margin: 0;
-      font-size: 18px;
-    }
-
-    .focus-card p,
-    .quick-card p,
-    .action-card span {
-      margin: 6px 0 0;
-      color: var(--muted);
-      font-size: 13px;
-      line-height: 1.4;
-    }
-
-    .action-card strong {
-      display: block;
-      font-size: 15px;
-    }
-
-    .content-grid {
-      display: grid;
-      grid-template-columns: 1.35fr .65fr;
-      gap: 18px;
-    }
-
-    .panel {
-      padding: 20px;
-    }
-
-    .panel h2 {
-      margin: 0 0 14px;
-      font-size: 24px;
-    }
-
-    .job-list,
-    .metric-grid {
-      display: grid;
-      gap: 12px;
-    }
-
-    .job-card,
-    .metric {
-      border: 1px solid var(--line);
-      background: var(--card);
-      border-radius: 20px;
-      padding: 16px;
-    }
-
-    .job-card strong {
-      display: block;
-      font-size: 17px;
-      margin-bottom: 5px;
-    }
-
-    .job-card span,
-    .metric span {
-      color: var(--muted);
-      font-size: 14px;
-    }
-
-    .tag-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-top: 10px;
-    }
-
-    .tag {
-      font-size: 12px;
-      font-weight: 900;
-      border-radius: 999px;
-      padding: 6px 10px;
-      background: rgba(34,211,238,.12);
-      color: var(--blue);
-    }
-
-    .metric b {
-      display: block;
-      font-size: 34px;
-      margin-bottom: 5px;
-    }
-
-    .mobile-nav {
-      display: none;
-      position: fixed;
-      left: 10px;
-      right: 10px;
-      bottom: 10px;
-      background: rgba(5,11,15,.96);
-      border: 1px solid var(--line);
-      border-radius: 24px;
-      padding: 10px;
-      z-index: 100;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 6px;
-      box-shadow: var(--shadow);
-    }
-
-    .mobile-nav a {
-      text-align: center;
-      font-size: 12px;
-      border-radius: 16px;
-      padding: 8px 4px;
-    }
-
-    .field-dock {
-      display: none;
-      position: fixed;
-      left: 10px;
-      right: 78px;
-      bottom: 92px;
-      z-index: 101;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
-    }
-
-    .field-dock a {
-      text-align: center;
-      border: 1px solid var(--line);
-      background: rgba(5,11,15,.96);
-      border-radius: 18px;
-      padding: 10px 6px;
-      font-size: 12px;
-      box-shadow: var(--shadow);
-    }
-
-    .floating-search {
-      display: none;
-      position: fixed;
-      right: 16px;
-      bottom: 92px;
-      z-index: 101;
-      width: 58px;
-      height: 58px;
-      border-radius: 20px;
-      border: 1px solid rgba(34,211,238,.55);
-      background: rgba(34,211,238,.18);
-      color: white;
-      font-size: 24px;
-      box-shadow: var(--shadow);
-    }
-
-    @media (max-width: 1150px) {
-      .action-grid {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-      }
-
-      .focus-grid,
-      .quick-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-    }
-
-    @media (max-width: 950px) {
-      .shell {
-        padding: 14px 14px 130px;
-      }
-
-      .hero,
-      .content-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .mobile-nav {
-        display: grid;
-      }
-
-      .floating-search {
-        display: block;
-      }
-
-      .field-dock {
-        display: grid;
-      }
-    }
-
-    @media (max-width: 620px) {
-      .action-grid,
-      .focus-grid,
-      .quick-grid {
-        grid-template-columns: 1fr;
-      }
-    }
-  </style>
-</head>
-
-<body>
-
-  <main class="shell">
-
-    <section class="hero">
-      <div class="hero-main">
-
-        <div class="brand-row">
-          <img class="brand-logo" src="/static/logo.png" alt="Heinlin Concrete Logo">
-
-          <div>
-            <div class="eyebrow">Heinlin Concrete • PoolOps2</div>
-            <h1>Command Center</h1>
-          </div>
-        </div>
-
-        <p>
-          Your pool operations cockpit for jobs, schedules, clients,
-          properties, field logs, weather, backups, billing,
-          and future QuickBooks workflow.
-        </p>
-
-        <div class="system-row">
-          <div class="pill green">SYSTEM ONLINE</div>
-          <div class="pill">FASTAPI</div>
-          <div class="pill">POSTGRES CONNECTED</div>
-          <div class="pill">PHASE 15E</div>
-        </div>
-
-      </div>
-
-      <div class="hero-photo">
-        <div>
-          <h2>Superintendent Mode</h2>
-          <p>Fast field controls for crews, notes, scheduling, and documentation.</p>
-        </div>
-      </div>
-    </section>
-
-    <section class="search-card">
-      <div class="search-label">Universal Command Search</div>
-
-      <input id="universalSearch" type="search"
-        placeholder="Search jobs, clients, properties, field logs, schedule, billing..."
-        autocomplete="off">
-
-      <div id="searchResults" class="search-results"></div>
-    </section>
-
-    <section class="focus-grid">
-      <div class="focus-card">
-        <div class="icon">🎯</div>
-        <h3>Today</h3>
-        <p>Track today’s field priorities and crew movement.</p>
-      </div>
-
-      <div class="focus-card">
-        <div class="icon">📆</div>
-        <h3>This Week</h3>
-        <p>See upcoming pressure points and open schedule gaps.</p>
-      </div>
-
-      <div class="focus-card">
-        <div class="icon">⚠️</div>
-        <h3>Needs Attention</h3>
-        <p>Flag missing photos, notes, or delayed jobs.</p>
-      </div>
-
-      <div class="focus-card">
-        <div class="icon">💰</div>
-        <h3>Money</h3>
-        <p>Keep invoices and QuickBooks workflow visible.</p>
-      </div>
-    </section>
-
-    <section class="action-grid">
-      <a class="action-card" href="/jobs">
-        <div class="icon">➕</div>
-        <strong>Add Job</strong>
-        <span>Create and manage work orders.</span>
-      </a>
-
-      <a class="action-card" href="/field-logs">
-        <div class="icon">📸</div>
-        <strong>Upload Photo</strong>
-        <span>Document field progress.</span>
-      </a>
-
-      <a class="action-card" href="/field-logs">
-        <div class="icon">📝</div>
-        <strong>Daily Note</strong>
-        <span>Record field conditions.</span>
-      </a>
-
-      <a class="action-card" href="/schedule">
-        <div class="icon">📅</div>
-        <strong>Schedule</strong>
-        <span>Plan crews and slots.</span>
-      </a>
-
-      <a class="action-card" href="/weather">
-        <div class="icon">⛈️</div>
-        <strong>Weather</strong>
-        <span>Check conditions quickly.</span>
-      </a>
-
-      <a class="action-card" href="/billing">
-        <div class="icon">💵</div>
-        <strong>Billing</strong>
-        <span>Invoices and exports.</span>
-      </a>
-    </section>
-
-    <section class="quick-grid">
-  <a class="quick-card" href="/jobs">
-    <div class="icon">🏗️</div>
-    <h3>Jobs</h3>
-    <p>Active work, job details, crews, and status.</p>
-  </a>
-
-  <a class="quick-card" href="/schedule">
-    <div class="icon">📅</div>
-    <h3>Schedule</h3>
-    <p>Calendar control and open job slots.</p>
-  </a>
-
-  <a class="quick-card" href="/field-logs">
-    <div class="icon">📸</div>
-    <h3>Field Logs</h3>
-    <p>Photos, notes, and daily progress.</p>
-  </a>
-
-  <a class="quick-card" href="/weather">
-    <div class="icon">⛈️</div>
-    <h3>Weather</h3>
-    <p>Jobsite weather planning.</p>
-  </a>
-
-  <a class="quick-card" href="/clients">
-    <div class="icon">👥</div>
-    <h3>Clients</h3>
-    <p>Customer records and contact info.</p>
-  </a>
-
-  <a class="quick-card" href="/properties">
-    <div class="icon">🏡</div>
-    <h3>Properties</h3>
-    <p>Addresses, pools, and job locations.</p>
-  </a>
-
-  <a class="quick-card" href="/backups">
-    <div class="icon">🛡️</div>
-    <h3>Backups</h3>
-    <p>Protect company data.</p>
-  </a>
-
-  <a class="quick-card" href="/billing">
-    <div class="icon">💵</div>
-    <h3>Billing</h3>
-    <p>Invoices and QuickBooks CSV workflow.</p>
-  </a>
-</section>
-
-    <section class="content-grid">
-
-      <div class="panel">
-        <h2>Today’s Mission Board</h2>
-
-        <div class="job-list">
-
-          {% if jobs %}
-            {% for job in jobs[:8] %}
-              <div class="job-card">
-                <strong>{{ job.title or job.name or "Untitled Job" }}</strong>
-
-                <span>
-                  {{ job.client_name or "Client not assigned" }}
-                </span>
-
-                <div class="tag-row">
-                  <div class="tag">
-                    {{ job.status or "Active" }}
-                  </div>
-                </div>
-              </div>
-            {% endfor %}
-          {% else %}
-            <div class="job-card">
-              <strong>No jobs loaded yet.</strong>
-              <span>Jobs will appear here automatically.</span>
-            </div>
-          {% endif %}
-
-        </div>
-      </div>
-
-      <aside class="panel">
-        <h2>Ops Snapshot</h2>
-
-        <div class="metric-grid">
-          <div class="metric">
-            <b>{{ jobs|length if jobs else 0 }}</b>
-            <span>Jobs visible</span>
-          </div>
-
-          <div class="metric">
-            <b>{{ clients|length if clients else 0 }}</b>
-            <span>Clients visible</span>
-          </div>
-
-          <div class="metric">
-            <b>{{ properties|length if properties else 0 }}</b>
-            <span>Properties visible</span>
-          </div>
-        </div>
-      </aside>
-
-    </section>
-
-  </main>
-
-  <div class="field-dock">
-    <a href="/field-logs">📸<br>Photo</a>
-    <a href="/field-logs">📝<br>Note</a>
-    <a href="/schedule">📅<br>Schedule</a>
-  </div>
-
-  <button class="floating-search" id="floatingSearch">⌕</button>
-
-  <nav class="mobile-nav">
-    <a href="/dashboard">🏠<br>Home</a>
-    <a href="/jobs">🏗️<br>Jobs</a>
-    <a href="/schedule">📅<br>Sched</a>
-    <a href="/field-logs">📸<br>Logs</a>
-    <a href="/weather">⛈️<br>Weather</a>
-  </nav>
-
-  <script>
-    const searchInput = document.getElementById("universalSearch");
-    const resultsBox = document.getElementById("searchResults");
-    const floatingSearch = document.getElementById("floatingSearch");
-
-    const searchableItems = [
-      { type: "Jobs", title: "Jobs Work Orders", href: "/jobs" },
-      { type: "Schedule", title: "Schedule Calendar", href: "/schedule" },
-      { type: "Field Logs", title: "Photos Notes Progress", href: "/field-logs" },
-      { type: "Billing", title: "Invoices QuickBooks", href: "/billing" },
-      { type: "Weather", title: "Forecast Rain Wind", href: "/weather" },
-      { type: "Clients", title: "Customers Homeowners", href: "/clients" },
-      { type: "Properties", title: "Addresses Pools", href: "/properties" }
-    ];
-
-    function runSearch() {
-      const query = searchInput.value.trim().toLowerCase();
-
-      resultsBox.innerHTML = "";
-
-      if (!query) {
-        resultsBox.style.display = "none";
-        return;
-      }
-
-      const matches = searchableItems.filter(item =>
-        item.title.toLowerCase().includes(query) ||
-        item.type.toLowerCase().includes(query)
-      );
-
-      resultsBox.style.display = "grid";
-
-      if (!matches.length) {
-        resultsBox.innerHTML = `
-          <div class="search-result">
-            <small>No Match</small>
-            <div>No results found.</div>
-          </div>
-        `;
-        return;
-      }
-
-      matches.forEach(item => {
-        resultsBox.innerHTML += `
-          <a class="search-result" href="${item.href}">
-            <small>${item.type}</small>
-            <div>${item.title}</div>
-          </a>
-        `;
-      });
-    }
-
-    searchInput.addEventListener("input", runSearch);
-
-    floatingSearch.addEventListener("click", () => {
-      searchInput.focus();
-      window.scrollTo({
-        top: searchInput.offsetTop - 100,
-        behavior: "smooth"
-      });
-    });
-
-    document.addEventListener("keydown", (event) => {
-      if (event.key === "/") {
-        event.preventDefault();
-        searchInput.focus();
-      }
-    });
-  </script>
-
-</body>
-</html>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background:
+    linear-gradient(135deg, rgba(5, 11, 15, .94), rgba(5, 11, 15, .86)),
+    url("/static/pool-bg.jpg");
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  color: #f4fbff;
+}
+
+a {
+  color: #22d3ee;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+img {
+  max-width: 100%;
+}
+
+.page-shell,
+main,
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 22px;
+}
+
+.card,
+.panel,
+.form-card,
+section {
+  background: rgba(12, 24, 31, .94);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 24px;
+  padding: 20px;
+  margin-bottom: 18px;
+  box-shadow: 0 24px 60px rgba(0,0,0,.35);
+}
+
+h1, h2, h3 {
+  color: #f4fbff;
+  margin-top: 0;
+}
+
+p,
+small,
+label,
+span {
+  color: #9db3c0;
+}
+
+button,
+.btn,
+input[type="submit"] {
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(34,211,238,.14);
+  color: #f4fbff;
+  border-radius: 14px;
+  padding: 10px 14px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+button:hover,
+.btn:hover,
+input[type="submit"]:hover {
+  background: rgba(34,211,238,.24);
+}
+
+input,
+select,
+textarea {
+  width: 100%;
+  background: rgba(0,0,0,.32);
+  border: 1px solid rgba(255,255,255,.14);
+  color: #f4fbff;
+  border-radius: 14px;
+  padding: 12px;
+  margin: 6px 0 12px;
+}
+
+textarea {
+  min-height: 100px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: rgba(12,24,31,.9);
+  border-radius: 18px;
+  overflow: hidden;
+}
+
+th,
+td {
+  padding: 12px;
+  border-bottom: 1px solid rgba(255,255,255,.1);
+  text-align: left;
+}
+
+th {
+  color: #22d3ee;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+
+.logo,
+.brand-logo {
+  max-width: 170px;
+  height: auto;
+  display: block;
+  margin-bottom: 16px;
+}
+
+nav,
+.nav,
+.sidebar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 14px 0 22px;
+}
+
+nav a,
+.nav a,
+.sidebar a {
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 14px;
+  padding: 10px 12px;
+  color: #f4fbff;
+  font-weight: 800;
+}
+
+nav a:hover,
+.nav a:hover,
+.sidebar a:hover {
+  background: rgba(34,211,238,.16);
+  text-decoration: none;
+}
+
+.topbar-back {
+  width: 100%;
+  padding: 14px 16px 0;
+}
+
+.back-btn {
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(5,11,15,.92);
+  color: #22d3ee;
+  border-radius: 14px;
+  padding: 10px 16px;
+  font-size: 15px;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: 0 10px 25px rgba(0,0,0,.25);
+}
+
+.back-btn:hover {
+  background: rgba(34,211,238,.14);
+}
+
+.grid,
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.status,
+.tag,
+.badge {
+  display: inline-block;
+  border-radius: 999px;
+  padding: 6px 10px;
+  background: rgba(34,211,238,.12);
+  color: #22d3ee;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+@media (max-width: 768px) {
+  .page-shell,
+  main,
+  .container {
+    padding: 14px;
+  }
+
+  .card,
+  .panel,
+  .form-card,
+  section {
+    border-radius: 20px;
+    padding: 16px;
+  }
+
+  nav,
+  .nav,
+  .sidebar {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  nav a,
+  .nav a,
+  .sidebar a {
+    text-align: center;
+  }
+
+  .topbar-back {
+    position: sticky;
+    top: 0;
+    z-index: 500;
+    background: rgba(5,11,15,.94);
+    backdrop-filter: blur(8px);
+    padding-bottom: 10px;
+  }
+
+  .back-btn {
+    width: 100%;
+    padding: 14px;
+    font-size: 16px;
+  }
+
+  table {
+    display: block;
+    overflow-x: auto;
+  }
+}
