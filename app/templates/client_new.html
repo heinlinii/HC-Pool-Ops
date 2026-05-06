@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Add Client • PoolOps2</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<div class="topbar-back">
+  <button onclick="history.back()" class="back-btn">← Back</button>
+</div>
+
+<main class="page-shell">
+
+  <section class="card">
+    <h1>Add New Client</h1>
+    <p>Create a clean client record first. Properties and jobs can be attached after.</p>
+  </section>
+
+  <section class="card">
+    <form method="post" action="/clients/add">
+      <label>Client Name</label>
+      <input type="text" name="name" required>
+
+      <label>Phone</label>
+      <input type="text" name="phone">
+
+      <label>Email</label>
+      <input type="email" name="email">
+
+      <label>Notes</label>
+      <textarea name="notes"></textarea>
+
+      <button type="submit">Save Client</button>
+      <a class="btn" href="/clients">Cancel</a>
+    </form>
+  </section>
+
+</main>
+
+</body>
+</html>

@@ -750,6 +750,20 @@ async def complete_job(request: Request, job_id: int):
     finally:
         db.close()
 
+@app.get("/clients/new")
+async def new_client_page(request: Request):
+    user = require_admin(request)
+
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    return templates.TemplateResponse(
+        request,
+        "client_new.html",
+        {
+            "user": user,
+        },
+    )
 
 @app.get("/clients")
 async def clients_page(request: Request):
@@ -2225,6 +2239,145 @@ def build_weather_alerts(weather):
 
     return alerts
 
+# =========================
+# PHASE 16A UNIVERSAL SEARCH API
+# =========================
+
+@app.get("/api/search")
+async def api_search(request: Request, q: str = ""):
+
+    user = require_login(request)
+
+    if not user:
+        return {"results": []}
+
+    q = (q or "").strip().lower()
+
+    if not q:
+        return {"results": []}
+
+    db = db_session()
+
+    try:
+
+        results = []
+
+        # JOBS
+        jobs = db.query(Job).all()
+
+        for job in jobs:
+
+            search_blob = f"""
+            {job.client or ""}
+            {job.property or ""}
+            {job.address or ""}
+            {job.job_type or ""}
+            {job.status or ""}
+            {job.crew or ""}
+            {job.notes or ""}
+            """.lower()
+
+            if q in search_blob:
+
+                results.append({
+                    "type": "Job",
+                    "title": f"{job.client} • {job.job_type}",
+                    "subtitle": f"{job.address} • {job.status}",
+                    "url": f"/jobs/{job.id}"
+                })
+
+        # CLIENTS
+        clients = db.query(Client).all()
+
+        for client in clients:
+
+            search_blob = f"""
+            {client.name or ""}
+            {client.phone or ""}
+            {client.email or ""}
+            {client.notes or ""}
+            """.lower()
+
+            if q in search_blob:
+
+                results.append({
+                    "type": "Client",
+                    "title": client.name,
+                    "subtitle": client.phone or client.email or "",
+                    "url": "/clients"
+                })
+
+        # PROPERTIES
+        properties = db.query(Property).all()
+
+        for prop in properties:
+
+            search_blob = f"""
+            {prop.client or ""}
+            {prop.address or ""}
+            {prop.pool_type or ""}
+            {prop.notes or ""}
+            """.lower()
+
+            if q in search_blob:
+
+                results.append({
+                    "type": "Property",
+                    "title": prop.address,
+                    "subtitle": f"{prop.client} • {prop.pool_type}",
+                    "url": "/properties"
+                })
+
+        # FIELD LOGS
+        logs = db.query(FieldLog).all()
+
+        for log in logs:
+
+            search_blob = f"""
+            {log.employee_name or ""}
+            {log.client or ""}
+            {log.address or ""}
+            {log.work_completed or ""}
+            {log.issues or ""}
+            {log.next_steps or ""}
+            """.lower()
+
+            if q in search_blob:
+
+                results.append({
+                    "type": "Field Log",
+                    "title": log.client or "Field Log",
+                    "subtitle": log.work_completed[:80] if log.work_completed else "",
+                    "url": "/field-logs"
+                })
+
+        # PHOTOS
+        photos = db.query(PhotoLog).all()
+
+        for photo in photos:
+
+            search_blob = f"""
+            {photo.client or ""}
+            {photo.title or ""}
+            {photo.notes or ""}
+            {photo.photo_type or ""}
+            """.lower()
+
+            if q in search_blob:
+
+                results.append({
+                    "type": "Photo",
+                    "title": photo.title or "Photo",
+                    "subtitle": photo.client or "",
+                    "url": "/photos"
+                })
+
+        return {
+            "results": results[:25]
+        }
+
+    finally: 
+        db.close()
 
 @app.get("/weather")
 async def weather_page(request: Request):
