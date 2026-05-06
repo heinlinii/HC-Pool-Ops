@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Property</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<main class="page-shell">
+
+    <div class="card">
+        <h1>{{ property.address }}</h1>
+        <p>{{ property.client }}</p>
+        <p>{{ property.pool_type }}</p>
+    </div>
+
+    <div class="card">
+        <h2>Jobs</h2>
+
+        {% for job in jobs %}
+        <div class="card">
+            <p>{{ job.job_type }}</p>
+            <p>{{ job.status }}</p>
+        </div>
+        {% endfor %}
+    </div>
+
+</main>
+
+</body>
+</html>

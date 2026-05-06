@@ -783,8 +783,8 @@ async def wipe_clients(request: Request):
     return RedirectResponse(url="/clients", status_code=303)
 
 
-@app.get("/clients")
-async def clients_page(request: Request):
+@app.get("/properties/new")
+async def new_property_page(request: Request):
     user = require_admin(request)
 
     if not user:
@@ -797,7 +797,7 @@ async def clients_page(request: Request):
 
         return templates.TemplateResponse(
             request,
-            "clients.html",
+            "property_new.html",
             {
                 "user": user,
                 "clients": clients,
@@ -807,163 +807,6 @@ async def clients_page(request: Request):
     finally:
         db.close()
 
-
-@app.get("/clients/{client_id}")
-async def client_detail_page(request: Request, client_id: int):
-    user = require_admin(request)
-
-    if not user:
-        return RedirectResponse(url="/", status_code=303)
-
-    db = db_session()
-
-    try:
-        client = db.query(Client).filter(Client.id == client_id).first()
-
-        if not client:
-            return RedirectResponse(url="/clients", status_code=303)
-
-        properties = db.query(Property).filter(Property.client == client.name).order_by(Property.id.desc()).all()
-        jobs = db.query(Job).filter(Job.client == client.name).order_by(Job.id.desc()).all()
-        photos = db.query(PhotoLog).filter(PhotoLog.client == client.name).order_by(PhotoLog.id.desc()).all()
-
-        return templates.TemplateResponse(
-            request,
-            "client_detail.html",
-            {
-                "user": user,
-                "client": client,
-                "properties": properties,
-                "jobs": jobs,
-                "photos": photos,
-            },
-        )
-
-    finally:
-        db.close()
-
-
-@app.post("/clients/add")
-async def add_client(
-    request: Request,
-    name: str = Form(...),
-    phone: str = Form(""),
-    email: str = Form(""),
-    notes: str = Form(""),
-):
-    user = require_admin(request)
-
-    if not user:
-        return RedirectResponse(url="/", status_code=303)
-
-    db = db_session()
-
-    try:
-        db.add(
-            Client(
-                name=name.strip(),
-                phone=phone.strip(),
-                email=email.strip(),
-                notes=notes.strip(),
-            )
-        )
-
-        db.commit()
-
-        return RedirectResponse(url="/clients", status_code=303)
-
-    finally:
-        db.close()
-
-
-@app.post("/clients/update/{client_id}")
-async def update_client(
-    request: Request,
-    client_id: int,
-    name: str = Form(...),
-    phone: str = Form(""),
-    email: str = Form(""),
-    notes: str = Form(""),
-):
-    user = require_admin(request)
-
-    if not user:
-        return RedirectResponse(url="/", status_code=303)
-
-    db = db_session()
-
-    try:
-        client = db.query(Client).filter(Client.id == client_id).first()
-
-        if client:
-            old_name = client.name
-
-            client.name = name.strip()
-            client.phone = phone.strip()
-            client.email = email.strip()
-            client.notes = notes.strip()
-
-            properties = db.query(Property).filter(Property.client == old_name).all()
-            jobs = db.query(Job).filter(Job.client == old_name).all()
-
-            for prop in properties:
-                prop.client = client.name
-
-            for job in jobs:
-                job.client = client.name
-
-            db.commit()
-
-        return RedirectResponse(url="/clients", status_code=303)
-
-    finally:
-        db.close()
-
-
-@app.post("/clients/delete/{client_id}")
-async def delete_client(request: Request, client_id: int):
-    user = require_admin(request)
-
-    if not user:
-        return RedirectResponse(url="/", status_code=303)
-
-    db = db_session()
-
-    try:
-        client = db.query(Client).filter(Client.id == client_id).first()
-
-        if client:
-            db.delete(client)
-            db.commit()
-
-        return RedirectResponse(url="/clients", status_code=303)
-
-    finally:
-        db.close()
-
-@app.get("/clients")
-async def clients_page(request: Request):
-    user = require_admin(request)
-
-    if not user:
-        return RedirectResponse(url="/", status_code=303)
-
-    db = db_session()
-
-    try:
-        clients = db.query(Client).order_by(Client.name.asc()).all()
-
-        return templates.TemplateResponse(
-            "clients.html",
-            {
-                "request": request,
-                "user": user,
-                "clients": clients,
-            },
-        )
-
-    finally:
-        db.close()
 
 @app.get("/properties")
 async def properties_page(request: Request):
@@ -975,13 +818,47 @@ async def properties_page(request: Request):
     db = db_session()
 
     try:
+        properties = db.query(Property).order_by(Property.address.asc()).all()
+        clients = db.query(Client).order_by(Client.name.asc()).all()
+
         return templates.TemplateResponse(
             request,
             "properties.html",
             {
                 "user": user,
-                "clients": db.query(Client).order_by(Client.name.asc()).all(),
-                "properties": db.query(Property).order_by(Property.id.desc()).all(),
+                "clients": clients,
+                "properties": properties,
+            },
+        )
+
+    finally:
+        db.close()
+
+
+@app.get("/properties/{property_id}")
+async def property_detail_page(request: Request, property_id: int):
+    user = require_admin(request)
+
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    db = db_session()
+
+    try:
+        prop = db.query(Property).filter(Property.id == property_id).first()
+
+        if not prop:
+            return RedirectResponse(url="/properties", status_code=303)
+
+        jobs = db.query(Job).filter(Job.address == prop.address).order_by(Job.id.desc()).all()
+
+        return templates.TemplateResponse(
+            request,
+            "property_detail.html",
+            {
+                "user": user,
+                "property": prop,
+                "jobs": jobs,
             },
         )
 
@@ -1063,7 +940,7 @@ async def update_property(
 
             db.commit()
 
-        return RedirectResponse(url="/properties", status_code=303)
+        return RedirectResponse(url=f"/properties/{property_id}", status_code=303)
 
     finally:
         db.close()

@@ -3,331 +3,92 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PoolOps2 Properties</title>
+    <title>Properties • PoolOps</title>
     <link rel="stylesheet" href="/static/style.css?v=5">
 </head>
-
 <body>
-<div class="topbar-back">
-  <button onclick="history.back()" class="back-btn">
-    ← Back
-  </button>
-</div>
-    <div class="app-layout">
 
-        <aside class="sidebar">
+<div class="page">
 
-            <div class="sidebar-top">
+    <div class="topbar">
+        <h1>Properties</h1>
 
-                <img
-                    src="/static/logo.png"
-                    alt="Heinlin Concrete Logo"
-                    class="sidebar-logo"
-                >
+        <div>
+            <a class="btn" href="/dashboard">Dashboard</a>
+            <a class="btn btn-success" href="/properties/new">Add Property</a>
+        </div>
+    </div>
 
-                <h1>POOLOPS2</h1>
+    <div class="card">
 
-                <p>Heinlin Concrete LLC</p>
+        <input
+            type="text"
+            id="propertySearch"
+            placeholder="Search properties..."
+            class="search-input"
+        >
 
-            </div>
+        <table class="data-table" id="propertiesTable">
+            <thead>
+                <tr>
+                    <th>Client</th>
+                    <th>Address</th>
+                    <th>Pool Type</th>
+                    <th></th>
+                </tr>
+            </thead>
 
-            <nav class="sidebar-nav">
+            <tbody>
 
-                <a href="/dashboard">
-                    Dashboard
-                </a>
+            {% for property in properties %}
 
-                <a href="/jobs">
-                    Jobs
-                </a>
+            <tr>
+                <td>{{ property.client }}</td>
 
-                <a href="/schedule">
-                    Schedule
-                </a>
+                <td>{{ property.address }}</td>
 
-                <a href="/clients">
-                    Clients
-                </a>
+                <td>{{ property.pool_type }}</td>
 
-                <a href="/properties" class="active">
-                    Properties
-                </a>
+                <td>
+                    <a class="btn-small"
+                       href="/properties/{{ property.id }}">
+                        Open
+                    </a>
+                </td>
+            </tr>
 
-                <a href="/employees">
-                    Employees
-                </a>
+            {% endfor %}
 
-                <a href="/crew">
-                    Crew View
-                </a>
-
-                <a href="/health">
-                    Health
-                </a>
-
-            </nav>
-
-            <div class="sidebar-bottom">
-
-                <p>{{ user.name }}</p>
-
-                <span>{{ user.role }}</span>
-
-                <a href="/logout" class="logout-button">
-                    Logout
-                </a>
-
-            </div>
-
-        </aside>
-
-        <main class="main-content">
-
-            <div class="topbar">
-
-                <div>
-                    <h2>Properties</h2>
-                    <p>Track customer locations and pool information.</p>
-                </div>
-
-            </div>
-
-            <section class="content-card">
-
-                <div class="card-header">
-                    <h3>Add Property</h3>
-                </div>
-
-                <form method="post" action="/properties/add" class="job-form">
-
-                    <div class="form-grid">
-
-                        <div class="form-group">
-
-                            <label>Client</label>
-
-                            <select name="client" required>
-
-                                {% for client in clients %}
-
-                                <option value="{{ client.name }}">
-                                    {{ client.name }}
-                                </option>
-
-                                {% endfor %}
-
-                            </select>
-
-                        </div>
-
-                        <div class="form-group">
-
-                            <label>Address</label>
-
-                            <input
-                                type="text"
-                                name="address"
-                                placeholder="Property address"
-                                required
-                            >
-
-                        </div>
-
-                        <div class="form-group">
-
-                            <label>Pool Type</label>
-
-                            <select name="pool_type">
-
-                                <option>Concrete Pool</option>
-                                <option>Vinyl Pool</option>
-                                <option>Fiberglass Pool</option>
-                                <option>Pool Remodel</option>
-                                <option>Service Only</option>
-
-                            </select>
-
-                        </div>
-
-                        <div class="form-group form-full">
-
-                            <label>Notes</label>
-
-                            <textarea
-                                name="notes"
-                                rows="4"
-                                placeholder="Property notes..."
-                            ></textarea>
-
-                        </div>
-
-                    </div>
-
-                    <button type="submit" class="primary-button">
-                        Add Property
-                    </button>
-
-                </form>
-
-            </section>
-
-            <section class="content-card">
-
-                <div class="card-header">
-                    <h3>Property Database</h3>
-                </div>
-
-                <div class="jobs-grid">
-
-                    {% for property in properties %}
-
-                    <div class="job-card">
-
-                        <div class="job-top">
-
-                            <div>
-
-                                <h3>
-                                    {{ property.client }}
-                                </h3>
-
-                                <p>
-                                    {{ property.address }}
-                                </p>
-
-                            </div>
-
-                            <span class="status-pill">
-                                {{ property.pool_type }}
-                            </span>
-
-                        </div>
-
-                        <div class="job-details">
-
-                            <div class="detail-row">
-                                <strong>Property ID:</strong>
-                                <span>#{{ property.id }}</span>
-                            </div>
-
-                            <div class="detail-row">
-                                <strong>Pool Type:</strong>
-                                <span>{{ property.pool_type }}</span>
-                            </div>
-
-                        </div>
-
-                        <div class="job-notes">
-                            {{ property.notes }}
-                        </div>
-
-                        <details class="edit-panel">
-
-                            <summary>
-                                Edit Property
-                            </summary>
-
-                            <form
-                                method="post"
-                                action="/properties/update/{{ property.id }}"
-                                class="edit-form"
-                            >
-
-                                <div class="form-group">
-
-                                    <label>Client</label>
-
-                                    <select name="client">
-
-                                        {% for client in clients %}
-
-                                        <option
-                                            value="{{ client.name }}"
-                                            {% if property.client == client.name %}
-                                            selected
-                                            {% endif %}
-                                        >
-                                            {{ client.name }}
-                                        </option>
-
-                                        {% endfor %}
-
-                                    </select>
-
-                                </div>
-
-                                <div class="form-group">
-
-                                    <label>Address</label>
-
-                                    <input
-                                        type="text"
-                                        name="address"
-                                        value="{{ property.address }}"
-                                        required
-                                    >
-
-                                </div>
-
-                                <div class="form-group">
-
-                                    <label>Pool Type</label>
-
-                                    <input
-                                        type="text"
-                                        name="pool_type"
-                                        value="{{ property.pool_type }}"
-                                    >
-
-                                </div>
-
-                                <div class="form-group">
-
-                                    <label>Notes</label>
-
-                                    <textarea
-                                        name="notes"
-                                        rows="4"
-                                    >{{ property.notes }}</textarea>
-
-                                </div>
-
-                                <button
-                                    type="submit"
-                                    class="primary-button"
-                                >
-                                    Save Changes
-                                </button>
-
-                            </form>
-
-                            <form
-                                method="post"
-                                action="/properties/delete/{{ property.id }}"
-                            >
-
-                                <button
-                                    type="submit"
-                                    class="danger-button"
-                                >
-                                    Delete Property
-                                </button>
-
-                            </form>
-
-                        </details>
-
-                    </div>
-
-                    {% endfor %}
-
-                </div>
-
-            </section>
-
-        </main>
+            </tbody>
+        </table>
 
     </div>
+
+</div>
+
+<script>
+const searchInput = document.getElementById("propertySearch");
+
+searchInput.addEventListener("keyup", function () {
+
+    let filter = searchInput.value.toLowerCase();
+
+    let rows = document.querySelectorAll("#propertiesTable tbody tr");
+
+    rows.forEach(function(row) {
+
+        let text = row.innerText.toLowerCase();
+
+        if (text.includes(filter)) {
+            row.style.display = "";
+        } else {
+            row.style.display = "none";
+        }
+
+    });
+
+});
+</script>
 
 </body>
 </html>
