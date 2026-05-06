@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>{{ client.name }} • PoolOps2</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<div class="topbar-back">
+  <button onclick="history.back()" class="back-btn">← Back</button>
+</div>
+
+<main class="page-shell">
+
+  <section class="card">
+    <h1>{{ client.name }}</h1>
+    <p><strong>Phone:</strong> {{ client.phone or "—" }}</p>
+    <p><strong>Email:</strong> {{ client.email or "—" }}</p>
+    <p><strong>Notes:</strong> {{ client.notes or "—" }}</p>
+
+    <a class="btn" href="/clients">All Clients</a>
+    <a class="btn" href="/properties">Properties</a>
+    <a class="btn" href="/jobs">Jobs</a>
+  </section>
+
+  <section class="card">
+    <h2>Edit Client</h2>
+
+    <form method="post" action="/clients/update/{{ client.id }}">
+      <label>Client Name</label>
+      <input type="text" name="name" value="{{ client.name }}" required>
+
+      <label>Phone</label>
+      <input type="text" name="phone" value="{{ client.phone or '' }}">
+
+      <label>Email</label>
+      <input type="email" name="email" value="{{ client.email or '' }}">
+
+      <label>Notes</label>
+      <textarea name="notes">{{ client.notes or '' }}</textarea>
+
+      <button type="submit">Save Changes</button>
+    </form>
+  </section>
+
+  <section class="card">
+    <h2>Properties</h2>
+
+    {% if properties %}
+      <div class="cards">
+        {% for property in properties %}
+          <div class="card">
+            <h3>{{ property.address }}</h3>
+            <p><strong>Pool Type:</strong> {{ property.pool_type or "—" }}</p>
+            <p><strong>Notes:</strong> {{ property.notes or "—" }}</p>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p>No properties attached to this client yet.</p>
+    {% endif %}
+  </section>
+
+  <section class="card">
+    <h2>Jobs</h2>
+
+    {% if jobs %}
+      <div class="cards">
+        {% for job in jobs %}
+          <a class="card" href="/jobs/{{ job.id }}">
+            <h3>{{ job.job_type or "Job" }}</h3>
+            <p><strong>Address:</strong> {{ job.address or "—" }}</p>
+            <p><strong>Status:</strong> {{ job.status or "—" }}</p>
+            <p><strong>Date:</strong> {{ job.date or "—" }}</p>
+            <span class="badge">Open Job →</span>
+          </a>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p>No jobs attached to this client yet.</p>
+    {% endif %}
+  </section>
+
+  <section class="card">
+    <h2>Photos</h2>
+
+    {% if photos %}
+      <div class="cards">
+        {% for photo in photos %}
+          <div class="card">
+            <img src="{{ photo.photo_url or '/static/logo.png' }}" alt="{{ photo.title }}">
+            <h3>{{ photo.title or "Photo" }}</h3>
+            <p>{{ photo.notes or "" }}</p>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p>No photos attached to this client yet.</p>
+    {% endif %}
+  </section>
+
+  <section class="card">
+    <h2>Danger Zone</h2>
+
+    <form method="post" action="/clients/delete/{{ client.id }}" onsubmit="return confirm('Delete this client?');">
+      <button type="submit">Delete Client</button>
+    </form>
+  </section>
+
+</main>
+
+</body>
+</html>

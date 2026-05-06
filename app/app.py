@@ -787,6 +787,39 @@ async def clients_page(request: Request):
     finally:
         db.close()
 
+@app.get("/clients/{client_id}")
+async def client_detail_page(request: Request, client_id: int):
+    user = require_admin(request)
+
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    db = db_session()
+
+    try:
+        client = db.query(Client).filter(Client.id == client_id).first()
+
+        if not client:
+            return RedirectResponse(url="/clients", status_code=303)
+
+        properties = db.query(Property).filter(Property.client == client.name).order_by(Property.id.desc()).all()
+        jobs = db.query(Job).filter(Job.client == client.name).order_by(Job.id.desc()).all()
+        photos = db.query(PhotoLog).filter(PhotoLog.client == client.name).order_by(PhotoLog.id.desc()).all()
+
+        return templates.TemplateResponse(
+            request,
+            "client_detail.html",
+            {
+                "user": user,
+                "client": client,
+                "properties": properties,
+                "jobs": jobs,
+                "photos": photos,
+            },
+        )
+
+    finally:
+        db.close()
 
 @app.post("/clients/add")
 async def add_client(

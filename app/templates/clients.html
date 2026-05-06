@@ -15,7 +15,7 @@
 
   <section class="card">
     <h1>Clients</h1>
-    <p>Search, scroll, and manage current clients.</p>
+    <p>Search, scroll, open client records, or add a new client.</p>
 
     <a class="btn" href="/clients/new">+ Add New Client</a>
     <a class="btn" href="/dashboard">Dashboard</a>
@@ -31,17 +31,15 @@
     {% if clients %}
       <div class="cards" id="clientList">
         {% for client in clients %}
-          <div class="card client-card"
-               data-search="{{ client.name }} {{ client.phone }} {{ client.email }} {{ client.notes }}">
+          <a class="card client-card"
+             href="/clients/{{ client.id }}"
+             data-search="{{ client.name }} {{ client.phone }} {{ client.email }} {{ client.notes }}">
             <h3>{{ client.name }}</h3>
             <p><strong>Phone:</strong> {{ client.phone or "—" }}</p>
             <p><strong>Email:</strong> {{ client.email or "—" }}</p>
             <p><strong>Notes:</strong> {{ client.notes or "—" }}</p>
-
-            <form method="post" action="/clients/delete/{{ client.id }}" onsubmit="return confirm('Delete this client?');">
-              <button type="submit">Delete</button>
-            </form>
-          </div>
+            <span class="badge">Open Client →</span>
+          </a>
         {% endfor %}
       </div>
     {% else %}
