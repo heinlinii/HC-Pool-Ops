@@ -16,7 +16,16 @@
         <div>
             <a class="btn" href="/dashboard">Dashboard</a>
             <a class="btn btn-success" href="/properties/new">Add Property</a>
-            
+            <form method="post"
+      action="/properties/delete-all"
+      onsubmit="return confirm('Delete ALL properties?');"
+      style="display:inline;">
+
+    <button type="submit" class="danger-button">
+        Delete All Properties
+    </button>
+
+</form>
         </div>
     </div>
 
