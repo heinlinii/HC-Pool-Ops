@@ -364,7 +364,7 @@ async def new_job_from_property(request: Request, property_id: int):
                 },
             )
 
-        finally:
+    finally:
             db.close()
 
 @app.get("/projects")
