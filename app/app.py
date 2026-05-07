@@ -207,6 +207,10 @@ def job_financial_summary(job_id: int, db):
         "profit_status": profit_status(tracked_profit, tracked_margin),
     }
 
+@app.get("/logout")
+async def logout(request: Request):
+    request.session.clear()
+    return RedirectResponse(url="/", status_code=303)
 
 @app.get("/")
 async def login_page(request: Request):
