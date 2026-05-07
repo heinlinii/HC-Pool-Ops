@@ -354,7 +354,7 @@ async def projects_page(request: Request):
     finally:
         db.close()
 
-        
+
 @app.get("/jobs")
 async def jobs_page(request: Request):
     user = require_login(request)
@@ -1035,7 +1035,6 @@ async def update_property(
     finally:
         db.close()
 
-ort
 @app.post("/properties/delete/{property_id}")
 async def delete_property(request: Request, property_id: int):
     user = require_admin(request)
