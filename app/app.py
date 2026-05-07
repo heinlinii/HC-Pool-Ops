@@ -332,6 +332,41 @@ async def dashboard(request: Request):
     finally:
         db.close()
 
+@app.get("/jobs/new/{property_id}")
+async def new_job_from_property(request: Request, property_id: int):
+
+    user = require_login(request)
+
+    if not user:
+            return RedirectResponse(url="/", status_code=303)
+
+    db = db_session()
+
+    try:
+            property_obj = (
+                db.query(Property)
+                .filter(Property.id == property_id)
+                .first()
+            )
+
+            if not property_obj:
+                return RedirectResponse(url="/projects", status_code=303)
+
+            employees = db.query(Employee).all()
+
+            return templates.TemplateResponse(
+                request,
+                "job_new.html",
+                {
+                    "user": user,
+                    "property": property_obj,
+                    "employees": employees,
+                },
+            )
+
+        finally:
+            db.close()
+
 @app.get("/projects")
 async def projects_page(request: Request):
     user = require_login(request)
