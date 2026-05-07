@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Dashboard Theme • PoolOps2</title>
-  <link rel="stylesheet" href="/static/style.css">
+  <title>Dashboard Theme • PoolOps</title>
+  <link rel="stylesheet" href="/static/style.css?v=20c">
 </head>
 <body>
 
@@ -14,14 +14,14 @@
 <main class="page-shell">
 
   <section class="card">
-    <h1>Dashboard Theme</h1>
-    <p>Edit the look and wording of your dashboard without touching code.</p>
+    <h1>Dashboard Look</h1>
+    <p>Edit the dashboard wording and images without touching code.</p>
 
     <a class="btn" href="/dashboard">View Dashboard</a>
   </section>
 
   <section class="card">
-    <form method="post" action="/dashboard/theme">
+    <form method="post" action="/dashboard/theme" enctype="multipart/form-data">
 
       <label>Dashboard Title</label>
       <input type="text" name="title" value="{{ theme.title }}">
@@ -37,6 +37,24 @@
 
       <label>Accent Color</label>
       <input type="color" name="accent" value="{{ theme.accent }}">
+
+      <hr>
+
+      <label>Hero Image</label>
+      <input type="file" name="hero_image" accept="image/*">
+
+      {% if theme.hero_image %}
+        <p>Current Hero Image:</p>
+        <img src="{{ theme.hero_image }}" style="max-width:100%;border-radius:18px;margin-bottom:18px;">
+      {% endif %}
+
+      <label>Background Image</label>
+      <input type="file" name="background_image" accept="image/*">
+
+      {% if theme.background_image %}
+        <p>Current Background Image:</p>
+        <img src="{{ theme.background_image }}" style="max-width:100%;border-radius:18px;margin-bottom:18px;">
+      {% endif %}
 
       <button type="submit">Save Dashboard Look</button>
 

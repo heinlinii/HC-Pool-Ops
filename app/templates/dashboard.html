@@ -8,7 +8,7 @@
 
 </head>
 
-<body>
+<body {% if theme and theme.background_image %}style="background-image: linear-gradient(rgba(5,11,15,.90), rgba(5,11,15,.96)), url('{{ theme.background_image }}'); background-size: cover; background-position: center; background-attachment: fixed;"{% endif %}>
 
 <main class="shell">
 

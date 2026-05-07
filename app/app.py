@@ -400,6 +400,8 @@ def get_dashboard_theme():
         "hero_title": "Jarvis for Pool Operations",
         "hero_subtitle": "Fast field controls. Better documentation. Cleaner project command.",
         "accent": "#22d3ee"
+        "hero_image": "",
+        "background_image": "",
     }
 
     try:
@@ -440,19 +442,35 @@ async def save_dashboard_theme(
     hero_title: str = Form("Jarvis for Pool Operations"),
     hero_subtitle: str = Form(""),
     accent: str = Form("#22d3ee"),
+    hero_image: UploadFile = File(None),
+    background_image: UploadFile = File(None),
 ):
     user = require_admin(request)
 
     if not user:
         return RedirectResponse(url="/", status_code=303)
 
-    theme = {
-        "title": title.strip(),
-        "subtitle": subtitle.strip(),
-        "hero_title": hero_title.strip(),
-        "hero_subtitle": hero_subtitle.strip(),
-        "accent": accent.strip() or "#22d3ee",
-    }
+    os.makedirs("app/static/uploads", exist_ok=True)
+
+    theme = get_dashboard_theme()
+
+    theme["title"] = title.strip()
+    theme["subtitle"] = subtitle.strip()
+    theme["hero_title"] = hero_title.strip()
+    theme["hero_subtitle"] = hero_subtitle.strip()
+    theme["accent"] = accent.strip() or "#22d3ee"
+
+    if hero_image and hero_image.filename:
+        hero_path = f"app/static/uploads/dashboard_hero_{hero_image.filename}"
+        with open(hero_path, "wb") as buffer:
+            shutil.copyfileobj(hero_image.file, buffer)
+        theme["hero_image"] = "/" + hero_path.replace("app/", "")
+
+    if background_image and background_image.filename:
+        bg_path = f"app/static/uploads/dashboard_bg_{background_image.filename}"
+        with open(bg_path, "wb") as buffer:
+            shutil.copyfileobj(background_image.file, buffer)
+        theme["background_image"] = "/" + bg_path.replace("app/", "")
 
     with open(DASHBOARD_THEME_FILE, "w") as f:
         json.dump(theme, f, indent=2)
