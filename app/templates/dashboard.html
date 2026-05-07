@@ -13,10 +13,7 @@
 <main class="shell">
 
   <section class="hero">
-    {% if theme and theme.hero_image %}
-  <img src="{{ theme.hero_image }}" style="width:100%;max-height:320px;object-fit:cover;border-radius:24px;margin-top:16px;">
-{% endif %}
-    <div class="hero-main">
+        <div class="hero-main">
       <div class="brand-row">
         <img class="brand-logo" src="/static/logo.png" alt="Logo">
         <div>
@@ -29,6 +26,10 @@
         Your pool operations cockpit for jobs, schedules, clients, properties, field logs,
         weather, backups, billing, and future QuickBooks workflow.
       </p>
+
+{% if theme and theme.hero_image %}
+  <img src="{{ theme.hero_image }}" style="width:100%;max-height:320px;object-fit:cover;border-radius:24px;margin-top:16px;">
+{% endif %}
 
       <div class="system-row">
         <div class="pill green">SYSTEM ONLINE</div>
@@ -320,16 +321,17 @@
   const floatingSearch = document.getElementById("floatingSearch");
   let currentMatches = [];
 
- <script>
-const searchInput = document.getElementById("universalSearch");
-const resultsBox = document.getElementById("searchResults");
-const floatingSearch = document.getElementById("floatingSearch");
+
+ <script> 
+  const searchInput = document.getElementById("universalSearch");
+  const resultsBox = document.getElementById("searchResults");
+  const floatingSearch = document.getElementById("floatingSearch");
 
 let currentResults = [];
 
 async function runSearch() {
 
-    const query = searchInput.value.trim();
+  const query = searchInput.value.trim();
 
     resultsBox.innerHTML = "";
 
@@ -340,7 +342,7 @@ async function runSearch() {
 
     try {
 
-        const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+  const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
 
         const data = await response.json();
 
