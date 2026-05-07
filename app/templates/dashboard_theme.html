@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Dashboard Theme • PoolOps2</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<div class="topbar-back">
+  <button onclick="history.back()" class="back-btn">← Back</button>
+</div>
+
+<main class="page-shell">
+
+  <section class="card">
+    <h1>Dashboard Theme</h1>
+    <p>Edit the look and wording of your dashboard without touching code.</p>
+
+    <a class="btn" href="/dashboard">View Dashboard</a>
+  </section>
+
+  <section class="card">
+    <form method="post" action="/dashboard/theme">
+
+      <label>Dashboard Title</label>
+      <input type="text" name="title" value="{{ theme.title }}">
+
+      <label>Dashboard Subtitle</label>
+      <textarea name="subtitle">{{ theme.subtitle }}</textarea>
+
+      <label>Hero Title</label>
+      <input type="text" name="hero_title" value="{{ theme.hero_title }}">
+
+      <label>Hero Subtitle</label>
+      <textarea name="hero_subtitle">{{ theme.hero_subtitle }}</textarea>
+
+      <label>Accent Color</label>
+      <input type="color" name="accent" value="{{ theme.accent }}">
+
+      <button type="submit">Save Dashboard Look</button>
+
+    </form>
+  </section>
+
+</main>
+
+</body>
+</html>

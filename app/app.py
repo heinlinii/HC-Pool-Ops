@@ -287,6 +287,7 @@ async def dashboard(request: Request):
         invoices = db.query(Invoice).all()
         costs = db.query(JobCost).all()
         photos = db.query(PhotoLog).all()
+        theme = get_dashboard_theme()
 
         total_invoice_amount = round(sum(float(invoice.amount or 0) for invoice in invoices), 2)
 
@@ -324,6 +325,7 @@ async def dashboard(request: Request):
                 "properties": properties,
                 "employees": employees,
                 "stats": stats,
+                "theme": theme,
             },
         )
 
@@ -353,6 +355,74 @@ async def projects_page(request: Request):
 
     finally:
         db.close()
+DASHBOARD_THEME_FILE = "app/dashboard_theme.json"
+
+
+def get_dashboard_theme():
+    default_theme = {
+        "title": "Command Center",
+        "subtitle": "Your pool operations cockpit for jobs, projects, schedules, photos, weather, billing, and field work.",
+        "hero_title": "Jarvis for Pool Operations",
+        "hero_subtitle": "Fast field controls. Better documentation. Cleaner project command.",
+        "accent": "#22d3ee"
+    }
+
+    try:
+        if os.path.exists(DASHBOARD_THEME_FILE):
+            with open(DASHBOARD_THEME_FILE, "r") as f:
+                saved = json.load(f)
+                default_theme.update(saved)
+    except Exception:
+        pass
+
+    return default_theme
+
+
+@app.get("/dashboard/theme")
+async def dashboard_theme_page(request: Request):
+    user = require_admin(request)
+
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    theme = get_dashboard_theme()
+
+    return templates.TemplateResponse(
+        request,
+        "dashboard_theme.html",
+        {
+            "user": user,
+            "theme": theme,
+        },
+    )
+
+
+@app.post("/dashboard/theme")
+async def save_dashboard_theme(
+    request: Request,
+    title: str = Form("Command Center"),
+    subtitle: str = Form(""),
+    hero_title: str = Form("Jarvis for Pool Operations"),
+    hero_subtitle: str = Form(""),
+    accent: str = Form("#22d3ee"),
+):
+    user = require_admin(request)
+
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    theme = {
+        "title": title.strip(),
+        "subtitle": subtitle.strip(),
+        "hero_title": hero_title.strip(),
+        "hero_subtitle": hero_subtitle.strip(),
+        "accent": accent.strip() or "#22d3ee",
+    }
+
+    with open(DASHBOARD_THEME_FILE, "w") as f:
+        json.dump(theme, f, indent=2)
+
+    return RedirectResponse(url="/dashboard/theme", status_code=303)
 
 
 @app.get("/jobs")
