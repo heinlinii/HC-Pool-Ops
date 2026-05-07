@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Projects • PoolOps</title>
+    <link rel="stylesheet" href="/static/style.css?v=5">
+</head>
+<body>
+
+<div class="page">
+
+    <div class="topbar">
+        <h1>Projects</h1>
+
+        <div>
+            <a class="btn" href="/dashboard">Dashboard</a>
+            <a class="btn btn-success" href="/properties/new">Add Project</a>
+        </div>
+    </div>
+
+    <div class="card">
+
+        <input
+            type="text"
+            id="projectSearch"
+            placeholder="Search by client, address, pool type..."
+            class="search-input"
+        >
+
+        <table class="data-table" id="projectsTable">
+            <thead>
+                <tr>
+                    <th>Client</th>
+                    <th>Address</th>
+                    <th>Pool Type</th>
+                    <th>Open</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for project in projects %}
+                <tr>
+                    <td>{{ project.client or "" }}</td>
+                    <td>{{ project.address or "" }}</td>
+                    <td>{{ project.pool_type or "" }}</td>
+                    <td>
+                        <a class="btn-small" href="/properties/{{ project.id }}">
+                            Open
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+    </div>
+
+</div>
+
+<script>
+const searchInput = document.getElementById("projectSearch");
+
+if (searchInput) {
+    searchInput.addEventListener("keyup", function () {
+        let filter = searchInput.value.toLowerCase();
+        let rows = document.querySelectorAll("#projectsTable tbody tr");
+
+        rows.forEach(function(row) {
+            let text = row.innerText.toLowerCase();
+            row.style.display = text.includes(filter) ? "" : "none";
+        });
+    });
+}
+</script>
+
+</body>
+</html>

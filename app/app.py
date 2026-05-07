@@ -330,7 +330,31 @@ async def dashboard(request: Request):
     finally:
         db.close()
 
+@app.get("/projects")
+async def projects_page(request: Request):
+    user = require_login(request)
 
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    db = db_session()
+
+    try:
+        projects = db.query(Property).order_by(Property.client.asc()).all()
+
+        return templates.TemplateResponse(
+            "projects.html",
+            {
+                "request": request,
+                "user": user,
+                "projects": projects,
+            },
+        )
+
+    finally:
+        db.close()
+
+        
 @app.get("/jobs")
 async def jobs_page(request: Request):
     user = require_login(request)
@@ -1011,7 +1035,7 @@ async def update_property(
     finally:
         db.close()
 
-
+ort
 @app.post("/properties/delete/{property_id}")
 async def delete_property(request: Request, property_id: int):
     user = require_admin(request)
