@@ -54,6 +54,31 @@ def startup():
     finally:
         db.close()
 
+@app.get("/admin/seed-users")
+async def seed_users(request: Request):
+    db = db_session()
+
+    users = [
+        ("mike", "5500", "admin", "Mike"),
+        ("randy", "0318", "crew", "Randy"),
+        ("marty", "0712", "crew", "Marty"),
+        ("jamie", "1105", "office", "Jamie"),
+    ]
+
+    for username, password, role, name in users:
+        existing = db.query(User).filter(User.username == username).first()
+
+        if existing:
+            existing.password = password
+            existing.role = role
+            existing.name = name
+        else:
+            db.add(User(username=username, password=password, role=role, name=name))
+
+    db.commit()
+    db.close()
+
+    return {"status": "users seeded"}
 
 TIME_CLOCK = {
     "randy": {"clocked_in": False, "current_job": None}
