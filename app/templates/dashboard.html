@@ -8,11 +8,14 @@
 
 </head>
 
-<body {% if theme and theme.background_image %}style="background-image: linear-gradient(rgba(5,11,15,.90), rgba(5,11,15,.96)), url('{{ theme.background_image }}'); background-size: cover; background-position: center; background-attachment: fixed;"{% endif %}>
+<body {% if theme and theme.background_image %}style="background-image: linear-gradient(rgba(5,11,15,.90), rgba(5,11,15,.96)), url('{{ theme.background_image }}'); background-size: cover; background-position: center; background-attachment: fixed;"{% endif %}></body>
 
 <main class="shell">
 
   <section class="hero">
+    {% if theme and theme.hero_image %}
+  <img src="{{ theme.hero_image }}" style="width:100%;max-height:320px;object-fit:cover;border-radius:24px;margin-top:16px;">
+{% endif %}
     <div class="hero-main">
       <div class="brand-row">
         <img class="brand-logo" src="/static/logo.png" alt="Logo">
