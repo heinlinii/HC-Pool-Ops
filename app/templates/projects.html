@@ -1,77 +1,195 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Projects • PoolOps</title>
-    <link rel="stylesheet" href="/static/style.css?v=5">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Projects • PoolOps</title>
+  <link rel="stylesheet" href="/static/style.css?v=19b">
+
+  <style>
+    .project-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .project-search {
+      font-size: 18px;
+      padding: 16px;
+      border-radius: 18px;
+    }
+
+    .project-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+    }
+
+    .project-card {
+      display: block;
+      background: rgba(12,24,31,.94);
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 24px;
+      padding: 18px;
+      color: #f4fbff;
+      text-decoration: none;
+      box-shadow: 0 18px 45px rgba(0,0,0,.28);
+    }
+
+    .project-card:hover {
+      border-color: rgba(34,211,238,.65);
+      background: rgba(18,36,46,.96);
+      text-decoration: none;
+    }
+
+    .project-card h3 {
+      margin: 0 0 8px;
+      font-size: 21px;
+    }
+
+    .project-address {
+      color: #22d3ee;
+      font-weight: 800;
+      margin-bottom: 10px;
+    }
+
+    .project-meta {
+      color: #9db3c0;
+      font-size: 14px;
+      margin: 5px 0;
+    }
+
+    .project-actions {
+      margin-top: 14px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .mini-btn {
+      display: inline-block;
+      padding: 9px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(34,211,238,.14);
+      color: #f4fbff;
+      font-weight: 900;
+      font-size: 13px;
+    }
+
+    .mini-btn.danger {
+      background: rgba(220,38,38,.20);
+      color: #fecaca;
+    }
+
+    @media (max-width: 768px) {
+      .project-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .project-search {
+        font-size: 16px;
+      }
+
+      .project-toolbar a {
+        width: 100%;
+        text-align: center;
+      }
+    }
+  </style>
 </head>
+
 <body>
 
-<div class="page">
-
-    <div class="topbar">
-        <h1>Projects</h1>
-
-        <div>
-            <a class="btn" href="/dashboard">Dashboard</a>
-            <a class="btn btn-success" href="/properties/new">Add Project</a>
-        </div>
-    </div>
-
-    <div class="card">
-
-        <input
-            type="text"
-            id="projectSearch"
-            placeholder="Search by client, address, pool type..."
-            class="search-input"
-        >
-
-        <table class="data-table" id="projectsTable">
-            <thead>
-                <tr>
-                    <th>Client</th>
-                    <th>Address</th>
-                    <th>Pool Type</th>
-                    <th>Open</th>
-                </tr>
-            </thead>
-
-            <tbody>
-                {% for project in projects %}
-                <tr>
-                    <td>{{ project.client or "" }}</td>
-                    <td>{{ project.address or "" }}</td>
-                    <td>{{ project.pool_type or "" }}</td>
-                    <td>
-                        <a class="btn-small" href="/properties/{{ project.id }}">
-                            Open
-                        </a>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-
-    </div>
-
+<div class="topbar-back">
+  <button onclick="history.back()" class="back-btn">← Back</button>
 </div>
 
+<main class="page-shell">
+
+  <section class="card">
+    <h1>Projects</h1>
+    <p>One simple place for every pool, client, address, jobsite, and future work order.</p>
+
+    <div class="project-toolbar">
+      <a class="btn" href="/dashboard">Dashboard</a>
+      <a class="btn" href="/properties/new">+ Add Project</a>
+      <a class="btn" href="/jobs">Jobs</a>
+      <a class="btn" href="/photos">Photos</a>
+    </div>
+  </section>
+
+  <section class="card">
+    <input
+      id="projectSearch"
+      class="project-search"
+      type="search"
+      placeholder="Search client, address, pool type, notes..."
+      autocomplete="off">
+  </section>
+
+  <section>
+    {% if projects %}
+      <div class="project-grid" id="projectGrid">
+        {% for project in projects %}
+          <div class="project-card"
+               data-search="{{ project.client }} {{ project.address }} {{ project.pool_type }} {{ project.notes }}">
+
+            <h3>{{ project.client or "Unknown Client" }}</h3>
+
+            <div class="project-address">
+              {{ project.address or "No address entered" }}
+            </div>
+
+            <div class="project-meta">
+              <strong>Pool Type:</strong> {{ project.pool_type or "Not set" }}
+            </div>
+
+            <div class="project-meta">
+              <strong>Notes:</strong> {{ project.notes or "—" }}
+            </div>
+
+            <div class="project-actions">
+              <a class="mini-btn" href="/properties/{{ project.id }}">Open Project</a>
+              <a class="mini-btn" href="/jobs">Create Job</a>
+
+              <form method="post"
+                    action="/properties/delete/{{ project.id }}"
+                    onsubmit="return confirm('Delete this project/property?');"
+                    style="display:inline;">
+                <button type="submit" class="mini-btn danger">Delete</button>
+              </form>
+            </div>
+
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="card">
+        <h2>No projects yet.</h2>
+        <p>Add your first project, or import properties from your cleaned CSV.</p>
+        <a class="btn" href="/properties/new">+ Add Project</a>
+      </div>
+    {% endif %}
+  </section>
+
+</main>
+
 <script>
-const searchInput = document.getElementById("projectSearch");
+  const searchInput = document.getElementById("projectSearch");
+  const cards = document.querySelectorAll(".project-card");
 
-if (searchInput) {
-    searchInput.addEventListener("keyup", function () {
-        let filter = searchInput.value.toLowerCase();
-        let rows = document.querySelectorAll("#projectsTable tbody tr");
+  if (searchInput) {
+    searchInput.addEventListener("input", function () {
+      const query = this.value.toLowerCase();
 
-        rows.forEach(function(row) {
-            let text = row.innerText.toLowerCase();
-            row.style.display = text.includes(filter) ? "" : "none";
-        });
+      cards.forEach(card => {
+        const text = card.dataset.search.toLowerCase();
+        card.style.display = text.includes(query) ? "block" : "none";
+      });
     });
-}
+  }
 </script>
 
 </body>
