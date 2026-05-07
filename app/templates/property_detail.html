@@ -25,6 +25,27 @@
         {% endfor %}
     </div>
 
+<section class="card">
+    <h2>Project Hub</h2>
+    <p>Everything for this pool in one place.</p>
+
+    <div class="project-toolbar">
+        <a class="btn" href="/jobs">Jobs</a>
+        <a class="btn" href="/photos">Photos</a>
+        <a class="btn" href="/billing">Billing</a>
+        <a class="btn" href="/schedule">Schedule</a>
+        <a class="btn" href="/projects">All Projects</a>
+
+        {% if property.address %}
+        <a class="btn"
+           target="_blank"
+           href="https://www.google.com/maps/search/?api=1&query={{ property.address | urlencode }}">
+            Map
+        </a>
+        {% endif %}
+    </div>
+</section>
+
 </main>
 
 </body>
