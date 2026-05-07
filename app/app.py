@@ -1843,7 +1843,7 @@ async def import_properties(request: Request, file: UploadFile = File(...)):
         db.close()
 
 @app.post("/properties/delete/{property_id}")
-async def delete_property(property_id: int, request: Request):
+async def delete_property_post(property_id: int, request: Request):
     user = require_login(request)
 
     if not user:
