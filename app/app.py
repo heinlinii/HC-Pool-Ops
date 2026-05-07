@@ -1842,6 +1842,23 @@ async def import_properties(request: Request, file: UploadFile = File(...)):
     finally:
         db.close()
 
+@app.post("/properties/delete/{property_id}")
+async def delete_property(property_id: int, request: Request):
+    user = require_login(request)
+
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    db = db_session()
+
+    property_obj = db.query(Property).filter(Property.id == property_id).first()
+
+    if property_obj:
+        db.delete(property_obj)
+        db.commit()
+
+    return RedirectResponse(url="/properties", status_code=303)
+
 # =========================
 # PHASE 6 SCHEDULE ROUTES
 # =========================

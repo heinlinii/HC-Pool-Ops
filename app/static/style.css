@@ -250,3 +250,11 @@ th {
     overflow-x: auto;
   }
 }
+.danger-button {
+    background: #a83232;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+}
