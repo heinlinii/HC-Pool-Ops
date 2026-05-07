@@ -399,7 +399,7 @@ def get_dashboard_theme():
         "subtitle": "Your pool operations cockpit for jobs, projects, schedules, photos, weather, billing, and field work.",
         "hero_title": "Jarvis for Pool Operations",
         "hero_subtitle": "Fast field controls. Better documentation. Cleaner project command.",
-        "accent": "#22d3ee"
+        "accent": "#22d3ee",
         "hero_image": "",
         "background_image": "",
     }
