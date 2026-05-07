@@ -1842,6 +1842,26 @@ async def import_properties(request: Request, file: UploadFile = File(...)):
     finally:
         db.close()
 
+ @app.post("/properties/delete-all")
+    
+
+async def delete_all_properties(request: Request):
+    user = require_login(request)
+
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    db = db_session()
+
+    try:
+        db.query(Property).delete()
+        db.commit()
+
+        return RedirectResponse(url="/properties", status_code=303)
+
+    finally:
+        db.close()  
+
 @app.post("/properties/delete/{property_id}")
 async def delete_property_post(property_id: int, request: Request):
     user = require_login(request)
