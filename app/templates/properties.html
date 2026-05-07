@@ -8,12 +8,6 @@
 </head>
 <body>
 
-<form method="post" action="/properties/delete/{{ property.id }}">
-    <button class="danger-button">
-        Delete
-    </button>
-</form>
-
 <div class="page">
 
     <div class="topbar">
@@ -40,31 +34,35 @@
                     <th>Client</th>
                     <th>Address</th>
                     <th>Pool Type</th>
-                    <th></th>
+                    <th>Open</th>
+                    <th>Delete</th>
                 </tr>
             </thead>
 
             <tbody>
+                {% for property in properties %}
+                <tr>
+                    <td>{{ property.client or "" }}</td>
+                    <td>{{ property.address or "" }}</td>
+                    <td>{{ property.pool_type or "" }}</td>
 
-            {% for property in properties %}
+                    <td>
+                        <a class="btn-small" href="/properties/{{ property.id }}">
+                            Open
+                        </a>
+                    </td>
 
-            <tr>
-                <td>{{ property.client }}</td>
-
-                <td>{{ property.address }}</td>
-
-                <td>{{ property.pool_type }}</td>
-
-                <td>
-                    <a class="btn-small"
-                       href="/properties/{{ property.id }}">
-                        Open
-                    </a>
-                </td>
-            </tr>
-
-            {% endfor %}
-
+                    <td>
+                        <form method="post"
+                              action="/properties/delete/{{ property.id }}"
+                              onsubmit="return confirm('Delete this property?');">
+                            <button type="submit" class="danger-button">
+                                Delete
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
             </tbody>
         </table>
 
@@ -75,25 +73,17 @@
 <script>
 const searchInput = document.getElementById("propertySearch");
 
-searchInput.addEventListener("keyup", function () {
+if (searchInput) {
+    searchInput.addEventListener("keyup", function () {
+        let filter = searchInput.value.toLowerCase();
+        let rows = document.querySelectorAll("#propertiesTable tbody tr");
 
-    let filter = searchInput.value.toLowerCase();
-
-    let rows = document.querySelectorAll("#propertiesTable tbody tr");
-
-    rows.forEach(function(row) {
-
-        let text = row.innerText.toLowerCase();
-
-        if (text.includes(filter)) {
-            row.style.display = "";
-        } else {
-            row.style.display = "none";
-        }
-
+        rows.forEach(function(row) {
+            let text = row.innerText.toLowerCase();
+            row.style.display = text.includes(filter) ? "" : "none";
+        });
     });
-
-});
+}
 </script>
 
 </body>
