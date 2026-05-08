@@ -39,16 +39,11 @@ def startup():
         if db.query(User).count() == 0:
             db.add(User(username="mike", password="5500", role="admin", name="Mike"))
             db.add(User(username="randy", password="0318", role="crew", name="Randy"))
-            db.add(User(username="marty", password="0712", role="crew", name="Marty"))
-            db.add(User(username="jamie", password="1105", role="office", name="Jamie"))
-
-
+           
         if db.query(Employee).count() == 0:
             db.add(Employee(name="Mike", role="Admin", phone="", email="", active=True))
             db.add(Employee(name="Randy", role="Foreman", phone="", email="", active=True))
-            db.add(Employee(name="Marty", role="Crew", phone="", email="", active=True))
-            db.add(Employee(name="Jamie", role="Office", phone="", email="", active=True)) 
-
+          
         db.commit()
 
     finally:
@@ -424,10 +419,10 @@ DASHBOARD_THEME_FILE = "app/dashboard_theme.json"
 
 def get_dashboard_theme():
     default_theme = {
-        "title": "Command Center",
-        "subtitle": "Your pool operations cockpit for jobs, projects, schedules, photos, weather, billing, and field work.",
-        "hero_title": "Jarvis for Pool Operations",
-        "hero_subtitle": "Fast field controls. Better documentation. Cleaner project command.",
+        "title": "Heinlin Operations",
+        "subtitle": " Dashboard for jobs, projects, schedules, photos, weather, billing, and field work.",
+        "hero_title": "Jarvis (Mike's Brain)",
+        "hero_subtitle": "We fix the unfixable & everything the other guys say they fix!",
         "accent": "#22d3ee",
         "hero_image": "",
         "background_image": "",
@@ -2190,6 +2185,34 @@ async def client_login(
     finally:
         db.close()
 
+@app.post("/clients/{client_id}/edit")
+async def update_client(
+    request: Request,
+    client_id: int,
+    name: str = Form(...),
+    phone: str = Form(""),
+    email: str = Form(""),
+    address: str = Form(""),
+    notes: str = Form("")
+):
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+        UPDATE clients
+        SET name = %s,
+            phone = %s,
+            email = %s,
+            address = %s,
+            notes = %s
+        WHERE id = %s
+    """, (name, phone, email, address, notes, client_id))
+
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    return RedirectResponse(url="/clients", status_code=303)
 
 @app.get("/client-dashboard", response_class=HTMLResponse)
 async def client_dashboard(request: Request):
