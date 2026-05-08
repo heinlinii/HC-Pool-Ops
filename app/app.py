@@ -2330,7 +2330,8 @@ async def submit_client_request(
             crew="Unassigned",
             status="Requested",
             priority="Medium",
-            notes=message
+            notes=message,
+     
         )
 
         db.add(new_job)
