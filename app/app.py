@@ -2195,24 +2195,31 @@ async def update_client(
     address: str = Form(""),
     notes: str = Form("")
 ):
-    conn = get_db_connection()
-    cur = conn.cursor()
+    user = require_admin(request)
 
-    cur.execute("""
-        UPDATE clients
-        SET name = %s,
-            phone = %s,
-            email = %s,
-            address = %s,
-            notes = %s
-        WHERE id = %s
-    """, (name, phone, email, address, notes, client_id))
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
 
-    conn.commit()
-    cur.close()
-    conn.close()
+    db = db_session()
 
-    return RedirectResponse(url="/clients", status_code=303)
+    try:
+        client = db.query(Client).filter(Client.id == client_id).first()
+
+        if not client:
+            return HTMLResponse("Client not found", status_code=404)
+
+        client.name = name.strip()
+        client.phone = phone.strip()
+        client.email = email.strip()
+        client.address = address.strip()
+        client.notes = notes.strip()
+
+        db.commit()
+
+        return RedirectResponse(url="/clients", status_code=303)
+
+    finally:
+        db.close()
 
 @app.get("/client-dashboard", response_class=HTMLResponse)
 async def client_dashboard(request: Request):
