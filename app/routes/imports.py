@@ -187,18 +187,6 @@ def contact_record(row):
         "Emails",
     )
 
-    address = pick(
-        row,
-        "address",
-        "Address",
-        "all addresses",
-        "All Addresses",
-        "billing address",
-        "Billing Address",
-        "shipping address",
-        "Shipping Address",
-    )
-
     notes = pick(
         row,
         "notes",
@@ -221,7 +209,6 @@ def contact_record(row):
         "name": name,
         "phone": phone.strip(),
         "email": email.strip(),
-        "address": address.strip(),
         "notes": notes.strip(),
         "phones": phones,
         "emails": emails,
@@ -302,7 +289,6 @@ def backup_existing_clients(db):
             "name",
             "phone",
             "email",
-            "address",
             "notes",
         ])
 
@@ -312,7 +298,6 @@ def backup_existing_clients(db):
                 client.name or "",
                 client.phone or "",
                 client.email or "",
-                getattr(client, "address", "") or "",
                 client.notes or "",
             ])
 
@@ -519,7 +504,6 @@ async def rebuild_qb_matched_only(
             "name": contact["name"],
             "phone": contact["phone"],
             "email": contact["email"],
-            "address": contact["address"],
             "notes": final_notes,
         })
 
@@ -538,7 +522,6 @@ async def rebuild_qb_matched_only(
                     name=item["name"],
                     phone=item["phone"],
                     email=item["email"],
-                    address=item["address"],
                     notes=item["notes"],
                 )
             )
@@ -610,14 +593,6 @@ async def import_clients(
                 "E-mail 1 - Value",
             )
 
-            address = pick(
-                row,
-                "address",
-                "Address",
-                "all addresses",
-                "All Addresses",
-            )
-
             notes = pick(
                 row,
                 "notes",
@@ -647,7 +622,6 @@ async def import_clients(
                     name=name.strip(),
                     phone=phone.strip(),
                     email=email.strip(),
-                    address=address.strip(),
                     notes=notes.strip(),
                 )
             )
