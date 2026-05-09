@@ -1944,6 +1944,73 @@ async def contact_matcher_page(request: Request):
         },
     )
 
+@app.post("/contact-matcher")
+async def contact_matcher_upload(
+    request: Request,
+    csv_file: UploadFile = File(...)
+):
+    user = require_admin(request)
+
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    contents = await csv_file.read()
+    decoded = contents.decode("utf-8").splitlines()
+
+    import csv
+
+    reader = csv.DictReader(decoded)
+
+    imported_contacts = []
+
+    for row in reader:
+        imported_contacts.append({
+            "name": row.get("Name", ""),
+            "phone": row.get("Phone", ""),
+            "email": row.get("E-mail 1 - Value", "")
+        })
+
+    db = db_session()
+
+    try:
+        clients = db.query(Client).all()
+
+        matches = []
+        new_contacts = []
+
+        for contact in imported_contacts:
+
+            found = False
+
+            for client in clients:
+
+                client_phone = (client.phone or "").replace("-", "").replace(" ", "")
+                contact_phone = (contact["phone"] or "").replace("-", "").replace(" ", "")
+
+                if client_phone and client_phone in contact_phone:
+                    matches.append({
+                        "contact": contact,
+                        "client": client
+                    })
+                    found = True
+                    break
+
+            if not found:
+                new_contacts.append(contact)
+
+        return templates.TemplateResponse(
+            request,
+            "contact_matcher.html",
+            {
+                "user": user,
+                "matches": matches,
+                "new_contacts": new_contacts,
+            },
+        )
+
+    finally:
+        db.close()
+
 @app.get("/imports")
 async def imports_page(request: Request, message: str = ""):
     user = require_admin(request)
