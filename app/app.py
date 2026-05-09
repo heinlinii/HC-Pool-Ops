@@ -3245,3 +3245,105 @@ async def add_field_log(
 
     finally:
         db.close()
+    
+        
+
+        TEMP_ESTIMATE_FILE = "app/temp_estimates.json"
+
+
+def load_temp_estimates():
+    if not os.path.exists(TEMP_ESTIMATE_FILE):
+        return []
+
+    try:
+        with open(TEMP_ESTIMATE_FILE, "r") as f:
+            return json.load(f)
+
+    except Exception:
+        return []
+
+
+def save_temp_estimates(estimates):
+    with open(TEMP_ESTIMATE_FILE, "w") as f:
+        json.dump(estimates, f, indent=2)
+
+
+@app.get("/estimate-capture")
+async def estimate_capture_page(request: Request):
+
+    user = require_login(request)
+
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    estimates = load_temp_estimates()
+
+    return templates.TemplateResponse(
+        request,
+        "estimate_capture.html",
+        {
+            "user": user,
+            "estimates": estimates,
+            "message": None,
+        },
+    )
+
+
+@app.post("/estimate-capture/save")
+async def save_estimate_capture(
+    request: Request,
+    client: str = Form(...),
+    property_address: str = Form(...),
+    estimate_type: str = Form(...),
+    captured_text: str = Form(""),
+    total: str = Form("0"),
+    notes: str = Form(""),
+    estimate_image: UploadFile = File(None),
+):
+
+    user = require_login(request)
+
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    image_url = ""
+
+    if estimate_image and estimate_image.filename:
+
+        clean_name = estimate_image.filename.replace(" ", "_")
+
+        image_path = os.path.join(
+            UPLOAD_DIR,
+            f"estimate_{clean_name}"
+        )
+
+        with open(image_path, "wb") as buffer:
+            shutil.copyfileobj(estimate_image.file, buffer)
+
+        image_url = "/" + image_path.replace("app/", "")
+
+    estimates = load_temp_estimates()
+
+    new_estimate = {
+        "client": client.strip(),
+        "property_address": property_address.strip(),
+        "estimate_type": estimate_type.strip(),
+        "captured_text": captured_text.strip(),
+        "total": total.strip(),
+        "notes": notes.strip(),
+        "image_url": image_url,
+    }
+
+    estimates.insert(0, new_estimate)
+
+    save_temp_estimates(estimates)
+
+    return templates.TemplateResponse(
+        request,
+        "estimate_capture.html",
+        {
+            "user": user,
+            "estimates": estimates,
+            "message": "Estimate saved successfully.",
+        },
+    )

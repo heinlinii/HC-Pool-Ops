@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estimate Capture • PoolOps2</title>
+    <link rel="stylesheet" href="/static/style.css?v=15j">
+</head>
+
+<body>
+
+<main class="shell">
+
+    <section class="card">
+        <h1>Estimate Capture</h1>
+        <p>Upload a screenshot, paste the captured text, and save it as a temporary PoolOps estimate record.</p>
+
+        <a class="btn" href="/dashboard">Back to Dashboard</a>
+        <a class="btn" href="/imports">Imports</a>
+        <a class="btn" href="/billing">Billing</a>
+    </section>
+
+    {% if message %}
+    <section class="card">
+        <h2>Saved</h2>
+        <p>{{ message }}</p>
+    </section>
+    {% endif %}
+
+    <section class="card">
+        <h2>Original Estimate Entry</h2>
+
+        <form method="post" action="/estimate-capture/save" enctype="multipart/form-data">
+
+            <label>Client / Job Name</label>
+            <input name="client" value="Bulkley" required>
+
+            <label>Property / Address</label>
+            <input name="property_address" value="Newburgh Rd" required>
+
+            <label>Estimate Type</label>
+            <input name="estimate_type" value="Original Automation Estimate" required>
+
+            <label>Screenshot / Photo</label>
+            <input type="file" name="estimate_image" accept="image/*">
+
+            <label>Captured Text</label>
+            <textarea name="captured_text" rows="10">HLPRO4W OMNIPL 4 RELAY W/ WEB INTERFACE $3,144.91
+
+TRISTAR VS950 VAR SPEED PUMP $2,661.92
+
+HDF275 275K NG/LP IID LOW NOX UNIVERSAL HC SERIES HEATER $3,614.93</textarea>
+
+            <label>Flat Rate Total</label>
+            <input name="total" value="9421.76" required>
+
+            <label>Notes</label>
+            <textarea name="notes" rows="5">Original estimate captured from screenshot. Temporary file-based estimate record. Database model to be added later.</textarea>
+
+            <button type="submit" class="btn">Save Temporary Estimate</button>
+
+        </form>
+    </section>
+
+    <section class="card">
+        <h2>Temporary Estimate Records</h2>
+
+        {% if estimates %}
+            {% for estimate in estimates %}
+                <div class="job-card">
+                    <h3>{{ estimate.estimate_type }}</h3>
+                    <p><strong>{{ estimate.client }}</strong> — {{ estimate.property_address }}</p>
+                    <p><strong>Total:</strong> ${{ estimate.total }}</p>
+                    <div class="job-notes">
+                        {{ estimate.captured_text }}
+                    </div>
+                    {% if estimate.image_url %}
+                        <p><a href="{{ estimate.image_url }}" target="_blank">Open uploaded screenshot</a></p>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        {% else %}
+            <p>No temporary estimate records yet.</p>
+        {% endif %}
+    </section>
+
+</main>
+
+</body>
+</html>
