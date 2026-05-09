@@ -4,71 +4,68 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>PoolOps2 Command Center</title>
-  <link rel="stylesheet" href="/static/style.css?v=15i">
-
+  <link rel="stylesheet" href="/static/style.css?v=15j">
 </head>
 
-<body {% if theme and theme.background_image %}style="background-image: linear-gradient(rgba(5,11,15,.90), rgba(5,11,15,.96)), url('{{ theme.background_image }}'); background-size: cover; background-position: center; background-attachment: fixed;"{% endif %}></body>
+<body {% if theme and theme.background_image %}style="background-image: linear-gradient(rgba(5,11,15,.90), rgba(5,11,15,.96)), url('{{ theme.background_image }}'); background-size: cover; background-position: center; background-attachment: fixed;"{% endif %}>
 
 <main class="shell">
 
   <section class="hero">
-        <div class="hero-main">
+    <div class="hero-main">
       <div class="brand-row">
         <img class="brand-logo" src="/static/logo.png" alt="Logo">
         <div>
           <div class="eyebrow">Heinlin Concrete • PoolOps2</div>
-         <h1>{{ theme.title if theme else "Command Center" }}</h1>
+          <h1>{{ theme.title if theme else "Command Center" }}</h1>
         </div>
       </div>
 
-      <p>{{ theme.subtitle if theme else "Your pool operations cockpit." }}</p>
-        Your pool operations cockpit for jobs, schedules, clients, properties, field logs,
-        weather, backups, billing, and future QuickBooks workflow.
+      <p>
+        {{ theme.subtitle if theme else "Your pool operations cockpit for jobs, schedules, clients, properties, field logs, weather, backups, billing, and future QuickBooks workflow." }}
       </p>
 
-{% if theme and theme.hero_image %}
-  <img src="{{ theme.hero_image }}" style="width:100%;max-height:320px;object-fit:cover;border-radius:24px;margin-top:16px;">
-{% endif %}
+      {% if theme and theme.hero_image %}
+      <img src="{{ theme.hero_image }}" style="width:100%;max-height:320px;object-fit:cover;border-radius:24px;margin-top:16px;">
+      {% endif %}
 
       <div class="system-row">
         <div class="pill green">SYSTEM ONLINE</div>
         <div class="pill">FASTAPI</div>
         <div class="pill">POSTGRES CONNECTED</div>
-        <div class="pill">PHASE 15I</div>
+        <div class="pill">PHASE 15J</div>
       </div>
     </div>
 
     <div class="hero-photo">
       <div>
-       <h2>{{ theme.hero_title if theme else "Jarvis for Pool Operations" }}</h2>
+        <h2>{{ theme.hero_title if theme else "Jarvis for Pool Operations" }}</h2>
         <p>{{ theme.hero_subtitle if theme else "Fast field controls. Better documentation." }}</p>
       </div>
     </div>
   </section>
 
-<section class="card">
+  <section class="card">
     <h2>Control Panel</h2>
-    <p>Quick app controls for layout, projects, jobs, imports, photos, and admin tools.</p>
+    <p>Quick app controls for layout, projects, jobs, imports, photos, billing, and estimate capture.</p>
 
     <div class="project-toolbar">
-        <a class="btn" href="/dashboard/theme">Edit Dashboard Look</a>
-        <a class="btn" href="/projects">Projects</a>
-        <a class="btn" href="/properties/new">Add Project</a>
-        <a class="btn" href="/jobs">Jobs</a>
-        <a class="btn" href="/schedule">Schedule</a>
-        <a class="btn" href="/imports">Imports</a>
-        <a class="btn" href="/contact-matcher">Contact Matcher</a>
-        <a class="btn" href="/photos">Photos</a>
-        <a class="btn" href="/billing">Billing</a>
-        
+      <a class="btn" href="/dashboard/theme">Edit Dashboard Look</a>
+      <a class="btn" href="/projects">Projects</a>
+      <a class="btn" href="/properties/new">Add Project</a>
+      <a class="btn" href="/jobs">Jobs</a>
+      <a class="btn" href="/schedule">Schedule</a>
+      <a class="btn" href="/imports">Imports</a>
+      <a class="btn" href="/contact-matcher">Contact Matcher</a>
+      <a class="btn" href="/photos">Photos</a>
+      <a class="btn" href="/billing">Billing</a>
+      <a class="btn" href="/job-costing">Job Costing</a>
+      <a class="btn" href="/estimate-capture">Estimate Capture</a>
     </div>
-</section>
+  </section>
 
   <section class="search-card" id="searchSection">
     <div class="search-label">Universal Command Search</div>
-
-<a class="btn" href="/dashboard/theme">Edit Dashboard Look</a>
 
     <input id="universalSearch"
       type="search"
@@ -76,37 +73,6 @@
       autocomplete="off">
 
     <div id="searchResults" class="search-results"></div>
-  </section>
-
-  <div class="section-title">
-    <h2>Command Focus</h2>
-    <span>What needs your eyes first</span>
-  </div>
-
-  <section class="focus-grid">
-    <div class="focus-card searchable" data-type="Focus" data-title="Today field priorities crew movement active jobs">
-      <div class="icon">🎯</div>
-      <h3>Today</h3>
-      <p>Track field priorities and crew movement.</p>
-    </div>
-
-    <div class="focus-card searchable" data-type="Focus" data-title="This Week schedule pressure open slots calendar">
-      <div class="icon">📆</div>
-      <h3>This Week</h3>
-      <p>See upcoming schedule pressure points.</p>
-    </div>
-
-    <div class="focus-card searchable" data-type="Focus" data-title="Needs Attention delayed jobs missing documentation notes photos">
-      <div class="icon">⚠️</div>
-      <h3>Needs Attention</h3>
-      <p>Flag delayed jobs and missing documentation.</p>
-    </div>
-
-    <div class="focus-card searchable" data-type="Focus" data-title="Money billing QuickBooks invoices exports profit">
-      <div class="icon">💰</div>
-      <h3>Money</h3>
-      <p>Keep billing and QuickBooks visible.</p>
-    </div>
   </section>
 
   <div class="section-title">
@@ -119,6 +85,12 @@
       <div class="icon">➕</div>
       <strong>Add Job</strong>
       <span>Create work orders.</span>
+    </a>
+
+    <a class="action-card searchable" href="/estimate-capture" data-type="Command" data-title="Estimate Capture screenshot quote OCR original estimate">
+      <div class="icon">🧾</div>
+      <strong>Estimate Capture</strong>
+      <span>Upload screenshots and build estimate records.</span>
     </a>
 
     <a class="action-card searchable" href="/field-logs" data-type="Command" data-title="Upload Photo field logs pictures progress">
@@ -137,12 +109,6 @@
       <div class="icon">📅</div>
       <strong>Schedule</strong>
       <span>Plan crews.</span>
-    </a>
-
-    <a class="action-card searchable" href="/weather" data-type="Command" data-title="Weather forecast rain wind conditions">
-      <div class="icon">⛈️</div>
-      <strong>Weather</strong>
-      <span>Check conditions.</span>
     </a>
 
     <a class="action-card searchable" href="/billing" data-type="Command" data-title="Billing invoices QuickBooks exports CSV">
@@ -170,18 +136,6 @@
       <p>Calendar and planning.</p>
     </a>
 
-    <a class="quick-card searchable" href="/field-logs" data-type="Module" data-title="Field Logs photos progress notes daily">
-      <div class="icon">📸</div>
-      <h3>Field Logs</h3>
-      <p>Photos and progress.</p>
-    </a>
-
-    <a class="quick-card searchable" href="/weather" data-type="Module" data-title="Weather forecast rain wind jobsite conditions">
-      <div class="icon">⛈️</div>
-      <h3>Weather</h3>
-      <p>Forecast planning.</p>
-    </a>
-
     <a class="quick-card searchable" href="/clients" data-type="Module" data-title="Clients customers homeowners contacts">
       <div class="icon">👥</div>
       <h3>Clients</h3>
@@ -194,16 +148,28 @@
       <p>Addresses and pools.</p>
     </a>
 
-    <a class="quick-card searchable" href="/backups" data-type="Module" data-title="Backups database export company data">
-      <div class="icon">🛡️</div>
-      <h3>Backups</h3>
-      <p>Protect company data.</p>
+    <a class="quick-card searchable" href="/photos" data-type="Module" data-title="Photos project pictures before after progress">
+      <div class="icon">📸</div>
+      <h3>Photos</h3>
+      <p>Project pictures.</p>
     </a>
 
     <a class="quick-card searchable" href="/billing" data-type="Module" data-title="Billing QuickBooks workflow invoices CSV">
       <div class="icon">💵</div>
       <h3>Billing</h3>
       <p>QuickBooks workflow.</p>
+    </a>
+
+    <a class="quick-card searchable" href="/job-costing" data-type="Module" data-title="Job Costing profit margin expenses">
+      <div class="icon">📊</div>
+      <h3>Job Costing</h3>
+      <p>Profit and expenses.</p>
+    </a>
+
+    <a class="quick-card searchable" href="/imports" data-type="Module" data-title="Imports QuickBooks CSV contacts clients properties">
+      <div class="icon">⬆️</div>
+      <h3>Imports</h3>
+      <p>CSV and contact tools.</p>
     </a>
   </section>
 
@@ -216,11 +182,12 @@
           {% for job in jobs[:8] %}
             <div class="job-card searchable"
               data-type="Job"
-              data-title="{{ job.title or job.name or 'Untitled Job' }} {{ job.client_name or '' }} {{ job.status or '' }}">
-              <strong>{{ job.title or job.name or "Untitled Job" }}</strong>
-              <span>{{ job.client_name or "Client not assigned" }}</span>
+              data-title="{{ job.client or '' }} {{ job.address or job.property or '' }} {{ job.job_type or '' }} {{ job.status or '' }}">
+              <strong>{{ job.client or "Untitled Job" }}</strong>
+              <span>{{ job.address or job.property or "No address listed" }}</span>
               <div class="tag-row">
                 <div class="tag">{{ job.status or "Active" }}</div>
+                <div class="tag">{{ job.job_type or "Job" }}</div>
               </div>
             </div>
           {% endfor %}
@@ -238,246 +205,200 @@
 
       <div class="metric-grid">
         <div class="metric">
-          <b>{{ jobs|length if jobs else 0 }}</b>
-          <span>Jobs visible</span>
+          <b>{{ stats.total_jobs if stats else jobs|length if jobs else 0 }}</b>
+          <span>Jobs</span>
         </div>
 
         <div class="metric">
-          <b>{{ clients|length if clients else 0 }}</b>
-          <span>Clients visible</span>
+          <b>{{ stats.clients if stats else clients|length if clients else 0 }}</b>
+          <span>Clients</span>
         </div>
 
         <div class="metric">
-          <b>{{ properties|length if properties else 0 }}</b>
-          <span>Properties visible</span>
+          <b>{{ stats.properties if stats else properties|length if properties else 0 }}</b>
+          <span>Properties</span>
+        </div>
+
+        <div class="metric">
+          <b>${{ "%.2f"|format(stats.invoice_total if stats else 0) }}</b>
+          <span>Invoices</span>
         </div>
       </div>
 
       <h2 style="margin-top:20px;">Next Best Moves</h2>
 
       <div class="moves-grid">
-        <div class="move-card searchable" data-type="Move" data-title="Add real backend universal search clients jobs properties">
-          <strong>1. Real Search Backend</strong>
-          <span>Next phase should connect this search box to actual clients, jobs, and properties.</span>
+        <div class="move-card searchable" data-type="Move" data-title="Estimate Capture screenshot original quote OCR">
+          <strong>1. Estimate Capture</strong>
+          <span>Upload screenshots and save original estimates.</span>
         </div>
 
         <div class="move-card searchable" data-type="Move" data-title="Field logs photo upload daily notes progress">
           <strong>2. Field Logs Upgrade</strong>
-          <span>Make photos, notes, and daily logs truly useful for job documentation.</span>
+          <span>Make photos, notes, and daily logs useful for job documentation.</span>
         </div>
 
         <div class="move-card searchable" data-type="Move" data-title="QuickBooks CSV billing invoice export">
           <strong>3. QuickBooks CSV</strong>
-          <span>Start turning billing into clean exports and better job-cost visibility.</span>
-        </div>
-      </div>
-
-      <h2 style="margin-top:20px;">Project Look</h2>
-
-      <div class="photo-grid">
-        <div class="photo-card" style="background-image:url('/static/pool-1.jpg');">
-          <div>
-            <strong>Finished Pools</strong>
-            <span>Showcase completed work.</span>
-          </div>
-        </div>
-
-        <div class="photo-card" style="background-image:url('/static/pool-2.jpg');">
-          <div>
-            <strong>Remodels</strong>
-            <span>Before, during, and after.</span>
-          </div>
-        </div>
-
-        <div class="photo-card" style="background-image:url('/static/pool-3.jpg');">
-          <div>
-            <strong>Concrete + Craft</strong>
-            <span>Premium builder branding.</span>
-          </div>
+          <span>Turn billing into clean exports and better job-cost visibility.</span>
         </div>
       </div>
     </aside>
   </section>
 
-<div style="margin-top:30px;text-align:center;">
+  <section class="dashboard-card">
+    <h2>Customer Intake</h2>
+
+    <form action="/customer-intake" method="post">
+      <textarea
+        name="message"
+        rows="8"
+        placeholder="Paste customer text message here..."
+      ></textarea>
+
+      <button type="submit" class="btn">
+        Create Intake
+      </button>
+    </form>
+  </section>
+
+  <div style="margin-top:30px;text-align:center;">
     <a href="/logout"
-       style="
-       display:inline-block;
-       padding:12px 20px;
-       border-radius:14px;
-       background:#ef4444;
-       color:white;
-       text-decoration:none;
-       font-weight:700;">
+       style="display:inline-block;padding:12px 20px;border-radius:14px;background:#ef4444;color:white;text-decoration:none;font-weight:700;">
        Logout
     </a>
-</div>
+  </div>
 
 </main>
 
 <div class="field-dock">
+  <a href="/estimate-capture">🧾<br>Estimate</a>
   <a href="/field-logs">📸<br>Photo</a>
-  <a href="/field-logs">📝<br>Note</a>
   <a href="/schedule">📅<br>Schedule</a>
 </div>
 
 <button class="floating-search" id="floatingSearch" type="button">⌕</button>
-<div class="dashboard-card">
-    <h2>Customer Intake</h2>
-
-    <form action="/customer-intake" method="post">
-
-        <textarea
-            name="message"
-            rows="8"
-            placeholder="Paste customer text message here..."
-            style="width:100%; padding:12px; border-radius:10px;"
-        ></textarea>
-
-        <button type="submit" class="btn">
-            Create Intake
-        </button>
-
-    </form>
-</div>
 
 <nav class="mobile-nav">
   <a href="/dashboard">🏠<br>Home</a>
   <a href="/jobs">🏗️<br>Jobs</a>
   <a href="/schedule">📅<br>Sched</a>
-  <a href="/field-logs">📸<br>Logs</a>
-  <a href="/weather">⛈️<br>Weather</a>
+  <a href="/estimate-capture">🧾<br>Estimate</a>
+  <a href="/billing">💵<br>Billing</a>
 </nav>
 
 <script>
   const searchInput = document.getElementById("universalSearch");
   const resultsBox = document.getElementById("searchResults");
   const floatingSearch = document.getElementById("floatingSearch");
-  let currentMatches = [];
 
-async function runSearch() {
+  let currentResults = [];
 
-  const query = searchInput.value.trim();
+  async function runSearch() {
+    const query = searchInput.value.trim();
 
     resultsBox.innerHTML = "";
 
     if (!query) {
-        resultsBox.style.display = "none";
-        return;
+      resultsBox.style.display = "none";
+      currentResults = [];
+      return;
     }
 
     try {
+      const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+      const data = await response.json();
 
-  const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+      currentResults = data.results || [];
+      resultsBox.style.display = "grid";
 
-        const data = await response.json();
-
-        currentResults = data.results || [];
-
-        resultsBox.style.display = "grid";
-
-        if (!currentResults.length) {
-
-            resultsBox.innerHTML = `
-                <div class="search-result">
-                    <small>No Match</small>
-                    <div>No records found.</div>
-                </div>
-            `;
-
-            return;
-        }
-
-        currentResults.forEach((item, index) => {
-
-            const card = document.createElement("a");
-
-            card.className = "search-result";
-
-            if (index === 0) {
-                card.classList.add("active-result");
-            }
-
-            card.href = item.url || "#";
-
-            card.innerHTML = `
-                <small>${item.type}</small>
-                <div>${item.title}</div>
-                <span>${item.subtitle || ""}</span>
-            `;
-
-            resultsBox.appendChild(card);
-
-        });
-
-    } catch (err) {
-
-        resultsBox.style.display = "grid";
-
+      if (!currentResults.length) {
         resultsBox.innerHTML = `
-            <div class="search-result">
-                <small>Error</small>
-                <div>Search API offline.</div>
+          <div class="search-result">
+            <small>No Match</small>
+            <div>No records found.</div>
           </div>
         `;
+        return;
+      }
+
+      currentResults.forEach((item, index) => {
+        const card = document.createElement("a");
+        card.className = "search-result";
+
+        if (index === 0) {
+          card.classList.add("active-result");
+        }
+
+        card.href = item.url || "#";
+
+        card.innerHTML = `
+          <small>${item.type || "Result"}</small>
+          <div>${item.title || "Untitled"}</div>
+          <span>${item.subtitle || ""}</span>
+        `;
+
+        resultsBox.appendChild(card);
+      });
+
+    } catch (err) {
+      resultsBox.style.display = "grid";
+      resultsBox.innerHTML = `
+        <div class="search-result">
+          <small>Error</small>
+          <div>Search API offline.</div>
+        </div>
+      `;
     }
-}
+  }
 
-searchInput.addEventListener("input", runSearch);
+  if (searchInput) {
+    searchInput.addEventListener("input", runSearch);
 
-searchInput.addEventListener("keydown", function(event){
-
-    if (
+    searchInput.addEventListener("keydown", function(event) {
+      if (
         event.key === "Enter" &&
         currentResults.length &&
         currentResults[0].url
-    ) {
+      ) {
         window.location.href = currentResults[0].url;
-    }
+      }
 
-    if (event.key === "Escape") {
-
+      if (event.key === "Escape") {
         searchInput.value = "";
-
         resultsBox.style.display = "none";
-
         searchInput.blur();
-    }
-});
+      }
+    });
+  }
 
-document.addEventListener("keydown", function(event){
-
+  document.addEventListener("keydown", function(event) {
     const activeTag = document.activeElement.tagName.toLowerCase();
 
     if (
-        event.key === "/" &&
-        activeTag !== "input" &&
-        activeTag !== "textarea"
+      event.key === "/" &&
+      activeTag !== "input" &&
+      activeTag !== "textarea"
     ) {
-
-        event.preventDefault();
-
-        searchInput.focus();
-
-        searchInput.scrollIntoView({
-            behavior: "smooth",
-            block: "center"
-        });
+      event.preventDefault();
+      searchInput.focus();
+      searchInput.scrollIntoView({
+        behavior: "smooth",
+        block: "center"
+      });
     }
-});
+  });
 
-if (floatingSearch) {
-
-    floatingSearch.addEventListener("click", function(){
-
-        searchInput.focus();
-
-        searchInput.scrollIntoView({
-            behavior: "smooth",
-            block: "center"
-        });
+  if (floatingSearch) {
+    floatingSearch.addEventListener("click", function() {
+      searchInput.focus();
+      searchInput.scrollIntoView({
+        behavior: "smooth",
+        block: "center"
+      });
     });
-}
+  }
 </script>
+
 </body>
 </html>
