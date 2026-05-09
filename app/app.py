@@ -3341,4 +3341,94 @@ async def save_estimate_capture(
         },
     )     
 
-   
+   @app.post("/estimate-to-job/{estimate_index}")
+async def estimate_to_job(
+    request: Request,
+    estimate_index: int,
+):
+    user = require_login(request)
+
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    estimates = load_temp_estimates()
+
+    if estimate_index < 0 or estimate_index >= len(estimates):
+        return RedirectResponse(url="/estimate-capture", status_code=303)
+
+    estimate = estimates[estimate_index]
+
+    db = db_session()
+
+    try:
+        client_name = estimate.get("client", "").strip() or "Unknown Client"
+        property_address = estimate.get("property_address", "").strip() or "No address listed"
+        estimate_type = estimate.get("estimate_type", "").strip() or "Captured Estimate"
+        captured_text = estimate.get("captured_text", "").strip()
+        total = estimate.get("total", "").strip()
+        notes = estimate.get("notes", "").strip()
+
+        existing_client = db.query(Client).filter(Client.name == client_name).first()
+
+        if not existing_client:
+            existing_client = Client(
+                name=client_name,
+                phone="",
+                email="",
+                notes="Created from estimate capture."
+            )
+            db.add(existing_client)
+            db.commit()
+            db.refresh(existing_client)
+
+        existing_property = db.query(Property).filter(
+            Property.client == client_name,
+            Property.address == property_address,
+        ).first()
+
+        if not existing_property:
+            existing_property = Property(
+                client_id=existing_client.id,
+                client=client_name,
+                address=property_address,
+                pool_type="",
+                notes="Created from estimate capture."
+            )
+            db.add(existing_property)
+            db.commit()
+
+        job_notes = f"""
+Created from Estimate Capture.
+
+Estimate Type:
+{estimate_type}
+
+Estimate Total:
+${total}
+
+Captured Estimate Text:
+{captured_text}
+
+Notes:
+{notes}
+""".strip()
+
+        new_job = Job(
+            client=client_name,
+            property=property_address,
+            address=property_address,
+            job_type=estimate_type,
+            status="Pending",
+            crew="Unassigned",
+            date="Unscheduled",
+            priority="Normal",
+            notes=job_notes,
+        )
+
+        db.add(new_job)
+        db.commit()
+
+    finally:
+        db.close()
+
+    return RedirectResponse(url="/jobs", status_code=303)

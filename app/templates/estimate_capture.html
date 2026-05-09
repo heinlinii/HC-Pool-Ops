@@ -77,6 +77,11 @@ HDF275 275K NG/LP IID LOW NOX UNIVERSAL HC SERIES HEATER $3,614.93</textarea>
                     {% if estimate.image_url %}
                         <p><a href="{{ estimate.image_url }}" target="_blank">Open uploaded screenshot</a></p>
                     {% endif %}
+                    <form method="post" action="/estimate-to-job/{{ loop.index0 }}">
+    <button type="submit" class="action-btn">
+        Convert To Job
+    </button>
+</form>
                 </div>
             {% endfor %}
         {% else %}
