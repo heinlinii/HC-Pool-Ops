@@ -320,6 +320,24 @@
 </div>
 
 <button class="floating-search" id="floatingSearch" type="button">⌕</button>
+<div class="dashboard-card">
+    <h2>Customer Intake</h2>
+
+    <form action="/customer-intake" method="post">
+
+        <textarea
+            name="message"
+            rows="8"
+            placeholder="Paste customer text message here..."
+            style="width:100%; padding:12px; border-radius:10px;"
+        ></textarea>
+
+        <button type="submit" class="btn">
+            Create Intake
+        </button>
+
+    </form>
+</div>
 
 <nav class="mobile-nav">
   <a href="/dashboard">🏠<br>Home</a>
@@ -406,7 +424,7 @@ async function runSearch() {
             <div class="search-result">
                 <small>Error</small>
                 <div>Search API offline.</div>
-            </div>
+          </div>
         `;
     }
 }
