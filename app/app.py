@@ -2018,7 +2018,14 @@ async def imports_page(request: Request, message: str = ""):
     if not user:
         return RedirectResponse(url="/", status_code=303)
 
-   
+    return templates.TemplateResponse(
+    request,
+    "import.html",
+    {
+        "user": user,
+        "message": message,
+    },
+)
 
 @app.post("/imports/properties")
 async def import_properties(request: Request, file: UploadFile = File(...)):
