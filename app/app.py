@@ -1927,6 +1927,22 @@ async def delete_photo_log(request: Request, photo_id: int):
     finally:
         db.close()
 
+@app.get("/contact-matcher")
+async def contact_matcher_page(request: Request):
+    user = require_admin(request)
+
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    return templates.TemplateResponse(
+        request,
+        "contact_matcher.html",
+        {
+            "user": user,
+            "matches": None,
+            "new_contacts": None,
+        },
+    )
 
 @app.get("/imports")
 async def imports_page(request: Request, message: str = ""):

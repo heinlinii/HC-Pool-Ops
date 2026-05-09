@@ -1,0 +1,16 @@
+@app.get("/contact-matcher")
+async def contact_matcher_page(request: Request):
+    user = require_admin(request)
+
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    return templates.TemplateResponse(
+        request,
+        "contact_matcher.html",
+        {
+            "user": user,
+            "matches": None,
+            "new_contacts": None,
+        },
+    )
