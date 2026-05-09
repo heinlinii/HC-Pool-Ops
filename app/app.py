@@ -3246,9 +3246,7 @@ async def add_field_log(
     finally:
         db.close()
     
-        
-
-        TEMP_ESTIMATE_FILE = "app/temp_estimates.json"
+TEMP_ESTIMATE_FILE = "app/temp_estimates.json"
 
 
 def load_temp_estimates():
@@ -3258,7 +3256,6 @@ def load_temp_estimates():
     try:
         with open(TEMP_ESTIMATE_FILE, "r") as f:
             return json.load(f)
-
     except Exception:
         return []
 
@@ -3270,7 +3267,6 @@ def save_temp_estimates(estimates):
 
 @app.get("/estimate-capture")
 async def estimate_capture_page(request: Request):
-
     user = require_login(request)
 
     if not user:
@@ -3300,7 +3296,6 @@ async def save_estimate_capture(
     notes: str = Form(""),
     estimate_image: UploadFile = File(None),
 ):
-
     user = require_login(request)
 
     if not user:
@@ -3309,7 +3304,6 @@ async def save_estimate_capture(
     image_url = ""
 
     if estimate_image and estimate_image.filename:
-
         clean_name = estimate_image.filename.replace(" ", "_")
 
         image_path = os.path.join(
@@ -3335,7 +3329,6 @@ async def save_estimate_capture(
     }
 
     estimates.insert(0, new_estimate)
-
     save_temp_estimates(estimates)
 
     return templates.TemplateResponse(
@@ -3346,4 +3339,6 @@ async def save_estimate_capture(
             "estimates": estimates,
             "message": "Estimate saved successfully.",
         },
-    )
+    )     
+
+   
