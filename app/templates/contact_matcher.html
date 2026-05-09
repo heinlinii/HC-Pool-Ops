@@ -1,16 +1,22 @@
-@app.get("/contact-matcher")
-async def contact_matcher_page(request: Request):
-    user = require_admin(request)
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Contact Matcher</title>
+    <link rel="stylesheet" href="/static/style.css?v=15i">
+</head>
+<body>
 
-    if not user:
-        return RedirectResponse(url="/", status_code=303)
+<main>
+    <h1>Contact Matcher</h1>
+    <p>Upload exported phone contacts as a CSV. PoolOps will compare them to your clients.</p>
 
-    return templates.TemplateResponse(
-        request,
-        "contact_matcher.html",
-        {
-            "user": user,
-            "matches": None,
-            "new_contacts": None,
-        },
-    )
+    <form method="post" action="/contact-matcher" enctype="multipart/form-data">
+        <input type="file" name="csv_file" accept=".csv" required>
+        <button class="btn" type="submit">Scan Contacts</button>
+    </form>
+
+    <a class="btn" href="/dashboard">Back to Dashboard</a>
+</main>
+
+</body>
+</html>
