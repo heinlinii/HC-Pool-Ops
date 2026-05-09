@@ -57,7 +57,7 @@ async def seed_users(request: Request):
         ("mike", "5500", "admin", "Mike"),
         ("randy", "0318", "crew", "Randy"),
         ("marty", "0712", "crew", "Marty"),
-        ("jamie", "1105", "office", "Jamie"),
+        ("jamie", "1105", "admin", "Jamie"),
     ]
 
     for username, password, role, name in users:
