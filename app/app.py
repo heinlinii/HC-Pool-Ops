@@ -13,10 +13,10 @@ import urllib.request
 
 from app.database import Base, engine, SessionLocal
 from app.models import User, Employee, Client, Property, Job, Invoice, JobCost, PhotoLog, FieldLog
-
+from app.routes.imports import router as imports_router
 
 app = FastAPI(title="PoolOps2")
-
+app.include_router(imports_router)
 app.add_middleware(
     SessionMiddleware,
     secret_key="poolops2-phase-5-secret",
@@ -2024,58 +2024,7 @@ async def imports_page(request: Request, message: str = ""):
         {
             "user": user,
             "message": message,
-        },
-    )
 
-
-@app.post("/imports/clients")
-async def import_clients(request: Request, csv_file: UploadFile = File(...)):
-    user = require_admin(request)
-
-    if not user:
-        return RedirectResponse(url="/", status_code=303)
-
-    rows = read_csv_upload(csv_file)
-
-    db = db_session()
-
-    imported = 0
-    skipped = 0
-
-    try:
-        for row in rows:
-            name = pick(row, "name", "customer", "client", "display name", "company")
-
-            if not name:
-                skipped += 1
-                continue
-
-            existing = db.query(Client).filter(Client.name == name).first()
-
-            if existing:
-                skipped += 1
-                continue
-
-            db.add(
-                Client(
-                    name=name,
-                    phone=pick(row, "phone", "phone number", "mobile", "main phone"),
-                    email=pick(row, "email", "email address", "main email"),
-                    notes=pick(row, "notes", "memo", "description"),
-                )
-            )
-
-            imported += 1
-
-        db.commit()
-
-    finally:
-        db.close()
-
-    return RedirectResponse(
-        url=f"/imports?message=Imported {imported} clients. Skipped {skipped}.",
-        status_code=303,
-    )
 
 @app.post("/imports/properties")
 async def import_properties(request: Request, file: UploadFile = File(...)):
