@@ -54,11 +54,11 @@ async def seed_users(request: Request):
     db = db_session()
 
     users = [
-        ("mike", "5500", "admin", "Mike"),
-        ("randy", "0318", "crew", "Randy"),
-        ("marty", "0712", "crew", "Marty"),
-        ("jamie", "1105", "admin", "Jamie"),
-    ]
+    ("Mike", "5500", "admin", "Mike"),
+    ("Jamie", "1105", "admin", "Jamie"),
+    ("Randy", "0318", "crew", "Randy"),
+    ("Marty", "0712", "crew", "Marty"),
+]
 
     for username, password, role, name in users:
         existing = db.query(User).filter(User.username == username).first()
