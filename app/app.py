@@ -1307,6 +1307,55 @@ async def upgrade_properties(request: Request):
     finally:
         db.close()
 
+@app.get("/admin/upgrade-clients")
+async def upgrade_clients(request: Request):
+    user = require_admin(request)
+
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    db = db_session()
+
+    columns = {
+        "contact_name": "VARCHAR DEFAULT ''",
+        "mobile": "VARCHAR DEFAULT ''",
+        "billing_address": "TEXT DEFAULT ''",
+        "shipping_address": "TEXT DEFAULT ''",
+        "city": "VARCHAR DEFAULT ''",
+        "state": "VARCHAR DEFAULT ''",
+        "zip_code": "VARCHAR DEFAULT ''",
+        "company": "VARCHAR DEFAULT ''",
+    }
+
+    added = []
+    skipped = []
+
+    try:
+        for column_name, column_type in columns.items():
+            try:
+                db.execute(
+                    text(
+                        f"ALTER TABLE poolops2_clients "
+                        f"ADD COLUMN {column_name} {column_type}"
+                    )
+                )
+                added.append(column_name)
+
+            except Exception:
+                db.rollback()
+                skipped.append(column_name)
+
+        db.commit()
+
+        return {
+                   "status": "Client table upgrade complete",
+            "added": added,
+            "already_existed_or_skipped": skipped,
+        }
+
+    finally:
+        db.close()    
+
 @app.get("/employees")
 async def employees_page(request: Request):
     user = require_admin(request)

@@ -26,9 +26,22 @@ class Client(Base):
     __tablename__ = "poolops2_clients"
 
     id = Column(Integer, primary_key=True, index=True)
+
     name = Column(String, nullable=False)
+    contact_name = Column(String, default="")
+
     phone = Column(String, default="")
+    mobile = Column(String, default="")
     email = Column(String, default="")
+
+    billing_address = Column(Text, default="")
+    shipping_address = Column(Text, default="")
+
+    city = Column(String, default="")
+    state = Column(String, default="")
+    zip_code = Column(String, default="")
+
+    company = Column(String, default="")
     notes = Column(Text, default="")
 
 
