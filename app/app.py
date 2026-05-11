@@ -245,6 +245,13 @@ async def login_page(request: Request):
 
     return templates.TemplateResponse(request, "login.html", {"error": None})
 
+@app.get("/login")
+async def login_page(request: Request):
+    return templates.TemplateResponse(
+        request,
+        "login.html",
+        {}
+    )
 
 @app.post("/login")
 async def login(request: Request, username: str = Form(...), password: str = Form(...)):
