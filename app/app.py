@@ -3,6 +3,7 @@ from fastapi.responses import RedirectResponse, StreamingResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
+from sqlalchemy import text
 
 import csv
 import io
@@ -54,11 +55,11 @@ async def seed_users(request: Request):
     db = db_session()
 
     users = [
-    ("Mike", "5500", "admin", "Mike"),
-    ("Jamie", "1105", "admin", "Jamie"),
-    ("Randy", "0318", "crew", "Randy"),
-    ("Marty", "0712", "crew", "Marty"),
-]
+        ("mike", "5500", "admin", "Mike"),
+        ("randy", "0318", "crew", "Randy"),
+        ("marty", "0712", "crew", "Marty"),
+        ("jamie", "1105", "admin", "Jamie"),
+    ]
 
     for username, password, role, name in users:
         existing = db.query(User).filter(User.username == username).first()
@@ -1107,8 +1108,23 @@ async def property_detail_page(request: Request, property_id: int):
 async def add_property(
     request: Request,
     client: str = Form(...),
+    property_name: str = Form(""),
     address: str = Form(...),
+    city: str = Form(""),
+    state: str = Form(""),
+    zip_code: str = Form(""),
     pool_type: str = Form(""),
+    pool_size: str = Form(""),
+    pool_depth: str = Form(""),
+    cover_type: str = Form(""),
+    finish_type: str = Form(""),
+    pump_model: str = Form(""),
+    filter_model: str = Form(""),
+    heater_model: str = Form(""),
+    sanitizer: str = Form(""),
+    automation_system: str = Form(""),
+    gate_code: str = Form(""),
+    service_plan: str = Form(""),
     notes: str = Form(""),
 ):
     user = require_admin(request)
@@ -1125,8 +1141,23 @@ async def add_property(
             Property(
                 client_id=selected_client.id if selected_client else None,
                 client=client.strip(),
+                property_name=property_name.strip(),
                 address=address.strip(),
+                city=city.strip(),
+                state=state.strip(),
+                zip_code=zip_code.strip(),
                 pool_type=pool_type.strip(),
+                pool_size=pool_size.strip(),
+                pool_depth=pool_depth.strip(),
+                cover_type=cover_type.strip(),
+                finish_type=finish_type.strip(),
+                pump_model=pump_model.strip(),
+                filter_model=filter_model.strip(),
+                heater_model=heater_model.strip(),
+                sanitizer=sanitizer.strip(),
+                automation_system=automation_system.strip(),
+                gate_code=gate_code.strip(),
+                service_plan=service_plan.strip(),
                 notes=notes.strip(),
             )
         )
@@ -1137,8 +1168,7 @@ async def add_property(
 
     finally:
         db.close()
-
-
+    
 @app.post("/properties/update/{property_id}")
 async def update_property(
     request: Request,
@@ -1221,6 +1251,61 @@ async def delete_all_properties(request: Request):
         db.close()
 
     return RedirectResponse(url="/properties", status_code=303)
+
+@app.get("/admin/upgrade-properties")
+async def upgrade_properties(request: Request):
+    user = require_admin(request)
+
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    db = db_session()
+
+    columns = {
+        "property_name": "VARCHAR DEFAULT ''",
+        "city": "VARCHAR DEFAULT ''",
+        "state": "VARCHAR DEFAULT ''",
+        "zip_code": "VARCHAR DEFAULT ''",
+        "pool_size": "VARCHAR DEFAULT ''",
+        "pool_depth": "VARCHAR DEFAULT ''",
+        "cover_type": "VARCHAR DEFAULT ''",
+        "finish_type": "VARCHAR DEFAULT ''",
+        "pump_model": "VARCHAR DEFAULT ''",
+        "filter_model": "VARCHAR DEFAULT ''",
+        "heater_model": "VARCHAR DEFAULT ''",
+        "sanitizer": "VARCHAR DEFAULT ''",
+        "automation_system": "VARCHAR DEFAULT ''",
+        "gate_code": "VARCHAR DEFAULT ''",
+        "service_plan": "VARCHAR DEFAULT ''",
+    }
+
+    added = []
+    skipped = []
+
+    try:
+        for column_name, column_type in columns.items():
+            try:
+                db.execute(
+                    text(
+                        f"ALTER TABLE poolops2_properties "
+                        f"ADD COLUMN {column_name} {column_type}"
+                    )
+                )
+                added.append(column_name)
+            except Exception:
+                db.rollback()
+                skipped.append(column_name)
+
+        db.commit()
+
+        return {
+            "status": "Property table upgrade complete",
+            "added": added,
+            "already_existed_or_skipped": skipped,
+        }
+
+    finally:
+        db.close()
 
 @app.get("/employees")
 async def employees_page(request: Request):

@@ -36,10 +36,30 @@ class Property(Base):
     __tablename__ = "poolops2_properties"
 
     id = Column(Integer, primary_key=True, index=True)
+
     client_id = Column(Integer, nullable=True)
     client = Column(String, nullable=False)
+
+    property_name = Column(String, default="")
     address = Column(String, nullable=False)
+    city = Column(String, default="")
+    state = Column(String, default="")
+    zip_code = Column(String, default="")
+
     pool_type = Column(String, default="")
+    pool_size = Column(String, default="")
+    pool_depth = Column(String, default="")
+    cover_type = Column(String, default="")
+    finish_type = Column(String, default="")
+
+    pump_model = Column(String, default="")
+    filter_model = Column(String, default="")
+    heater_model = Column(String, default="")
+    sanitizer = Column(String, default="")
+    automation_system = Column(String, default="")
+
+    gate_code = Column(String, default="")
+    service_plan = Column(String, default="")
     notes = Column(Text, default="")
 
 
