@@ -561,6 +561,7 @@ async def import_clients(
     db = db_session()
 
     imported = 0
+    updated = 0
     duplicate_skipped = 0
     blank_name_skipped = 0
 
@@ -570,6 +571,44 @@ async def import_clients(
             if value and str(value).strip():
                 return str(value).strip()
         return ""
+
+    def clean_text(value):
+        return (value or "").lower().strip()
+
+    def clean_phone(value):
+        return (
+            (value or "")
+            .replace("-", "")
+            .replace("(", "")
+            .replace(")", "")
+            .replace(" ", "")
+            .replace(".", "")
+            .replace("+1", "")
+            .strip()
+        )
+
+    def find_existing_client(name, phone, email):
+        clean_name = clean_text(name)
+        clean_email = clean_text(email)
+        clean_phone_value = clean_phone(phone)
+
+        clients = db.query(Client).all()
+
+        for client in clients:
+            client_name = clean_text(client.name)
+            client_email = clean_text(client.email)
+            client_phone = clean_phone(client.phone or client.mobile)
+
+            if clean_email and client_email and clean_email == client_email:
+                return client
+
+            if clean_phone_value and client_phone and clean_phone_value[-7:] == client_phone[-7:]:
+                return client
+
+            if clean_name and client_name and clean_name == client_name:
+                return client
+
+        return None
 
     for row in rows:
 
@@ -583,6 +622,9 @@ async def import_clients(
             "Client",
             "Display Name",
             "Full Name",
+            "Customer Name",
+            "Company",
+            "Company Name",
         )
 
         phone = pick(
@@ -593,6 +635,9 @@ async def import_clients(
             "Mobile",
             "Cell",
             "Cell Phone",
+            "Main Phone",
+            "Primary Phone",
+            "Phone Number",
         )
 
         email = pick(
@@ -603,6 +648,8 @@ async def import_clients(
             "Email Address",
             "main email",
             "Main Email",
+            "Primary Email",
+            "E-mail",
         )
 
         notes = pick(
@@ -619,37 +666,50 @@ async def import_clients(
             blank_name_skipped += 1
             continue
 
-        existing = db.query(Client).filter(Client.name == name).first()
-
         client_data = {
             "name": name,
             "contact_name": pick(row, "contact_name", "Contact Name", "Full Name"),
             "phone": phone,
             "mobile": phone,
             "email": email,
-            "billing_address": pick(row, "billing_address", "Billing Address", "Address"),
+            "billing_address": pick(row, "billing_address", "Billing Address", "Address", "Street"),
             "shipping_address": pick(row, "shipping_address", "Shipping Address"),
             "city": pick(row, "city", "City"),
             "state": pick(row, "state", "State"),
-            "zip_code": pick(row, "zip", "ZIP", "Zip Code"),
+            "zip_code": pick(row, "zip", "ZIP", "Zip Code", "Postal Code"),
             "company": pick(row, "company", "Company", "Company Name"),
             "notes": notes,
         }
 
+        existing = find_existing_client(name, phone, email)
+
         if existing:
             duplicate_skipped += 1
+            updated += 1
 
             for key, value in client_data.items():
-                if value:
+                if value and not getattr(existing, key, None):
                     setattr(existing, key, value)
 
         else:
             db.add(Client(**client_data))
-
-        imported += 1
+            imported += 1
 
     db.commit()
     db.close()
+
+    message = (
+        f"Client import complete. "
+        f"New clients: {imported}. "
+        f"Updated existing: {updated}. "
+        f"Duplicates matched: {duplicate_skipped}. "
+        f"Blank names skipped: {blank_name_skipped}."
+    )
+
+    return RedirectResponse(
+        url=f"/imports?message={message}",
+        status_code=303,
+    )
 
     return RedirectResponse(
         url=(
