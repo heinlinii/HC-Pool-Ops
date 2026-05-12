@@ -1,441 +1,463 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PoolOps2 Schedule</title>
-    <link rel="stylesheet" href="/static/style.css?v=5">
+    <link rel="stylesheet" href="/static/style.css?v=6">
 </head>
 
 <body>
+
 <div class="topbar-back">
-  <button onclick="history.back()" class="back-btn">
-    ← Back
-  </button>
+    <button onclick="history.back()" class="back-btn">
+        ← Back
+    </button>
 </div>
-    <div class="app-layout">
 
-        <aside class="sidebar">
+<div class="app-layout">
 
-            <div class="sidebar-top">
+    <aside class="sidebar">
 
-                <img
-                    src="/static/logo.png"
-                    alt="Heinlin Concrete Logo"
-                    class="sidebar-logo"
+        <div class="sidebar-top">
+
+            <img
+                src="/static/logo.png"
+                alt="Heinlin Concrete Logo"
+                class="sidebar-logo"
+            >
+
+            <h1>POOLOPS2</h1>
+
+            <p>Heinlin Concrete LLC</p>
+
+        </div>
+
+        <nav class="sidebar-nav">
+
+            <a href="/dashboard">
+                Dashboard
+            </a>
+
+            <a href="/jobs">
+                Jobs
+            </a>
+
+            <a href="/schedule" class="active">
+                Schedule
+            </a>
+
+            <a href="/clients">
+                Clients
+            </a>
+
+            <a href="/properties">
+                Properties
+            </a>
+
+            <a href="/employees">
+                Employees
+            </a>
+
+            <a href="/crew">
+                Crew View
+            </a>
+
+            <a href="/health">
+                Health
+            </a>
+
+        </nav>
+
+        <div class="sidebar-bottom">
+
+            <p>{{ user.name }}</p>
+
+            <span>{{ user.role }}</span>
+
+            <a href="/logout" class="logout-button">
+                Logout
+            </a>
+
+        </div>
+
+    </aside>
+
+    <main class="main-content">
+
+        <div class="topbar">
+
+            <div>
+                <h2>Schedule Board</h2>
+                <p>Live crew scheduling and project tracking.</p>
+            </div>
+
+        </div>
+
+        <section class="schedule-toolbar">
+
+            <a href="/schedule/day" class="schedule-view-btn">
+                Day
+            </a>
+
+            <a href="/schedule/week" class="schedule-view-btn">
+                Week
+            </a>
+
+            <a href="/schedule/month" class="schedule-view-btn">
+                Month
+            </a>
+
+        </section>
+
+        <section class="schedule-grid">
+
+            {% for job in jobs %}
+
+            <div class="schedule-card schedule-status-{{ job.status|lower|replace(' ', '-') }}">
+
+                <div class="schedule-top">
+
+                    <span class="status-pill">
+                        {{ job.status }}
+                    </span>
+
+                    <span class="priority-pill priority-{{ job.priority|lower }}">
+                        {{ job.priority }}
+                    </span>
+
+                </div>
+
+                <div class="schedule-date">
+                    {{ job.date }}
+                </div>
+
+                <h3>
+                    {{ job.client }}
+                </h3>
+
+                <p>
+                    {{ job.address }}
+                </p>
+
+                <div class="schedule-meta">
+
+                    <span>
+                        {{ job.job_type }}
+                    </span>
+
+                    <span>
+                        {{ job.crew }}
+                    </span>
+
+                </div>
+
+                <div class="schedule-notes">
+                    {{ job.notes }}
+                </div>
+
+                <div class="schedule-actions">
+
+                    <a
+                        href="/jobs/{{ job.id }}"
+                        class="secondary-button"
+                    >
+                        Open Job
+                    </a>
+
+                    <a
+                        href="https://calendar.google.com/calendar/render?action=TEMPLATE&text={{ job.client }}+-+{{ job.job_type }}&details={{ job.notes }}&location={{ job.address }}"
+                        target="_blank"
+                        class="primary-button"
+                    >
+                        Add to Google
+                    </a>
+
+                </div>
+
+                {% if user.role == "admin" %}
+
+                <form
+                    method="post"
+                    action="/schedule/status/{{ job.id }}"
+                    class="schedule-form"
                 >
 
-                <h1>POOLOPS2</h1>
+                    <select name="status">
 
-                <p>Heinlin Concrete LLC</p>
+                        <option {% if job.status == "Scheduled" %}selected{% endif %}>
+                            Scheduled
+                        </option>
 
-            </div>
+                        <option {% if job.status == "Pending" %}selected{% endif %}>
+                            Pending
+                        </option>
 
-            <nav class="sidebar-nav">
+                        <option {% if job.status == "In Progress" %}selected{% endif %}>
+                            In Progress
+                        </option>
 
-                <a href="/dashboard">
-                    Dashboard
-                </a>
+                        <option {% if job.status == "Completed" %}selected{% endif %}>
+                            Completed
+                        </option>
 
-                <a href="/jobs">
-                    Jobs
-                </a>
+                    </select>
 
-                <a href="/schedule" class="active">
-                    Schedule
-                </a>
+                    <button
+                        type="submit"
+                        class="primary-button"
+                    >
+                        Update
+                    </button>
 
-                <a href="/clients">
-                    Clients
-                </a>
+                </form>
 
-                <a href="/properties">
-                    Properties
-                </a>
-
-                <a href="/employees">
-                    Employees
-                </a>
-
-                <a href="/crew">
-                    Crew View
-                </a>
-
-                <a href="/health">
-                    Health
-                </a>
-
-            </nav>
-
-            <div class="sidebar-bottom">
-
-                <p>{{ user.name }}</p>
-
-                <span>{{ user.role }}</span>
-
-                <a href="/logout" class="logout-button">
-                    Logout
-                </a>
+                {% endif %}
 
             </div>
 
-        </aside>
+            {% endfor %}
 
-        <main class="main-content">
+        </section>
 
-            <div class="topbar">
+    </main>
 
-                <div>
-                    <h2>Schedule Board</h2>
-                    <p>Live crew scheduling and project tracking.</p>
-                </div>
-
-            </div>
-
-            <section class="schedule-grid">
-
-                <div class="schedule-column">
-
-                    <div class="schedule-header">
-                        Today
-                    </div>
-
-                    {% for job in jobs %}
-
-                        {% if job.date == "Today" %}
-
-                        <div class="schedule-card">
-
-                            <div class="schedule-top">
-
-                                <span class="status-pill">
-                                    {{ job.status }}
-                                </span>
-
-                                <span class="priority-pill priority-{{ job.priority|lower }}">
-                                    {{ job.priority }}
-                                </span>
-
-                            </div>
-
-                            <h3>
-                                {{ job.client }}
-                            </h3>
-
-                            <p>
-                                {{ job.address }}
-                            </p>
-
-                            <div class="schedule-meta">
-
-                                <span>
-                                    {{ job.job_type }}
-                                </span>
-
-                                <span>
-                                    {{ job.crew }}
-                                </span>
-
-                            </div>
-
-                            <div class="schedule-notes">
-                                {{ job.notes }}
-                            </div>
-
-                            {% if user.role == "admin" %}
-
-                            <form
-                                method="post"
-                                action="/schedule/status/{{ job.id }}"
-                                class="schedule-form"
-                            >
-
-                                <select name="status">
-
-                                    <option
-                                        {% if job.status == "Scheduled" %}
-                                        selected
-                                        {% endif %}
-                                    >
-                                        Scheduled
-                                    </option>
-
-                                    <option
-                                        {% if job.status == "Pending" %}
-                                        selected
-                                        {% endif %}
-                                    >
-                                        Pending
-                                    </option>
-
-                                    <option
-                                        {% if job.status == "In Progress" %}
-                                        selected
-                                        {% endif %}
-                                    >
-                                        In Progress
-                                    </option>
-
-                                    <option
-                                        {% if job.status == "Completed" %}
-                                        selected
-                                        {% endif %}
-                                    >
-                                        Completed
-                                    </option>
-
-                                </select>
-
-                                <button
-                                    type="submit"
-                                    class="primary-button"
-                                >
-                                    Update
-                                </button>
-
-                            </form>
-
-                            {% endif %}
-
-                        </div>
-
-                        {% endif %}
-
-                    {% endfor %}
-
-                </div>
-
-                <div class="schedule-column">
-
-                    <div class="schedule-header">
-                        Tomorrow
-                    </div>
-
-                    {% for job in jobs %}
-
-                        {% if job.date == "Tomorrow" %}
-
-                        <div class="schedule-card">
-
-                            <div class="schedule-top">
-
-                                <span class="status-pill">
-                                    {{ job.status }}
-                                </span>
-
-                                <span class="priority-pill priority-{{ job.priority|lower }}">
-                                    {{ job.priority }}
-                                </span>
-
-                            </div>
-
-                            <h3>
-                                {{ job.client }}
-                            </h3>
-
-                            <p>
-                                {{ job.address }}
-                            </p>
-
-                            <div class="schedule-meta">
-
-                                <span>
-                                    {{ job.job_type }}
-                                </span>
-
-                                <span>
-                                    {{ job.crew }}
-                                </span>
-
-                            </div>
-
-                            <div class="schedule-notes">
-                                {{ job.notes }}
-                            </div>
-
-                            {% if user.role == "admin" %}
-
-                            <form
-                                method="post"
-                                action="/schedule/status/{{ job.id }}"
-                                class="schedule-form"
-                            >
-
-                                <select name="status">
-
-                                    <option
-                                        {% if job.status == "Scheduled" %}
-                                        selected
-                                        {% endif %}
-                                    >
-                                        Scheduled
-                                    </option>
-
-                                    <option
-                                        {% if job.status == "Pending" %}
-                                        selected
-                                        {% endif %}
-                                    >
-                                        Pending
-                                    </option>
-
-                                    <option
-                                        {% if job.status == "In Progress" %}
-                                        selected
-                                        {% endif %}
-                                    >
-                                        In Progress
-                                    </option>
-
-                                    <option
-                                        {% if job.status == "Completed" %}
-                                        selected
-                                        {% endif %}
-                                    >
-                                        Completed
-                                    </option>
-
-                                </select>
-
-                                <button
-                                    type="submit"
-                                    class="primary-button"
-                                >
-                                    Update
-                                </button>
-
-                            </form>
-
-                            {% endif %}
-
-                        </div>
-
-                        {% endif %}
-
-                    {% endfor %}
-
-                </div>
-
-                <div class="schedule-column">
-
-                    <div class="schedule-header">
-                        Upcoming
-                    </div>
-
-                    {% for job in jobs %}
-
-                        {% if job.date != "Today" and job.date != "Tomorrow" %}
-
-                        <div class="schedule-card">
-
-                            <div class="schedule-top">
-
-                                <span class="status-pill">
-                                    {{ job.status }}
-                                </span>
-
-                                <span class="priority-pill priority-{{ job.priority|lower }}">
-                                    {{ job.priority }}
-                                </span>
-
-                            </div>
-
-                            <h3>
-                                {{ job.client }}
-                            </h3>
-
-                            <p>
-                                {{ job.address }}
-                            </p>
-
-                            <div class="schedule-meta">
-
-                                <span>
-                                    {{ job.job_type }}
-                                </span>
-
-                                <span>
-                                    {{ job.crew }}
-                                </span>
-
-                            </div>
-
-                            <div class="schedule-notes">
-                                {{ job.notes }}
-                            </div>
-
-                            <div class="upcoming-date">
-                                {{ job.date }}
-                            </div>
-
-                            {% if user.role == "admin" %}
-
-                            <form
-                                method="post"
-                                action="/schedule/status/{{ job.id }}"
-                                class="schedule-form"
-                            >
-
-                                <select name="status">
-
-                                    <option
-                                        {% if job.status == "Scheduled" %}
-                                        selected
-                                        {% endif %}
-                                    >
-                                        Scheduled
-                                    </option>
-
-                                    <option
-                                        {% if job.status == "Pending" %}
-                                        selected
-                                        {% endif %}
-                                    >
-                                        Pending
-                                    </option>
-
-                                    <option
-                                        {% if job.status == "In Progress" %}
-                                        selected
-                                        {% endif %}
-                                    >
-                                        In Progress
-                                    </option>
-
-                                    <option
-                                        {% if job.status == "Completed" %}
-                                        selected
-                                        {% endif %}
-                                    >
-                                        Completed
-                                    </option>
-
-                                </select>
-
-                                <button
-                                    type="submit"
-                                    class="primary-button"
-                                >
-                                    Update
-                                </button>
-
-                            </form>
-
-                            {% endif %}
-
-                        </div>
-
-                        {% endif %}
-
-                    {% endfor %}
-
-                </div>
-
-            </section>
-
-        </main>
-
-    </div>
+</div>
 
 </body>
 </html>
+```
+
+---
+
+## Add This To Bottom of style.css
+
+```css
+/* =========================================
+   POOLOPS2 SCHEDULE SYSTEM
+========================================= */
+
+.schedule-toolbar {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 22px;
+    flex-wrap: wrap;
+}
+
+.schedule-view-btn {
+    background: rgba(34,211,238,.12);
+    border: 1px solid rgba(34,211,238,.25);
+    color: #22d3ee;
+    padding: 12px 18px;
+    border-radius: 14px;
+    font-weight: 800;
+    transition: .2s ease;
+}
+
+.schedule-view-btn:hover {
+    background: rgba(34,211,238,.22);
+    transform: translateY(-2px);
+    text-decoration: none;
+}
+
+.schedule-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+    gap: 20px;
+    align-items: start;
+}
+
+.schedule-card {
+    background: rgba(16,28,36,.95);
+    border: 1px solid rgba(255,255,255,.08);
+    border-left: 6px solid #22d3ee;
+    border-radius: 22px;
+    padding: 20px;
+    transition: .2s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.schedule-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 18px 40px rgba(0,0,0,.35);
+}
+
+.schedule-status-completed {
+    border-left-color: #16c784;
+}
+
+.schedule-status-in-progress {
+    border-left-color: #f59e0b;
+}
+
+.schedule-status-pending {
+    border-left-color: #ef4444;
+}
+
+.schedule-status-scheduled {
+    border-left-color: #22d3ee;
+}
+
+.schedule-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+}
+
+.schedule-date {
+    font-size: 14px;
+    font-weight: 700;
+    color: #22d3ee;
+    margin-bottom: 12px;
+    letter-spacing: .03em;
+}
+
+.schedule-card h3 {
+    margin-bottom: 10px;
+    font-size: 22px;
+    line-height: 1.2;
+}
+
+.schedule-card p {
+    margin-bottom: 16px;
+    color: #d2e7ef;
+}
+
+.schedule-meta {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+}
+
+.schedule-meta span {
+    background: rgba(255,255,255,.06);
+    padding: 8px 12px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.schedule-notes {
+    background: rgba(255,255,255,.04);
+    border-radius: 14px;
+    padding: 14px;
+    margin-bottom: 18px;
+    color: #bdd2da;
+    line-height: 1.5;
+    white-space: pre-wrap;
+}
+
+.schedule-actions {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+
+.primary-button,
+.secondary-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 10px 16px;
+    border-radius: 12px;
+    font-weight: 800;
+    transition: .2s ease;
+}
+
+.secondary-button {
+    background: rgba(255,255,255,.06);
+    border: 1px solid rgba(255,255,255,.08);
+    color: #f4fbff;
+}
+
+.secondary-button:hover {
+    background: rgba(255,255,255,.12);
+    text-decoration: none;
+}
+
+.status-pill {
+    background: rgba(34,211,238,.12);
+    color: #22d3ee;
+    padding: 7px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 900;
+}
+
+.priority-pill {
+    padding: 7px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 900;
+}
+
+.priority-high {
+    background: rgba(239,68,68,.18);
+    color: #ef4444;
+}
+
+.priority-normal {
+    background: rgba(34,211,238,.12);
+    color: #22d3ee;
+}
+
+.priority-low {
+    background: rgba(22,199,132,.16);
+    color: #16c784;
+}
+
+.schedule-form {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.schedule-form select {
+    flex: 1;
+    min-width: 160px;
+}
+
+@media screen and (max-width: 768px) {
+
+    .schedule-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .schedule-actions {
+        flex-direction: column;
+    }
+
+    .schedule-actions a,
+    .schedule-actions button,
+    .schedule-form button {
+        width: 100%;
+    }
+
+    .schedule-form {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .schedule-form select {
+        width: 100%;
+    }
+
+    .schedule-toolbar {
+        flex-direction: column;
+    }
+
+    .schedule-view-btn {
+        width: 100%;
+        text-align: center;
+    }
+
+}
+```
