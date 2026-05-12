@@ -546,11 +546,10 @@ async def rebuild_qb_matched_only(
         status_code=303,
     )
 
-
 @router.post("/imports/clients")
 async def import_clients(
     request: Request,
-    csv_file: UploadFile = File(...)
+    csv_file: UploadFile = File(...),
 ):
     user = require_admin(request)
 
@@ -565,73 +564,92 @@ async def import_clients(
     duplicate_skipped = 0
     blank_name_skipped = 0
 
-    try:
-        for row in rows:
-            name = safe_name(row)
+    def pick(row, *keys):
+        for key in keys:
+            value = row.get(key)
+            if value and str(value).strip():
+                return str(value).strip()
+        return ""
 
-            phone = pick(
-                row,
-                "phone",
-                "Phone",
-                "phone number",
-                "Phone Number",
-                "mobile",
-                "Mobile",
-                "main phone",
-                "Main Phone",
-                "All Phones",
-            )
+    for row in rows:
 
-            email = pick(
-                row,
-                "email",
-                "Email",
-                "email address",
-                "Email Address",
-                "main email",
-                "Main Email",
-                "E-mail 1 - Value",
-            )
+        name = pick(
+            row,
+            "name",
+            "Name",
+            "customer",
+            "Customer",
+            "client",
+            "Client",
+            "Display Name",
+            "Full Name",
+        )
 
-            notes = pick(
-                row,
-                "notes",
-                "Notes",
-                "memo",
-                "Memo",
-                "description",
-                "Description",
-            )
+        phone = pick(
+            row,
+            "phone",
+            "Phone",
+            "mobile",
+            "Mobile",
+            "Cell",
+            "Cell Phone",
+        )
 
-            if not name:
-                blank_name_skipped += 1
-                continue
+        email = pick(
+            row,
+            "email",
+            "Email",
+            "email address",
+            "Email Address",
+            "main email",
+            "Main Email",
+        )
 
-            existing = (
-                db.query(Client)
-                .filter(Client.name == name)
-                .first()
-            )
+        notes = pick(
+            row,
+            "notes",
+            "Notes",
+            "memo",
+            "Memo",
+            "description",
+            "Description",
+        )
 
-            if existing:
-                duplicate_skipped += 1
-                continue
+        if not name:
+            blank_name_skipped += 1
+            continue
 
-            db.add(
-                Client(
-                    name=name.strip(),
-                    phone=phone.strip(),
-                    email=email.strip(),
-                    notes=notes.strip(),
-                )
-            )
+        existing = db.query(Client).filter(Client.name == name).first()
 
-            imported += 1
+        client_data = {
+            "name": name,
+            "contact_name": pick(row, "contact_name", "Contact Name", "Full Name"),
+            "phone": phone,
+            "mobile": phone,
+            "email": email,
+            "billing_address": pick(row, "billing_address", "Billing Address", "Address"),
+            "shipping_address": pick(row, "shipping_address", "Shipping Address"),
+            "city": pick(row, "city", "City"),
+            "state": pick(row, "state", "State"),
+            "zip_code": pick(row, "zip", "ZIP", "Zip Code"),
+            "company": pick(row, "company", "Company", "Company Name"),
+            "notes": notes,
+        }
 
-        db.commit()
+        if existing:
+            duplicate_skipped += 1
 
-    finally:
-        db.close()
+            for key, value in client_data.items():
+                if value:
+                    setattr(existing, key, value)
+
+        else:
+            db.add(Client(**client_data))
+
+        imported += 1
+
+    db.commit()
+    db.close()
 
     return RedirectResponse(
         url=(

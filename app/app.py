@@ -2120,19 +2120,50 @@ async def contact_matcher_upload(
         new_contacts = []
 
         for contact in imported_contacts:
-
             found = False
 
+            contact_name = (contact["name"] or "").lower().strip()
+            contact_email = (contact["email"] or "").lower().strip()
+
+            contact_phone = (
+                (contact["phone"] or "")
+                .replace("-", "")
+                .replace("(", "")
+                .replace(")", "")
+                .replace(" ", "")
+                .replace(".", "")
+            )
+
             for client in clients:
+                client_name = (client.name or "").lower().strip()
+                client_email = (client.email or "").lower().strip()
 
-                client_phone = (client.phone or "").replace("-", "").replace(" ", "")
-                contact_phone = (contact["phone"] or "").replace("-", "").replace(" ", "")
+                client_phone = (
+                    (client.phone or "")
+                    .replace("-", "")
+                    .replace("(", "")
+                    .replace(")", "")
+                    .replace(" ", "")
+                    .replace(".", "")
+                )
 
-                if client_phone and client_phone in contact_phone:
+                matched = False
+
+                if client_phone and contact_phone and client_phone[-7:] == contact_phone[-7:]:
+                    matched = True
+
+                elif client_email and contact_email and client_email == contact_email:
+                    matched = True
+
+                elif client_name and contact_name and client_name == contact_name:
+                    matched = True
+
+                if matched:
                     matches.append({
                         "contact": contact,
                         "client": client
                     })
+
                     found = True
                     break
 
@@ -2151,7 +2182,7 @@ async def contact_matcher_upload(
 
     finally:
         db.close()
-
+        
 @app.get("/imports")
 async def imports_page(request: Request, message: str = ""):
     user = require_admin(request)
