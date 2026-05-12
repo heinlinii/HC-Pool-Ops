@@ -93,8 +93,8 @@ class Job(Base):
     date = Column(String, default="")
 
     # Real calendar scheduling fields.
- #  scheduled_start = Column(DateTime, nullable=True)
- #  scheduled_end = Column(DateTime, nullable=True)
+    scheduled_start = Column(DateTime, nullable=True)
+    scheduled_end = Column(DateTime, nullable=True)
 
     priority = Column(String, default="Normal")
     notes = Column(Text, default="")
