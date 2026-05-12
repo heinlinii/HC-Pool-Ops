@@ -825,12 +825,18 @@ async def schedule_page(request: Request):
     db = db_session()
 
     try:
+        jobs = (
+            db.query(Job)
+            .order_by(Job.scheduled_start.asc().nullslast(), Job.id.desc())
+            .all()
+        )
+
         return templates.TemplateResponse(
             request,
             "schedule.html",
             {
                 "user": user,
-                "jobs": db.query(Job).order_by(Job.id.desc()).all(),
+                "jobs": jobs,
             },
         )
 

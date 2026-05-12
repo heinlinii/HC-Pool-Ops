@@ -128,9 +128,13 @@
 
                 </div>
 
-                <div class="schedule-date">
-                    {{ job.date }}
-                </div>
+<div class="schedule-date">
+    {% if job.scheduled_start %}
+        {{ job.scheduled_start.strftime("%b %d, %Y • %I:%M %p") }}
+    {% else %}
+        {{ job.date or "Unscheduled" }}
+    {% endif %}
+</div>
 
                 <h3>
                     {{ job.client }}
