@@ -12,6 +12,7 @@ import shutil
 import json
 import urllib.request
 
+from datetime import datetime
 from app.database import Base, engine, SessionLocal
 from app.models import User, Employee, Client, Property, Job, Invoice, JobCost, PhotoLog, FieldLog
 from app.routes.imports import router as imports_router
@@ -699,7 +700,9 @@ async def add_job(
     client: str = Form(...),
     address: str = Form(...),
     job_type: str = Form(...),
-    date: str = Form(...),
+    date: str = Form(""),
+    scheduled_start: str = Form(""),
+    scheduled_end: str = Form(""),
     crew: str = Form("Unassigned"),
     status: str = Form("Scheduled"),
     priority: str = Form("Normal"),
@@ -715,6 +718,15 @@ async def add_job(
     try:
         clean_address = address.strip()
 
+        start_dt = None
+        end_dt = None
+
+        if scheduled_start:
+            start_dt = datetime.fromisoformat(scheduled_start)
+
+        if scheduled_end:
+            end_dt = datetime.fromisoformat(scheduled_end)
+
         db.add(
             Job(
                 client=client.strip(),
@@ -724,6 +736,8 @@ async def add_job(
                 status=status.strip(),
                 crew=crew.strip() or "Unassigned",
                 date=date.strip(),
+                scheduled_start=start_dt,
+                scheduled_end=end_dt,
                 priority=priority.strip(),
                 notes=notes.strip(),
             )
