@@ -1314,6 +1314,50 @@ async def upgrade_properties(request: Request):
     finally:
         db.close()
 
+@app.get("/admin/upgrade-job-schedule")
+async def upgrade_job_schedule(request: Request):
+    user = require_admin(request)
+
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    db = db_session()
+
+    columns = {
+        "scheduled_start": "TIMESTAMP NULL",
+        "scheduled_end": "TIMESTAMP NULL",
+    }
+
+    added = []
+    skipped = []
+
+    try:
+        for column_name, column_type in columns.items():
+            try:
+                db.execute(
+                    text(
+                        f"ALTER TABLE poolops2_jobs "
+                        f"ADD COLUMN {column_name} {column_type}"
+                    )
+                )
+                added.append(column_name)
+
+            except Exception:
+                db.rollback()
+                skipped.append(column_name)
+
+        db.commit()
+
+        return {
+            "status": "Job schedule upgrade complete",
+            "added": added,
+            "already_existed_or_skipped": skipped,
+        }
+
+    finally:
+        db.close()
+
+
 @app.get("/admin/upgrade-clients")
 async def upgrade_clients(request: Request):
     user = require_admin(request)
@@ -2182,7 +2226,7 @@ async def contact_matcher_upload(
 
     finally:
         db.close()
-        
+
 @app.get("/imports")
 async def imports_page(request: Request, message: str = ""):
     user = require_admin(request)

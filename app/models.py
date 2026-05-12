@@ -80,13 +80,22 @@ class Job(Base):
     __tablename__ = "poolops2_jobs"
 
     id = Column(Integer, primary_key=True, index=True)
+
     client = Column(String, nullable=False)
     property = Column(String, default="")
     address = Column(String, default="")
+
     job_type = Column(String, default="")
     status = Column(String, default="Pending")
     crew = Column(String, default="Unassigned")
+
+    # Old string date kept temporarily so existing pages/data do not break.
     date = Column(String, default="")
+
+    # Real calendar scheduling fields.
+    scheduled_start = Column(DateTime, nullable=True)
+    scheduled_end = Column(DateTime, nullable=True)
+
     priority = Column(String, default="Normal")
     notes = Column(Text, default="")
 
@@ -141,7 +150,9 @@ class User(Base):
     password = Column(String, nullable=False)
     role = Column(String, default="crew")
     name = Column(String, nullable=False)
-    # =========================================
+
+
+# =========================================
 # PHASE 11 — DAILY FIELD LOGS
 # =========================================
 
