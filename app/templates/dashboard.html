@@ -9,7 +9,11 @@
 
 <body {% if theme and theme.background_image %}style="background-image: linear-gradient(rgba(5,11,15,.90), rgba(5,11,15,.96)), url('{{ theme.background_image }}'); background-size: cover; background-position: center; background-attachment: fixed;"{% endif %}>
 
-<main class="shell">
+<body {% if theme and theme.background_image %}style="background-image: linear-gradient(rgba(5,11,15,.90), rgba(5,11,15,.96)), url('{{ theme.background_image }}'); background-size: cover; background-position: center; background-attachment: fixed;"{% endif %}>
+
+{% include "_sidebar.html" %}
+
+<main class="shell with-sidebar">
 
   <section class="hero">
     <div class="hero-main">
@@ -270,6 +274,10 @@
   </div>
 
 </main>
+
+<div class="mobile-sidebar-toggle" onclick="document.body.classList.toggle('sidebar-open')">
+    ☰
+</div>
 
 <div class="field-dock">
   <a href="/estimate-capture">🧾<br>Estimate</a>
