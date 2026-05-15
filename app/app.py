@@ -2073,17 +2073,23 @@ async def add_photo_log(
         db.close()
 
 
-@app.post("/jobs/{job_id}/upload-photo")
-async def upload_job_photo(
+from typing import List
+import os
+import shutil
+from uuid import uuid4
+
+
+@app.post("/jobs/{job_id}/upload-photos")
+async def upload_job_photos(
     request: Request,
     job_id: int,
     photo_type: str = Form(...),
-    title: str = Form(...),
-    photo_file: UploadFile = File(None),
-    date: str = Form("Today"),
+    title: str = Form(""),
+    date: str = Form(""),
     notes: str = Form(""),
+    photo_files: List[UploadFile] = File(...)
 ):
-    user = require_admin(request)
+    user = require_login(request)
 
     if not user:
         return RedirectResponse(url="/", status_code=303)
@@ -2096,23 +2102,44 @@ async def upload_job_photo(
         if not job:
             return RedirectResponse(url="/jobs", status_code=303)
 
-        photo_url = save_uploaded_photo(photo_file)
+        upload_dir = "app/static/uploads"
 
-        db.add(
-            PhotoLog(
-                job_id=job.id,
-                client=job.client,
-                photo_type=photo_type.strip(),
-                title=title.strip(),
-                photo_url=photo_url,
-                date=date.strip(),
-                notes=notes.strip(),
+        os.makedirs(upload_dir, exist_ok=True)
+
+        for index, photo_file in enumerate(photo_files):
+
+            if not photo_file.filename:
+                continue
+
+            ext = photo_file.filename.split(".")[-1]
+
+            filename = f"{uuid4()}.{ext}"
+
+            filepath = os.path.join(upload_dir, filename)
+
+            with open(filepath, "wb") as buffer:
+                shutil.copyfileobj(photo_file.file, buffer)
+
+            photo_url = f"/static/uploads/{filename}"
+
+            db.add(
+                PhotoLog(
+                    job_id=job.id,
+                    client=job.client,
+                    photo_type=photo_type,
+                    title=f"{title} {index + 1}".strip(),
+                    photo_url=photo_url,
+                    date=date,
+                    notes=notes,
+                )
             )
-        )
 
         db.commit()
 
-        return RedirectResponse(url=f"/jobs/{job_id}", status_code=303)
+        return RedirectResponse(
+            url=f"/jobs/{job.id}",
+            status_code=303
+        )
 
     finally:
         db.close()
