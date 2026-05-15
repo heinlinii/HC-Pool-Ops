@@ -595,3 +595,13 @@ th {
     }
 
 }
+
+.nav-section-title {
+    color: #22d3ee;
+    font-size: 11px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    margin: 18px 4px 6px;
+    opacity: .85;
+}
