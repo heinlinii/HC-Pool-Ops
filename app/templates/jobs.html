@@ -15,68 +15,9 @@
 </div>
 <div class="app-layout">
 
-    <aside class="sidebar">
+    {% include "_sidebar.html" %}
 
-        <div class="sidebar-top">
-            <img src="/static/logo.png" alt="Heinlin Concrete Logo" class="sidebar-logo">
-
-            <h1>POOLOPS2</h1>
-
-            <p>Heinlin Concrete LLC</p>
-        </div>
-
-        <nav class="sidebar-nav">
-
-            <a href="/dashboard">Dashboard</a>
-
-            <a href="/jobs" class="active">
-                Jobs
-            </a>
-
-            <a href="/schedule/day">Daily Schedule</a>
-            <a href="/schedule/week">Weekly Schedule</a>
-            <a href="/schedule/month">Monthly Schedule</a>
-
-            <a href="/weather">Weather</a>
-
-            <a href="/clients">Clients</a>
-            <a href="/properties">Properties</a>
-            <a href="/employees">Employees</a>
-
-            <a href="/billing">Billing</a>
-            <a href="/job-costing">Job Costing</a>
-
-            <a href="/photos">Photos</a>
-
-            <a href="/imports">Imports</a>
-
-            <a href="/quickbooks">QuickBooks</a>
-
-            <a href="/communication">Communication</a>
-
-            <a href="/backups">Backups</a>
-
-            <a href="/crew">Crew View</a>
-
-            <a href="/health">Health</a>
-
-        </nav>
-
-        <div class="sidebar-bottom">
-
-            <p>{{ user.name }}</p>
-
-            <span>{{ user.role }}</span>
-
-            <a href="/logout" class="logout-button">
-                Logout
-            </a>
-
-        </div>
-
-    </aside>
-
-    <main class="main-content">
+    <main class="main-content with-sidebar">
 
         <div class="topbar">
 
