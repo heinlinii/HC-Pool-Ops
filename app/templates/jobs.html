@@ -4,15 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PoolOps2 Jobs</title>
-    <link rel="stylesheet" href="/static/style.css?v=18">
+    <link rel="stylesheet" href="/static/style.css?v=19">
 </head>
 
 <body>
+
 <div class="topbar-back">
   <button onclick="history.back()" class="back-btn">
     ← Back
   </button>
 </div>
+
 <div class="app-layout">
 
     {% include "_sidebar.html" %}
@@ -112,33 +114,33 @@
                         >
                     </div>
 
- <div class="form-group">
-    <label>Display Date</label>
+                    <div class="form-group">
+                        <label>Display Date</label>
 
-    <input
-        type="text"
-        name="date"
-        placeholder="Optional display label"
-    >
-</div>
+                        <input
+                            type="text"
+                            name="date"
+                            placeholder="Optional display label"
+                        >
+                    </div>
 
-<div class="form-group">
-    <label>Scheduled Start</label>
+                    <div class="form-group">
+                        <label>Scheduled Start</label>
 
-    <input
-        type="datetime-local"
-        name="scheduled_start"
-    >
-</div>
+                        <input
+                            type="datetime-local"
+                            name="scheduled_start"
+                        >
+                    </div>
 
-<div class="form-group">
-    <label>Scheduled End</label>
+                    <div class="form-group">
+                        <label>Scheduled End</label>
 
-    <input
-        type="datetime-local"
-        name="scheduled_end"
-    >
-</div>
+                        <input
+                            type="datetime-local"
+                            name="scheduled_end"
+                        >
+                    </div>
 
                     <div class="form-group">
                         <label>Priority</label>
@@ -163,7 +165,7 @@
 
                 </div>
 
-                <button type="submit">
+                <button type="submit" class="primary-button">
                     Create Job
                 </button>
 
@@ -222,7 +224,13 @@
                         <div class="detail-row">
                             <strong>Date:</strong>
 
-                            <span>{{ job.date }}</span>
+                            <span>
+                                {% if job.scheduled_start %}
+                                    {{ job.scheduled_start.strftime("%b %d, %Y • %I:%M %p") }}
+                                {% else %}
+                                    {{ job.date }}
+                                {% endif %}
+                            </span>
                         </div>
 
                         <div class="detail-row">
@@ -257,6 +265,10 @@
 
     </main>
 
+</div>
+
+<div class="mobile-sidebar-toggle" onclick="document.body.classList.toggle('sidebar-open')">
+    ☰
 </div>
 
 </body>

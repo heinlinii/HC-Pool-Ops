@@ -1,67 +1,26 @@
 <!DOCTYPE html>
-section<html lang="en"><section class="content-card"></section>
+<html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PoolOps2 Job Detail</title>
-    <link rel="stylesheet" href="/static/style.css?v=10">
+    <link rel="stylesheet" href="/static/style.css?v=20">
 </head>
 
 <body>
+
 <div class="topbar-back">
-  <button onclick="history.back()" class="back-btn">
-    ← Back
-  </button>
+    <button onclick="history.back()" class="back-btn">
+        ← Back
+    </button>
 </div>
+
 <div class="app-layout">
 
-    <aside class="sidebar">
+    {% include "_sidebar.html" %}
 
-        <div class="sidebar-top">
-
-            <img
-                src="/static/logo.png"
-                alt="Heinlin Concrete Logo"
-                class="sidebar-logo"
-            >
-
-            <h1>POOLOPS2</h1>
-
-            <p>Heinlin Concrete LLC</p>
-
-        </div>
-
-        <nav class="sidebar-nav">
-
-            <a href="/dashboard">Dashboard</a>
-            <a href="/jobs" class="active">Jobs</a>
-            <a href="/schedule">Schedule</a>
-            <a href="/clients">Clients</a>
-            <a href="/properties">Properties</a>
-            <a href="/employees">Employees</a>
-            <a href="/billing">Billing</a>
-            <a href="/job-costing">Job Costing</a>
-            <a href="/photos">Photos</a>
-            <a href="/crew">Crew View</a>
-            <a href="/health">Health</a>
-
-        </nav>
-
-        <div class="sidebar-bottom">
-
-            <p>{{ user.name }}</p>
-
-            <span>{{ user.role }}</span>
-
-            <a href="/logout" class="logout-button">
-                Logout
-            </a>
-
-        </div>
-
-    </aside>
-
-    <main class="main-content">
+    <main class="main-content with-sidebar">
 
         <div class="topbar">
 
@@ -84,6 +43,7 @@ section<html lang="en"><section class="content-card"></section>
 
             <div class="stat-card">
                 <h3>Status</h3>
+
                 <div class="stat-number small-stat">
                     {{ job.status }}
                 </div>
@@ -91,6 +51,7 @@ section<html lang="en"><section class="content-card"></section>
 
             <div class="stat-card">
                 <h3>Priority</h3>
+
                 <div class="stat-number small-stat">
                     {{ job.priority }}
                 </div>
@@ -98,6 +59,7 @@ section<html lang="en"><section class="content-card"></section>
 
             <div class="stat-card money-card">
                 <h3>Invoice Total</h3>
+
                 <div class="stat-number">
                     ${{ "%.2f"|format(summary.invoice_total) }}
                 </div>
@@ -105,6 +67,7 @@ section<html lang="en"><section class="content-card"></section>
 
             <div class="stat-card money-card">
                 <h3>Tracked Profit</h3>
+
                 <div class="stat-number">
                     ${{ "%.2f"|format(summary.tracked_profit) }}
                 </div>
@@ -142,97 +105,97 @@ section<html lang="en"><section class="content-card"></section>
 
         <section class="content-card">
 
-    <div class="card-header">
-        <h3>Upload Job Photos</h3>
-    </div>
-
-    <form
-        method="post"
-        action="/jobs/{{ job.id }}/upload-photos"
-        class="job-form"
-        enctype="multipart/form-data"
-    >
-
-        <div class="form-grid">
-
-            <div class="form-group">
-
-                <label>Photo Type</label>
-
-                <select name="photo_type">
-                    <option>Before</option>
-                    <option>Progress</option>
-                    <option>After</option>
-                    <option>Issue</option>
-                </select>
-
+            <div class="card-header">
+                <h3>Upload Job Photos</h3>
             </div>
 
-            <div class="form-group">
+            <form
+                method="post"
+                action="/jobs/{{ job.id }}/upload-photos"
+                class="job-form"
+                enctype="multipart/form-data"
+            >
 
-                <label>Title Prefix</label>
+                <div class="form-grid">
 
-                <input
-                    type="text"
-                    name="title"
-                    placeholder="Opening Photos"
+                    <div class="form-group">
+
+                        <label>Photo Type</label>
+
+                        <select name="photo_type">
+                            <option>Before</option>
+                            <option>Progress</option>
+                            <option>After</option>
+                            <option>Issue</option>
+                        </select>
+
+                    </div>
+
+                    <div class="form-group">
+
+                        <label>Title Prefix</label>
+
+                        <input
+                            type="text"
+                            name="title"
+                            placeholder="Opening Photos"
+                        >
+
+                    </div>
+
+                    <div class="form-group">
+
+                        <label>Date</label>
+
+                        <input
+                            type="text"
+                            name="date"
+                            placeholder="Today"
+                        >
+
+                    </div>
+
+                    <div class="form-group form-full">
+
+                        <label>Upload Photos</label>
+
+                        <input
+                            type="file"
+                            name="photo_files"
+                            accept="image/*"
+                            multiple
+                        >
+
+                        <small style="opacity:.7;">
+                            Select multiple photos at once.
+                        </small>
+
+                    </div>
+
+                    <div class="form-group form-full">
+
+                        <label>Notes</label>
+
+                        <textarea
+                            name="notes"
+                            rows="4"
+                            placeholder="Photo notes..."
+                        ></textarea>
+
+                    </div>
+
+                </div>
+
+                <button
+                    type="submit"
+                    class="primary-button"
                 >
+                    Upload Photos
+                </button>
 
-            </div>
+            </form>
 
-            <div class="form-group">
-
-                <label>Date</label>
-
-                <input
-                    type="text"
-                    name="date"
-                    placeholder="Today"
-                >
-
-            </div>
-
-            <div class="form-group form-full">
-
-                <label>Upload Photos</label>
-
-                <input
-                    type="file"
-                    name="photo_files"
-                    accept="image/*"
-                    multiple
-                >
-
-                <small style="opacity:.7;">
-                    Select multiple photos at once.
-                </small>
-
-            </div>
-
-            <div class="form-group form-full">
-
-                <label>Notes</label>
-
-                <textarea
-                    name="notes"
-                    rows="4"
-                    placeholder="Photo notes..."
-                ></textarea>
-
-            </div>
-
-        </div>
-
-        <button
-            type="submit"
-            class="primary-button"
-        >
-            Upload Photos
-        </button>
-
-    </form>
-
-</section>
+        </section>
 
         <section class="content-card">
 
@@ -246,11 +209,15 @@ section<html lang="en"><section class="content-card"></section>
 
                 <div class="photo-card">
 
-                    <img
-                        src="{{ photo.photo_url }}"
-                        alt="{{ photo.title }}"
-                        class="photo-preview"
-                    >
+                    <div class="job-photo">
+
+                        <img
+                            src="{{ photo.photo_url }}"
+                            alt="{{ photo.title }}"
+                            class="photo-preview"
+                        >
+
+                    </div>
 
                     <div class="photo-content">
 
@@ -315,6 +282,10 @@ section<html lang="en"><section class="content-card"></section>
 
     </main>
 
+</div>
+
+<div class="mobile-sidebar-toggle" onclick="document.body.classList.toggle('sidebar-open')">
+    ☰
 </div>
 
 </body>
