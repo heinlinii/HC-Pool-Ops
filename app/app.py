@@ -533,6 +533,9 @@ async def dashboard(request: Request):
             "tracked_profit": total_profit,
             "photos": len(photos),
         }
+
+        work_groups = dashboard_work_groups(jobs)
+
         return templates.TemplateResponse(
             request,
             "dashboard.html",
@@ -544,6 +547,7 @@ async def dashboard(request: Request):
                 "employees": employees,
                 "stats": stats,
                 "theme": theme,
+                "work_groups": work_groups,
             },
         )
 
@@ -2623,15 +2627,13 @@ async def imports_page(request: Request, message: str = ""):
         return RedirectResponse(url="/", status_code=303)
 
     return templates.TemplateResponse(
-    request,
-    "weather.html",
-    {
-        "user": user,
-        "current": current,
-        "daily": daily,
-        "alerts": alerts,
-    },
-)
+        request,
+        "import.html",
+        {
+            "user": user,
+            "message": message,
+        },
+    )
 
 @app.post("/imports/properties")
 async def import_properties(request: Request, file: UploadFile = File(...)):
@@ -3230,7 +3232,7 @@ async def weather_page(request: Request):
         "weather.html",
         {
             "user": user,
-            "weather": current,
+            "weather": weather if "weather" in locals() else None,
             "current": current,
             "daily": daily,
             "alerts": alerts,
