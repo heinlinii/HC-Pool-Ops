@@ -410,7 +410,7 @@ async def map_page(request: Request):
 
     db = db_session()
 
-try:
+    try:
         jobs = db.query(Job).order_by(Job.id.desc()).all()
 
         properties = db.query(Property).order_by(Property.id.desc()).all()
