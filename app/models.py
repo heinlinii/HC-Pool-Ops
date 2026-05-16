@@ -85,6 +85,14 @@ class Job(Base):
     property = Column(String, default="")
     address = Column(String, default="")
 
+    check_in_time = Column(DateTime, nullable=True)
+    check_in_lat = Column(Float, nullable=True)
+    check_in_lng = Column(Float, nullable=True)
+
+    check_out_time = Column(DateTime, nullable=True)
+    check_out_lat = Column(Float, nullable=True)
+    check_out_lng = Column(Float, nullable=True)
+
     job_type = Column(String, default="")
     status = Column(String, default="Pending")
     crew = Column(String, default="Unassigned")

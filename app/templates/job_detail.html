@@ -60,6 +60,8 @@
             <div class="stat-card money-card">
                 <h3>Invoice Total</h3>
 
+                
+
                 <div class="stat-number">
                     ${{ "%.2f"|format(summary.invoice_total) }}
                 </div>
@@ -101,7 +103,79 @@
 
             </form>
 
-        </section>
+        <section class="content-card">
+
+    <div class="card-header">
+        <h3>Field Location Tracking</h3>
+    </div>
+
+    <div class="jobs-grid">
+
+        <div class="job-card">
+            <h3>Check In</h3>
+
+            {% if job.check_in_time %}
+                <p>
+                    Checked in:
+                    {{ job.check_in_time.strftime("%b %d, %Y • %I:%M %p") }}
+                </p>
+                <p>
+                    GPS:
+                    {{ job.check_in_lat }},
+                    {{ job.check_in_lng }}
+                </p>
+            {% else %}
+                <p>No check-in yet.</p>
+            {% endif %}
+
+            <form
+                method="post"
+                action="/jobs/{{ job.id }}/check-in"
+                class="gps-form"
+            >
+                <input type="hidden" name="lat">
+                <input type="hidden" name="lng">
+
+                <button type="button" class="primary-button gps-submit">
+                    Check In Here
+                </button>
+            </form>
+        </div>
+
+        <div class="job-card">
+            <h3>Check Out</h3>
+
+            {% if job.check_out_time %}
+                <p>
+                    Checked out:
+                    {{ job.check_out_time.strftime("%b %d, %Y • %I:%M %p") }}
+                </p>
+                <p>
+                    GPS:
+                    {{ job.check_out_lat }},
+                    {{ job.check_out_lng }}
+                </p>
+            {% else %}
+                <p>No check-out yet.</p>
+            {% endif %}
+
+            <form
+                method="post"
+                action="/jobs/{{ job.id }}/check-out"
+                class="gps-form"
+            >
+                <input type="hidden" name="lat">
+                <input type="hidden" name="lng">
+
+                <button type="button" class="secondary-button gps-submit">
+                    Check Out Here
+                </button>
+            </form>
+        </div>
+
+    </div>
+
+</section>
 
         <section class="content-card">
 
@@ -287,6 +361,38 @@
 <div class="mobile-sidebar-toggle" onclick="document.body.classList.toggle('sidebar-open')">
     ☰
 </div>
+
+<script>
+    document.querySelectorAll(".gps-submit").forEach(button => {
+        button.addEventListener("click", function () {
+            const form = this.closest("form");
+
+            if (!navigator.geolocation) {
+                alert("GPS is not available on this device.");
+                return;
+            }
+
+            this.innerText = "Getting GPS...";
+
+            navigator.geolocation.getCurrentPosition(
+                function (position) {
+                    form.querySelector('input[name="lat"]').value = position.coords.latitude;
+                    form.querySelector('input[name="lng"]').value = position.coords.longitude;
+                    form.submit();
+                },
+                function () {
+                    alert("Could not get GPS location. Make sure location permission is allowed.");
+                    button.innerText = "Try Again";
+                },
+                {
+                    enableHighAccuracy: true,
+                    timeout: 12000,
+                    maximumAge: 0
+                }
+            );
+        });
+    });
+</script>
 
 </body>
 </html>

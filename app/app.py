@@ -296,6 +296,63 @@ async def map_page(request: Request):
     finally:
         db.close()
 
+@app.post("/jobs/{job_id}/check-in")
+async def job_check_in(
+    request: Request,
+    job_id: int,
+    lat: float = Form(...),
+    lng: float = Form(...),
+):
+    user = require_login(request)
+
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    db = db_session()
+
+    try:
+        job = db.query(Job).filter(Job.id == job_id).first()
+
+        if job:
+            job.check_in_time = datetime.now()
+            job.check_in_lat = lat
+            job.check_in_lng = lng
+            db.commit()
+
+        return RedirectResponse(url=f"/jobs/{job_id}", status_code=303)
+
+    finally:
+        db.close()
+
+
+@app.post("/jobs/{job_id}/check-out")
+async def job_check_out(
+    request: Request,
+    job_id: int,
+    lat: float = Form(...),
+    lng: float = Form(...),
+):
+    user = require_login(request)
+
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    db = db_session()
+
+    try:
+        job = db.query(Job).filter(Job.id == job_id).first()
+
+        if job:
+            job.check_out_time = datetime.now()
+            job.check_out_lat = lat
+            job.check_out_lng = lng
+            db.commit()
+
+        return RedirectResponse(url=f"/jobs/{job_id}", status_code=303)
+
+    finally:
+        db.close()
+
 @app.get("/logout")
 async def logout(request: Request):
     request.session.clear()
