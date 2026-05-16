@@ -1,70 +1,139 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Clients • PoolOps2</title>
-  <link rel="stylesheet" href="/static/style.css">
+    <meta charset="UTF-8">
+    <title>Clients • PoolOps2</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/style.css?v=20">
 </head>
+
 <body>
 
 <div class="topbar-back">
-  <button onclick="history.back()" class="back-btn">← Back</button>
+    <button onclick="history.back()" class="back-btn">
+        ← Back
+    </button>
 </div>
 
-<main class="page-shell">
+<div class="app-layout">
 
-  <section class="card">
-    <h1>Clients</h1>
-    <p>Search, scroll, open client records, or add a new client.</p>
+    {% include "_sidebar.html" %}
 
-    <a class="btn" href="/clients/new">+ Add New Client</a>
-    <a class="btn" href="/dashboard">Dashboard</a>
- <form method="post" action="/admin/wipe-clients"
-      onsubmit="return confirm('Delete ALL clients?');">
-  <button type="submit">Delete All Clients</button>
-</form>
-</section>
+    <main class="page-shell with-sidebar">
 
-  <section class="card">
-    <input id="clientSearch" type="search" placeholder="Search clients by name, phone, email, or notes...">
-  </section>
+        <section class="card">
 
-  <section class="card">
-    <h2>Current Clients</h2>
+            <h1>Clients</h1>
 
-    {% if clients %}
-      <div class="cards" id="clientList">
-        {% for client in clients %}
-          <a class="card client-card"
-             href="/clients/{{ client.id }}"
-             data-search="{{ client.name }} {{ client.phone }} {{ client.email }} {{ client.notes }}">
-            <h3>{{ client.name }}</h3>
-            <p><strong>Phone:</strong> {{ client.phone or "—" }}</p>
-            <p><strong>Email:</strong> {{ client.email or "—" }}</p>
-            <p><strong>Notes:</strong> {{ client.notes or "—" }}</p>
-            <span class="badge">Open Client →</span>
-          </a>
-        {% endfor %}
-      </div>
-    {% else %}
-      <p>No clients added yet.</p>
-    {% endif %}
-  </section>
+            <p>
+                Search, scroll, open client records, or add a new client.
+            </p>
 
-</main>
+            <div class="project-toolbar">
+                <a class="btn" href="/clients/new">
+                    + Add New Client
+                </a>
+
+                <a class="btn" href="/dashboard">
+                    Dashboard
+                </a>
+            </div>
+
+            <form
+                method="post"
+                action="/admin/wipe-clients"
+                onsubmit="return confirm('Delete ALL clients?');"
+            >
+                <button type="submit" class="danger-button">
+                    Delete All Clients
+                </button>
+            </form>
+
+        </section>
+
+        <section class="card">
+
+            <input
+                id="clientSearch"
+                type="search"
+                placeholder="Search clients by name, phone, email, or notes..."
+            >
+
+        </section>
+
+        <section class="card">
+
+            <h2>Current Clients</h2>
+
+            {% if clients %}
+
+                <div class="cards" id="clientList">
+
+                    {% for client in clients %}
+
+                        <a
+                            class="card client-card"
+                            href="/clients/{{ client.id }}"
+                            data-search="{{ client.name }} {{ client.phone }} {{ client.email }} {{ client.notes }}"
+                        >
+
+                            <h3>{{ client.name }}</h3>
+
+                            <p>
+                                <strong>Phone:</strong>
+                                {{ client.phone or "—" }}
+                            </p>
+
+                            <p>
+                                <strong>Email:</strong>
+                                {{ client.email or "—" }}
+                            </p>
+
+                            <p>
+                                <strong>Notes:</strong>
+                                {{ client.notes or "—" }}
+                            </p>
+
+                            <span class="badge">
+                                Open Client →
+                            </span>
+
+                        </a>
+
+                    {% endfor %}
+
+                </div>
+
+            {% else %}
+
+                <p>No clients added yet.</p>
+
+            {% endif %}
+
+        </section>
+
+    </main>
+
+</div>
+
+<div class="mobile-sidebar-toggle" onclick="document.body.classList.toggle('sidebar-open')">
+    ☰
+</div>
 
 <script>
-  const searchInput = document.getElementById("clientSearch");
-  const cards = document.querySelectorAll(".client-card");
+    const searchInput = document.getElementById("clientSearch");
+    const cards = document.querySelectorAll(".client-card");
 
-  searchInput.addEventListener("input", function () {
-    const query = this.value.toLowerCase();
+    if (searchInput) {
+        searchInput.addEventListener("input", function () {
+            const query = this.value.toLowerCase();
 
-    cards.forEach(card => {
-      const text = card.dataset.search.toLowerCase();
-      card.style.display = text.includes(query) ? "block" : "none";
-    });
-  });
+            cards.forEach(card => {
+                const text = card.dataset.search.toLowerCase();
+                card.style.display = text.includes(query) ? "block" : "none";
+            });
+        });
+    }
 </script>
 
 </body>
