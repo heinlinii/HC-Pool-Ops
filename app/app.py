@@ -2624,10 +2624,12 @@ async def imports_page(request: Request, message: str = ""):
 
     return templates.TemplateResponse(
     request,
-    "import.html",
+    "weather.html",
     {
         "user": user,
-        "message": message,
+        "current": current,
+        "daily": daily,
+        "alerts": alerts,
     },
 )
 
@@ -3208,15 +3210,20 @@ async def weather_page(request: Request):
     if not user:
         return RedirectResponse(url="/", status_code=303)
 
-    weather = get_evansville_weather()
-    alerts = build_weather_alerts(weather)
-
     current = {}
-    daily = {}
+daily = {}
+alerts = []
+
+try:
+    weather = get_evansville_weather()
 
     if weather:
         current = weather.get("current", {})
         daily = weather.get("daily", {})
+        alerts = build_weather_alerts(weather)
+
+except Exception as e:
+    print("WEATHER ERROR:", e)
 
     return templates.TemplateResponse(
         request,
