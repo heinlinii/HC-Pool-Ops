@@ -345,6 +345,10 @@ async def geocode_properties(request: Request):
         skipped = 0
 
         for prop in properties:
+            if not prop.address:
+                skipped += 1
+                continue
+
             if prop.latitude and prop.longitude:
                 skipped += 1
                 continue
