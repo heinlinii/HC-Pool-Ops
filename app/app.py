@@ -1593,6 +1593,145 @@ async def delete_employee(request: Request, employee_id: int):
     finally:
         db.close()
 
+@app.get("/quick-add")
+async def quick_add_page(request: Request):
+    user = require_login(request)
+
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    return templates.TemplateResponse(
+        request,
+        "quick_add.html",
+        {
+            "user": user,
+        },
+    )
+
+@app.post("/quick-add")
+async def quick_add_job(
+    request: Request,
+    client: str = Form(...),
+    phone: str = Form(""),
+    address: str = Form(""),
+    job_type: str = Form("Service"),
+    status: str = Form("Requested"),
+    priority: str = Form("Normal"),
+    date: str = Form(""),
+    notes: str = Form(""),
+):
+    user = require_login(request)
+
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    db = db_session()
+
+    try:
+
+        existing_client = (
+            db.query(Client)
+            .filter(Client.name == client.strip())
+            .first()
+        )
+
+        if not existing_client:
+
+            db.add(
+                Client(
+                    name=client.strip(),
+                    phone=phone.strip(),
+                    notes=notes.strip(),
+                )
+            )
+
+        db.add(
+            Job(
+                client=client.strip(),
+                address=address.strip(),
+                property=address.strip(),
+                job_type=job_type.strip(),
+                status=status.strip(),
+                priority=priority.strip(),
+                date=date.strip(),
+                notes=notes.strip(),
+            )
+        )
+
+        db.commit()
+
+        return RedirectResponse(
+            url="/jobs",
+            status_code=303
+        )
+
+    finally:
+        db.close()
+
+@app.get("/openings")
+async def openings_page(request: Request):
+    user = require_login(request)
+
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    db = db_session()
+
+    try:
+        jobs = (
+            db.query(Job)
+            .filter(Job.job_type.ilike("%opening%"))
+            .order_by(Job.scheduled_start.asc().nullslast(), Job.id.desc())
+            .all()
+        )
+
+        return templates.TemplateResponse(
+            request,
+            "seasonal_queue.html",
+            {
+                "user": user,
+                "jobs": jobs,
+                "queue_title": "Pool Openings",
+                "queue_subtitle": "Opening season command board.",
+                "queue_type": "Opening",
+            },
+        )
+
+    finally:
+        db.close()
+
+
+@app.get("/closings")
+async def closings_page(request: Request):
+    user = require_login(request)
+
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    db = db_session()
+
+    try:
+        jobs = (
+            db.query(Job)
+            .filter(Job.job_type.ilike("%closing%"))
+            .order_by(Job.scheduled_start.asc().nullslast(), Job.id.desc())
+            .all()
+        )
+
+        return templates.TemplateResponse(
+            request,
+            "seasonal_queue.html",
+            {
+                "user": user,
+                "jobs": jobs,
+                "queue_title": "Pool Closings",
+                "queue_subtitle": "Closing season command board.",
+                "queue_type": "Closing",
+            },
+        )
+
+    finally:
+        db.close()
 
 @app.get("/billing")
 async def billing_page(request: Request):

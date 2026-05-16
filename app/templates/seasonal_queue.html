@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ queue_title }} • PoolOps2</title>
+    <link rel="stylesheet" href="/static/style.css?v=22">
+</head>
+
+<body>
+
+<div class="topbar-back">
+    <button onclick="history.back()" class="back-btn">← Back</button>
+</div>
+
+<div class="app-layout">
+
+    {% include "_sidebar.html" %}
+
+    <main class="main-content with-sidebar">
+
+        <div class="topbar">
+            <div>
+                <h2>{{ queue_title }}</h2>
+                <p>{{ queue_subtitle }}</p>
+            </div>
+
+            <a href="/quick-add" class="primary-button" style="text-decoration:none;">
+                + Quick Add
+            </a>
+        </div>
+
+        <section class="seasonal-summary-grid">
+
+            <div class="stat-card">
+                <h3>Total</h3>
+                <div class="stat-number">{{ jobs|length }}</div>
+            </div>
+
+            <div class="stat-card">
+                <h3>Requested</h3>
+                <div class="stat-number">
+                    {{ jobs|selectattr("status", "equalto", "Requested")|list|length }}
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <h3>Scheduled</h3>
+                <div class="stat-number">
+                    {{ jobs|selectattr("status", "equalto", "Scheduled")|list|length }}
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <h3>Complete</h3>
+                <div class="stat-number">
+                    {{ jobs|selectattr("status", "equalto", "Completed")|list|length }}
+                </div>
+            </div>
+
+        </section>
+
+        <section class="schedule-grid">
+
+            {% for job in jobs %}
+
+            <div class="schedule-card schedule-status-{{ job.status|lower|replace(' ', '-') }}">
+
+                <div class="schedule-top">
+                    <span class="status-pill">{{ job.status }}</span>
+                    <span class="priority-pill priority-{{ job.priority|lower }}">{{ job.priority }}</span>
+                </div>
+
+                <div class="schedule-date">
+                    {% if job.scheduled_start %}
+                        {{ job.scheduled_start.strftime("%b %d, %Y • %I:%M %p") }}
+                    {% else %}
+                        {{ job.date or "Unscheduled" }}
+                    {% endif %}
+                </div>
+
+                <h3>{{ job.client }}</h3>
+
+                <p>{{ job.address }}</p>
+
+                <div class="schedule-meta">
+                    <span>{{ job.job_type }}</span>
+                    <span>{{ job.crew }}</span>
+                </div>
+
+                <div class="schedule-notes">
+                    {{ job.notes }}
+                </div>
+
+                <div class="schedule-actions">
+                    <a href="/jobs/{{ job.id }}" class="primary-button">
+                        Open Job
+                    </a>
+                </div>
+
+            </div>
+
+            {% else %}
+
+            <section class="content-card">
+                <h3>No {{ queue_type }} jobs yet.</h3>
+                <p>Create one from Quick Add or Jobs.</p>
+            </section>
+
+            {% endfor %}
+
+        </section>
+
+    </main>
+
+</div>
+
+<div class="mobile-sidebar-toggle" onclick="document.body.classList.toggle('sidebar-open')">
+    ☰
+</div>
+
+</body>
+</html>
