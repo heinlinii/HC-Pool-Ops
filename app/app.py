@@ -304,12 +304,43 @@ async def map_page(request: Request):
     try:
         jobs = db.query(Job).order_by(Job.id.desc()).all()
 
+        map_jobs = []
+
+        for job in jobs:
+
+            if job.check_in_lat and job.check_in_lng:
+
+                map_jobs.append({
+                    "id": job.id,
+                    "client": job.client,
+                    "address": job.address,
+                    "job_type": job.job_type,
+                    "status": job.status,
+                    "lat": job.check_in_lat,
+                    "lng": job.check_in_lng,
+                    "check_type": "checkin",
+                })
+
+            if job.check_out_lat and job.check_out_lng:
+
+                map_jobs.append({
+                    "id": job.id,
+                    "client": job.client,
+                    "address": job.address,
+                    "job_type": job.job_type,
+                    "status": job.status,
+                    "lat": job.check_out_lat,
+                    "lng": job.check_out_lng,
+                    "check_type": "checkout",
+                })
+
         return templates.TemplateResponse(
             request,
             "map.html",
             {
                 "user": user,
                 "jobs": jobs,
+                "map_jobs": map_jobs,
             },
         )
 
