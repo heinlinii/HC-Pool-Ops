@@ -272,6 +272,30 @@ def job_financial_summary(job_id: int, db):
         "profit_status": profit_status(tracked_profit, tracked_margin),
     }
 
+@app.get("/map")
+async def map_page(request: Request):
+    user = require_login(request)
+
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    db = db_session()
+
+    try:
+        jobs = db.query(Job).order_by(Job.id.desc()).all()
+
+        return templates.TemplateResponse(
+            request,
+            "map.html",
+            {
+                "user": user,
+                "jobs": jobs,
+            },
+        )
+
+    finally:
+        db.close()
+
 @app.get("/logout")
 async def logout(request: Request):
     request.session.clear()

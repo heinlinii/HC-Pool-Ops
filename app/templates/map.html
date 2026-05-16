@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Map • Heinlin Pool Ops</title>
+
+    <link rel="stylesheet" href="/static/style.css?v=23">
+
+    <link
+        rel="stylesheet"
+        href="https://unpkg.com/leaflet/dist/leaflet.css"
+    >
+
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+</head>
+
+<body>
+
+<div class="topbar-back">
+    <button onclick="history.back()" class="back-btn">
+        ← Back
+    </button>
+</div>
+
+<div class="app-layout">
+
+    {% include "_sidebar.html" %}
+
+    <main class="main-content with-sidebar">
+
+        <div class="topbar">
+            <div>
+                <h2>Job Map</h2>
+                <p>Map view for jobs, openings, closings, and service routing.</p>
+            </div>
+        </div>
+
+        <section class="content-card">
+            <div id="poolops-map"></div>
+        </section>
+
+        <section class="content-card">
+            <h3>Jobs Without Coordinates Yet</h3>
+
+            <div class="jobs-grid">
+
+                {% for job in jobs %}
+
+                <div class="job-card">
+                    <h3>{{ job.client }}</h3>
+                    <p>{{ job.address }}</p>
+                    <p>{{ job.job_type }} • {{ job.status }}</p>
+
+                    <a
+                        href="/jobs/{{ job.id }}"
+                        class="primary-button"
+                        style="text-decoration:none;"
+                    >
+                        Open Job
+                    </a>
+                </div>
+
+                {% endfor %}
+
+            </div>
+        </section>
+
+    </main>
+
+</div>
+
+<div class="mobile-sidebar-toggle" onclick="document.body.classList.toggle('sidebar-open')">
+    ☰
+</div>
+
+<script>
+    const map = L.map("poolops-map").setView([37.9716, -87.5711], 11);
+
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 19,
+        attribution: "© OpenStreetMap"
+    }).addTo(map);
+
+    L.marker([37.9716, -87.5711])
+        .addTo(map)
+        .bindPopup("Heinlin Pool Ops — Evansville Area");
+</script>
+
+</body>
+</html>
