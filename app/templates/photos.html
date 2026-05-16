@@ -1,210 +1,168 @@
-# PoolOps2 — Phase 4 Photo Upload System (FULL FILE REPLACEMENTS)
-
----
-
-# FULL REPLACEMENT — `app/templates/photos.html`
-
-```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PoolOps2 Photo Log</title>
-    <link rel="stylesheet" href="/static/style.css?v=9">
+    <link rel="stylesheet" href="/static/style.css?v=20">
 </head>
 
 <body>
 
-    <div class="app-layout">
+<div class="topbar-back">
+    <button onclick="history.back()" class="back-btn">
+        ← Back
+    </button>
+</div>
 
-        <aside class="sidebar">
+<div class="app-layout">
 
-            <div class="sidebar-top">
+    {% include "_sidebar.html" %}
 
-                <img
-                    src="/static/logo.png"
-                    alt="Heinlin Concrete Logo"
-                    class="sidebar-logo"
-                >
+    <main class="main-content with-sidebar">
 
-                <h1>POOLOPS2</h1>
+        <div class="topbar">
 
-                <p>Heinlin Concrete LLC</p>
+            <div>
 
-            </div>
+                <h2>Photo Log</h2>
 
-            <nav class="sidebar-nav">
-
-                <a href="/dashboard">Dashboard</a>
-                <a href="/jobs">Jobs</a>
-                <a href="/schedule">Schedule</a>
-                <a href="/clients">Clients</a>
-                <a href="/properties">Properties</a>
-                <a href="/employees">Employees</a>
-                <a href="/billing">Billing</a>
-                <a href="/job-costing">Job Costing</a>
-                <a href="/photos" class="active">Photos</a>
-                <a href="/crew">Crew View</a>
-                <a href="/health">Health</a>
-
-            </nav>
-
-            <div class="sidebar-bottom">
-
-                <p>{{ user.name }}</p>
-
-                <span>{{ user.role }}</span>
-
-                <a href="/logout" class="logout-button">
-                    Logout
-                </a>
+                <p>
+                    Before, progress, after, and issue documentation.
+                </p>
 
             </div>
 
-        </aside>
+        </div>
 
-        <main class="main-content">
+        <section class="content-card">
 
-            <div class="topbar">
-
-                <div>
-
-                    <h2>Photo Log</h2>
-
-                    <p>
-                        Upload real before, progress, after, and issue photos.
-                    </p>
-
-                </div>
-
+            <div class="card-header">
+                <h3>Add Photo Record</h3>
             </div>
 
-            <section class="content-card">
+            <form
+                method="post"
+                action="/photos/add"
+                class="job-form"
+                enctype="multipart/form-data"
+            >
 
-                <div class="card-header">
+                <div class="form-grid">
 
-                    <h3>Add Photo Record</h3>
+                    <div class="form-group">
 
-                </div>
+                        <label>Job</label>
 
-                <form
-                    method="post"
-                    action="/photos/add"
-                    class="job-form"
-                    enctype="multipart/form-data"
-                >
+                        <select name="job_id" required>
 
-                    <div class="form-grid">
+                            {% for job in jobs %}
 
-                        <div class="form-group">
+                            <option value="{{ job.id }}">
+                                {{ job.label }}
+                            </option>
 
-                            <label>Job</label>
+                            {% endfor %}
 
-                            <select name="job_id" required>
-
-                                {% for job in jobs %}
-
-                                <option value="{{ job.id }}">
-                                    {{ job.label }}
-                                </option>
-
-                                {% endfor %}
-
-                            </select>
-
-                        </div>
-
-                        <div class="form-group">
-
-                            <label>Photo Type</label>
-
-                            <select name="photo_type">
-
-                                <option>Before</option>
-                                <option>Progress</option>
-                                <option>After</option>
-                                <option>Issue</option>
-
-                            </select>
-
-                        </div>
-
-                        <div class="form-group">
-
-                            <label>Title</label>
-
-                            <input
-                                type="text"
-                                name="title"
-                                placeholder="Photo title"
-                                required
-                            >
-
-                        </div>
-
-                        <div class="form-group">
-
-                            <label>Upload Photo</label>
-
-                            <input
-                                type="file"
-                                name="photo_file"
-                                accept="image/*"
-                            >
-
-                        </div>
-
-                        <div class="form-group">
-
-                            <label>Date</label>
-
-                            <input
-                                type="text"
-                                name="date"
-                                placeholder="Today"
-                            >
-
-                        </div>
-
-                        <div class="form-group form-full">
-
-                            <label>Notes</label>
-
-                            <textarea
-                                name="notes"
-                                rows="4"
-                                placeholder="Photo notes..."
-                            ></textarea>
-
-                        </div>
+                        </select>
 
                     </div>
 
-                    <button
-                        type="submit"
-                        class="primary-button"
-                    >
-                        Upload Photo
-                    </button>
+                    <div class="form-group">
 
-                </form>
+                        <label>Photo Type</label>
 
-            </section>
+                        <select name="photo_type">
 
-            <section class="content-card">
+                            <option>Before</option>
+                            <option>Progress</option>
+                            <option>After</option>
+                            <option>Issue</option>
 
-                <div class="card-header">
+                        </select>
 
-                    <h3>Project Photo Records</h3>
+                    </div>
+
+                    <div class="form-group">
+
+                        <label>Title</label>
+
+                        <input
+                            type="text"
+                            name="title"
+                            placeholder="Photo title"
+                            required
+                        >
+
+                    </div>
+
+                    <div class="form-group form-full">
+
+                        <label>Upload Photos</label>
+
+                        <input
+                            type="file"
+                            name="photo_files"
+                            accept="image/*"
+                            multiple
+                        >
+
+                        <small style="opacity:.7;">
+                            Select multiple photos at once.
+                        </small>
+
+                    </div>
+
+                    <div class="form-group">
+
+                        <label>Date</label>
+
+                        <input
+                            type="text"
+                            name="date"
+                            placeholder="Today"
+                        >
+
+                    </div>
+
+                    <div class="form-group form-full">
+
+                        <label>Notes</label>
+
+                        <textarea
+                            name="notes"
+                            rows="4"
+                            placeholder="Photo notes..."
+                        ></textarea>
+
+                    </div>
 
                 </div>
 
-                <div class="photo-grid">
+                <button
+                    type="submit"
+                    class="primary-button"
+                >
+                    Upload Photos
+                </button>
 
-                    {% for photo in photos %}
+            </form>
 
-                    <div class="photo-card">
+        </section>
+
+        <section class="content-card">
+
+            <div class="card-header">
+                <h3>Project Photo Records</h3>
+            </div>
+
+            <div class="photo-grid">
+
+                {% for photo in photos %}
+
+                <div class="photo-card">
+
+                    <div class="job-photo">
 
                         <img
                             src="{{ photo.photo_url }}"
@@ -212,180 +170,75 @@
                             class="photo-preview"
                         >
 
-                        <div class="photo-content">
+                    </div>
 
-                            <div class="job-top">
+                    <div class="photo-content">
 
-                                <div>
+                        <div class="job-top">
 
-                                    <h3>
-                                        {{ photo.title }}
-                                    </h3>
+                            <div>
 
-                                    <p>
-                                        {{ photo.client }}
-                                    </p>
+                                <h3>
+                                    {{ photo.title }}
+                                </h3>
 
-                                </div>
+                                <p>
+                                    {{ photo.client }}
+                                </p>
 
-                                <span class="status-pill">
-                                    {{ photo.photo_type }}
+                            </div>
+
+                            <span class="status-pill">
+                                {{ photo.photo_type }}
+                            </span>
+
+                        </div>
+
+                        <div class="job-details">
+
+                            <div class="detail-row">
+
+                                <strong>Job ID:</strong>
+
+                                <span>
+                                    #{{ photo.job_id }}
                                 </span>
 
                             </div>
 
-                            <div class="job-details">
+                            <div class="detail-row">
 
-                                <div class="detail-row">
+                                <strong>Date:</strong>
 
-                                    <strong>Job ID:</strong>
+                                <span>
+                                    {{ photo.date }}
+                                </span>
 
-                                    <span>
-                                        #{{ photo.job_id }}
-                                    </span>
-
-                                </div>
-
-                                <div class="detail-row">
-
-                                    <strong>Date:</strong>
-
-                                    <span>
-                                        {{ photo.date }}
-                                    </span>
-
-                                </div>
-
-                            </div>
-
-                            <div class="job-notes">
-                                {{ photo.notes }}
                             </div>
 
                         </div>
 
-                    </div>
+                        <div class="job-notes">
+                            {{ photo.notes }}
+                        </div>
 
-                    {% endfor %}
+                    </div>
 
                 </div>
 
-            </section>
+                {% endfor %}
 
-        </main>
+            </div>
 
-    </div>
+        </section>
+
+    </main>
+
+</div>
+
+<div class="mobile-sidebar-toggle" onclick="document.body.classList.toggle('sidebar-open')">
+    ☰
+</div>
 
 </body>
 </html>
-```
-
----
-
-# ADD THESE IMPORTS TO TOP OF `app/app.py`
-
-```python
-from fastapi import FastAPI, Request, Form, File, UploadFile
-import os
-import shutil
-```
-
----
-
-# ADD THIS UNDER `templates = Jinja2Templates(...)`
-
-```python
-UPLOAD_DIR = "app/static/uploads"
-os.makedirs(UPLOAD_DIR, exist_ok=True)
-
-
-def save_uploaded_photo(upload: UploadFile):
-    if not upload or not upload.filename:
-        return "/static/logo.png"
-
-    clean_name = upload.filename.replace(" ", "_")
-    file_path = os.path.join(UPLOAD_DIR, clean_name)
-
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(upload.file, buffer)
-
-    return f"/static/uploads/{clean_name}"
-```
-
----
-
-# FULL REPLACEMENT — `/photos/add` ROUTE IN `app/app.py`
-
-```python
-@app.post("/photos/add")
-async def add_photo_log(
-    request: Request,
-    job_id: int = Form(...),
-    photo_type: str = Form(...),
-    title: str = Form(...),
-    photo_file: UploadFile = File(None),
-    date: str = Form("Today"),
-    notes: str = Form(""),
-):
-    user = require_admin(request)
-
-    if not user:
-        return RedirectResponse(url="/", status_code=303)
-
-    db = db_session()
-
-    try:
-        job = db.query(Job).filter(Job.id == job_id).first()
-        client_name = job.client if job else "Unknown Client"
-
-        photo_url = save_uploaded_photo(photo_file)
-
-        db.add(
-            PhotoLog(
-                job_id=job_id,
-                client=client_name,
-                photo_type=photo_type.strip(),
-                title=title.strip(),
-                photo_url=photo_url,
-                date=date.strip(),
-                notes=notes.strip(),
-            )
-        )
-
-        db.commit()
-
-        return RedirectResponse(url="/photos", status_code=303)
-
-    finally:
-        db.close()
-```
-
----
-
-# CREATE THIS FOLDER
-
-```text
-app/static/uploads
-```
-
----
-
-# DEPLOY
-
-```bash
-git add .
-git commit -m "Add Phase 4 real photo uploads"
-git push
-```
-
-Then in Render:
-
-```text
-Clear build cache & deploy
-```
-
-Then test:
-
-```text
-/photos
-```
