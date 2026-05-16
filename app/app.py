@@ -38,17 +38,36 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 def startup():
     Base.metadata.create_all(bind=engine)
 
+    gps_columns = [
+        ("check_in_time", "TIMESTAMP"),
+        ("check_in_lat", "FLOAT"),
+        ("check_in_lng", "FLOAT"),
+        ("check_out_time", "TIMESTAMP"),
+        ("check_out_lat", "FLOAT"),
+        ("check_out_lng", "FLOAT"),
+    ]
+
+    with engine.begin() as conn:
+        for column_name, column_type in gps_columns:
+            try:
+                conn.execute(
+                    text(
+                        f"ALTER TABLE poolops2_jobs ADD COLUMN {column_name} {column_type}"
+                    )
+                )
+            except Exception:
+                pass
+
     db = SessionLocal()
 
     try:
         if db.query(User).count() == 0:
-            db.add(User(username="mike", password="5500", role="admin", name="Mike"))
-            db.add(User(username="randy", password="0318", role="crew", name="Randy"))
-           
+            db.add(User(username="mike", password="5500"))
+            db.add(User(username="randy", password="0318"))
+
         if db.query(Employee).count() == 0:
-            db.add(Employee(name="Mike", role="Admin", phone="", email="", active=True))
-            db.add(Employee(name="Randy", role="Foreman", phone="", email="", active=True))
-          
+            db.add(Employee(name="Mike", role="Admin"))
+
         db.commit()
 
     finally:
