@@ -4,50 +4,29 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PoolOps2 Imports</title>
-    <link rel="stylesheet" href="/static/style.css?v=11">
+    <link rel="stylesheet" href="/static/style.css?v=20">
 </head>
 
 <body>
 
+<div class="topbar-back">
+    <button onclick="history.back()" class="back-btn">
+        ← Back
+    </button>
+</div>
+
 <div class="app-layout">
 
-    <aside class="sidebar">
+    {% include "_sidebar.html" %}
 
-        <div class="sidebar-top">
-            <img src="/static/logo.png" alt="Heinlin Concrete Logo" class="sidebar-logo">
-            <h1>POOLOPS2</h1>
-            <p>Heinlin Concrete LLC</p>
-        </div>
-
-        <nav class="sidebar-nav">
-            <a href="/dashboard">Dashboard</a>
-            <a href="/jobs">Jobs</a>
-            <a href="/schedule">Schedule</a>
-            <a href="/clients">Clients</a>
-            <a href="/properties">Properties</a>
-            <a href="/employees">Employees</a>
-            <a href="/billing">Billing</a>
-            <a href="/job-costing">Job Costing</a>
-            <a href="/photos">Photos</a>
-            <a href="/imports" class="active">Imports</a>
-            <a href="/crew">Crew View</a>
-            <a href="/health">Health</a>
-        </nav>
-
-        <div class="sidebar-bottom">
-            <p>{{ user.name }}</p>
-            <span>{{ user.role }}</span>
-            <a href="/logout" class="logout-button">Logout</a>
-        </div>
-
-    </aside>
-
-    <main class="main-content">
+    <main class="main-content with-sidebar">
 
         <div class="topbar">
             <div>
                 <h2>QuickBooks / CSV Imports</h2>
-                <p>Import customers, properties, and invoice records from CSV files.</p>
+                <p>
+                    Import customers, properties, invoices, and contact lists into PoolOps2.
+                </p>
             </div>
         </div>
 
@@ -66,7 +45,8 @@
             </div>
 
             <p class="helper-text">
-                CSV columns supported: name, customer, client, phone, email, notes.
+                Supported columns:
+                name, customer, client, phone, email, notes.
             </p>
 
             <form
@@ -78,7 +58,13 @@
 
                 <div class="form-group">
                     <label>Client CSV File</label>
-                    <input type="file" name="csv_file" accept=".csv" required>
+
+                    <input
+                        type="file"
+                        name="csv_file"
+                        accept=".csv"
+                        required
+                    >
                 </div>
 
                 <button type="submit" class="primary-button">
@@ -94,17 +80,10 @@
             <div class="card-header">
                 <h3>Import Properties</h3>
             </div>
-            
-<section class="content-card">
-    <h3>Contact Matcher</h3>
-    <p>Upload phone contacts and compare them against PoolOps clients.</p>
 
-    <a class="btn" href="/contact-matcher">
-        Open Contact Matcher
-    </a>
-</section>
             <p class="helper-text">
-                CSV columns supported: client, customer, name, address, property, pool_type, notes.
+                Supported columns:
+                client, customer, address, property, pool_type, notes.
             </p>
 
             <form
@@ -116,7 +95,13 @@
 
                 <div class="form-group">
                     <label>Property CSV File</label>
-                    <input type="file" name="file" accept=".csv" required>
+
+                    <input
+                        type="file"
+                        name="file"
+                        accept=".csv"
+                        required
+                    >
                 </div>
 
                 <button type="submit" class="primary-button">
@@ -134,7 +119,8 @@
             </div>
 
             <p class="helper-text">
-                CSV columns supported: client, customer, description, amount, status, date, notes.
+                Supported columns:
+                client, description, amount, status, date, notes.
             </p>
 
             <form
@@ -146,7 +132,13 @@
 
                 <div class="form-group">
                     <label>Invoice CSV File</label>
-                    <input type="file" name="csv_file" accept=".csv" required>
+
+                    <input
+                        type="file"
+                        name="csv_file"
+                        accept=".csv"
+                        required
+                    >
                 </div>
 
                 <button type="submit" class="primary-button">
@@ -160,32 +152,57 @@
         <section class="content-card">
 
             <div class="card-header">
-                <h3>Recommended QuickBooks CSV Prep</h3>
+                <h3>Contact Matcher</h3>
+            </div>
+
+            <p>
+                Upload phone contacts and compare them against existing PoolOps2 client records.
+            </p>
+
+            <a class="btn" href="/contact-matcher">
+                Open Contact Matcher
+            </a>
+
+        </section>
+
+        <section class="content-card">
+
+            <div class="card-header">
+                <h3>Recommended CSV Prep</h3>
             </div>
 
             <div class="jobs-grid">
 
                 <div class="job-card">
                     <h3>Clients</h3>
+
                     <p>Use one row per customer.</p>
+
                     <div class="job-notes">
-                        Best columns: name, phone, email, notes.
+                        Best columns:
+                        name, phone, email, notes.
                     </div>
                 </div>
 
                 <div class="job-card">
                     <h3>Properties</h3>
-                    <p>Use one row per jobsite/address.</p>
+
+                    <p>Use one row per property/jobsite.</p>
+
                     <div class="job-notes">
-                        Best columns: client, address, pool_type, notes.
+                        Best columns:
+                        client, address, pool_type, notes.
                     </div>
                 </div>
 
                 <div class="job-card">
                     <h3>Invoices</h3>
+
                     <p>Use one row per invoice.</p>
+
                     <div class="job-notes">
-                        Best columns: client, description, amount, status, date, notes.
+                        Best columns:
+                        client, description, amount, status, date, notes.
                     </div>
                 </div>
 
@@ -195,6 +212,10 @@
 
     </main>
 
+</div>
+
+<div class="mobile-sidebar-toggle" onclick="document.body.classList.toggle('sidebar-open')">
+    ☰
 </div>
 
 </body>
