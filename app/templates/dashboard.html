@@ -60,23 +60,133 @@
     </div>
   </section>
 
-  <section class="card">
-    <h2>Control Panel</h2>
-    <p>Quick app controls for jobs, photos, billing, estimates, imports, and customer records.</p>
+  <section class="command-section">
 
-    <div class="project-toolbar">
-      <a class="btn" href="/jobs">Jobs</a>
-      <a class="btn" href="/schedule">Schedule</a>
-      <a class="btn" href="/clients">Clients</a>
-      <a class="btn" href="/properties">Properties</a>
-      <a class="btn" href="/estimate-capture">Estimate Capture</a>
-      <a class="btn" href="/photos">Photos</a>
-      <a class="btn" href="/billing">Billing</a>
-      <a class="btn" href="/imports">Imports</a>
-      <a class="btn" href="/contact-matcher">Contact Matcher</a>
-      <a class="btn" href="/dashboard/theme">Edit Dashboard Look</a>
+    <div class="section-title">
+        <h2>Today</h2>
+        <span>What matters now</span>
     </div>
-  </section>
+
+    <section class="quick-grid">
+
+        <a class="quick-card image-tile" href="/schedule" style="background-image:url('/static/schedule-bg.jpg');">
+            <div>
+                <h3>Today’s Work</h3>
+                <p>Jobs, crews, and schedule for the day.</p>
+            </div>
+        </a>
+
+        <a class="quick-card image-tile" href="/jobs" style="background-image:url('/static/jobs-bg.jpg');">
+            <div>
+                <h3>Urgent Jobs</h3>
+                <p>Repairs, callbacks, deadlines, and active issues.</p>
+            </div>
+        </a>
+
+    </section>
+
+</section>
+
+<section class="command-section">
+
+    <div class="section-title">
+        <h2>Season</h2>
+        <span>Openings and closings</span>
+    </div>
+
+    <section class="quick-grid">
+
+        <a class="quick-card image-tile" href="/openings" style="background-image:url('/static/openings-bg.jpg');">
+            <div>
+                <h3>Openings</h3>
+                <p>Startup queue, deadlines, covers, heaters, and water levels.</p>
+            </div>
+        </a>
+
+        <a class="quick-card image-tile" href="/closings" style="background-image:url('/static/closings-bg.jpg');">
+            <div>
+                <h3>Closings</h3>
+                <p>Winterization queue, shutdown notes, covers, and equipment.</p>
+            </div>
+        </a>
+
+    </section>
+
+</section>
+
+<section class="command-section">
+
+    <div class="section-title">
+        <h2>Quick Actions</h2>
+        <span>Fast field controls</span>
+    </div>
+
+    <section class="action-grid compact-actions">
+
+        <a class="action-card" href="/quick-add">
+            <div class="icon">➕</div>
+            <strong>Quick Add</strong>
+            <span>Create job from text/call.</span>
+        </a>
+
+        <a class="action-card" href="/photos">
+            <div class="icon">📸</div>
+            <strong>Photos</strong>
+            <span>Upload job photos.</span>
+        </a>
+
+        <a class="action-card" href="/estimate-capture">
+            <div class="icon">🧾</div>
+            <strong>Estimate</strong>
+            <span>Capture estimate notes.</span>
+        </a>
+
+        <a class="action-card" href="/map">
+            <div class="icon">🗺️</div>
+            <strong>Map</strong>
+            <span>View jobs by area.</span>
+        </a>
+
+    </section>
+
+</section>
+
+<section class="command-section">
+
+    <div class="section-title">
+        <h2>Operations</h2>
+        <span>Company records</span>
+    </div>
+
+    <section class="action-grid compact-actions">
+
+        <a class="action-card" href="/clients">
+            <div class="icon">👥</div>
+            <strong>Clients</strong>
+            <span>Customer records.</span>
+        </a>
+
+        <a class="action-card" href="/properties">
+            <div class="icon">🏡</div>
+            <strong>Properties</strong>
+            <span>Pool locations.</span>
+        </a>
+
+        <a class="action-card" href="/billing">
+            <div class="icon">💵</div>
+            <strong>Billing</strong>
+            <span>Invoices and money.</span>
+        </a>
+
+        <a class="action-card" href="/imports">
+            <div class="icon">⬆️</div>
+            <strong>Imports</strong>
+            <span>CSV and contacts.</span>
+        </a>
+
+    </section>
+
+</section>
 
   <section class="search-card" id="searchSection">
     <div class="search-label">Universal Command Search</div>

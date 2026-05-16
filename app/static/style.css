@@ -1789,3 +1789,70 @@ body.dashboard-body {
         z-index:2800 !important;
     }
 }
+
+/* =====================================================
+   SIMPLIFIED MOBILE COMMAND DASHBOARD
+===================================================== */
+
+.command-section {
+    margin-bottom: 28px;
+}
+
+.compact-actions {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.compact-actions .action-card {
+    min-height: 150px;
+}
+
+@media(max-width:768px) {
+
+    .command-section {
+        margin-bottom: 20px;
+    }
+
+    .section-title {
+        padding: 0 4px;
+        margin-bottom: 10px;
+    }
+
+    .section-title h2 {
+        font-size: 26px !important;
+        margin-bottom: 2px;
+    }
+
+    .section-title span {
+        font-size: 13px;
+        opacity: .75;
+    }
+
+    .compact-actions {
+        grid-template-columns: 1fr 1fr !important;
+        gap: 10px !important;
+    }
+
+    .compact-actions .action-card {
+        min-height: 132px;
+        padding: 14px !important;
+        border-radius: 18px !important;
+    }
+
+    .compact-actions .icon {
+        font-size: 24px;
+        margin-bottom: 8px;
+    }
+
+    .compact-actions strong {
+        font-size: 15px;
+    }
+
+    .compact-actions span {
+        font-size: 12px;
+        line-height: 1.25;
+    }
+
+    .image-tile {
+        min-height: 210px !important;
+    }
+}
