@@ -475,6 +475,34 @@ async def map_page(request: Request):
     finally:
         db.close()
 
+@app.get("/admin/property-addresses")
+async def property_addresses(request: Request):
+    user = require_admin(request)
+
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    db = db_session()
+
+    try:
+        properties = db.query(Property).limit(25).all()
+
+        output = []
+
+        for prop in properties:
+            output.append({
+                "client": prop.client,
+                "address": prop.address,
+                "city": prop.city,
+                "state": prop.state,
+                "zip": prop.zip_code,
+            })
+
+        return output
+
+    finally:
+        db.close()
+
 @app.get("/admin/geocode-properties")
 async def geocode_properties(request: Request):
     user = require_admin(request)
