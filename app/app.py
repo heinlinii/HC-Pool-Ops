@@ -4,6 +4,8 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
 from sqlalchemy import text
+from typing import List
+from uuid import uuid4
 
 import csv
 import io
@@ -2035,8 +2037,8 @@ async def add_photo_log(
     request: Request,
     job_id: int = Form(...),
     photo_type: str = Form(...),
-    title: str = Form(...),
-    photo_file: UploadFile = File(None),
+    title: str = Form(""),
+    photo_files: List[UploadFile] = File(None),
     date: str = Form("Today"),
     notes: str = Form(""),
 ):
@@ -2051,19 +2053,40 @@ async def add_photo_log(
         job = db.query(Job).filter(Job.id == job_id).first()
         client_name = job.client if job else "Unknown Client"
 
-        photo_url = save_uploaded_photo(photo_file)
+        if not photo_files:
+            return RedirectResponse(url="/photos", status_code=303)
 
-        db.add(
-            PhotoLog(
-                job_id=job_id,
-                client=client_name,
-                photo_type=photo_type.strip(),
-                title=title.strip(),
-                photo_url=photo_url,
-                date=date.strip(),
-                notes=notes.strip(),
+        for index, photo_file in enumerate(photo_files):
+
+            if not photo_file or not photo_file.filename:
+                continue
+
+            clean_ext = photo_file.filename.split(".")[-1].lower()
+            safe_filename = f"{uuid4()}.{clean_ext}"
+
+            file_path = os.path.join(UPLOAD_DIR, safe_filename)
+
+            with open(file_path, "wb") as buffer:
+                shutil.copyfileobj(photo_file.file, buffer)
+
+            photo_url = f"/static/uploads/{safe_filename}"
+
+            photo_title = title.strip() or "Job Photo"
+
+            if len(photo_files) > 1:
+                photo_title = f"{photo_title} {index + 1}"
+
+            db.add(
+                PhotoLog(
+                    job_id=job_id,
+                    client=client_name,
+                    photo_type=photo_type.strip(),
+                    title=photo_title,
+                    photo_url=photo_url,
+                    date=date.strip(),
+                    notes=notes.strip(),
+                )
             )
-        )
 
         db.commit()
 
