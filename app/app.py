@@ -37,32 +37,34 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 @app.on_event("startup")
 def startup():
-    Base.metadata.create_all(bind=engine)
+   Base.metadata.create_all(bind=engine)
 
-    property_gps_columns = [
-        ("latitude", "FLOAT"),
-        ("longitude", "FLOAT"),
-    ]
+property_gps_columns = [
+    ("latitude", "FLOAT"),
+    ("longitude", "FLOAT"),
+]
 
-    gps_columns = [
-        ("check_in_time", "TIMESTAMP"),
-        ("check_in_lat", "FLOAT"),
-        ("check_in_lng", "FLOAT"),
-        ("check_out_time", "TIMESTAMP"),
-        ("check_out_lat", "FLOAT"),
-        ("check_out_lng", "FLOAT"),
-    ]
+gps_columns = [
+    ("check_in_time", "TIMESTAMP"),
+    ("check_in_lat", "FLOAT"),
+    ("check_in_lng", "FLOAT"),
+    ("check_out_time", "TIMESTAMP"),
+    ("check_out_lat", "FLOAT"),
+    ("check_out_lng", "FLOAT"),
+]
 
-    with engine.begin() as conn:
-        for column_name, column_type in property_gps_columns:
-            try:
-                conn.execute(
-                    text(
-                        f"ALTER TABLE poolops2_properties ADD COLUMN {column_name} {column_type}"
-                    )
-                )
-            except Exception:
-                pass
+with engine.begin() as conn:
+    for column_name, column_type in property_gps_columns:
+        try:
+            conn.execute(text(f"ALTER TABLE poolops2_properties ADD COLUMN {column_name} {column_type}"))
+        except Exception:
+            pass
+
+    for column_name, column_type in gps_columns:
+        try:
+            conn.execute(text(f"ALTER TABLE poolops2_jobs ADD COLUMN {column_name} {column_type}"))
+        except Exception:
+            pass
 
         for column_name, column_type in gps_columns:
             try:
@@ -83,16 +85,17 @@ def startup():
         ("check_out_lng", "FLOAT"),
     ]
 
-    with engine.begin() as conn:
-        for column_name, column_type in gps_columns:
-            try:
-                conn.execute(
-                    text(
-                        f"ALTER TABLE poolops2_jobs ADD COLUMN {column_name} {column_type}"
-                    )
-                )
-            except Exception:
-                pass
+with engine.begin() as conn:
+
+    try:
+        conn.execute(text("ALTER TABLE poolops2_properties ADD COLUMN latitude FLOAT"))
+    except Exception:
+        pass
+
+    try:
+        conn.execute(text("ALTER TABLE poolops2_properties ADD COLUMN longitude FLOAT"))
+    except Exception:
+        pass
 
     db = SessionLocal()
 
