@@ -7,6 +7,7 @@ from sqlalchemy import text
 from typing import List
 from uuid import uuid4
 
+import base64
 import csv
 import io
 import os
@@ -2061,15 +2062,11 @@ async def add_photo_log(
             if not photo_file or not photo_file.filename:
                 continue
 
-            clean_ext = photo_file.filename.split(".")[-1].lower()
-            safe_filename = f"{uuid4()}.{clean_ext}"
+            file_bytes = await photo_file.read()
+            encoded = base64.b64encode(file_bytes).decode("utf-8")
 
-            file_path = os.path.join(UPLOAD_DIR, safe_filename)
-
-            with open(file_path, "wb") as buffer:
-                shutil.copyfileobj(photo_file.file, buffer)
-
-            photo_url = f"/static/uploads/{safe_filename}"
+            content_type = photo_file.content_type or "image/jpeg"
+            photo_url = f"data:{content_type};base64,{encoded}"
 
             photo_title = title.strip() or "Job Photo"
 
