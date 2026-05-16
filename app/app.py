@@ -3205,6 +3205,19 @@ async def api_search(request: Request, q: str = ""):
     finally: 
         db.close()
 
+@app.get("/weather-test")
+async def weather_test():
+    weather = get_evansville_weather()
+
+    if not weather:
+        return {"status": "failed", "weather": None}
+
+    return {
+        "status": "ok",
+        "current": weather.get("current", {}),
+        "daily_keys": list(weather.get("daily", {}).keys()),
+    }
+
 @app.get("/weather")
 async def weather_page(request: Request):
     user = require_login(request)
