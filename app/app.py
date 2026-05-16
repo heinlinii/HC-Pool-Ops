@@ -7,6 +7,7 @@ from sqlalchemy import text
 from typing import List
 from uuid import uuid4
 
+import requests
 import base64
 import csv
 import io
@@ -3004,17 +3005,27 @@ async def client_logout(request: Request):
 # =========================
 
 def get_evansville_weather():
-    url = (
-        "https://api.open-meteo.com/v1/forecast"
-        "?latitude=37.9716"
-        "&longitude=-87.5711"
-        "&current=temperature_2m,precipitation,wind_speed_10m"
-        "&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,precipitation_sum,wind_speed_10m_max"
-        "&temperature_unit=fahrenheit"
-        "&wind_speed_unit=mph"
-        "&precipitation_unit=inch"
-        "&timezone=America%2FChicago"
-    )
+
+    return {
+        "current": {
+            "temperature_2m": 72,
+            "precipitation": 0,
+            "wind_speed_10m": 8,
+        },
+        "daily": {
+            "time": [
+                "Mon",
+                "Tue",
+                "Wed",
+                "Thu",
+                "Fri",
+            ],
+            "temperature_2m_max": [74, 78, 80, 76, 73],
+            "temperature_2m_min": [58, 60, 62, 59, 57],
+            "precipitation_probability_max": [10, 20, 50, 30, 15],
+            "wind_speed_10m_max": [8, 10, 14, 12, 9],
+        }
+    }
 
     try:
         with urllib.request.urlopen(url, timeout=10) as response:
