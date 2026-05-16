@@ -1629,3 +1629,163 @@ body.dashboard-body {
         line-height: 1 !important;
     }
 }
+
+/* =====================================================
+   MOBILE CLEANUP — FIELD FRIENDLY VERSION
+===================================================== */
+
+@media(max-width:768px){
+
+    body{
+        padding:0 !important;
+        margin:0 !important;
+        overflow-x:hidden !important;
+    }
+
+    .with-sidebar,
+    .main-content,
+    .page-shell,
+    .shell{
+        padding:72px 14px 96px !important;
+        margin-left:0 !important;
+        width:100% !important;
+    }
+
+    .hero{
+        padding:20px !important;
+        border-radius:0 0 26px 26px !important;
+        min-height:auto !important;
+    }
+
+    .brand-row{
+        display:block !important;
+        text-align:left !important;
+    }
+
+    .brand-logo{
+        width:135px !important;
+        margin-bottom:18px !important;
+    }
+
+    .hero h1{
+        font-size:40px !important;
+        line-height:.95 !important;
+        letter-spacing:-1.5px !important;
+    }
+
+    .hero-main p{
+        font-size:17px !important;
+        line-height:1.45 !important;
+    }
+
+    .system-row{
+        display:flex !important;
+        flex-wrap:wrap !important;
+        gap:8px !important;
+    }
+
+    .pill{
+        font-size:11px !important;
+        padding:8px 11px !important;
+    }
+
+    .hero-photo{
+        min-height:180px !important;
+        margin-top:18px !important;
+    }
+
+    .content-card,
+    .card,
+    .panel,
+    .job-card,
+    .schedule-card,
+    .photo-card,
+    .stat-card{
+        padding:16px !important;
+        border-radius:20px !important;
+        margin-bottom:14px !important;
+    }
+
+    .quick-grid,
+    .action-grid,
+    .jobs-grid,
+    .photo-grid,
+    .schedule-grid,
+    .stats-grid,
+    .content-grid,
+    .metric-grid{
+        grid-template-columns:1fr !important;
+        gap:14px !important;
+    }
+
+    .image-tile{
+        min-height:190px !important;
+        border-radius:22px !important;
+    }
+
+    .image-tile h3{
+        font-size:28px !important;
+    }
+
+    input,
+    select,
+    textarea{
+        font-size:16px !important;
+        min-height:52px !important;
+        border-radius:14px !important;
+    }
+
+    button,
+    .btn,
+    .primary-button,
+    .secondary-button{
+        width:100% !important;
+        min-height:52px !important;
+        font-size:16px !important;
+        border-radius:14px !important;
+    }
+
+    .topbar-back{
+        position:fixed !important;
+        top:0;
+        left:0;
+        right:0;
+        z-index:3000;
+        background:rgba(5,11,15,.96) !important;
+        padding:10px 14px !important;
+        border-bottom:1px solid rgba(255,255,255,.08);
+        backdrop-filter:blur(14px);
+    }
+
+    .back-btn{
+        width:100%;
+        min-height:48px;
+    }
+
+    .mobile-nav{
+        display:grid !important;
+        grid-template-columns:repeat(5,1fr);
+        position:fixed;
+        bottom:0;
+        left:0;
+        right:0;
+        z-index:2600;
+        background:rgba(3,8,13,.98);
+        border-top:1px solid rgba(255,255,255,.10);
+        padding:8px 4px calc(8px + env(safe-area-inset-bottom));
+    }
+
+    .mobile-nav a{
+        font-size:11px !important;
+        text-align:center;
+        color:#e6fbff !important;
+        text-decoration:none;
+        padding:8px 2px !important;
+    }
+
+    .mobile-sidebar-toggle{
+        right:18px !important;
+        bottom:86px !important;
+        z-index:2800 !important;
+    }
+}
