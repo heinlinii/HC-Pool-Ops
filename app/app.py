@@ -39,6 +39,22 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 def startup():
     Base.metadata.create_all(bind=engine)
 
+    property_gps_columns = [
+    ("latitude", "FLOAT"),
+    ("longitude", "FLOAT"),
+]
+
+with engine.begin() as conn:
+    for column_name, column_type in property_gps_columns:
+        try:
+            conn.execute(
+                text(
+                    f"ALTER TABLE poolops2_properties ADD COLUMN {column_name} {column_type}"
+                )
+            )
+        except Exception:
+            pass
+
     gps_columns = [
         ("check_in_time", "TIMESTAMP"),
         ("check_in_lat", "FLOAT"),
@@ -291,6 +307,77 @@ def job_financial_summary(job_id: int, db):
         "tracked_margin": tracked_margin,
         "profit_status": profit_status(tracked_profit, tracked_margin),
     }
+
+@app.get("/admin/geocode-properties")
+async def geocode_properties(request: Request):
+    user = require_admin(request)
+
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    db = db_session()
+
+    try:
+        properties = db.query(Property).all()
+        updated = 0
+        skipped = 0
+
+        for prop in properties:
+            if prop.latitude and prop.longitude:
+                skipped += 1
+                continue
+
+            address_parts = [
+                prop.address or "",
+                prop.city or "",
+                prop.state or "",
+                prop.zip_code or "",
+            ]
+
+            query = ", ".join([part for part in address_parts if part]).strip()
+
+            if not query:
+                skipped += 1
+                continue
+
+            url = "https://nominatim.openstreetmap.org/search"
+
+            try:
+                response = requests.get(
+                    url,
+                    params={
+                        "q": query,
+                        "format": "json",
+                        "limit": 1,
+                    },
+                    headers={
+                        "User-Agent": "PoolOps2-HeinlinConcrete/1.0"
+                    },
+                    timeout=10,
+                )
+
+                data = response.json()
+
+                if data:
+                    prop.latitude = float(data[0]["lat"])
+                    prop.longitude = float(data[0]["lon"])
+                    updated += 1
+                else:
+                    skipped += 1
+
+            except Exception:
+                skipped += 1
+
+        db.commit()
+
+        return {
+            "status": "geocode complete",
+            "updated": updated,
+            "skipped": skipped,
+        }
+
+    finally:
+        db.close()
 
 @app.get("/map")
 async def map_page(request: Request):
