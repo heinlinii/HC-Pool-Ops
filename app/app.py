@@ -475,7 +475,7 @@ async def map_page(request: Request):
     finally:
         db.close()
 
- @app.get("/admin/geocode-properties")
+@app.get("/admin/geocode-properties")
 async def geocode_properties(request: Request):
     user = require_admin(request)
 
