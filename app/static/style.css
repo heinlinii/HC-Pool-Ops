@@ -1560,3 +1560,72 @@ body.dashboard-body {
         border-radius: 18px;
     }
 }
+
+.image-tile {
+    position: relative;
+    min-height: 180px;
+    border-radius: 24px;
+    overflow: hidden;
+    padding: 22px;
+    display: flex;
+    align-items: flex-end;
+    background-size: cover;
+    background-position: center;
+    border: 1px solid rgba(255,255,255,.14);
+    box-shadow: 0 22px 60px rgba(0,0,0,.35);
+}
+
+.image-tile::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        180deg,
+        rgba(0,0,0,.10),
+        rgba(0,0,0,.72)
+    );
+}
+
+.image-tile > * {
+    position: relative;
+    z-index: 2;
+}
+
+.image-tile h3 {
+    font-size: 28px;
+    margin-bottom: 6px;
+}
+
+.image-tile p {
+    color: #d8eef7;
+    font-size: 15px;
+}
+
+@media(max-width:768px) {
+    .image-tile {
+        min-height: 160px;
+        border-radius: 20px;
+    }
+
+    .image-tile h3 {
+        font-size: 24px;
+    }
+}
+
+@media(max-width:768px) {
+    .brand-row {
+        grid-template-columns: 1fr !important;
+        text-align: left;
+    }
+
+    .brand-logo {
+        width: 150px !important;
+        max-width: 70%;
+        margin-bottom: 18px !important;
+    }
+
+    .hero h1 {
+        font-size: 38px !important;
+        line-height: 1 !important;
+    }
+}
