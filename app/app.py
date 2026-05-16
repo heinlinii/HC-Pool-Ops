@@ -496,8 +496,8 @@ async def geocode_properties(request: Request):
 
             address_parts = [
                 prop.address or "",
-                prop.city or "",
-                prop.state or "",
+                prop.city or "Evansvlle",
+                prop.state or "IN",
                 prop.zip_code or "",
             ]
 
