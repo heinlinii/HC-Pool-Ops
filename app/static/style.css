@@ -1450,3 +1450,94 @@ body.dashboard-body {
         min-height: 220px;
     }
 }
+
+/* =====================================================
+   PHASE 17 HERO REFINEMENT
+===================================================== */
+
+.hero{
+    min-height:420px;
+    align-items:center;
+    padding:42px;
+}
+
+.hero-main{
+    max-width:760px;
+}
+
+.eyebrow{
+    color:#5ee7ff;
+    font-size:13px;
+    font-weight:800;
+    letter-spacing:.22em;
+    text-transform:uppercase;
+    margin-bottom:12px;
+}
+
+.hero h1{
+    font-size:68px;
+    line-height:.92;
+    font-weight:900;
+    letter-spacing:-3px;
+    margin-bottom:20px;
+    color:white;
+}
+
+.hero-main p{
+    font-size:22px;
+    line-height:1.5;
+    color:#d9edf7;
+    max-width:760px;
+}
+
+.hero-photo{
+    border:1px solid rgba(255,255,255,.12);
+    box-shadow:0 30px 90px rgba(0,0,0,.45);
+}
+
+.system-row{
+    margin-top:24px;
+    gap:12px;
+}
+
+.pill{
+    background:rgba(255,255,255,.08);
+    border:1px solid rgba(255,255,255,.08);
+    color:#dff8ff;
+    border-radius:999px;
+    padding:10px 14px;
+    font-size:12px;
+    font-weight:800;
+    letter-spacing:.08em;
+}
+
+.pill.green{
+    background:rgba(34,211,238,.18);
+    color:#5ee7ff;
+}
+
+@media(max-width:768px){
+
+    .hero{
+        min-height:auto;
+        padding:22px;
+    }
+
+    .hero h1{
+        font-size:42px;
+        letter-spacing:-2px;
+    }
+
+    .hero-main p{
+        font-size:18px;
+    }
+
+    .hero-photo{
+        margin-top:18px;
+        min-height:220px;
+    }
+
+    .eyebrow{
+        font-size:11px;
+    }
+}

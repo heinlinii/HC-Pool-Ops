@@ -179,6 +179,46 @@ def cost_totals(cost):
         "margin": margin,
     }
 
+def dashboard_work_groups(jobs):
+    today_jobs = []
+    high_priority = []
+    followups = []
+    waiting = []
+    openings = []
+    closings = []
+
+    for job in jobs:
+        status = (job.status or "").lower()
+        priority = (job.priority or "").lower()
+        job_type = (job.job_type or "").lower()
+        date_label = (job.date or "").lower()
+
+        if "today" in date_label:
+            today_jobs.append(job)
+
+        if priority in ["high", "urgent"]:
+            high_priority.append(job)
+
+        if "follow" in status:
+            followups.append(job)
+
+        if "waiting" in status or "parts" in status:
+            waiting.append(job)
+
+        if "opening" in job_type:
+            openings.append(job)
+
+        if "closing" in job_type:
+            closings.append(job)
+
+    return {
+        "today_jobs": today_jobs,
+        "high_priority": high_priority,
+        "followups": followups,
+        "waiting": waiting,
+        "openings": openings,
+        "closings": closings,
+    }
 
 def profit_status(profit, margin):
     if profit < 0:
