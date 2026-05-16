@@ -3023,6 +3023,7 @@ def get_evansville_weather():
             "temperature_2m_max": [74, 78, 80, 76, 73],
             "temperature_2m_min": [58, 60, 62, 59, 57],
             "precipitation_probability_max": [10, 20, 50, 30, 15],
+            "precipitation_sum": [0.1, 0.3, 0.5, 0.2, 0.1],
             "wind_speed_10m_max": [8, 10, 14, 12, 9],
         }
     }
