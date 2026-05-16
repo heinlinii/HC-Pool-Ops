@@ -3211,26 +3211,26 @@ async def weather_page(request: Request):
         return RedirectResponse(url="/", status_code=303)
 
     current = {}
-daily = {}
-alerts = []
+    daily = {}
+    alerts = []
 
-try:
-    weather = get_evansville_weather()
+    try:
+        weather = get_evansville_weather()
 
-    if weather:
-        current = weather.get("current", {})
-        daily = weather.get("daily", {})
-        alerts = build_weather_alerts(weather)
+        if weather:
+            current = weather.get("current", {})
+            daily = weather.get("daily", {})
+            alerts = build_weather_alerts(weather)
 
-except Exception as e:
-    print("WEATHER ERROR:", e)
+    except Exception as e:
+        print("WEATHER ERROR:", e)
 
     return templates.TemplateResponse(
         request,
         "weather.html",
         {
             "user": user,
-            "weather": weather,
+            "weather": current,
             "current": current,
             "daily": daily,
             "alerts": alerts,
