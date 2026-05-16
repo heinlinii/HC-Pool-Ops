@@ -3,97 +3,133 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Properties • PoolOps</title>
-    <link rel="stylesheet" href="/static/style.css?v=5">
+    <title>Properties • PoolOps2</title>
+    <link rel="stylesheet" href="/static/style.css?v=20">
 </head>
+
 <body>
 
-<div class="page">
-
-    <div class="topbar">
-        <h1>Properties</h1>
-
-        <div>
-            <a class="btn" href="/dashboard">Dashboard</a>
-            <a class="btn btn-success" href="/properties/new">Add Property</a>
-            <form method="post"
-      action="/properties/delete-all"
-      onsubmit="return confirm('Delete ALL properties?');"
-      style="display:inline;">
-
-    <button type="submit" class="danger-button">
-        Delete All Properties
+<div class="topbar-back">
+    <button onclick="history.back()" class="back-btn">
+        ← Back
     </button>
+</div>
 
-</form>
-        </div>
-    </div>
+<div class="app-layout">
 
-    <div class="card">
+    {% include "_sidebar.html" %}
 
-        <input
-            type="text"
-            id="propertySearch"
-            placeholder="Search properties..."
-            class="search-input"
-        >
+    <main class="page-shell with-sidebar">
 
-        <table class="data-table" id="propertiesTable">
-            <thead>
-                <tr>
-                    <th>Client</th>
-                    <th>Address</th>
-                    <th>Pool Type</th>
-                    <th>Open</th>
-                    <th>Delete</th>
-                </tr>
-            </thead>
+        <section class="card">
 
-            <tbody>
-                {% for property in properties %}
-                <tr>
-                    <td>{{ property.client or "" }}</td>
-                    <td>{{ property.address or "" }}</td>
-                    <td>{{ property.pool_type or "" }}</td>
+            <h1>Properties</h1>
 
-                    <td>
-                        <a class="btn-small" href="/properties/{{ property.id }}">
-                            Open
-                        </a>
-                    </td>
+            <p>
+                Search properties, open jobsite records, or add a new pool/property location.
+            </p>
 
-                    <td>
-                        <form method="post"
-                              action="/properties/delete/{{ property.id }}"
-                              onsubmit="return confirm('Delete this property?');">
-                            <button type="submit" class="danger-button">
-                                Delete
-                            </button>
-                        </form>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+            <div class="project-toolbar">
+                <a class="btn" href="/dashboard">
+                    Dashboard
+                </a>
 
-    </div>
+                <a class="btn btn-success" href="/properties/new">
+                    + Add Property
+                </a>
+            </div>
+
+            <form
+                method="post"
+                action="/properties/delete-all"
+                onsubmit="return confirm('Delete ALL properties?');"
+            >
+                <button type="submit" class="danger-button">
+                    Delete All Properties
+                </button>
+            </form>
+
+        </section>
+
+        <section class="card">
+
+            <input
+                type="text"
+                id="propertySearch"
+                placeholder="Search properties by client, address, pool type..."
+                class="search-input"
+            >
+
+        </section>
+
+        <section class="card">
+
+            <h2>Current Properties</h2>
+
+            <table class="data-table" id="propertiesTable">
+                <thead>
+                    <tr>
+                        <th>Client</th>
+                        <th>Address</th>
+                        <th>Pool Type</th>
+                        <th>Open</th>
+                        <th>Delete</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for property in properties %}
+                    <tr>
+                        <td>{{ property.client or "" }}</td>
+                        <td>{{ property.address or "" }}</td>
+                        <td>{{ property.pool_type or "" }}</td>
+
+                        <td>
+                            <a class="btn-small" href="/properties/{{ property.id }}">
+                                Open
+                            </a>
+                        </td>
+
+                        <td>
+                            <form
+                                method="post"
+                                action="/properties/delete/{{ property.id }}"
+                                onsubmit="return confirm('Delete this property?');"
+                            >
+                                <button type="submit" class="danger-button">
+                                    Delete
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+        </section>
+
+    </main>
 
 </div>
 
+<div class="mobile-sidebar-toggle" onclick="document.body.classList.toggle('sidebar-open')">
+    ☰
+</div>
+
 <script>
-const searchInput = document.getElementById("propertySearch");
+    const searchInput = document.getElementById("propertySearch");
 
-if (searchInput) {
-    searchInput.addEventListener("keyup", function () {
-        let filter = searchInput.value.toLowerCase();
-        let rows = document.querySelectorAll("#propertiesTable tbody tr");
+    if (searchInput) {
+        searchInput.addEventListener("keyup", function () {
+            let filter = searchInput.value.toLowerCase();
+            let rows = document.querySelectorAll("#propertiesTable tbody tr");
 
-        rows.forEach(function(row) {
-            let text = row.innerText.toLowerCase();
-            row.style.display = text.includes(filter) ? "" : "none";
+            rows.forEach(function(row) {
+                let text = row.innerText.toLowerCase();
+                row.style.display = text.includes(filter) ? "" : "none";
+            });
         });
-    });
-}
+    }
 </script>
 
 </body>
