@@ -2285,3 +2285,33 @@ body.dashboard-body {
         border-radius: 20px !important;
     }
 }
+
+.hero-signature{
+    display:flex;
+    align-items:center;
+    gap:12px;
+
+    margin-top:22px;
+
+    color:#38bdf8;
+
+    font-size:15px;
+    font-weight:700;
+    letter-spacing:1px;
+    text-transform:uppercase;
+
+    opacity:.92;
+}
+
+.hero-signature span{
+    white-space:nowrap;
+}
+
+@media(max-width:768px){
+
+    .hero-signature{
+        flex-wrap:wrap;
+        gap:8px;
+        font-size:13px;
+    }
+}
