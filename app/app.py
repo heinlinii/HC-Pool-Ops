@@ -462,6 +462,23 @@ async def estimate_new_page(request: Request, type: str = "general"):
         },
     )
 
+@app.post("/estimate/new/save")
+async def estimate_new_save(
+    request: Request,
+    estimate_type: str = Form("general"),
+    client_name: str = Form(""),
+    property_address: str = Form(""),
+    title: str = Form(""),
+    scope_notes: str = Form(""),
+    material_cost: float = Form(0),
+    labor_cost: float = Form(0),
+    markup_percent: float = Form(35),
+):
+    return RedirectResponse(
+        url="/estimates",
+        status_code=303
+    )
+
 @app.get("/ai/field-help")
 async def ai_field_help(request: Request):
     user = require_login(request)
