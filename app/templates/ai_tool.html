@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ title }} • PoolOps AI</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/style.css?v=42">
+</head>
+
+<body>
+
+<div class="topbar-back">
+    <button onclick="history.back()" class="back-btn">← Back</button>
+</div>
+
+<div class="app-layout">
+
+    {% include "_sidebar.html" %}
+
+    <main class="main-content with-sidebar">
+
+        <section class="hero-card">
+            <h1>{{ title }}</h1>
+            <p>{{ description }}</p>
+        </section>
+
+        <section class="content-card">
+            <form method="post" action="/assistant" class="job-form">
+                <label>Ask PoolOps AI</label>
+
+                <textarea
+                    name="question"
+                    rows="10"
+                    placeholder="{{ placeholder }}"
+                    required
+                ></textarea>
+
+                <button type="submit" class="primary-button">
+                    Ask AI
+                </button>
+            </form>
+        </section>
+
+        <section class="content-card">
+            <h2>Safe Workflow</h2>
+            <p>
+                AI prepares the answer. Mike or the crew reviews before anything becomes an estimate,
+                invoice, job cost record, or QuickBooks entry.
+            </p>
+        </section>
+
+    </main>
+
+</div>
+
+<div class="mobile-sidebar-toggle" onclick="document.body.classList.toggle('sidebar-open')">
+    ☰
+</div>
+
+</body>
+</html>

@@ -436,6 +436,100 @@ async def save_brain_dump(
     finally:
         db.close()
 
+@app.get("/ai/field-help")
+async def ai_field_help(request: Request):
+    user = require_login(request)
+
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    return templates.TemplateResponse(
+        request,
+        "ai_tool.html",
+        {
+            "user": user,
+            "title": "Field Help",
+            "description": "Troubleshoot field problems and equipment issues.",
+            "placeholder": "Example: Hayward heater SF code as soon as power turns on...",
+        },
+    )
+
+
+@app.get("/ai/estimate-helper")
+async def ai_estimate_helper(request: Request):
+    user = require_login(request)
+
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    return templates.TemplateResponse(
+        request,
+        "ai_tool.html",
+        {
+            "user": user,
+            "title": "Estimate Helper",
+            "description": "Build estimate scopes, material notes, labor assumptions, and customer-facing wording.",
+            "placeholder": "Example: Estimate a 400k BTU heater install with gas check, bypass, check valve, and startup...",
+        },
+    )
+
+
+@app.get("/ai/job-costing-helper")
+async def ai_job_costing_helper(request: Request):
+    user = require_login(request)
+
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    return templates.TemplateResponse(
+        request,
+        "ai_tool.html",
+        {
+            "user": user,
+            "title": "Job Costing Helper",
+            "description": "Review labor, materials, equipment, subcontractors, and profit notes.",
+            "placeholder": "Example: Labor 14 hours, materials $1,850, charged $4,900. How did we do?",
+        },
+    )
+
+
+@app.get("/ai/billing-helper")
+async def ai_billing_helper(request: Request):
+    user = require_login(request)
+
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    return templates.TemplateResponse(
+        request,
+        "ai_tool.html",
+        {
+            "user": user,
+            "title": "Billing Helper",
+            "description": "Draft invoice descriptions, payment notes, and billing summaries.",
+            "placeholder": "Example: Write an invoice description for replacing a leaking multiport valve and re-plumbing filter connections...",
+        },
+    )
+
+
+@app.get("/ai/quickbooks-helper")
+async def ai_quickbooks_helper(request: Request):
+    user = require_login(request)
+
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    return templates.TemplateResponse(
+        request,
+        "ai_tool.html",
+        {
+            "user": user,
+            "title": "QuickBooks Helper",
+            "description": "Prepare QuickBooks notes, categories, export reminders, and cleanup guidance.",
+            "placeholder": "Example: Help me categorize this pool opening income and chemical expense...",
+        },
+    )      
+
 @app.get("/assistant-interview-live")
 async def assistant_interview_live_page(request: Request):
     user = require_login(request)
