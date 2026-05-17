@@ -1956,3 +1956,332 @@ body.dashboard-body {
         padding-bottom: 95px !important;
     }
 }
+
+/* =====================================================
+   PREMIUM DASHBOARD LOOK
+===================================================== */
+
+.dashboard-hero,
+.hero-card {
+    position: relative;
+    overflow: hidden;
+    border-radius: 28px;
+    padding: 28px;
+    background:
+        linear-gradient(
+            135deg,
+            rgba(3, 18, 28, 0.96),
+            rgba(4, 33, 52, 0.96)
+        ),
+        url("/static/pool-hero.jpg");
+
+    background-size: cover;
+    background-position: center;
+    border: 1px solid rgba(56, 189, 248, 0.18);
+    box-shadow:
+        0 10px 40px rgba(0,0,0,0.45),
+        inset 0 1px 0 rgba(255,255,255,0.04);
+}
+
+.dashboard-hero h1,
+.hero-card h1 {
+    font-size: clamp(38px, 6vw, 62px);
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 10px;
+    letter-spacing: -1px;
+}
+
+.dashboard-hero p,
+.hero-card p {
+    font-size: 18px;
+    opacity: 0.88;
+    max-width: 700px;
+}
+
+.content-card,
+.card,
+.stat-card {
+    background: linear-gradient(
+        180deg,
+        rgba(9, 16, 24, 0.96),
+        rgba(5, 10, 18, 0.96)
+    );
+
+    border: 1px solid rgba(255,255,255,0.05);
+
+    box-shadow:
+        0 10px 25px rgba(0,0,0,0.35);
+
+    backdrop-filter: blur(10px);
+}
+
+.stat-number {
+    font-size: clamp(34px, 5vw, 54px);
+    font-weight: 800;
+    color: #38bdf8;
+}
+
+.action-card:hover,
+.job-card:hover,
+.card:hover {
+    transform: translateY(-2px);
+    transition: 0.18s ease;
+    border-color: rgba(56, 189, 248, 0.35);
+}
+
+.bottom-nav {
+    backdrop-filter: blur(14px);
+    background: rgba(2, 8, 15, 0.92);
+    border-top: 1px solid rgba(255,255,255,0.08);
+}
+
+/* =====================================================
+   PREMIUM DASHBOARD LOOK
+===================================================== */
+
+.dashboard-hero,
+.hero-card {
+    position: relative;
+    overflow: hidden;
+    border-radius: 28px;
+    padding: 28px;
+    background:
+        linear-gradient(
+            135deg,
+            rgba(3, 18, 28, 0.96),
+            rgba(4, 33, 52, 0.96)
+        ),
+        url("/static/pool-hero.jpg");
+
+    background-size: cover;
+    background-position: center;
+    border: 1px solid rgba(56, 189, 248, 0.18);
+    box-shadow:
+        0 10px 40px rgba(0,0,0,0.45),
+        inset 0 1px 0 rgba(255,255,255,0.04);
+}
+
+.dashboard-hero h1,
+.hero-card h1 {
+    font-size: clamp(38px, 6vw, 62px);
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 10px;
+    letter-spacing: -1px;
+}
+
+.dashboard-hero p,
+.hero-card p {
+    font-size: 18px;
+    opacity: 0.88;
+    max-width: 700px;
+}
+
+.content-card,
+.card,
+.stat-card {
+    background: linear-gradient(
+        180deg,
+        rgba(9, 16, 24, 0.96),
+        rgba(5, 10, 18, 0.96)
+    );
+
+    border: 1px solid rgba(255,255,255,0.05);
+
+    box-shadow:
+        0 10px 25px rgba(0,0,0,0.35);
+
+    backdrop-filter: blur(10px);
+}
+
+.stat-number {
+    font-size: clamp(34px, 5vw, 54px);
+    font-weight: 800;
+    color: #38bdf8;
+}
+
+.action-card:hover,
+.job-card:hover,
+.card:hover {
+    transform: translateY(-2px);
+    transition: 0.18s ease;
+    border-color: rgba(56, 189, 248, 0.35);
+}
+
+.bottom-nav {
+    backdrop-filter: blur(14px);
+    background: rgba(2, 8, 15, 0.92);
+    border-top: 1px solid rgba(255,255,255,0.08);
+}
+
+/* =====================================================
+   PREMIUM FIELD DASHBOARD
+===================================================== */
+
+.dashboard-hero,
+.hero-card,
+.hero {
+    position: relative;
+    overflow: hidden;
+
+    border-radius: 28px;
+
+    padding: 32px;
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(3, 18, 28, 0.96),
+            rgba(4, 33, 52, 0.96)
+        ),
+        url("/static/pool-hero.jpg");
+
+    background-size: cover;
+    background-position: center;
+
+    border: 1px solid rgba(56, 189, 248, 0.18);
+
+    box-shadow:
+        0 12px 44px rgba(0,0,0,0.45),
+        inset 0 1px 0 rgba(255,255,255,0.04);
+}
+
+.hero h1,
+.dashboard-hero h1,
+.hero-card h1 {
+    font-size: clamp(40px, 6vw, 68px);
+    font-weight: 900;
+    line-height: .96;
+    margin-bottom: 14px;
+    letter-spacing: -2px;
+}
+
+.hero p,
+.dashboard-hero p,
+.hero-card p {
+    font-size: 18px;
+    line-height: 1.5;
+    opacity: .9;
+    max-width: 760px;
+}
+
+.content-card,
+.card,
+.stat-card,
+.job-card,
+.photo-card,
+.schedule-card,
+.panel {
+    background:
+        linear-gradient(
+            180deg,
+            rgba(10, 16, 24, 0.96),
+            rgba(5, 10, 18, 0.96)
+        ) !important;
+
+    border: 1px solid rgba(255,255,255,.06) !important;
+
+    box-shadow:
+        0 10px 30px rgba(0,0,0,.34);
+
+    backdrop-filter: blur(12px);
+}
+
+.stat-number {
+    font-size: clamp(36px, 5vw, 56px);
+    font-weight: 900;
+    color: #38bdf8;
+}
+
+.action-card,
+.quick-card,
+.job-card,
+.photo-card,
+.schedule-card {
+    transition:
+        transform .18s ease,
+        border-color .18s ease,
+        box-shadow .18s ease;
+}
+
+.action-card:hover,
+.quick-card:hover,
+.job-card:hover,
+.photo-card:hover,
+.schedule-card:hover {
+    transform: translateY(-3px);
+
+    border-color: rgba(56, 189, 248, .32) !important;
+
+    box-shadow:
+        0 18px 40px rgba(0,0,0,.42);
+}
+
+.sidebar {
+    background:
+        linear-gradient(
+            180deg,
+            rgba(2,8,15,.98),
+            rgba(5,12,22,.98)
+        ) !important;
+
+    border-right: 1px solid rgba(255,255,255,.05);
+}
+
+.sidebar-nav a:hover {
+    background: rgba(56,189,248,.12) !important;
+}
+
+.mobile-nav {
+    backdrop-filter: blur(16px);
+
+    background:
+        rgba(2, 8, 15, 0.94);
+
+    border-top:
+        1px solid rgba(255,255,255,.08);
+}
+
+.topbar-back {
+    backdrop-filter: blur(14px);
+}
+
+#poolops-map {
+    border-radius: 26px !important;
+
+    box-shadow:
+        0 20px 50px rgba(0,0,0,.45);
+}
+
+@media(max-width:768px){
+
+    .hero,
+    .dashboard-hero,
+    .hero-card {
+        padding: 22px;
+        border-radius: 22px;
+    }
+
+    .hero h1,
+    .dashboard-hero h1,
+    .hero-card h1 {
+        font-size: 42px !important;
+        letter-spacing: -1px;
+    }
+
+    .hero p,
+    .dashboard-hero p,
+    .hero-card p {
+        font-size: 17px;
+    }
+
+    .content-card,
+    .card,
+    .stat-card,
+    .job-card,
+    .photo-card,
+    .schedule-card {
+        border-radius: 20px !important;
+    }
+}
