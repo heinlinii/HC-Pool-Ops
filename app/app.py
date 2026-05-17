@@ -330,6 +330,38 @@ def job_financial_summary(job_id: int, db):
         "profit_status": profit_status(tracked_profit, tracked_margin),
     }
 
+    @app.get("/admin/job-addresses-real")
+async def job_addresses_real(request: Request):
+    user = require_admin(request)
+
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    db = db_session()
+
+    try:
+        jobs = db.query(Job).all()
+
+        output = []
+
+        for job in jobs:
+            if job.address:
+                output.append({
+                    "id": job.id,
+                    "client": job.client,
+                    "address": job.address,
+                    "job_type": job.job_type,
+                    "status": job.status,
+                })
+
+        return {
+            "count": len(output),
+            "jobs": output[:50],
+        }
+
+    finally:
+        db.close()
+
 @app.get("/admin/geocode-properties")
 async def geocode_properties(request: Request):
     user = require_admin(request)
