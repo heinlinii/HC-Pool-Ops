@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Assistant Actions • Heinlin Pool Ops</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/style.css?v=33">
+</head>
+
+<body>
+
+<div class="topbar-back">
+    <button onclick="history.back()" class="back-btn">← Back</button>
+</div>
+
+<div class="app-layout">
+
+    {% include "_sidebar.html" %}
+
+    <main class="main-content with-sidebar">
+
+        <section class="hero-card">
+            <h1>Assistant Actions</h1>
+            <p>Tell PoolOps what to prepare. Nothing saves until you confirm.</p>
+        </section>
+
+        <section class="content-card">
+            <form method="post" action="/assistant-action" class="job-form">
+                <label>What do you want PoolOps to do?</label>
+
+                <textarea
+                    name="command"
+                    rows="8"
+                    placeholder="Example: Add a job for Ron Smith at 123 Main St for pool opening next Friday. Notes: automatic cover and heater issue."
+                    required
+                >{{ command or "" }}</textarea>
+
+                <button type="submit" class="primary-button">
+                    Prepare Action
+                </button>
+            </form>
+        </section>
+
+        {% if preview %}
+        <section class="content-card">
+            <h2>Review Before Saving</h2>
+
+            <div class="job-card">
+                <p><strong>Action:</strong> {{ preview.action }}</p>
+                <p><strong>Client:</strong> {{ preview.client }}</p>
+                <p><strong>Address:</strong> {{ preview.address }}</p>
+                <p><strong>Job Type:</strong> {{ preview.job_type }}</p>
+                <p><strong>Status:</strong> {{ preview.status }}</p>
+                <p><strong>Priority:</strong> {{ preview.priority }}</p>
+                <p><strong>Notes:</strong> {{ preview.notes }}</p>
+            </div>
+
+            <form method="post" action="/assistant-action/confirm">
+                <input type="hidden" name="action" value="{{ preview.action }}">
+                <input type="hidden" name="client" value="{{ preview.client }}">
+                <input type="hidden" name="address" value="{{ preview.address }}">
+                <input type="hidden" name="job_type" value="{{ preview.job_type }}">
+                <input type="hidden" name="status" value="{{ preview.status }}">
+                <input type="hidden" name="priority" value="{{ preview.priority }}">
+                <input type="hidden" name="notes" value="{{ preview.notes }}">
+
+                <button type="submit" class="primary-button">
+                    Confirm & Save
+                </button>
+            </form>
+        </section>
+        {% endif %}
+
+    </main>
+
+</div>
+
+<div class="mobile-sidebar-toggle" onclick="document.body.classList.toggle('sidebar-open')">
+    ☰
+</div>
+
+</body>
+</html>

@@ -436,6 +436,125 @@ async def save_brain_dump(
     finally:
         db.close()
 
+@app.get("/assistant-action")
+async def assistant_action_page(request: Request):
+    user = require_login(request)
+
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    return templates.TemplateResponse(
+        request,
+        "assistant_action.html",
+        {
+            "user": user,
+            "command": "",
+            "preview": None,
+        },
+    )
+
+
+@app.post("/assistant-action")
+async def prepare_assistant_action(
+    request: Request,
+    command: str = Form(...),
+):
+    user = require_login(request)
+
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    text = command.strip()
+    lower = text.lower()
+
+    action = "add_job"
+    job_type = "Service"
+    status = "Requested"
+    priority = "Normal"
+
+    if "opening" in lower or "open " in lower:
+        job_type = "Opening"
+
+    if "closing" in lower or "close " in lower:
+        job_type = "Closing"
+
+    if "urgent" in lower or "asap" in lower:
+        priority = "Urgent"
+
+    if "repair" in lower:
+        job_type = "Repair"
+
+    client = ""
+    address = ""
+
+    if " for " in lower:
+        client = text.split(" for ", 1)[1].split(" at ")[0].strip()
+
+    if " at " in lower:
+        address = text.split(" at ", 1)[1].split(".")[0].strip()
+
+    preview = {
+        "action": action,
+        "client": client,
+        "address": address,
+        "job_type": job_type,
+        "status": status,
+        "priority": priority,
+        "notes": text,
+    }
+
+    return templates.TemplateResponse(
+        request,
+        "assistant_action.html",
+        {
+            "user": user,
+            "command": command,
+            "preview": preview,
+        },
+    )
+
+
+@app.post("/assistant-action/confirm")
+async def confirm_assistant_action(
+    request: Request,
+    action: str = Form(...),
+    client: str = Form(""),
+    address: str = Form(""),
+    job_type: str = Form("Service"),
+    status: str = Form("Requested"),
+    priority: str = Form("Normal"),
+    notes: str = Form(""),
+):
+    user = require_login(request)
+
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    db = db_session()
+
+    try:
+        if action == "add_job":
+            db.add(
+                Job(
+                    client=client.strip() or "Unknown Client",
+                    address=address.strip(),
+                    property=address.strip(),
+                    job_type=job_type.strip(),
+                    status=status.strip(),
+                    priority=priority.strip(),
+                    crew="Unassigned",
+                    date="",
+                    notes=notes.strip(),
+                )
+            )
+
+        db.commit()
+
+        return RedirectResponse(url="/jobs", status_code=303)
+
+    finally:
+        db.close()
+
 @app.get("/client-interview")
 async def client_interview_page(request: Request):
     user = require_login(request)
