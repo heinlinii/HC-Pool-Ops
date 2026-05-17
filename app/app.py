@@ -436,6 +436,68 @@ async def save_brain_dump(
     finally:
         db.close()
 
+@app.get("/assistant-interview")
+async def assistant_interview_page(request: Request):
+    user = require_login(request)
+
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    return templates.TemplateResponse(
+        request,
+        "assistant_interview.html",
+        {
+            "user": user,
+        },
+    )
+
+
+@app.post("/assistant-interview")
+async def save_assistant_interview(
+    request: Request,
+    record_type: str = Form(...),
+    record_id: int = Form(...),
+    notes: str = Form(...),
+):
+    user = require_login(request)
+
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    db = db_session()
+
+    try:
+        header = "\n\n--- ASSISTANT INTERVIEW NOTES ---\n\n"
+
+        if record_type == "client":
+            record = db.query(Client).filter(Client.id == record_id).first()
+
+            if record:
+                record.notes = (record.notes or "") + header + notes.strip()
+                db.commit()
+                return RedirectResponse(url=f"/clients/{record.id}", status_code=303)
+
+        if record_type == "property":
+            record = db.query(Property).filter(Property.id == record_id).first()
+
+            if record:
+                record.notes = (record.notes or "") + header + notes.strip()
+                db.commit()
+                return RedirectResponse(url=f"/properties/{record.id}", status_code=303)
+
+        if record_type == "job":
+            record = db.query(Job).filter(Job.id == record_id).first()
+
+            if record:
+                record.notes = (record.notes or "") + header + notes.strip()
+                db.commit()
+                return RedirectResponse(url=f"/jobs/{record.id}", status_code=303)
+
+        return RedirectResponse(url="/dashboard", status_code=303)
+
+    finally:
+        db.close()       
+
 @app.get("/assistant-action")
 async def assistant_action_page(request: Request):
     user = require_login(request)
