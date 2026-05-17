@@ -436,7 +436,7 @@ async def save_brain_dump(
     finally:
         db.close()
 
-      @app.get("/assistant-interview-live")
+@app.get("/assistant-interview-live")
 async def assistant_interview_live_page(request: Request):
     user = require_login(request)
 

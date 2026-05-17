@@ -2315,3 +2315,29 @@ body.dashboard-body {
         font-size:13px;
     }
 }
+
+.assistant-chat {
+    display: grid;
+    gap: 18px;
+}
+
+.assistant-bubble {
+    background: rgba(56,189,248,.14);
+    border: 1px solid rgba(56,189,248,.18);
+    padding: 18px;
+    border-radius: 18px;
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.assistant-questions {
+    display: grid;
+    gap: 12px;
+}
+
+.question-card {
+    background: rgba(255,255,255,.04);
+    border: 1px solid rgba(255,255,255,.08);
+    padding: 18px;
+    border-radius: 16px;
+}
