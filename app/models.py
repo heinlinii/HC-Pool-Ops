@@ -59,9 +59,6 @@ class Property(Base):
     state = Column(String, default="")
     zip_code = Column(String, default="")
 
-    latitude = Column(Float, nullable=True)
-    longitude = Column(Float, nullable=True)
-
     pool_type = Column(String, default="")
     pool_size = Column(String, default="")
     pool_depth = Column(String, default="")
