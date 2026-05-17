@@ -581,7 +581,7 @@ async def property_addresses(request: Request):
         db.close()
 
 
-        @app.get("/admin/geocode-jobs")
+@app.get("/admin/geocode-jobs")
 async def geocode_jobs(request: Request):
     user = require_admin(request)
 
