@@ -330,7 +330,7 @@ def job_financial_summary(job_id: int, db):
         "profit_status": profit_status(tracked_profit, tracked_margin),
     }
 
-    @app.get("/admin/job-addresses-real")
+@app.get("/admin/job-addresses-real")
 async def job_addresses_real(request: Request):
     user = require_admin(request)
 
