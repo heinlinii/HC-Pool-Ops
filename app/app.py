@@ -436,6 +436,32 @@ async def save_brain_dump(
     finally:
         db.close()
 
+@app.get("/estimates", response_class=HTMLResponse)
+async def estimates_page(request: Request):
+    return templates.TemplateResponse("estimates.html", {"request": request})
+
+@app.get("/estimate/new", response_class=HTMLResponse)
+async def estimate_new_page(request: Request, type: str = "general"):
+    labels = {
+        "pool_build": "Custom Pool Build",
+        "remodel": "Pool Remodel",
+        "repair": "Repair Estimate",
+        "service": "Service / Maintenance",
+        "automation": "Automation / Equipment",
+        "general": "General Estimate",
+    }
+
+    estimate_type_label = labels.get(type, "General Estimate")
+
+    return templates.TemplateResponse(
+        "estimate_new.html",
+        {
+            "request": request,
+            "estimate_type": type,
+            "estimate_type_label": estimate_type_label,
+        },
+    )
+
 @app.get("/ai/field-help")
 async def ai_field_help(request: Request):
     user = require_login(request)

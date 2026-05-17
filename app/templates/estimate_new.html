@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>New Estimate • PoolOps2</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/style.css?v=46">
+</head>
+
+<body>
+
+<div class="topbar-back">
+    <button onclick="history.back()" class="back-btn">← Back</button>
+</div>
+
+<div class="app-layout">
+
+    {% include "_sidebar.html" %}
+
+    <main class="main-content with-sidebar">
+
+        <section class="hero-card">
+            <h1>New Estimate</h1>
+            <p>Build a structured estimate for {{ estimate_type_label }}.</p>
+        </section>
+
+        <section class="content-card">
+            <form method="post" action="/estimate/new/save">
+
+                <input type="hidden" name="estimate_type" value="{{ estimate_type }}">
+
+                <label>Client Name</label>
+                <input name="client_name" placeholder="Customer name" required>
+
+                <label>Property Address</label>
+                <input name="property_address" placeholder="Job address">
+
+                <label>Estimate Title</label>
+                <input name="title" value="{{ estimate_type_label }}" required>
+
+                <label>Scope Notes</label>
+                <textarea name="scope_notes" rows="6" placeholder="Describe the work..."></textarea>
+
+                <label>Materials / Products</label>
+                <textarea name="materials" rows="6" placeholder="Pump, heater, valves, lights, concrete, tile, coping..."></textarea>
+
+                <label>Labor Notes</label>
+                <textarea name="labor_notes" rows="4" placeholder="Crew size, days, special access, demo, plumbing, equipment setup..."></textarea>
+
+                <label>Estimated Material Cost</label>
+                <input name="material_cost" type="number" step="0.01" value="0">
+
+                <label>Estimated Labor Cost</label>
+                <input name="labor_cost" type="number" step="0.01" value="0">
+
+                <label>Markup %</label>
+                <input name="markup_percent" type="number" step="0.01" value="35">
+
+                <label>Customer Price</label>
+                <input name="customer_price" type="number" step="0.01" placeholder="Optional final price">
+
+                <label>Status</label>
+                <select name="status">
+                    <option value="draft">Draft</option>
+                    <option value="sent">Sent</option>
+                    <option value="approved">Approved</option>
+                    <option value="declined">Declined</option>
+                </select>
+
+                <button type="submit" class="btn">Save Estimate</button>
+
+            </form>
+        </section>
+
+    </main>
+
+</div>
+
+<div class="mobile-sidebar-toggle" onclick="document.body.classList.toggle('sidebar-open')">
+    ☰
+</div>
+
+</body>
+</html>
