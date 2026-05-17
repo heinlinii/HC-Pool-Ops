@@ -436,7 +436,7 @@ async def save_brain_dump(
     finally:
         db.close()
 
- @app.get("/brain-dump")
+@app.get("/brain-dump")
 async def brain_dump_page(request: Request):
     user = require_login(request)
 
