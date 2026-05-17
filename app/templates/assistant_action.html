@@ -28,6 +28,8 @@
             <form method="post" action="/assistant-action" class="job-form">
                 <label>What do you want PoolOps to do?</label>
 
+                {% include "_ai_prompt_panel.html" %}
+
                 <textarea
                     name="command"
                     rows="8"

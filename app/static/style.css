@@ -2316,28 +2316,42 @@ body.dashboard-body {
     }
 }
 
-.assistant-chat {
-    display: grid;
-    gap: 18px;
+/* =========================
+   AI PROMPT / VOICE MODE
+========================= */
+
+.ai-prompt-panel {
+    border: 1px solid rgba(56,189,248,.18) !important;
 }
 
-.assistant-bubble {
-    background: rgba(56,189,248,.14);
+.ai-prompt-btn {
+    text-align: left;
+    display: grid;
+    gap: 6px;
+    background: rgba(56,189,248,.10);
     border: 1px solid rgba(56,189,248,.18);
-    padding: 18px;
-    border-radius: 18px;
-    font-size: 18px;
-    font-weight: 700;
+    color: white;
 }
 
-.assistant-questions {
+.ai-prompt-btn span {
+    font-size: 13px;
+    opacity: .78;
+}
+
+.ai-question-stack {
     display: grid;
-    gap: 12px;
+    gap: 10px;
+    margin-top: 18px;
 }
 
 .question-card {
-    background: rgba(255,255,255,.04);
+    padding: 14px;
+    border-radius: 14px;
+    background: rgba(255,255,255,.05);
     border: 1px solid rgba(255,255,255,.08);
-    padding: 18px;
-    border-radius: 16px;
+}
+
+.muted {
+    opacity: .72;
+    font-size: 14px;
 }
