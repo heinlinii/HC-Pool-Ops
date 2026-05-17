@@ -436,6 +436,68 @@ async def save_brain_dump(
     finally:
         db.close()
 
+ @app.get("/client-interview")
+async def client_interview_page(request: Request):
+    user = require_login(request)
+
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    db = db_session()
+
+    try:
+        clients = db.query(Client).order_by(Client.name.asc()).all()
+
+        return templates.TemplateResponse(
+            request,
+            "client_interview.html",
+            {
+                "user": user,
+                "clients": clients,
+            },
+        )
+
+    finally:
+        db.close()
+
+
+@app.post("/client-interview")
+async def save_client_interview(
+    request: Request,
+    client_id: int = Form(...),
+    notes: str = Form(""),
+):
+    user = require_login(request)
+
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    db = db_session()
+
+    try:
+        client = db.query(Client).filter(Client.id == client_id).first()
+
+        if client:
+            old_notes = client.notes or ""
+
+            client.notes = (
+                old_notes
+                + "\n\n--- CLIENT INTERVIEW NOTES ---\n\n"
+                + notes.strip()
+            )
+
+            db.commit()
+
+            return RedirectResponse(
+                url=f"/clients/{client.id}",
+                status_code=303
+            )
+
+        return RedirectResponse(url="/clients", status_code=303)
+
+    finally:
+        db.close()       
+
 @app.get("/brain-dump")
 async def brain_dump_page(request: Request):
     user = require_login(request)
