@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Assistant Interview</title>
+    <link rel="stylesheet" href="/static/style.css?v=40">
+</head>
+
+<body>
+
+<div class="topbar-back">
+    <button onclick="history.back()" class="back-btn">
+        ← Back
+    </button>
+</div>
+
+<div class="app-layout">
+
+    {% include "_sidebar.html" %}
+
+    <main class="main-content with-sidebar">
+
+        <section class="hero-card">
+            <h1>Live Assistant Interview</h1>
+
+            <p>
+                PoolOps interviews you and captures your field knowledge.
+            </p>
+        </section>
+
+        <section class="content-card">
+
+            <div class="assistant-chat">
+
+                <div class="assistant-bubble">
+                    Tell me about this pool.
+                </div>
+
+                <form method="post" action="/assistant-interview-live">
+
+                    <div class="form-grid">
+
+                        <div class="form-group">
+                            <label>Client Name</label>
+
+                            <input
+                                type="text"
+                                name="client"
+                                placeholder="Ron Smith"
+                                required
+                            >
+                        </div>
+
+                        <div class="form-group form-full">
+                            <label>Your Answer</label>
+
+                            <textarea
+                                name="notes"
+                                rows="10"
+                                placeholder="Use your microphone and speak naturally..."
+                                required
+                            ></textarea>
+</html>
