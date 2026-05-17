@@ -461,6 +461,20 @@ async def assistant_interview_live_page(request: Request):
     finally:
         db.close()
 
+@app.get("/ai")
+async def ai_command_center(request: Request):
+    user = require_login(request)
+
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    return templates.TemplateResponse(
+        request,
+        "ai.html",
+        {
+            "user": user,
+        },
+    )
 
 @app.post("/assistant-interview-live")
 async def assistant_interview_live(
