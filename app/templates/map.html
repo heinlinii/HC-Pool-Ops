@@ -87,8 +87,7 @@
     ).addTo(map);
 
     const mapJobs = JSON.parse('{{ map_jobs | tojson | safe }}');
-    const mapProperties = JSON.parse('{{ map_properties | tojson | safe }}');
-
+    
     mapJobs.forEach(job => {
 
         let markerColor = "#22c55e";
@@ -145,45 +144,6 @@
         `);
 
     });
-
-   mapProperties.forEach(property => {
-
-    const marker = L.circleMarker(
-        [property.lat, property.lng],
-        {
-            radius: 8,
-            color: "#38bdf8",
-            fillColor: "#38bdf8",
-            fillOpacity: 0.85,
-            weight: 2,
-        }
-    ).addTo(map);
-
-    marker.bindPopup(`
-        <div style="min-width:220px;">
-            <h3>${property.client}</h3>
-            <p>${property.address || ""}</p>
-            <p>${property.pool_type || "Pool Property"}</p>
-
-            <a
-                href="/properties/${property.id}"
-                style="
-                    display:inline-block;
-                    margin-top:8px;
-                    padding:8px 12px;
-                    background:#38bdf8;
-                    color:#041018;
-                    text-decoration:none;
-                    border-radius:10px;
-                    font-weight:700;
-                "
-            >
-                Open Property
-            </a>
-        </div>
-    `);
-
-});
 
 </script>
 
