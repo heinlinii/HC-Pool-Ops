@@ -1856,3 +1856,103 @@ body.dashboard-body {
         min-height: 210px !important;
     }
 }
+
+/* =====================================================
+   SAFE MOBILE POLISH — NO DATABASE CHANGES
+===================================================== */
+
+@media (max-width: 768px) {
+    body {
+        overflow-x: hidden;
+    }
+
+    .main-content,
+    .page-shell,
+    .shell,
+    .content {
+        padding: 14px !important;
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+
+    .card,
+    .content-card,
+    .stat-card,
+    .job-card,
+    .action-card,
+    .quick-card {
+        border-radius: 22px !important;
+        padding: 18px !important;
+        margin-bottom: 14px !important;
+    }
+
+    h1 {
+        font-size: 34px !important;
+        line-height: 1.05 !important;
+    }
+
+    h2 {
+        font-size: 26px !important;
+    }
+
+    p,
+    span,
+    label,
+    input,
+    textarea,
+    select,
+    button,
+    a {
+        font-size: 16px;
+    }
+
+    .btn,
+    .primary-button,
+    .secondary-button,
+    .danger-button,
+    button {
+        width: 100%;
+        min-height: 50px;
+        border-radius: 16px !important;
+        margin-bottom: 10px;
+    }
+
+    input,
+    textarea,
+    select {
+        width: 100%;
+        min-height: 48px;
+        border-radius: 14px !important;
+    }
+
+    .stats-grid,
+    .action-grid,
+    .quick-grid,
+    .jobs-grid,
+    .cards {
+        grid-template-columns: 1fr !important;
+        gap: 14px !important;
+    }
+
+    .topbar,
+    .project-toolbar,
+    .card-header {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 10px !important;
+    }
+
+    .bottom-nav {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 9999;
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    .main-content,
+    .page-shell {
+        padding-bottom: 95px !important;
+    }
+}
