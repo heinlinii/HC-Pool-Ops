@@ -443,20 +443,30 @@ async def assistant_interview_live_page(request: Request):
     if not user:
         return RedirectResponse(url="/", status_code=303)
 
-    return templates.TemplateResponse(
-        request,
-        "assistant_interview_live.html",
-        {
-            "user": user,
-            "next_questions": [],
-        },
-    )
+    db = db_session()
+
+    try:
+        clients = db.query(Client).order_by(Client.name.asc()).all()
+
+        return templates.TemplateResponse(
+            request,
+            "assistant_interview_live.html",
+            {
+                "user": user,
+                "clients": clients,
+                "next_questions": [],
+            },
+        )
+
+    finally:
+        db.close()
 
 
 @app.post("/assistant-interview-live")
 async def assistant_interview_live(
     request: Request,
-    client: str = Form(...),
+    client: str = Form(""),
+    new_client: str = Form(""),
     notes: str = Form(...),
 ):
     user = require_login(request)
@@ -466,10 +476,18 @@ async def assistant_interview_live(
 
     db = db_session()
 
+    if new_client.strip():
+        client = new_client.strip()
+
     try:
+        client_name = client.strip() or new_client.strip()
+
+        if not client_name:
+            return RedirectResponse(url="/assistant-interview-live", status_code=303)
+
         existing_client = (
             db.query(Client)
-            .filter(Client.name == client.strip())
+            .filter(Client.name == client_name)
             .first()
         )
 
@@ -483,7 +501,7 @@ async def assistant_interview_live(
         else:
             db.add(
                 Client(
-                    name=client.strip(),
+                    name=client_name,
                     notes=notes.strip(),
                 )
             )
