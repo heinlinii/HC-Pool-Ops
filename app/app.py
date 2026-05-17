@@ -580,6 +580,77 @@ async def property_addresses(request: Request):
     finally:
         db.close()
 
+
+        @app.get("/admin/geocode-jobs")
+async def geocode_jobs(request: Request):
+    user = require_admin(request)
+
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    db = db_session()
+
+    try:
+        jobs = db.query(Job).all()
+
+        updated = 0
+        skipped = 0
+
+        for job in jobs:
+
+            if not job.address:
+                skipped += 1
+                continue
+
+            if job.latitude and job.longitude:
+                skipped += 1
+                continue
+
+            address_parts = [
+                job.address or "",
+                "Evansville",
+                "IN",
+            ]
+
+            query = ", ".join([part for part in address_parts if part]).strip()
+
+            try:
+                response = requests.get(
+                    "https://nominatim.openstreetmap.org/search",
+                    params={
+                        "q": query,
+                        "format": "json",
+                        "limit": 1,
+                    },
+                    headers={
+                        "User-Agent": "PoolOps2-HeinlinConcrete/1.0"
+                    },
+                    timeout=10,
+                )
+
+                data = response.json()
+
+                if data:
+                    job.latitude = float(data[0]["lat"])
+                    job.longitude = float(data[0]["lon"])
+                    updated += 1
+                else:
+                    skipped += 1
+
+            except Exception:
+                skipped += 1
+
+        db.commit()
+
+        return {
+            "status": "job geocode complete",
+            "updated": updated,
+            "skipped": skipped,
+        }
+
+    finally:
+        db.close()
+
 @app.get("/admin/geocode-properties")
 async def geocode_properties(request: Request):
     user = require_admin(request)
