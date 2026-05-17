@@ -55,12 +55,35 @@ gps_columns = [
     ("check_out_lng", "FLOAT"),
 ]
 
+job_location_columns = [
+    ("latitude", "FLOAT"),
+    ("longitude", "FLOAT"),
+]
+
 with engine.begin() as conn:
     for column_name, column_type in property_gps_columns:
         try:
             conn.execute(text(f"ALTER TABLE poolops2_properties ADD COLUMN {column_name} {column_type}"))
         except Exception:
             pass
+
+              for column_name, column_type in job_location_columns:
+            try:
+                conn.execute(
+                    text(
+                        f"ALTER TABLE poolops2_jobs ADD COLUMN {column_name} {column_type}"
+                    )
+                )
+            
+        for column_name, column_type in job_location_columns:
+            try:
+                conn.execute(
+                    text(
+                        f"ALTER TABLE poolops2_jobs ADD COLUMN {column_name} {column_type}"
+                    )
+                )
+            except Exception:
+                pass
 
     for column_name, column_type in gps_columns:
         try:
