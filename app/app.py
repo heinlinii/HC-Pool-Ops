@@ -6,8 +6,78 @@ from starlette.middleware.sessions import SessionMiddleware
 from sqlalchemy import text
 from typing import List
 from uuid import uuid4
+import importlib
 
-import requests
+try:
+    requests = importlib.import_module("requests")
+except ImportError:
+    # Minimal shim for environments without 'requests' installed.
+    # Provides get/post with a Response-like object used in this app.
+    import urllib.request as _ur
+    import urllib.parse as _up
+    import json as _json
+
+    class _ResponseShim:
+        def __init__(self, status_code, content, headers=None):
+            self.status_code = status_code
+            self.content = content
+            self.headers = headers or {}
+
+        @property
+        def text(self):
+            try:
+                return self.content.decode('utf-8')
+            except Exception:
+                return str(self.content)
+
+        def json(self):
+            return _json.loads(self.text)
+
+    def _build_request(url, method='GET', params=None, data=None, json_data=None, headers=None):
+        if params:
+            query = _up.urlencode(params)
+            url = f"{url}?{query}"
+        body = None
+        hdrs = headers.copy() if headers else {}
+        if json_data is not None:
+            body = _json.dumps(json_data).encode('utf-8')
+            hdrs.setdefault('Content-Type', 'application/json')
+        elif data is not None:
+            if isinstance(data, dict):
+                body = _up.urlencode(data).encode('utf-8')
+                hdrs.setdefault('Content-Type', 'application/x-www-form-urlencoded')
+            elif isinstance(data, str):
+                body = data.encode('utf-8')
+            else:
+                body = data
+        req = _ur.Request(url, data=body, method=method, headers=hdrs)
+        return req
+
+    def _do_request(req, timeout=None):
+        try:
+            with _ur.urlopen(req, timeout=timeout) as resp:
+                content = resp.read()
+                return _ResponseShim(resp.getcode(), content, dict(resp.getheaders()))
+        except Exception as e:
+            # Attempt to extract code from HTTPError
+            if hasattr(e, 'code') and hasattr(e, 'read'):
+                return _ResponseShim(e.code, e.read())
+            raise
+
+    def requests_get(url, params=None, headers=None, timeout=None):
+        req = _build_request(url, 'GET', params=params, headers=headers)
+        return _do_request(req, timeout=timeout)
+
+    def requests_post(url, params=None, data=None, json=None, headers=None, timeout=None):
+        req = _build_request(url, 'POST', params=params, data=data, json_data=json, headers=headers)
+        return _do_request(req, timeout=timeout)
+
+    # Expose a 'requests' namespace with get/post
+    class _RequestsModule:
+        get = staticmethod(requests_get)
+        post = staticmethod(requests_post)
+
+    requests = _RequestsModule()
 import base64
 import csv
 import io

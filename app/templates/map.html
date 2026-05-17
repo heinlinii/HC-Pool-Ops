@@ -86,8 +86,8 @@
         }
     ).addTo(map);
 
-    const mapJobs = {{ map_jobs | tojson }};
-    const mapProperties = {{ map_properties | tojson }};
+    const mapJobs = JSON.parse('{{ map_jobs | tojson | safe }}');
+    const mapProperties = JSON.parse('{{ map_properties | tojson | safe }}');
 
     mapJobs.forEach(job => {
 
