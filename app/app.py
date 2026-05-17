@@ -371,6 +371,71 @@ def job_financial_summary(job_id: int, db):
         "profit_status": profit_status(tracked_profit, tracked_margin),
     }
 
+@app.get("/brain-dump")
+async def brain_dump_page(request: Request):
+    user = require_login(request)
+
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    return templates.TemplateResponse(
+        request,
+        "brain_dump.html",
+        {
+            "user": user,
+        },
+    )
+
+
+@app.post("/brain-dump")
+async def save_brain_dump(
+    request: Request,
+    client: str = Form(...),
+    address: str = Form(""),
+    notes: str = Form(""),
+):
+    user = require_login(request)
+
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    db = db_session()
+
+    try:
+        existing_client = (
+            db.query(Client)
+            .filter(Client.name == client.strip())
+            .first()
+        )
+
+        if existing_client:
+            old_notes = existing_client.notes or ""
+
+            existing_client.notes = (
+                old_notes
+                + "\n\n--- FIELD BRAIN DUMP ---\n\n"
+                + notes.strip()
+            )
+
+        else:
+            db.add(
+                Client(
+                    name=client.strip(),
+                    address=address.strip(),
+                    notes=notes.strip(),
+                )
+            )
+
+        db.commit()
+
+        return RedirectResponse(
+            url="/clients",
+            status_code=303
+        )
+
+    finally:
+        db.close()
+
 @app.get("/admin/job-addresses-real")
 async def job_addresses_real(request: Request):
     user = require_admin(request)
