@@ -955,25 +955,7 @@ async def map_page(request: Request):
     db = db_session()
 
     try:
-
         jobs = db.query(Job).order_by(Job.id.desc()).all()
-
-        properties = db.query(Property).order_by(Property.id.desc()).all()
-
-        map_properties = []
-
-        for prop in properties:
-
-            if prop.latitude and prop.longitude:
-
-                map_properties.append({
-                    "id": prop.id,
-                    "client": prop.client,
-                    "address": prop.address,
-                    "pool_type": prop.pool_type,
-                    "lat": prop.latitude,
-                    "lng": prop.longitude,
-                })
 
         map_jobs = []
 
@@ -1012,7 +994,6 @@ async def map_page(request: Request):
                 "user": user,
                 "jobs": jobs,
                 "map_jobs": map_jobs,
-                "map_properties": map_properties,
             },
         )
 
