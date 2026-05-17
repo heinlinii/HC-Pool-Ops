@@ -55,11 +55,6 @@ gps_columns = [
     ("check_out_lng", "FLOAT"),
 ]
 
-job_location_columns = [
-    ("latitude", "FLOAT"),
-    ("longitude", "FLOAT"),
-]
-
 with engine.begin() as conn:
     for column_name, column_type in property_gps_columns:
         try:
@@ -67,75 +62,26 @@ with engine.begin() as conn:
         except Exception:
             pass
 
-              for column_name, column_type in job_location_columns:
-            try:
-                conn.execute(
-                    text(
-                        f"ALTER TABLE poolops2_jobs ADD COLUMN {column_name} {column_type}"
-                    )
-                )
-            
-        for column_name, column_type in job_location_columns:
-            try:
-                conn.execute(
-                    text(
-                        f"ALTER TABLE poolops2_jobs ADD COLUMN {column_name} {column_type}"
-                    )
-                )
-            except Exception:
-                pass
-
     for column_name, column_type in gps_columns:
         try:
             conn.execute(text(f"ALTER TABLE poolops2_jobs ADD COLUMN {column_name} {column_type}"))
         except Exception:
             pass
 
-        for column_name, column_type in gps_columns:
-            try:
-                conn.execute(
-                    text(
-                        f"ALTER TABLE poolops2_jobs ADD COLUMN {column_name} {column_type}"
-                    )
-                )
-            except Exception:
-                pass
+db = SessionLocal()
 
-    gps_columns = [
-        ("check_in_time", "TIMESTAMP"),
-        ("check_in_lat", "FLOAT"),
-        ("check_in_lng", "FLOAT"),
-        ("check_out_time", "TIMESTAMP"),
-        ("check_out_lat", "FLOAT"),
-        ("check_out_lng", "FLOAT"),
-    ]
+try:
+    if db.query(User).count() == 0:
+        db.add(User(username="mike", password="5500"))
+        db.add(User(username="randy", password="0318"))
 
-with engine.begin() as conn:
+    if db.query(Employee).count() == 0:
+        db.add(Employee(name="Mike", role="Admin"))
 
-    try:
-        conn.execute(text("ALTER TABLE poolops2_properties ADD COLUMN latitude FLOAT"))
-    except Exception:
-        pass
+    db.commit()
 
-    try:
-        conn.execute(text("ALTER TABLE poolops2_properties ADD COLUMN longitude FLOAT"))
-    except Exception:
-        pass
-
-    db = SessionLocal()
-
-    try:
-        if db.query(User).count() == 0:
-            db.add(User(username="mike", password="5500"))
-            db.add(User(username="randy", password="0318"))
-
-        if db.query(Employee).count() == 0:
-            db.add(Employee(name="Mike", role="Admin"))
-
-        db.commit()
-
-    finally:
-        db.close()
+finally:
+    db.close()
 
 @app.get("/admin/seed-users")
 async def seed_users(request: Request):
