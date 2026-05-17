@@ -436,6 +436,74 @@ async def save_brain_dump(
     finally:
         db.close()
 
+ @app.get("/brain-dump")
+async def brain_dump_page(request: Request):
+    user = require_login(request)
+
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    return templates.TemplateResponse(
+        request,
+        "brain_dump.html",
+        {
+            "user": user,
+        },
+    )
+
+
+@app.post("/brain-dump")
+async def save_brain_dump(
+    request: Request,
+    client: str = Form(...),
+    address: str = Form(""),
+    notes: str = Form(""),
+):
+    user = require_login(request)
+
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    db = db_session()
+
+    try:
+
+        existing_client = (
+            db.query(Client)
+            .filter(Client.name == client.strip())
+            .first()
+        )
+
+        if existing_client:
+
+            old_notes = existing_client.notes or ""
+
+            existing_client.notes = (
+                old_notes
+                + "\n\n--- FIELD BRAIN DUMP ---\n\n"
+                + notes.strip()
+            )
+
+        else:
+
+            db.add(
+                Client(
+                    name=client.strip(),
+                    address=address.strip(),
+                    notes=notes.strip(),
+                )
+            )
+
+        db.commit()
+
+        return RedirectResponse(
+            url="/clients",
+            status_code=303
+        )
+
+    finally:
+        db.close()       
+
 @app.get("/admin/job-addresses-real")
 async def job_addresses_real(request: Request):
     user = require_admin(request)
@@ -4174,6 +4242,105 @@ async def backup_photos(request: Request):
         # =========================================
 # PHASE 11 — DAILY FIELD LOGS
 # =========================================
+
+@app.get("/assistant")
+async def assistant_page(request: Request):
+    user = require_login(request)
+
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    return templates.TemplateResponse(
+        request,
+        "assistant.html",
+        {
+            "user": user,
+            "question": "",
+            "answer": "",
+        },
+    )
+
+
+@app.post("/assistant")
+async def assistant_answer(
+    request: Request,
+    question: str = Form(...),
+):
+    user = require_login(request)
+
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    db = db_session()
+
+    try:
+        q = question.lower().strip()
+
+        clients = db.query(Client).all()
+        jobs = db.query(Job).all()
+
+        results = []
+
+        for client in clients:
+            searchable = " ".join([
+                client.name or "",
+                getattr(client, "phone", "") or "",
+                getattr(client, "email", "") or "",
+                getattr(client, "address", "") or "",
+                client.notes or "",
+            ]).lower()
+
+            if any(word in searchable for word in q.split()):
+                results.append(
+                    f"<div class='result-card'>"
+                    f"<h3>Client: {client.name}</h3>"
+                    f"<p><strong>Phone:</strong> {getattr(client, 'phone', '') or '—'}</p>"
+                    f"<p><strong>Email:</strong> {getattr(client, 'email', '') or '—'}</p>"
+                    f"<p><strong>Notes:</strong> {client.notes or '—'}</p>"
+                    f"<a class='btn' href='/clients/{client.id}'>Open Client</a>"
+                    f"</div>"
+                )
+
+        for job in jobs:
+            searchable = " ".join([
+                job.client or "",
+                job.address or "",
+                job.job_type or "",
+                job.status or "",
+                getattr(job, "notes", "") or "",
+            ]).lower()
+
+            if any(word in searchable for word in q.split()):
+                results.append(
+                    f"<div class='result-card'>"
+                    f"<h3>Job: {job.client}</h3>"
+                    f"<p><strong>Type:</strong> {job.job_type or '—'}</p>"
+                    f"<p><strong>Status:</strong> {job.status or '—'}</p>"
+                    f"<p><strong>Address:</strong> {job.address or '—'}</p>"
+                    f"<a class='btn' href='/jobs/{job.id}'>Open Job</a>"
+                    f"</div>"
+                )
+
+        if not results:
+            answer = (
+                "<p>I did not find a strong match yet. Try using a client name, "
+                "address, job type, status, or equipment keyword.</p>"
+            )
+        else:
+            answer = "".join(results[:20])
+
+        return templates.TemplateResponse(
+            request,
+            "assistant.html",
+            {
+                "user": user,
+                "question": question,
+                "answer": answer,
+            },
+        )
+
+    finally:
+        db.close()
 
 @app.get("/field-logs")
 async def field_logs_page(request: Request):

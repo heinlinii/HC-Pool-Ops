@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PoolOps Assistant</title>
+    <link rel="stylesheet" href="/static/style.css?v=31">
+</head>
+
+<body>
+
+<div class="topbar-back">
+    <button onclick="history.back()" class="back-btn">← Back</button>
+</div>
+
+<div class="app-layout">
+
+    {% include "_sidebar.html" %}
+
+    <main class="main-content with-sidebar">
+
+        <section class="hero-card">
+            <h1>PoolOps Assistant</h1>
+            <p>Ask questions about clients, jobs, notes, schedules, photos, and field work.</p>
+        </section>
+
+        <section class="content-card">
+
+            <form method="post" action="/assistant" class="job-form">
+
+                <label>Ask PoolOps</label>
+
+                <textarea
+                    name="question"
+                    rows="7"
+                    placeholder="Example: Show me jobs for Folz, find clients with automatic covers, or summarize open service work..."
+                    required
+                >{{ question or "" }}</textarea>
+
+                <button type="submit" class="primary-button">
+                    Ask Assistant
+                </button>
+
+            </form>
+
+        </section>
+
+        {% if answer %}
+        <section class="content-card">
+            <h2>Assistant Answer</h2>
+
+            <div class="assistant-answer">
+                {{ answer | safe }}
+            </div>
+        </section>
+        {% endif %}
+
+    </main>
+
+</div>
+
+<div class="mobile-sidebar-toggle" onclick="document.body.classList.toggle('sidebar-open')">
+    ☰
+</div>
+
+</body>
+</html>
