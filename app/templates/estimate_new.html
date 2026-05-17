@@ -1,11 +1,52 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>New Estimate</title>
+    <meta charset="UTF-8">
+    <title>New Estimate • PoolOps2</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/style.css?v=46">
 </head>
+
 <body>
-    <h1>New Estimate</h1>
-    <p>Type: {{ estimate_type_label }}</p>
-    <a href="/estimates">Back to Estimates</a>
+
+<h1>New Estimate</h1>
+
+<p>Type: {{ estimate_type_label }}</p>
+
+<form method="post" action="/estimate/new/save">
+
+    <input type="hidden" name="estimate_type" value="{{ estimate_type }}">
+
+    <label>Client Name</label><br>
+    <input name="client_name"><br><br>
+
+    <label>Property Address</label><br>
+    <input name="property_address"><br><br>
+
+    <label>Estimate Title</label><br>
+    <input name="title" value="{{ estimate_type_label }}"><br><br>
+
+    <label>Scope Notes</label><br>
+    <textarea name="scope_notes" rows="6"></textarea><br><br>
+
+    <label>Material Cost</label><br>
+    <input name="material_cost" type="number" step="0.01"><br><br>
+
+    <label>Labor Cost</label><br>
+    <input name="labor_cost" type="number" step="0.01"><br><br>
+
+    <label>Markup %</label><br>
+    <input name="markup_percent" type="number" value="35"><br><br>
+
+    <button type="submit">
+        Save Estimate
+    </button>
+
+</form>
+
+<br>
+
+<a href="/estimates">Back to Estimates</a>
+
 </body>
 </html>
