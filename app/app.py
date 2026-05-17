@@ -45,6 +45,8 @@ property_gps_columns = [
 ]
 
 gps_columns = [
+    ("latitude", "FLOAT"),
+    ("longitude", "FLOAT"),
     ("check_in_time", "TIMESTAMP"),
     ("check_in_lat", "FLOAT"),
     ("check_in_lng", "FLOAT"),

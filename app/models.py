@@ -87,6 +87,9 @@ class Job(Base):
     client = Column(String, nullable=False)
     property = Column(String, default="")
     address = Column(String, default="")
+    
+    latitude = Column(Float, nullable=True)
+    longitude = Column(Float, nullable=True)
 
     check_in_time = Column(DateTime, nullable=True)
     check_in_lat = Column(Float, nullable=True)
