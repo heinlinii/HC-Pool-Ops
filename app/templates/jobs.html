@@ -185,6 +185,18 @@
 
                 <div class="job-card">
 
+                    {% if user and user.role == "admin" %}
+<form
+    method="post"
+    action="/jobs/{{ job.id }}/delete"
+    onsubmit="return confirm('Delete this job?');"
+>
+    <button type="submit" class="danger-button">
+        Delete Job
+    </button>
+</form>
+{% endif %}
+
                     <div class="job-top">
 
                         <div>

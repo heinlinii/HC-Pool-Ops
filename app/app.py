@@ -1819,6 +1819,27 @@ async def update_job_notes(
         db.close()
 
 
+@app.post("/jobs/{job_id}/delete")
+async def delete_job(job_id: int, request: Request):
+    user = require_admin(request)
+
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    db = db_session()
+
+    try:
+        job = db.query(Job).filter(Job.id == job_id).first()
+
+        if job:
+            db.delete(job)
+            db.commit()
+
+        return RedirectResponse(url="/jobs", status_code=303)
+
+    finally:
+        db.close()
+
 @app.post("/jobs/{job_id}/status")
 async def update_job_detail_status(
     request: Request,
