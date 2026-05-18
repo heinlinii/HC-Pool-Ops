@@ -442,26 +442,40 @@ async def estimates_page(request: Request):
 
 @app.get("/estimate/new", response_class=HTMLResponse)
 async def estimate_new_page(request: Request, type: str = "general"):
-    labels = {
-        "pool_build": "Custom Pool Build",
-        "remodel": "Pool Remodel",
-        "repair": "Repair Estimate",
-        "service": "Service / Maintenance",
-        "automation": "Automation / Equipment",
-        "general": "General Estimate",
-    }
 
-    estimate_type_label = labels.get(type, "General Estimate")
+    db = db_session()
 
-    return templates.TemplateResponse(
-        "estimate_new.html",
-        {
-            "request": request,
-            "estimate_type": type,
-            "estimate_type_label": estimate_type_label,
-        },
-    )
+    try:
 
+        labels = {
+            "pool_build": "Custom Pool Build",
+            "remodel": "Pool Remodel",
+            "repair": "Repair Estimate",
+            "service": "Service / Maintenance",
+            "automation": "Automation / Equipment",
+            "general": "General Estimate",
+        }
+
+        estimate_type_label = labels.get(type, "General Estimate")
+
+        clients = db.query(Client).order_by(Client.name.asc()).all()
+
+        properties = db.query(Property).order_by(Property.address.asc()).all()
+
+        return templates.TemplateResponse(
+            "estimate_new.html",
+            {
+                "request": request,
+                "estimate_type": type,
+                "estimate_type_label": estimate_type_label,
+                "clients": clients,
+                "properties": properties,
+            },
+        )
+
+    finally:
+        db.close()
+        
 @app.post("/estimate/new/save")
 async def estimate_new_save(
     request: Request,
