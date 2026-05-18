@@ -14,9 +14,9 @@
 
     <div class="card">
         <form method="post" action="/properties/new" class="property-form">
+<label>Client</label>
 
-            <label>Client</label>
-           <select name="client_id" required>
+<select name="client_id" required>
 
     <option value="">
         Select Client
@@ -30,8 +30,30 @@
 
 </select>
 
-            <label>Address</label>
-            <input name="address" required>
+<br><br>
+
+<label>Property Address</label>
+
+<input
+    name="address"
+    id="property-address"
+    placeholder="Paste address or Google Maps pin link"
+    required
+>
+
+<br><br>
+
+<a
+    class="btn"
+    href="https://www.google.com/maps"
+    target="_blank"
+>
+    Open Google Maps
+</a>
+
+<p class="helper-text">
+    Open Google Maps, search/drop the pin, copy the address or share link, then paste it here.
+</p>
 
             <label>Pool Type</label>
             <input name="pool_type">
