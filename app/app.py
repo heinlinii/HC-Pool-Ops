@@ -1820,6 +1820,7 @@ async def update_job_notes(
 
 @app.post("/clients/{client_id}/delete")
 async def delete_client(client_id: int, request: Request):
+
     user = require_admin(request)
 
     if not user:
@@ -1828,17 +1829,45 @@ async def delete_client(client_id: int, request: Request):
     db = db_session()
 
     try:
-        client = db.query(Client).filter(Client.id == client_id).first()
+
+        client = (
+            db.query(Client)
+            .filter(Client.id == client_id)
+            .first()
+        )
 
         if client:
-            client.notes = (client.notes or "") + "\n[ARCHIVED / DELETED FROM ACTIVE CLIENT LIST]"
-            db.commit()
 
-        return RedirectResponse(url="/clients", status_code=303)
+            existing_notes = client.notes or ""
+
+            if "[ARCHIVED_CLIENT]" not in existing_notes:
+
+                client.notes = (
+                    existing_notes
+                    + "\n[ARCHIVED_CLIENT]"
+                )
+
+                db.commit()
+
+        return RedirectResponse(
+            url="/clients",
+            status_code=303
+        )
+
+    except Exception as e:
+
+        db.rollback()
+
+        print("CLIENT DELETE ERROR:", e)
+
+        return RedirectResponse(
+            url="/clients",
+            status_code=303
+        )
 
     finally:
         db.close()
-
+        
 @app.post("/jobs/{job_id}/delete")
 async def delete_job(job_id: int, request: Request):
     user = require_admin(request)
