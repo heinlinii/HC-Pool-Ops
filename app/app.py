@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Request, Form, File, UploadFile
+from fastapi import Form
 from fastapi.responses import RedirectResponse, StreamingResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -1867,7 +1868,7 @@ async def delete_client(client_id: int, request: Request):
 
     finally:
         db.close()
-        
+
 @app.post("/jobs/{job_id}/delete")
 async def delete_job(job_id: int, request: Request):
     user = require_admin(request)
@@ -2298,8 +2299,66 @@ async def new_client_page(request: Request):
         {"user": user},
     )
 
-@app.get("/properties/new")
+@app.get("/properties/new", response_class=HTMLResponse)
 async def new_property_page(request: Request):
+    user = require_admin(request)
+
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    db = db_session()
+
+    try:
+        clients = db.query(Client).order_by(Client.name.asc()).all()
+
+        return templates.TemplateResponse(
+            "property_new.html",
+            {
+                "request": request,
+                "user": user,
+                "clients": clients,
+            },
+        )
+
+    finally:
+        db.close()
+
+@app.post("/properties/new")
+async def save_property(
+    request: Request,
+    client_id: int = Form(...),
+    address: str = Form(""),
+    pool_type: str = Form(""),
+    notes: str = Form(""),
+):
+    user = require_admin(request)
+
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    db = db_session()
+
+    try:
+        new_property = Property(
+            client_id=client_id,
+            address=address.strip(),
+            pool_type=pool_type.strip(),
+            notes=notes.strip(),
+        )
+
+        db.add(new_property)
+        db.commit()
+
+        return RedirectResponse(url="/properties", status_code=303)
+
+    except Exception as e:
+        db.rollback()
+        print("SAVE PROPERTY ERROR:", e)
+        return RedirectResponse(url="/properties/new", status_code=303)
+
+    finally:
+        db.close()     
+
     user = require_admin(request)
 
     if not user:
