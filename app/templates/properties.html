@@ -39,17 +39,32 @@
                 </a>
             </div>
 
-            <form
-                method="post"
-                action="/properties/delete-all"
-                onsubmit="return confirm('Delete ALL properties?');"
-            >
-                <button type="submit" class="danger-button">
-                    Delete All Properties
-                </button>
-            </form>
+            <form method="post" action="/properties/new/save" class="property-form">
 
-        </section>
+                <label>Client</label><br>
+
+                <select name="client_id" id="client-select">
+                    <option value="">Select Client</option>
+
+                    {% for client in clients %}
+                        <option value="{{ client.id }}">
+                            {{ client.name }}
+                        </option>
+                    {% endfor %}
+
+                </select>
+
+                <br><br>
+
+                <label>Property Address</label><br>
+                <input name="address" placeholder="123 Main St, City, State"><br><br>
+
+                <label>Pool Type</label><br>
+                <input name="pool_type" placeholder="e.g. Inground, Above Ground, etc."><br><br>
+
+                <button type="submit" class="btn btn-success">
+                    Save New Property
+                </button>
 
         <section class="card">
 
