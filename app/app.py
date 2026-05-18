@@ -1818,6 +1818,37 @@ async def update_job_notes(
     finally:
         db.close()
 
+@app.post("/clients/{client_id}/delete")
+async def delete_client(client_id: int, request: Request):
+    user = require_admin(request)
+
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    db = db_session()
+
+    try:
+        client = db.query(Client).filter(Client.id == client_id).first()
+
+        if not client:
+            return RedirectResponse(url="/clients", status_code=303)
+
+        linked_properties = db.query(Property).filter(Property.client_id == client_id).count()
+        linked_jobs = db.query(Job).filter(Job.client_id == client_id).count()
+
+        if linked_properties > 0 or linked_jobs > 0:
+            return RedirectResponse(
+                url=f"/clients/{client_id}?error=Client has linked properties or jobs. Delete those first.",
+                status_code=303
+            )
+
+        db.delete(client)
+        db.commit()
+
+        return RedirectResponse(url="/clients", status_code=303)
+
+    finally:
+        db.close()
 
 @app.post("/jobs/{job_id}/delete")
 async def delete_job(job_id: int, request: Request):
