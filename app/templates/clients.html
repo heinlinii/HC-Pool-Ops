@@ -88,6 +88,18 @@
 
                         </a>
 
+{% if user and user.role == "admin" %}
+<form
+    method="post"
+    action="/clients/{{ client.id }}/delete"
+    onsubmit="return confirm('Archive this client?');"
+>
+    <button type="submit" class="danger-button">
+        Delete Client
+    </button>
+</form>
+{% endif %}
+
                     {% endfor %}
 
                 </div>
