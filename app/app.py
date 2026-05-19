@@ -182,7 +182,7 @@ async def ai_test():
             "error": str(e)
         }   
     
-  @app.get("/ai")
+@app.get("/ai")
 async def ai_page(request: Request):
     user = require_login(request)
     if not user:
