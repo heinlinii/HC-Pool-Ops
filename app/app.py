@@ -181,6 +181,57 @@ async def ai_test():
             "success": False,
             "error": str(e)
         }   
+    
+@app.get("/ai")
+async def ai_page(request: Request):
+    user = require_login(request)
+    if not user:
+        return RedirectResponse("/login", status_code=303)
+
+    return templates.TemplateResponse("ai.html", {
+        "request": request,
+        "user": user,
+        "answer": None,
+        "question": ""
+    })
+
+
+@app.post("/ai")
+async def ai_ask(request: Request, question: str = Form(...)):
+    user = require_login(request)
+    if not user:
+        return RedirectResponse("/login", status_code=303)
+
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4.1-mini",
+            messages=[
+                {
+                    "role": "system",
+                    "content": (
+                        "You are PoolOps2 AI, a contractor-focused pool service and construction assistant. "
+                        "Help with pool equipment troubleshooting, service notes, estimates, chemistry, scheduling, "
+                        "job costing, and field operations. Be practical, direct, and field-ready."
+                    )
+                },
+                {
+                    "role": "user",
+                    "content": question
+                }
+            ]
+        )
+
+        answer = response.choices[0].message.content
+
+    except Exception as e:
+        answer = f"AI error: {str(e)}"
+
+    return templates.TemplateResponse("ai.html", {
+        "request": request,
+        "user": user,
+        "answer": answer,
+        "question": question
+    })  
 
 @app.get("/admin/seed-users")
 async def seed_users(request: Request):

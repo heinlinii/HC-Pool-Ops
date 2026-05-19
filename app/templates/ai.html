@@ -1,95 +1,48 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>AI Command Center • Heinlin Pool Ops</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="/static/style.css?v=41">
-</head>
+{% extends "base.html" %}
 
-<body>
-
-<div class="topbar-back">
-    <button onclick="history.back()" class="back-btn">← Back</button>
+{% block content %}
+<div class="page-header">
+  <h1>AI Assistant</h1>
+  <p>PoolOps2 field intelligence for repairs, estimates, service notes, and troubleshooting.</p>
 </div>
 
-<div class="app-layout">
+<div class="card">
+  <form method="post" action="/ai">
+    <label for="question">Ask PoolOps2 AI</label>
+    <textarea
+      id="question"
+      name="question"
+      rows="7"
+      placeholder="Example: Hayward H400FDN throws IF code. Igniter and flame sensor were replaced. What should I check next?"
+      required>{{ question or "" }}</textarea>
 
-    {% include "_sidebar.html" %}
-
-    <main class="main-content with-sidebar">
-
-        <section class="hero-card">
-            <h1>AI Command Center</h1>
-            <p>Search, brain dump, interview, and prepare changes from one place.</p>
-        </section>
-
-        <section class="quick-grid">
-
-<a class="job-card" href="/ai/field-help">
-    <h3>Field Help</h3>
-    <p>Troubleshoot heaters, pumps, valves, filters, plumbing, electrical symptoms, and jobsite problems.</p>
-</a>
-
-<a class="job-card" href="/ai/estimate-helper">
-    <h3>Estimate Helper</h3>
-    <p>Build rough estimates, scopes, material lists, labor notes, and customer-facing wording.</p>
-</a>
-
-<a class="job-card" href="/ai/job-costing-helper">
-    <h3>Job Costing</h3>
-    <p>Review labor, material, equipment, subcontractor, and profit notes before entering final numbers.</p>
-</a>
-
-<a class="job-card" href="/ai/billing-helper">
-    <h3>Billing Helper</h3>
-    <p>Draft invoice descriptions, payment notes, change order wording, and billing summaries.</p>
-</a>
-
-<a class="job-card" href="/ai/quickbooks-helper">
-    <h3>QuickBooks Helper</h3>
-    <p>Prepare QuickBooks notes, CSV export ideas, invoice categories, and cleanup reminders.</p>
-</a>
-
-            <a class="job-card" href="/assistant">
-                <h3>Ask PoolOps</h3>
-                <p>Search clients, jobs, notes, and field history.</p>
-            </a>
-
-            <a class="job-card" href="/brain-dump">
-                <h3>Brain Dump</h3>
-                <p>Use voice notes to get pool knowledge out of your head.</p>
-            </a>
-
-            <a class="job-card" href="/assistant-interview-live">
-                <h3>Live Interview</h3>
-                <p>PoolOps asks follow-up questions about each pool.</p>
-            </a>
-
-            <a class="job-card" href="/assistant-action">
-                <h3>Assistant Actions</h3>
-                <p>Prepare jobs, notes, and changes before confirming.</p>
-            </a>
-
-            <a class="job-card" href="/client-interview">
-                <h3>Client Interview</h3>
-                <p>Guided capture for client details and preferences.</p>
-            </a>
-
-            <a class="job-card" href="/assistant-interview">
-                <h3>Record Interview</h3>
-                <p>Add notes to clients, properties, or jobs by ID.</p>
-            </a>
-
-        </section>
-
-    </main>
-
+    <button type="submit" class="btn-primary">Ask AI</button>
+  </form>
 </div>
 
-<div class="mobile-sidebar-toggle" onclick="document.body.classList.toggle('sidebar-open')">
-    ☰
+{% if answer %}
+<div class="card ai-answer">
+  <h2>PoolOps2 AI Response</h2>
+  <pre>{{ answer }}</pre>
 </div>
+{% endif %}
 
-</body>
-</html>
+<div class="card">
+  <h2>Quick Prompts</h2>
+
+  <form method="post" action="/ai">
+    <input type="hidden" name="question" value="Clean this up into a professional pool service note: cleaned baskets, brushed pool, added acid, customer says heater is loud.">
+    <button type="submit">Service Note Cleanup</button>
+  </form>
+
+  <form method="post" action="/ai">
+    <input type="hidden" name="question" value="Help diagnose a pool heater that clicks once but does not spark. Give field steps in order.">
+    <button type="submit">Heater Diagnosis</button>
+  </form>
+
+  <form method="post" action="/ai">
+    <input type="hidden" name="question" value="Build a good/better/best pool automation estimate structure for a service client.">
+    <button type="submit">Estimate Helper</button>
+  </form>
+</div>
+{% endblock %}
