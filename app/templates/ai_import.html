@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Client + Property Intake</title>
+
+    <style>
+        body {
+            background: #111827;
+            color: white;
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+
+        h1 {
+            color: #60a5fa;
+        }
+
+        .sub {
+            color: #cbd5e1;
+            margin-bottom: 20px;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 220px;
+            padding: 14px;
+            border-radius: 10px;
+            border: none;
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+
+        button, .link-btn {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 12px 18px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            text-decoration: none;
+            display: inline-block;
+            margin-right: 8px;
+            margin-bottom: 8px;
+        }
+
+        .card {
+            background: #1f2937;
+            padding: 18px;
+            border-radius: 14px;
+            margin-top: 20px;
+        }
+
+        pre {
+            white-space: pre-wrap;
+            font-family: Arial, sans-serif;
+            font-size: 15px;
+            line-height: 1.45;
+        }
+    </style>
+</head>
+<body>
+
+<a class="link-btn" href="/dashboard">← Dashboard</a>
+<a class="link-btn" href="/ai">AI Assistant</a>
+
+<h1>🤖 AI Client + Property Intake</h1>
+<p class="sub">Paste messy contact info, texts, QuickBooks notes, phone contact exports, or job notes. PoolOps2 AI will organize it.</p>
+
+<form method="post" action="/ai-import">
+    <textarea name="raw_text" placeholder="Paste client/property info here..." required>{{ raw_text or "" }}</textarea>
+    <br>
+    <button type="submit">Clean & Organize</button>
+</form>
+
+{% if result %}
+<div class="card">
+    <h2>Cleaned Intake Result</h2>
+    <pre>{{ result }}</pre>
+</div>
+{% endif %}
+
+</body>
+</html>

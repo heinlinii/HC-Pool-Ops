@@ -231,7 +231,74 @@ async def ai_ask(request: Request, question: str = Form(...)):
         "user": user,
         "answer": answer,
         "question": question
-    })  
+    }) 
+
+@app.get("/ai-import")
+async def ai_import_page(request: Request):
+    return templates.TemplateResponse(
+        request,
+        "ai_import.html",
+        {
+            "raw_text": "",
+            "result": None
+        }
+    )
+
+
+@app.post("/ai-import")
+async def ai_import_clean(request: Request, raw_text: str = Form(...)):
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4.1-mini",
+            messages=[
+                {
+                    "role": "system",
+                    "content": """
+You are PoolOps2 AI Intake Assistant.
+
+Your job is to clean messy customer, client, and property information for a pool/concrete contractor.
+
+Extract and organize:
+- Client name
+- Spouse/secondary contact if mentioned
+- Phone numbers
+- Email addresses
+- Property address
+- Billing address if different
+- Gate code
+- Pets/dog warnings
+- Pool type
+- Equipment notes
+- Service notes
+- Missing information
+- Possible duplicate warning
+
+Return a clean contractor-ready summary.
+
+Do not invent missing information.
+If unsure, mark it as "Unknown".
+"""
+                },
+                {
+                    "role": "user",
+                    "content": raw_text
+                }
+            ]
+        )
+
+        result = response.choices[0].message.content
+
+    except Exception as e:
+        result = f"AI error: {str(e)}"
+
+    return templates.TemplateResponse(
+        request,
+        "ai_import.html",
+        {
+            "raw_text": raw_text,
+            "result": result
+        }
+    ) 
 
 @app.get("/admin/seed-users")
 async def seed_users(request: Request):
