@@ -4,10 +4,14 @@ from fastapi.responses import RedirectResponse, StreamingResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
+from openai import OpenAI
+import os
+
 from sqlalchemy import text
 from typing import List
 from uuid import uuid4
 import importlib
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 try:
     requests = importlib.import_module("requests")
@@ -153,6 +157,30 @@ try:
 
 finally:
     db.close()
+
+ @app.get("/ai-test")
+async def ai_test():
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4.1-mini",
+            messages=[
+                {
+                    "role": "user",
+                    "content": "Say: PoolOps2 AI is online."
+                }
+            ]
+        )
+
+        return {
+            "success": True,
+            "message": response.choices[0].message.content
+        }
+
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e)
+        }   
 
 @app.get("/admin/seed-users")
 async def seed_users(request: Request):
