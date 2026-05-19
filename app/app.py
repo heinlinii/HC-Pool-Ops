@@ -158,7 +158,7 @@ try:
 finally:
     db.close()
 
- @app.get("/ai-test")
+@app.get("/ai-test")
 async def ai_test():
     try:
         response = client.chat.completions.create(
