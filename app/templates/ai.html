@@ -1,48 +1,72 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PoolOps2 AI Assistant</title>
 
-{% block content %}
-<div class="page-header">
-  <h1>AI Assistant</h1>
-  <p>PoolOps2 field intelligence for repairs, estimates, service notes, and troubleshooting.</p>
-</div>
+    <style>
+        body {
+            background: #111827;
+            color: white;
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
 
-<div class="card">
-  <form method="post" action="/ai">
-    <label for="question">Ask PoolOps2 AI</label>
+        h1 {
+            color: #60a5fa;
+        }
+
+        textarea {
+            width: 100%;
+            height: 180px;
+            padding: 12px;
+            border-radius: 10px;
+            border: none;
+            margin-top: 10px;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+
+        button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .response-box {
+            background: #1f2937;
+            padding: 20px;
+            border-radius: 12px;
+            margin-top: 25px;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+
+<h1>🤖 PoolOps2 AI Assistant</h1>
+
+<form method="post" action="/ai">
     <textarea
-      id="question"
-      name="question"
-      rows="7"
-      placeholder="Example: Hayward H400FDN throws IF code. Igniter and flame sensor were replaced. What should I check next?"
-      required>{{ question or "" }}</textarea>
+        name="question"
+        placeholder="Ask PoolOps2 AI anything..."
+        required>{{ question or "" }}</textarea>
 
-    <button type="submit" class="btn-primary">Ask AI</button>
-  </form>
-</div>
+    <button type="submit">
+        Ask AI
+    </button>
+</form>
 
 {% if answer %}
-<div class="card ai-answer">
-  <h2>PoolOps2 AI Response</h2>
-  <pre>{{ answer }}</pre>
+<div class="response-box">
+    {{ answer }}
 </div>
 {% endif %}
 
-<div class="card">
-  <h2>Quick Prompts</h2>
-
-  <form method="post" action="/ai">
-    <input type="hidden" name="question" value="Clean this up into a professional pool service note: cleaned baskets, brushed pool, added acid, customer says heater is loud.">
-    <button type="submit">Service Note Cleanup</button>
-  </form>
-
-  <form method="post" action="/ai">
-    <input type="hidden" name="question" value="Help diagnose a pool heater that clicks once but does not spark. Give field steps in order.">
-    <button type="submit">Heater Diagnosis</button>
-  </form>
-
-  <form method="post" action="/ai">
-    <input type="hidden" name="question" value="Build a good/better/best pool automation estimate structure for a service client.">
-    <button type="submit">Estimate Helper</button>
-  </form>
-</div>
-{% endblock %}
+</body>
+</html>
