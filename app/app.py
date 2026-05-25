@@ -118,6 +118,9 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 def startup():
    Base.metadata.create_all(bind=engine)
 
+   with engine.begin() as conn:
+    conn.execute(text("ALTER TABLE poolops2_employees ADD COLUMN IF NOT EXISTS card_image VARCHAR"))
+
 property_gps_columns = [
     ("latitude", "FLOAT"),
     ("longitude", "FLOAT"),
