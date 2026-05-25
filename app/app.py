@@ -120,7 +120,9 @@ def startup():
 
    with engine.begin() as conn:
     conn.execute(text("ALTER TABLE poolops2_employees ADD COLUMN IF NOT EXISTS card_image VARCHAR"))
-
+ 
+   print("Database startup repair complete.")
+   
 property_gps_columns = [
     ("latitude", "FLOAT"),
     ("longitude", "FLOAT"),
