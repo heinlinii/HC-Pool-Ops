@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Properties - Heinlin Field Ops</title>
+    <link rel="stylesheet" href="/static/style.css?v=fieldops-ready-2">
+</head>
+<body>
+{% include "_mobile_nav.html" %}
+<div class="ops-shell">
+    {% set title = "Saved Properties" %}
+    {% set subtitle = "Every property is its own card. Upload property photos and the first matched photo becomes the card background." %}
+    {% set primary_href = "/properties/new" %}
+    {% set primary_label = "+ Add Property" %}
+    {% include "_ops_header.html" %}
+
+    <section class="ops-card-grid">
+        {% for property in properties %}
+        {% set bg = property.card_image or '/static/uploads/fountain.jpg' %}
+        <a href="/properties/{{ property.id }}" class="ops-card">
+            <div class="ops-card-bg" style="background-image:url('{{ bg }}');"></div>
+            <div class="ops-card-body">
+                <h3>{{ property.property_name or property.client or "Property" }}</h3>
+                <p>{{ property.address or "No address saved" }}</p>
+                <p>{{ property.city }} {{ property.state }} {{ property.zip_code }}</p>
+                <div class="ops-card-meta">
+                    <span class="ops-pill">{{ property.client or "Unknown Client" }}</span>
+                    {% if property.pool_type %}<span class="ops-pill">{{ property.pool_type }}</span>{% endif %}
+                </div>
+            </div>
+        </a>
+        {% else %}
+        <div class="ops-panel"><h3>No properties saved yet</h3><p>Import QuickBooks clients or add properties manually.</p></div>
+        {% endfor %}
+    </section>
+</div>
+</body>
+</html>

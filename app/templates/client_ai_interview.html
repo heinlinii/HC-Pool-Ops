@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>AI Client Interview</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body {
+      background: #111827;
+      color: white;
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+
+    a, button {
+      background: #2563eb;
+      color: white;
+      padding: 12px 16px;
+      border-radius: 10px;
+      text-decoration: none;
+      border: 0;
+      font-size: 16px;
+      display: inline-block;
+      margin-bottom: 10px;
+    }
+
+    .card {
+      background: #1f2937;
+      padding: 18px;
+      border-radius: 14px;
+      margin-top: 16px;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 180px;
+      border-radius: 10px;
+      padding: 12px;
+      font-size: 16px;
+      margin-top: 10px;
+    }
+
+    pre {
+      white-space: pre-wrap;
+      font-family: Arial, sans-serif;
+      line-height: 1.45;
+    }
+
+    .muted {
+      color: #cbd5e1;
+    }
+  </style>
+</head>
+
+<body>
+{% include "_mobile_nav.html" %}
+
+<a href="/clients">← Clients</a>
+<a href="/dashboard">Dashboard</a>
+<a href="/clients/{{ client.id }}/ai-interview">🤖 AI Interview</a>
+
+<h1>🤖 AI Interview</h1>
+<p class="muted">Client: {{ client.name }}</p>
+
+<div class="card">
+  <h2>Current Saved Info</h2>
+  <p><strong>Name:</strong> {{ client.name }}</p>
+  <p><strong>Phone:</strong> {{ client.phone }}</p>
+  <p><strong>Email:</strong> {{ client.email }}</p>
+  <p><strong>Address:</strong> {{ client.address }}</p>
+  <p><strong>Notes:</strong> {{ client.notes }}</p>
+</div>
+
+<div class="card">
+  <h2>Tell AI what you know</h2>
+  <p class="muted">
+    Talk naturally. Example: “Gate code is 4412, dog is friendly, they have a Hayward heater, want weekly service Fridays, wife handles billing.”
+  </p>
+
+  <form method="post">
+    <textarea name="interview_notes" placeholder="Dump everything you know about this client/property...">{{ interview_notes or "" }}</textarea>
+    <br><br>
+    <button type="submit">Run AI Interview</button>
+  </form>
+</div>
+
+{% if result %}
+<div class="card">
+  <h2>Suggested Updates</h2>
+  <pre>{{ result }}</pre>
+</div>
+{% endif %}
+
+</body>
+</html>

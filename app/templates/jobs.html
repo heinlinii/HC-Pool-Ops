@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jobs - Heinlin Field Ops</title>
+    <link rel="stylesheet" href="/static/style.css?v=fieldops-ready-2">
+</head>
+<body>
+{% include "_mobile_nav.html" %}
+<div class="ops-shell">
+    {% set title = "Saved Jobs" %}
+    {% set subtitle = "Jobs are shown first as cards, with quick access for schedule, maps, status, notes, and photos." %}
+    {% set primary_href = "#create-job" %}
+    {% set primary_label = "+ Create Job" %}
+    {% include "_ops_header.html" %}
+
+    <section class="ops-card-grid" style="margin-bottom:22px;">
+        {% for job in jobs %}
+        <a href="/jobs/{{ job.id }}" class="ops-card">
+            <div class="ops-card-bg" style="background-image:url('/static/uploads/fountain.jpg');"></div>
+            <div class="ops-card-body">
+                <h3>{{ job.client }}</h3>
+                <p>{{ job.address or job.property or "No address saved" }}</p>
+                <p>{{ job.job_type or "Job" }} · {{ job.crew or "Unassigned" }}</p>
+                <div class="ops-card-meta">
+                    <span class="ops-pill">{{ job.status }}</span>
+                    <span class="ops-pill">{{ job.priority }}</span>
+                    {% if job.scheduled_start %}<span class="ops-pill">{{ job.scheduled_start.strftime('%b %d') }}</span>{% endif %}
+                </div>
+            </div>
+        </a>
+        {% else %}
+        <div class="ops-panel"><h3>No jobs saved yet</h3><p>Create a job below or from a property card.</p></div>
+        {% endfor %}
+    </section>
+
+    {% if user.role == "admin" %}
+    <section id="create-job" class="ops-panel only-admin">
+        <h2>Create New Job</h2>
+        <form method="post" action="/jobs/add" class="ops-form-grid">
+            <div>
+                <label>Client</label>
+                <select name="client" required>
+                    <option value="">Select client</option>
+                    {% for client in clients %}<option>{{ client.name }}</option>{% endfor %}
+                </select>
+            </div>
+            <div>
+                <label>Property / Location Name</label>
+                <select name="property">
+                    <option value="">Select property</option>
+                    {% for property in properties %}<option value="{{ property.property_name or property.address }}">{{ property.client }} — {{ property.property_name or property.address }}</option>{% endfor %}
+                </select>
+            </div>
+            <div class="full">
+                <label>Address</label>
+                <select name="address">
+                    <option value="">Select address or type later</option>
+                    {% for property in properties %}<option>{{ property.address }} {{ property.city }} {{ property.state }} {{ property.zip_code }}</option>{% endfor %}
+                </select>
+            </div>
+            <div>
+                <label>Job Type</label>
+                <select name="job_type">
+                    <option>Service</option><option>Opening</option><option>Closing</option><option>Pool Build</option><option>Pool Remodel</option><option>Tile / Coping</option><option>EcoFinish</option><option>Estimate</option>
+                </select>
+            </div>
+            <div>
+                <label>Status</label>
+                <select name="status"><option>Requested</option><option>Scheduled</option><option>In Progress</option><option>Completed</option></select>
+            </div>
+            <div>
+                <label>Crew</label>
+                <select name="crew"><option>Unassigned</option>{% for employee in employees %}<option>{{ employee.name }}</option>{% endfor %}</select>
+            </div>
+            <div>
+                <label>Priority</label>
+                <select name="priority"><option>Low</option><option selected>Medium</option><option>High</option><option>Urgent</option></select>
+            </div>
+            <div>
+                <label>Scheduled Start</label>
+                <input type="datetime-local" name="scheduled_start">
+            </div>
+            <div>
+                <label>Scheduled End</label>
+                <input type="datetime-local" name="scheduled_end">
+            </div>
+            <div class="full">
+                <label>Display Date / Notes</label>
+                <input type="text" name="date" placeholder="Optional display label">
+            </div>
+            <div class="full">
+                <label>Job Notes</label>
+                <textarea name="notes" rows="5"></textarea>
+            </div>
+            <div class="full"><button class="primary-button" type="submit">Create Job</button></div>
+        </form>
+    </section>
+    {% endif %}
+</div>
+</body>
+</html>

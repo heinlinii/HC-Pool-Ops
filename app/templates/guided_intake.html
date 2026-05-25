@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Guided Intake</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { background:#111827; color:white; font-family:Arial; padding:20px; }
+    .card { background:#1f2937; padding:18px; border-radius:14px; margin-bottom:16px; }
+    a, button { background:#2563eb; color:white; padding:12px 16px; border-radius:10px; text-decoration:none; border:0; font-size:16px; }
+    .question { font-size:20px; margin:18px 0; }
+    textarea { width:100%; min-height:120px; border-radius:10px; padding:12px; font-size:16px; }
+  </style>
+</head>
+<body>
+{% include "_mobile_nav.html" %}
+
+<a href="/dashboard">← Dashboard</a>
+
+<h1>🤖 Guided Client Intake</h1>
+
+<div class="card">
+  <div class="question">
+    First question: who is the client?
+  </div>
+
+  <form method="post" action="/ai-import">
+    <textarea name="raw_text" placeholder="Example: Bob and Lisa Johnson, they live off Lincoln Ave..."></textarea>
+    <br><br>
+    <button type="submit">Send to AI Intake</button>
+  </form>
+</div>
+
+<div class="card">
+  <h2>What to tell it</h2>
+  <p>Talk naturally. Dump whatever is in your head: name, address, phone, gate code, dogs, equipment, service needed, history, or problems.</p>
+</div>
+
+</body>
+</html>

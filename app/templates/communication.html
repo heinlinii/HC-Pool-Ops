@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PoolOps2 Communication Center</title>
+    <link rel="stylesheet" href="/static/style.css?v=15">
+</head>
+
+<body>
+{% include "_mobile_nav.html" %}
+
+<div class="app-layout">
+
+    <aside class="sidebar">
+
+        <div class="sidebar-top">
+            <img src="/static/logo.png" alt="Heinlin Concrete Logo" class="sidebar-logo">
+            <h1>POOLOPS2</h1>
+            <p>Heinlin Concrete LLC</p>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="/dashboard">Dashboard</a>
+            <a href="/jobs">Jobs</a>
+            <a href="/schedule/day">Daily Schedule</a>
+            <a href="/schedule/week">Weekly Schedule</a>
+            <a href="/schedule/month">Monthly Schedule</a>
+            <a href="/weather">Weather</a>
+            <a href="/clients">Clients</a>
+            <a href="/properties">Properties</a>
+            <a href="/employees">Employees</a>
+            <a href="/billing">Billing</a>
+            <a href="/job-costing">Job Costing</a>
+            <a href="/photos">Photos</a>
+            <a href="/imports">Imports</a>
+            <a href="/quickbooks">QuickBooks</a>
+            <a href="/communication" class="active">Communication</a>
+            <a href="/crew">Crew View</a>
+            <a href="/health">Health</a>
+        </nav>
+
+        <div class="sidebar-bottom">
+            <p>{{ user.name }}</p>
+            <span>{{ user.role }}</span>
+            <a href="/logout" class="logout-button">Logout</a>
+        </div>
+
+    </aside>
+
+    <main class="main-content">
+
+        <div class="topbar">
+            <div>
+                <h2>Communication Center</h2>
+                <p>Free copy-and-paste texting, email lists, and update templates.</p>
+            </div>
+        </div>
+
+        <section class="content-card">
+
+            <div class="card-header">
+                <h3>Copy-Ready Message Templates</h3>
+            </div>
+
+            <div class="jobs-grid">
+
+                <div class="job-card">
+                    <h3>Weather Delay</h3>
+                    <textarea rows="5">Heinlin Concrete Update: Due to weather conditions, today’s schedule may be delayed. We’ll keep you updated as soon as we know more. Thank you.</textarea>
+                </div>
+
+                <div class="job-card">
+                    <h3>Schedule Confirmation</h3>
+                    <textarea rows="5">Heinlin Concrete Update: Your project is currently on our schedule. We’ll reach out before arrival with any final details. Thank you.</textarea>
+                </div>
+
+                <div class="job-card">
+                    <h3>Crew On The Way</h3>
+                    <textarea rows="5">Heinlin Concrete Update: Our crew is on the way to your property. Please make sure access is clear. Thank you.</textarea>
+                </div>
+
+                <div class="job-card">
+                    <h3>Invoice Reminder</h3>
+                    <textarea rows="5">Heinlin Concrete Update: This is a friendly reminder that your invoice is available. Please contact us with any questions. Thank you.</textarea>
+                </div>
+
+            </div>
+
+        </section>
+
+        <section class="content-card">
+
+            <div class="card-header">
+                <h3>Client Phone List</h3>
+            </div>
+
+            <textarea rows="8">{% for phone in client_phones %}{{ phone }}
+{% endfor %}</textarea>
+
+        </section>
+
+        <section class="content-card">
+
+            <div class="card-header">
+                <h3>Client Email List</h3>
+            </div>
+
+            <textarea rows="8">{% for email in client_emails %}{{ email }}{% if not loop.last %}, {% endif %}{% endfor %}</textarea>
+
+        </section>
+
+        <section class="content-card">
+
+            <div class="card-header">
+                <h3>Employee Phone List</h3>
+            </div>
+
+            <textarea rows="8">{% for phone in employee_phones %}{{ phone }}
+{% endfor %}</textarea>
+
+        </section>
+
+        <section class="content-card">
+
+            <div class="card-header">
+                <h3>Current Jobs Quick Reference</h3>
+            </div>
+
+            <div class="jobs-grid">
+
+                {% for job in jobs %}
+
+                <div class="job-card">
+                    <h3>{{ job.client }}</h3>
+                    <p>{{ job.address }}</p>
+
+                    <div class="job-details">
+                        <div class="detail-row">
+                            <strong>Status:</strong>
+                            <span>{{ job.status }}</span>
+                        </div>
+
+                        <div class="detail-row">
+                            <strong>Date:</strong>
+                            <span>{{ job.date }}</span>
+                        </div>
+
+                        <div class="detail-row">
+                            <strong>Crew:</strong>
+                            <span>{{ job.crew }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                {% endfor %}
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+</body>
+</html>

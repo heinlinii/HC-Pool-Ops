@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ property.property_name or property.address }} - Heinlin Field Ops</title>
+    <link rel="stylesheet" href="/static/style.css?v=fieldops-ready-2">
+</head>
+<body>
+{% include "_mobile_nav.html" %}
+<div class="ops-shell">
+    {% set title = property.property_name or property.address or "Property" %}
+    {% set subtitle = property.client ~ " · " ~ (property.address or "No address saved") %}
+    {% set primary_href = "/jobs/new/" ~ property.id %}
+    {% set primary_label = "+ Job Here" %}
+    {% include "_ops_header.html" %}
+
+    <div class="ops-grid-2">
+        <section class="ops-card">
+            {% set bg = property.card_image or '/static/uploads/fountain.jpg' %}
+            <div class="ops-card-bg" style="background-image:url('{{ bg }}');"></div>
+            <div class="ops-card-body">
+                <h3>{{ property.client }}</h3>
+                <p>{{ property.address }} {{ property.city }} {{ property.state }} {{ property.zip_code }}</p>
+                <div class="ops-card-meta">
+                    {% if property.pool_type %}<span class="ops-pill">{{ property.pool_type }}</span>{% endif %}
+                    {% if property.service_plan %}<span class="ops-pill">{{ property.service_plan }}</span>{% endif %}
+                </div>
+            </div>
+        </section>
+
+        <section class="ops-panel">
+            <h2>Pool / Equipment</h2>
+            <p><strong>Pool:</strong> {{ property.pool_type or "" }} {{ property.pool_size or "" }} {{ property.pool_depth or "" }}</p>
+            <p><strong>Cover:</strong> {{ property.cover_type or "" }}</p>
+            <p><strong>Finish:</strong> {{ property.finish_type or "" }}</p>
+            <p><strong>Pump:</strong> {{ property.pump_model or "" }}</p>
+            <p><strong>Filter:</strong> {{ property.filter_model or "" }}</p>
+            <p><strong>Heater:</strong> {{ property.heater_model or "" }}</p>
+            <p><strong>Gate Code:</strong> {{ property.gate_code or "" }}</p>
+        </section>
+    </div>
+
+    {% if user.role == "admin" %}
+    <section class="ops-panel only-admin" style="margin-top:18px;">
+        <h2>Admin: Property Card Image</h2>
+        <form method="post" action="/properties/{{ property.id }}/card-image" class="ops-form-grid">
+            <div class="full"><label>Background Image URL</label><input name="card_image" value="{{ property.card_image or '' }}" placeholder="/static/uploads/photo.jpg"></div>
+            <div class="full"><button class="primary-button">Save Background</button></div>
+        </form>
+    </section>
+    {% endif %}
+
+    <section class="ops-panel" style="margin-top:18px;">
+        <h2>Notes</h2>
+        <p>{{ property.notes or "No notes yet." }}</p>
+        {% if property.latitude and property.longitude %}<p class="geo-note">GPS saved: {{ property.latitude }}, {{ property.longitude }}</p>{% endif %}
+    </section>
+</div>
+</body>
+</html>

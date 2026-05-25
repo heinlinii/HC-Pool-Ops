@@ -1,0 +1,47 @@
+{% if nearest %}
+
+<div style="
+background:#0f172a;
+padding:16px;
+border-radius:16px;
+margin-top:16px;
+">
+
+<h2 style="margin-top:0;">
+📍 Likely Property
+</h2>
+
+<p>
+<strong>Client:</strong><br>
+{{ nearest.client or "Unknown Client" }}
+</p>
+
+<p>
+<strong>Address:</strong><br>
+{{ nearest.address or "Unknown Address" }}
+</p>
+
+<p>
+<strong>Pool Type:</strong><br>
+{{ nearest.pool_type or "Unknown" }}
+</p>
+
+<p>
+<strong>Notes:</strong><br>
+{{ nearest.notes or "No notes yet." }}
+</p>
+
+</div>
+
+{% else %}
+
+<div style="
+background:#7f1d1d;
+padding:16px;
+border-radius:16px;
+margin-top:16px;
+">
+❌ No nearby property found.
+</div>
+
+{% endif %}

@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Invisible Office Capture</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body {
+      background: #0f172a;
+      color: white;
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+
+    h1 {
+      margin-bottom: 6px;
+    }
+
+    .muted {
+      color: #cbd5e1;
+      line-height: 1.4;
+    }
+
+    .card {
+      background: #1e293b;
+      padding: 18px;
+      border-radius: 16px;
+      margin-top: 16px;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 240px;
+      border-radius: 14px;
+      padding: 14px;
+      font-size: 17px;
+      border: none;
+      box-sizing: border-box;
+    }
+
+    button, a {
+      background: #2563eb;
+      color: white;
+      padding: 13px 18px;
+      border-radius: 12px;
+      border: 0;
+      text-decoration: none;
+      font-size: 16px;
+      display: inline-block;
+      margin-top: 10px;
+      margin-right: 8px;
+      cursor: pointer;
+    }
+
+    .capture-button {
+      width: 100%;
+      font-size: 20px;
+      padding: 18px;
+      background: #16a34a;
+    }
+
+    pre {
+      white-space: pre-wrap;
+      font-family: Arial, sans-serif;
+      line-height: 1.5;
+      font-size: 15px;
+    }
+  </style>
+</head>
+
+<body>
+{% include "_mobile_nav.html" %}
+{% include "bottom_routes.html" %}
+<a href="/dashboard">← Dashboard</a>
+<a href="/ai">AI Assistant</a>
+<a href="/session/start">▶ Start Session</a>
+<a href="/session/end">⏹ End Session</a>
+<a href="/jobs">🧾 Jobs</a>
+
+<h1>🎙️ Invisible Office Capture</h1>
+<p class="muted">
+  <p class="muted">
+  Talk like yourself. Tell PoolOps2 what happened, what you used, what needs billed, and what needs remembered.
+</p>
+</p>
+
+<div class="card">
+  <form method="post" action="/capture">
+ <textarea
+  id="raw_text"
+  name="raw_text"
+  placeholder="Example: At Johnson pool we opened it, used 4 bags shock, 2 gallons acid, cleaned filter..."
+>{{ raw_text or "" }}</textarea>
+
+<button type="button" onclick="startVoice()">🎙️ Start Talking</button>
+<button type="button" onclick="stopVoice()">⏹️ Stop</button>
+
+<button class="capture-button" type="submit">Organize My Day</button>   
+  </form>
+</div>
+
+{% if saved %}
+<div class="card" style="border: 2px solid #22c55e;">
+  ✅ Memory saved permanently.
+</div>
+{% endif %}
+
+{% if result %}
+<div class="card">
+  <h2>Organized Office Record</h2>
+  <pre>{{ result }}</pre>
+</div>
+{% endif %}
+
+{% if result %}
+<div class="card">
+  <h2>Where should Jarvis file this?</h2>
+
+  <form method="post" action="/memory/file">
+
+    <input type="hidden" name="raw_text" value="{{ raw_text }}">
+    <input type="hidden" name="organized_text" value="{{ result }}">
+
+    <label>
+      <input type="radio" name="file_option" value="existing" checked>
+      Existing client + existing property
+    </label>
+
+    <br><br>
+
+    <label>Client</label>
+    <select name="existing_client_id">
+      <option value="0">Choose client</option>
+      {% for client in clients %}
+      <option value="{{ client.id }}">{{ client.name }}</option>
+      {% endfor %}
+    </select>
+
+    <br><br>
+
+    <label>Property</label>
+    <select name="existing_property_id">
+      <option value="0">Choose property</option>
+      {% for property in properties %}
+      <option value="{{ property.id }}">{{ property.client }} - {{ property.address }}</option>
+      {% endfor %}
+    </select>
+
+    <br><br>
+
+    <label>
+      <input type="radio" name="file_option" value="existing_client_new_property">
+      Existing client + new property
+    </label>
+
+    <br><br>
+
+    <label>
+      <input type="radio" name="file_option" value="new">
+      New client + new property
+    </label>
+
+    <br><br>
+
+    <input name="new_client_name" placeholder="New client name">
+    <br><br>
+    <input name="new_property_address" placeholder="New property address">
+
+    <br><br>
+
+    <label>
+      <input type="radio" name="file_option" value="general">
+      General memory only
+    </label>
+
+    <br><br>
+
+    <button class="capture-button" type="submit">
+      Save Memory To Selected Place
+    </button>
+
+  </form>
+</div>
+{% endif %}
+
+<div class="card">
+  <h2>What to say</h2>
+  <p class="muted">
+    Say the client, what you did, what you used, time worked, problems found, what needs billed, and what needs remembered.
+  </p>
+</div>
+
+<div class="card">
+  <h2>Quick Capture Modes</h2>
+
+  <form method="post" action="/capture">
+    <input type="hidden" name="raw_text" value="Ask me questions one at a time so I can document a pool opening. Ask about client, pool condition, cover removal, chemicals used, equipment started, issues found, materials used, billable items, and follow-up.">
+    <button type="submit">Pool Opening Interview</button>
+  </form>
+
+  <form method="post" action="/capture">
+    <input type="hidden" name="raw_text" value="Ask me questions one at a time so I can document a pool closing. Ask about client, chemicals used, equipment winterized, plugs, cover, water level, issues found, billable items, and follow-up.">
+    <button type="submit">Pool Closing Interview</button>
+  </form>
+
+  <form method="post" action="/capture">
+    <input type="hidden" name="raw_text" value="Ask me questions one at a time so I can document a repair job. Ask about client, symptom, diagnosis, work performed, parts used, time worked, remaining issues, billable items, and follow-up.">
+    <button type="submit">Repair Job Interview</button>
+  </form>
+
+  <form method="post" action="/capture">
+    <input type="hidden" name="raw_text" value="Ask me questions one at a time so I can document materials used today. Ask which job, what materials, quantities, supplier, cost if known, and whether they should be billed.">
+    <button type="submit">Materials Used</button>
+  </form>
+</div>
+<script>
+let recognition;
+
+function startVoice() {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+  if (!SpeechRecognition) {
+    alert("Voice dictation is not supported on this browser. Try Chrome or Safari.");
+    return;
+  }
+
+  recognition = new SpeechRecognition();
+  recognition.continuous = true;
+  recognition.interimResults = true;
+  recognition.lang = "en-US";
+
+  const box = document.getElementById("raw_text");
+  let finalTranscript = box.value ? box.value + " " : "";
+
+  recognition.onresult = function(event) {
+    let interimTranscript = "";
+
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      const transcript = event.results[i][0].transcript;
+
+      if (event.results[i].isFinal) {
+        finalTranscript += transcript + " ";
+      } else {
+        interimTranscript += transcript;
+      }
+    }
+
+    box.value = finalTranscript + interimTranscript;
+  };
+
+  recognition.start();
+}
+
+function stopVoice() {
+  if (recognition) {
+    recognition.stop();
+  }
+}
+</script>
+</body>
+</html>

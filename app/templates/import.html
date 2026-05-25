@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PoolOps2 Imports</title>
+    <link rel="stylesheet" href="/static/style.css?v=fieldops-ready-2">
+</head>
+
+<body>
+{% include "_mobile_nav.html" %}
+
+<div class="topbar-back">
+    <button onclick="history.back()" class="back-btn">
+        ← Back
+    </button>
+</div>
+
+<div class="app-layout">
+
+    {% include "_sidebar.html" %}
+
+    <main class="main-content with-sidebar">
+
+        <div class="topbar">
+            <div>
+                <h2>QuickBooks / CSV Imports</h2>
+                <p>
+                    Import customers, properties, invoices, and contact lists into PoolOps2.
+                </p>
+            </div>
+        </div>
+
+        {% if message %}
+        <section class="content-card">
+            <div class="success-message">
+                {{ message }}
+            </div>
+        </section>
+        {% endif %}
+
+        <section class="content-card">
+
+            <div class="card-header">
+                <h3>Import Clients</h3>
+            </div>
+
+            <p class="helper-text">
+                Supported columns:
+                name, customer, client, phone, email, notes.
+            </p>
+
+            <form
+                method="post"
+                action="/imports/clients"
+                enctype="multipart/form-data"
+                class="job-form"
+            >
+
+                <div class="form-group">
+                    <label>Client CSV File</label>
+
+                    <input
+                        type="file"
+                        name="csv_file"
+                        accept=".csv"
+                        required
+                    >
+                </div>
+
+                <button type="submit" class="primary-button">
+                    Import Clients
+                </button>
+
+            </form>
+
+        </section>
+
+        <section class="content-card">
+
+            <div class="card-header">
+                <h3>Import Properties</h3>
+            </div>
+
+            <p class="helper-text">
+                Supported columns:
+                client, customer, address, property, pool_type, notes.
+            </p>
+
+            <form
+                method="post"
+                action="/imports/properties"
+                enctype="multipart/form-data"
+                class="job-form"
+            >
+
+                <div class="form-group">
+                    <label>Property CSV File</label>
+
+                    <input
+                        type="file"
+                        name="file"
+                        accept=".csv"
+                        required
+                    >
+                </div>
+
+                <button type="submit" class="primary-button">
+                    Import Properties
+                </button>
+
+            </form>
+
+        </section>
+
+        <section class="content-card">
+
+            <div class="card-header">
+                <h3>Import Invoices</h3>
+            </div>
+
+            <p class="helper-text">
+                Supported columns:
+                client, description, amount, status, date, notes.
+            </p>
+
+            <form
+                method="post"
+                action="/imports/invoices"
+                enctype="multipart/form-data"
+                class="job-form"
+            >
+
+                <div class="form-group">
+                    <label>Invoice CSV File</label>
+
+                    <input
+                        type="file"
+                        name="csv_file"
+                        accept=".csv"
+                        required
+                    >
+                </div>
+
+                <button type="submit" class="primary-button">
+                    Import Invoices
+                </button>
+
+            </form>
+
+        </section>
+
+        <section class="content-card">
+
+            <div class="card-header">
+                <h3>Contact Matcher</h3>
+            </div>
+
+            <p>
+                Upload phone contacts and compare them against existing PoolOps2 client records.
+            </p>
+
+            <a class="btn" href="/contact-matcher">
+                Open Contact Matcher
+            </a>
+
+        </section>
+
+        <section class="content-card">
+
+            <div class="card-header">
+                <h3>Recommended CSV Prep</h3>
+            </div>
+
+            <div class="jobs-grid">
+
+                <div class="job-card">
+                    <h3>Clients</h3>
+
+                    <p>Use one row per customer.</p>
+
+                    <div class="job-notes">
+                        Best columns:
+                        name, phone, email, notes.
+                    </div>
+                </div>
+
+                <div class="job-card">
+                    <h3>Properties</h3>
+
+                    <p>Use one row per property/jobsite.</p>
+
+                    <div class="job-notes">
+                        Best columns:
+                        client, address, pool_type, notes.
+                    </div>
+                </div>
+
+                <div class="job-card">
+                    <h3>Invoices</h3>
+
+                    <p>Use one row per invoice.</p>
+
+                    <div class="job-notes">
+                        Best columns:
+                        client, description, amount, status, date, notes.
+                    </div>
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+<div class="mobile-sidebar-toggle" onclick="document.body.classList.toggle('sidebar-open')">
+    ☰
+</div>
+
+</body>
+</html>

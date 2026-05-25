@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clients - Heinlin Field Ops</title>
+    <link rel="stylesheet" href="/static/style.css?v=fieldops-ready-2">
+</head>
+<body>
+{% include "_mobile_nav.html" %}
+<div class="ops-shell">
+    {% set title = "Saved Clients" %}
+    {% set subtitle = "Clients are shown first as individual cards. Each card can use that client's pool photo as the background." %}
+    {% set primary_href = "/clients/new" %}
+    {% set primary_label = "+ Add Client" %}
+    {% include "_ops_header.html" %}
+
+    {% if user.role == "admin" %}
+    <section class="ops-panel only-admin" style="margin-bottom:18px;">
+        <h3>Admin Tools</h3>
+        <p class="role-note">Convert QuickBooks client addresses into property cards automatically.</p>
+        <form method="post" action="/admin/clients-to-properties">
+            <button class="primary-button" type="submit">Create Properties From Client Addresses</button>
+        </form>
+    </section>
+    {% endif %}
+
+    <section class="ops-card-grid">
+        {% for client in clients %}
+        {% set bg = client.card_image or '/static/uploads/fountain.jpg' %}
+        <a href="/clients/{{ client.id }}" class="ops-card">
+            <div class="ops-card-bg" style="background-image:url('{{ bg }}');"></div>
+            <div class="ops-card-body">
+                <h3>{{ client.name }}</h3>
+                <p>{{ client.phone or client.mobile or "No phone saved" }}</p>
+                <p>{{ client.email or "No email saved" }}</p>
+                <div class="ops-card-meta">
+                    <span class="ops-pill">{{ property_counts.get(client.id, property_counts.get(client.name, 0)) }} Properties</span>
+                    {% if client.portal_username %}<span class="ops-pill">Portal Ready</span>{% endif %}
+                </div>
+            </div>
+        </a>
+        {% else %}
+        <div class="ops-panel"><h3>No clients saved yet</h3><p>Add or import clients to start building cards.</p></div>
+        {% endfor %}
+    </section>
+</div>
+</body>
+</html>

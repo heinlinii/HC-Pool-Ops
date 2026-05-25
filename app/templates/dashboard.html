@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Heinlin Field Ops Dashboard</title><link rel="stylesheet" href="/static/style.css?v=fieldops-ready-2"></head>
+<body>
+{% include "_mobile_nav.html" %}
+<div class="ops-shell">
+    <header class="ops-page-header">
+        <div><div class="ops-kicker">HEINLIN FIELD OPS</div><h1>Command Center</h1><p>Jobs, clients, properties, schedule, maps, photos, billing, QuickBooks, weather, and invisible office.</p></div>
+        <div class="ops-header-actions"><a href="/logout" class="secondary-button">Logout</a><a href="/dashboard/theme" class="secondary-button">Theme</a></div>
+    </header>
+
+    <section class="ops-grid-3" style="margin-bottom:20px;">
+        <div class="ops-panel"><h3>Jobs</h3><p class="stat-number">{{ stats.total_jobs }}</p></div>
+        <div class="ops-panel"><h3>Clients</h3><p class="stat-number">{{ stats.clients }}</p></div>
+        <div class="ops-panel"><h3>Properties</h3><p class="stat-number">{{ stats.properties }}</p></div>
+    </section>
+
+    <section class="ops-card-grid">
+        <a href="/clients" class="ops-card"><div class="ops-card-bg" style="background-image:url('/static/uploads/fountain.jpg');"></div><div class="ops-card-body"><h3>Clients</h3><p>Saved client cards and portal logins</p></div></a>
+        <a href="/properties" class="ops-card"><div class="ops-card-bg" style="background-image:url('/static/uploads/traylor.jpg');"></div><div class="ops-card-body"><h3>Properties</h3><p>Pool/property cards with photo backgrounds</p></div></a>
+        <a href="/jobs" class="ops-card"><div class="ops-card-bg" style="background-image:url('/static/uploads/maria.jpg');"></div><div class="ops-card-body"><h3>Jobs</h3><p>Create, schedule, and track work</p></div></a>
+        <a href="/schedule" class="ops-card"><div class="ops-card-bg" style="background-image:url('/static/uploads/fountain.jpg');"></div><div class="ops-card-body"><h3>Calendar</h3><p>Click each day and claim open time</p></div></a>
+        <a href="/crew" class="ops-card"><div class="ops-card-bg" style="background-image:url('/static/uploads/traylor-steps.jpg');"></div><div class="ops-card-body"><h3>Crew</h3><p>Randy, Marty, maps, teams, weather</p></div></a>
+        <a href="/photos" class="ops-card"><div class="ops-card-bg" style="background-image:url('/static/uploads/pool-hero.jpg');"></div><div class="ops-card-body"><h3>Photos</h3><p>GPS-tagged uploads for property cards</p></div></a>
+        <a href="/map" class="ops-card"><div class="ops-card-bg" style="background-image:url('/static/uploads/fountain.jpg');"></div><div class="ops-card-body"><h3>Map</h3><p>Properties and jobs on the road</p></div></a>
+        <a href="/weather" class="ops-card"><div class="ops-card-bg" style="background-image:url('/static/uploads/fountain.jpg');"></div><div class="ops-card-body"><h3>Weather</h3><p>Field decisions and scheduling</p></div></a>
+        <a href="/assistant" class="ops-card"><div class="ops-card-bg" style="background-image:url('/static/uploads/fountain.jpg');"></div><div class="ops-card-body"><h3>Invisible Office</h3><p>Jarvis for estimates, notes, and field help</p></div></a>
+    </section>
+</div>
+</body></html>
