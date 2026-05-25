@@ -13,7 +13,7 @@ if not DATABASE_URL:
 if DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace(
         "postgres://",
-        "postgresql+psycopg://",
+        "postgresql://",
         1
     )
 
