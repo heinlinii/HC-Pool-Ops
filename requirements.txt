@@ -7,5 +7,5 @@ python-multipart==0.0.20
 itsdangerous==2.2.0
 sqlalchemy==2.0.36
 requests
-psycopg[binary]==3.2.9
+psycopg[binary]==3.2.10
 openai==1.58.0
