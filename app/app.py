@@ -301,8 +301,9 @@ def ensure_schema():
         "poolops2_clients": [("portal_username", "TEXT DEFAULT ''"), ("portal_password", "TEXT DEFAULT ''"), ("card_image", "TEXT DEFAULT ''")],
         "poolops2_properties": [("card_image", "TEXT DEFAULT ''"), ("pool_notes", "TEXT DEFAULT ''"), ("equipment_notes", "TEXT DEFAULT ''"), ("latitude", "REAL"), ("longitude", "REAL")],
         "poolops2_jobs": [("scheduled_start", "TEXT"), ("scheduled_end", "TEXT"), ("card_image", "TEXT DEFAULT ''")],
-        "poolops2_employees": [("username", "TEXT DEFAULT ''"), ("password", "TEXT DEFAULT ''"), ("card_image", "TEXT DEFAULT ''")],
+        "poolops2_employees": [("username", "TEXT DEFAULT ''"), ("password", "TEXT DEFAULT ''"), ("card_image", "TEXT DEFAULT ''"), ("clocked_in", "BOOLEAN DEFAULT false" if USE_POSTGRES else "INTEGER DEFAULT 0"), ("clock_lat", "REAL"), ("clock_lng", "REAL"), ("clocked_in_at", "TEXT DEFAULT ''"), ("last_seen_at", "TEXT DEFAULT ''")],
         "poolops2_photo_logs": [("property_id", "INTEGER"), ("latitude", "REAL"), ("longitude", "REAL")],
+        "field_logs": [("latitude", "REAL"), ("longitude", "REAL")],
     }.items():
         for col, spec in cols:
             add_col(table, col, spec)
@@ -345,6 +346,96 @@ def is_admin(user):
     return user and user.get("role") == "admin"
 
 
+def is_client(user):
+    return user and user.get("role") == "client"
+
+
+def is_employee(user):
+    return user and user.get("role") == "employee"
+
+
+def admin_redirect(user):
+    if is_client(user):
+        return RedirectResponse("/client-portal", status_code=303)
+    if is_employee(user):
+        return RedirectResponse("/employee", status_code=303)
+    return login_redirect()
+
+
+def client_name_for_user(user):
+    if not user:
+        return ""
+    if is_client(user):
+        c = one("SELECT * FROM poolops2_clients WHERE id=?", (user.get("id"),))
+        return (c or {}).get("name", "")
+    return ""
+
+
+def client_can_access(user, client_id=None, client_name=""):
+    if is_admin(user):
+        return True
+    if not is_client(user):
+        return False
+    if client_id is not None and str(user.get("id")) == str(client_id):
+        return True
+    own = client_name_for_user(user).strip().lower()
+    return bool(own and client_name and own == str(client_name).strip().lower())
+
+
+def property_can_access(user, prop):
+    if is_admin(user):
+        return True
+    if not prop:
+        return False
+    if is_client(user):
+        return client_can_access(user, prop.get("client_id"), prop.get("client"))
+    if is_employee(user):
+        return True
+    return False
+
+
+def employee_can_access_job(user, job):
+    if is_admin(user):
+        return True
+    if not job:
+        return False
+    if is_employee(user):
+        crew = str(job.get("crew") or "").lower()
+        name = str(user.get("name") or "").lower()
+        return crew in ("", "unassigned") or (name and name in crew)
+    return False
+
+
+def jobs_for_user(user):
+    if is_admin(user):
+        return rows("SELECT * FROM poolops2_jobs ORDER BY id DESC")
+    if is_employee(user):
+        name = user.get("name", "")
+        return rows("SELECT * FROM poolops2_jobs WHERE crew LIKE ? OR crew='' OR crew='Unassigned' ORDER BY id DESC", (f"%{name}%",))
+    if is_client(user):
+        cname = client_name_for_user(user)
+        return rows("SELECT * FROM poolops2_jobs WHERE client=? ORDER BY id DESC", (cname,))
+    return []
+
+
+def properties_for_user(user):
+    if is_admin(user) or is_employee(user):
+        return rows("SELECT * FROM poolops2_properties ORDER BY client,address")
+    if is_client(user):
+        cname = client_name_for_user(user)
+        return rows("SELECT * FROM poolops2_properties WHERE client_id=? OR client=? ORDER BY address", (user.get("id"), cname))
+    return []
+
+
+def photos_for_user(user):
+    if is_admin(user) or is_employee(user):
+        return rows("SELECT * FROM poolops2_photo_logs ORDER BY id DESC")
+    if is_client(user):
+        cname = client_name_for_user(user)
+        return rows("SELECT * FROM poolops2_photo_logs WHERE client=? ORDER BY id DESC", (cname,))
+    return []
+
+
 def login_redirect():
     return RedirectResponse("/login", status_code=303)
 
@@ -372,13 +463,13 @@ def schedule_date(job):
     return val[:10]
 
 
-def month_grid(year=None, month=None):
+def month_grid(year=None, month=None, job_rows=None):
     today = date.today()
     year = year or today.year
     month = month or today.month
     cal = calendar.Calendar(firstweekday=6)
     day_rows = []
-    jobs = rows("SELECT * FROM poolops2_jobs ORDER BY id DESC")
+    jobs = job_rows if job_rows is not None else rows("SELECT * FROM poolops2_jobs ORDER BY id DESC")
     images = {r["day_date"]: r for r in rows("SELECT * FROM poolops2_calendar_day_images")}
     for d in cal.itermonthdates(year, month):
         ds = d.isoformat()
@@ -395,7 +486,16 @@ def month_grid(year=None, month=None):
 
 
 def ctx(request, **kw):
-    return {"request": request, "user": current_user(request), "theme": theme(), **kw}
+    u = current_user(request)
+    return {
+        "request": request,
+        "user": u,
+        "theme": theme(),
+        "is_admin": is_admin(u),
+        "is_client": is_client(u),
+        "is_employee": is_employee(u),
+        **kw,
+    }
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -541,7 +641,9 @@ def _delete_photo_records(photo_rows):
 
 @app.get("/clients", response_class=HTMLResponse)
 def clients(request: Request, q: str = ""):
-    if not require_login(request): return login_redirect()
+    u = require_login(request)
+    if not u: return login_redirect()
+    if not is_admin(u): return admin_redirect(u)
     qlike = f"%{q.strip()}%"
     data = rows("SELECT * FROM poolops2_clients WHERE name LIKE ? OR phone LIKE ? OR email LIKE ? ORDER BY name", (qlike, qlike, qlike)) if q else rows("SELECT * FROM poolops2_clients ORDER BY name")
     return templates.TemplateResponse("clients.html", ctx(request, clients=data, q=q))
@@ -549,9 +651,12 @@ def clients(request: Request, q: str = ""):
 
 @app.get("/clients/{client_id}", response_class=HTMLResponse)
 def client_detail(request: Request, client_id: int):
-    if not require_login(request): return login_redirect()
+    u = require_login(request)
+    if not u: return login_redirect()
     client = one("SELECT * FROM poolops2_clients WHERE id=?", (client_id,))
-    if not client: return RedirectResponse("/clients", status_code=303)
+    if not client: return admin_redirect(u)
+    if not client_can_access(u, client_id, client.get("name", "")):
+        return admin_redirect(u)
     props = rows("SELECT * FROM poolops2_properties WHERE client_id=? OR client=? ORDER BY address", (client_id, client["name"]))
     jobs = rows("SELECT * FROM poolops2_jobs WHERE client=? ORDER BY id DESC", (client["name"],))
     photos = rows("SELECT * FROM poolops2_photo_logs WHERE client=? ORDER BY id DESC", (client["name"],))
@@ -560,13 +665,21 @@ def client_detail(request: Request, client_id: int):
 
 @app.post("/clients/{client_id}/save")
 async def client_save(request: Request, client_id: int, name: str = Form(""), contact_name: str = Form(""), phone: str = Form(""), mobile: str = Form(""), email: str = Form(""), billing_address: str = Form(""), city: str = Form(""), state: str = Form(""), zip_code: str = Form(""), notes: str = Form(""), portal_username: str = Form(""), portal_password: str = Form(""), card_image: UploadFile = File(None)):
-    if not is_admin(require_login(request)): return login_redirect()
-    url = await save_upload(card_image)
-    if url:
-        exec_sql("UPDATE poolops2_clients SET name=?, contact_name=?, phone=?, mobile=?, email=?, billing_address=?, city=?, state=?, zip_code=?, notes=?, portal_username=?, portal_password=?, card_image=? WHERE id=?", (name, contact_name, phone, mobile, email, billing_address, city, state, zip_code, notes, portal_username, portal_password, url, client_id))
+    u = require_login(request)
+    if not u: return login_redirect()
+    client = one("SELECT * FROM poolops2_clients WHERE id=?", (client_id,))
+    if not client or not client_can_access(u, client_id, client.get("name", "")):
+        return admin_redirect(u)
+    url = await save_upload(card_image) if is_admin(u) else ""
+    # Clients may update their own contact/profile info. Only admins can change portal login credentials or card images.
+    if is_admin(u):
+        if url:
+            exec_sql("UPDATE poolops2_clients SET name=?, contact_name=?, phone=?, mobile=?, email=?, billing_address=?, city=?, state=?, zip_code=?, notes=?, portal_username=?, portal_password=?, card_image=? WHERE id=?", (name, contact_name, phone, mobile, email, billing_address, city, state, zip_code, notes, portal_username, portal_password, url, client_id))
+        else:
+            exec_sql("UPDATE poolops2_clients SET name=?, contact_name=?, phone=?, mobile=?, email=?, billing_address=?, city=?, state=?, zip_code=?, notes=?, portal_username=?, portal_password=? WHERE id=?", (name, contact_name, phone, mobile, email, billing_address, city, state, zip_code, notes, portal_username, portal_password, client_id))
     else:
-        exec_sql("UPDATE poolops2_clients SET name=?, contact_name=?, phone=?, mobile=?, email=?, billing_address=?, city=?, state=?, zip_code=?, notes=?, portal_username=?, portal_password=? WHERE id=?", (name, contact_name, phone, mobile, email, billing_address, city, state, zip_code, notes, portal_username, portal_password, client_id))
-    return RedirectResponse(f"/clients/{client_id}", status_code=303)
+        exec_sql("UPDATE poolops2_clients SET name=?, contact_name=?, phone=?, mobile=?, email=?, billing_address=?, city=?, state=?, zip_code=?, notes=? WHERE id=?", (name, contact_name, phone, mobile, email, billing_address, city, state, zip_code, notes, client_id))
+    return RedirectResponse("/client-portal" if is_client(u) else f"/clients/{client_id}", status_code=303)
 
 
 @app.post("/clients/new")
@@ -620,17 +733,25 @@ def client_delete(request: Request, client_id: int):
 
 @app.get("/properties", response_class=HTMLResponse)
 def properties(request: Request, q: str = ""):
-    if not require_login(request): return login_redirect()
+    u = require_login(request)
+    if not u: return login_redirect()
+    if is_client(u): return RedirectResponse("/client-portal", status_code=303)
     qlike = f"%{q.strip()}%"
-    data = rows("SELECT * FROM poolops2_properties WHERE client LIKE ? OR address LIKE ? OR property_name LIKE ? ORDER BY client,address", (qlike, qlike, qlike)) if q else rows("SELECT * FROM poolops2_properties ORDER BY client,address")
+    if is_admin(u):
+        data = rows("SELECT * FROM poolops2_properties WHERE client LIKE ? OR address LIKE ? OR property_name LIKE ? ORDER BY client,address", (qlike, qlike, qlike)) if q else rows("SELECT * FROM poolops2_properties ORDER BY client,address")
+    else:
+        data = properties_for_user(u)
     return templates.TemplateResponse("properties.html", ctx(request, properties=data, q=q))
 
 
 @app.get("/properties/{property_id}", response_class=HTMLResponse)
 def property_detail(request: Request, property_id: int):
-    if not require_login(request): return login_redirect()
+    u = require_login(request)
+    if not u: return login_redirect()
     prop = one("SELECT * FROM poolops2_properties WHERE id=?", (property_id,))
-    if not prop: return RedirectResponse("/properties", status_code=303)
+    if not prop: return admin_redirect(u)
+    if not property_can_access(u, prop):
+        return admin_redirect(u)
     photos = rows("SELECT * FROM poolops2_photo_logs WHERE property_id=? ORDER BY id DESC", (property_id,))
     equip = rows("SELECT * FROM poolops2_equipment WHERE property_id=? ORDER BY id DESC", (property_id,))
     jobs = rows("SELECT * FROM poolops2_jobs WHERE address=? OR property=? ORDER BY id DESC", (prop["address"], prop["property_name"]))
@@ -639,19 +760,29 @@ def property_detail(request: Request, property_id: int):
 
 @app.post("/properties/{property_id}/save")
 async def property_save(request: Request, property_id: int, client: str = Form(""), property_name: str = Form(""), address: str = Form(""), city: str = Form(""), state: str = Form(""), zip_code: str = Form(""), pool_type: str = Form(""), pool_size: str = Form(""), pool_depth: str = Form(""), cover_type: str = Form(""), finish_type: str = Form(""), pump_model: str = Form(""), filter_model: str = Form(""), heater_model: str = Form(""), sanitizer: str = Form(""), automation_system: str = Form(""), gate_code: str = Form(""), service_plan: str = Form(""), pool_notes: str = Form(""), equipment_notes: str = Form(""), notes: str = Form(""), card_image: UploadFile = File(None)):
-    if not is_admin(require_login(request)): return login_redirect()
-    url = await save_upload(card_image)
-    base = (client, property_name, address, city, state, zip_code, pool_type, pool_size, pool_depth, cover_type, finish_type, pump_model, filter_model, heater_model, sanitizer, automation_system, gate_code, service_plan, pool_notes, equipment_notes, notes)
-    if url:
-        exec_sql("UPDATE poolops2_properties SET client=?, property_name=?, address=?, city=?, state=?, zip_code=?, pool_type=?, pool_size=?, pool_depth=?, cover_type=?, finish_type=?, pump_model=?, filter_model=?, heater_model=?, sanitizer=?, automation_system=?, gate_code=?, service_plan=?, pool_notes=?, equipment_notes=?, notes=?, card_image=? WHERE id=?", base + (url, property_id))
+    u = require_login(request)
+    if not u: return login_redirect()
+    prop = one("SELECT * FROM poolops2_properties WHERE id=?", (property_id,))
+    if not prop or not property_can_access(u, prop):
+        return admin_redirect(u)
+    url = await save_upload(card_image) if is_admin(u) else ""
+    # Clients can update their own property/pool/equipment details; only admins can reassign client or card image.
+    if is_admin(u):
+        base = (client, property_name, address, city, state, zip_code, pool_type, pool_size, pool_depth, cover_type, finish_type, pump_model, filter_model, heater_model, sanitizer, automation_system, gate_code, service_plan, pool_notes, equipment_notes, notes)
+        if url:
+            exec_sql("UPDATE poolops2_properties SET client=?, property_name=?, address=?, city=?, state=?, zip_code=?, pool_type=?, pool_size=?, pool_depth=?, cover_type=?, finish_type=?, pump_model=?, filter_model=?, heater_model=?, sanitizer=?, automation_system=?, gate_code=?, service_plan=?, pool_notes=?, equipment_notes=?, notes=?, card_image=? WHERE id=?", base + (url, property_id))
+        else:
+            exec_sql("UPDATE poolops2_properties SET client=?, property_name=?, address=?, city=?, state=?, zip_code=?, pool_type=?, pool_size=?, pool_depth=?, cover_type=?, finish_type=?, pump_model=?, filter_model=?, heater_model=?, sanitizer=?, automation_system=?, gate_code=?, service_plan=?, pool_notes=?, equipment_notes=?, notes=? WHERE id=?", base + (property_id,))
     else:
-        exec_sql("UPDATE poolops2_properties SET client=?, property_name=?, address=?, city=?, state=?, zip_code=?, pool_type=?, pool_size=?, pool_depth=?, cover_type=?, finish_type=?, pump_model=?, filter_model=?, heater_model=?, sanitizer=?, automation_system=?, gate_code=?, service_plan=?, pool_notes=?, equipment_notes=?, notes=? WHERE id=?", base + (property_id,))
+        exec_sql("UPDATE poolops2_properties SET property_name=?, address=?, city=?, state=?, zip_code=?, pool_type=?, pool_size=?, pool_depth=?, cover_type=?, finish_type=?, pump_model=?, filter_model=?, heater_model=?, sanitizer=?, automation_system=?, gate_code=?, service_plan=?, pool_notes=?, equipment_notes=?, notes=? WHERE id=?", (property_name, address, city, state, zip_code, pool_type, pool_size, pool_depth, cover_type, finish_type, pump_model, filter_model, heater_model, sanitizer, automation_system, gate_code, service_plan, pool_notes, equipment_notes, notes, property_id))
     return RedirectResponse(f"/properties/{property_id}", status_code=303)
 
 
 @app.post("/properties/{property_id}/photo")
 async def property_photo(request: Request, property_id: int, title: str = Form("Property Photo"), notes: str = Form(""), photo: UploadFile = File(None)):
-    if not require_login(request): return login_redirect()
+    u = require_login(request)
+    if not u: return login_redirect()
+    if is_client(u): return RedirectResponse("/client-portal", status_code=303)
     prop = one("SELECT * FROM poolops2_properties WHERE id=?", (property_id,))
     url = await save_upload(photo)
     if url and prop:
@@ -702,15 +833,19 @@ def property_delete(request: Request, property_id: int):
 
 @app.get("/jobs", response_class=HTMLResponse)
 def jobs(request: Request):
-    if not require_login(request): return login_redirect()
-    return templates.TemplateResponse("jobs.html", ctx(request, jobs=rows("SELECT * FROM poolops2_jobs ORDER BY id DESC"), properties=rows("SELECT * FROM poolops2_properties ORDER BY client,address")))
+    u = require_login(request)
+    if not u: return login_redirect()
+    if is_client(u): return RedirectResponse("/client-portal", status_code=303)
+    return templates.TemplateResponse("jobs.html", ctx(request, jobs=jobs_for_user(u), properties=properties_for_user(u)))
 
 
 @app.get("/jobs/{job_id}", response_class=HTMLResponse)
 def job_detail(request: Request, job_id: int):
-    if not require_login(request): return login_redirect()
+    u = require_login(request)
+    if not u: return login_redirect()
+    if is_client(u): return RedirectResponse("/client-portal", status_code=303)
     job = one("SELECT * FROM poolops2_jobs WHERE id=?", (job_id,))
-    if not job: return RedirectResponse("/jobs", status_code=303)
+    if not job or not employee_can_access_job(u, job): return RedirectResponse("/jobs", status_code=303)
     costs = rows("SELECT * FROM poolops2_job_costs WHERE job_id=?", (job_id,))
     photos = rows("SELECT * FROM poolops2_photo_logs WHERE job_id=?", (job_id,))
     return templates.TemplateResponse("job_detail.html", ctx(request, job=job, costs=costs, photos=photos))
@@ -752,21 +887,25 @@ def schedule(request: Request):
 
 @app.get("/schedule/month", response_class=HTMLResponse)
 def schedule_month(request: Request):
-    if not require_login(request): return login_redirect()
-    return templates.TemplateResponse("schedule_month.html", ctx(request, days=month_grid()))
+    u = require_login(request)
+    if not u: return login_redirect()
+    return templates.TemplateResponse("schedule_month.html", ctx(request, days=month_grid(job_rows=jobs_for_user(u))))
 
 @app.get("/schedule/day", response_class=HTMLResponse)
 def schedule_day(request: Request):
-    if not require_login(request): return login_redirect()
+    u = require_login(request)
+    if not u: return login_redirect()
     today = date.today().isoformat()
-    return templates.TemplateResponse("schedule_list.html", ctx(request, title="Daily Schedule", jobs=[j for j in rows("SELECT * FROM poolops2_jobs ORDER BY id DESC") if schedule_date(j) == today]))
+    visible_jobs = [j for j in jobs_for_user(u) if schedule_date(j) == today]
+    return templates.TemplateResponse("schedule_list.html", ctx(request, title="Daily Schedule", jobs=visible_jobs))
 
 @app.get("/schedule/week", response_class=HTMLResponse)
 def schedule_week(request: Request):
-    if not require_login(request): return login_redirect()
+    u = require_login(request)
+    if not u: return login_redirect()
     start = date.today(); end = start + timedelta(days=7)
     jobs = []
-    for j in rows("SELECT * FROM poolops2_jobs ORDER BY id DESC"):
+    for j in jobs_for_user(u):
         ds = schedule_date(j)
         try:
             d = date.fromisoformat(ds)
@@ -777,12 +916,15 @@ def schedule_week(request: Request):
 
 @app.get("/photos", response_class=HTMLResponse)
 def photos(request: Request):
-    if not require_login(request): return login_redirect()
-    return templates.TemplateResponse("photos.html", ctx(request, photos=rows("SELECT * FROM poolops2_photo_logs ORDER BY id DESC"), jobs=rows("SELECT * FROM poolops2_jobs ORDER BY id DESC"), properties=rows("SELECT * FROM poolops2_properties ORDER BY client,address")))
+    u = require_login(request)
+    if not u: return login_redirect()
+    return templates.TemplateResponse("photos.html", ctx(request, photos=photos_for_user(u), jobs=jobs_for_user(u), properties=properties_for_user(u)))
 
 @app.post("/photos/add")
 async def photos_add(request: Request, job_id: int = Form(0), property_id: int = Form(0), photo_type: str = Form("Progress"), title: str = Form("Photo"), date_str: str = Form(""), notes: str = Form(""), photo_files: list[UploadFile] = File(None)):
-    if not require_login(request): return login_redirect()
+    u = require_login(request)
+    if not u: return login_redirect()
+    if is_client(u): return RedirectResponse("/client-portal", status_code=303)
     prop = one("SELECT * FROM poolops2_properties WHERE id=?", (property_id,)) if property_id else None
     job = one("SELECT * FROM poolops2_jobs WHERE id=?", (job_id,)) if job_id else None
     client = (prop or job or {}).get("client", "")
@@ -807,8 +949,24 @@ def photo_delete(request: Request, photo_id: int):
 
 @app.get("/crew", response_class=HTMLResponse)
 def crew(request: Request):
-    if not require_login(request): return login_redirect()
+    u = require_login(request)
+    if not u: return login_redirect()
+    if not is_admin(u): return admin_redirect(u)
     return templates.TemplateResponse("crew.html", ctx(request, employees=rows("SELECT * FROM poolops2_employees ORDER BY name")))
+
+@app.post("/crew/new")
+def crew_new(request: Request, name: str = Form("New Employee"), role: str = Form("Crew"), phone: str = Form(""), email: str = Form(""), username: str = Form(""), password: str = Form("")):
+    u = require_login(request)
+    if not is_admin(u): return login_redirect()
+    eid = exec_sql("INSERT INTO poolops2_employees (name,role,phone,email,username,password,active) VALUES (?,?,?,?,?,?,?)", (name.strip() or "New Employee", role.strip() or "Crew", phone, email, username or name.strip().lower().replace(" ", "."), password or "1234", True if USE_POSTGRES else 1))
+    return RedirectResponse("/crew", status_code=303)
+
+@app.post("/crew/{emp_id}/delete")
+def crew_delete(request: Request, emp_id: int):
+    u = require_login(request)
+    if not is_admin(u): return login_redirect()
+    _try_exec("DELETE FROM poolops2_employees WHERE id=?", (emp_id,))
+    return RedirectResponse("/crew", status_code=303)
 
 @app.post("/crew/{emp_id}/save")
 def crew_save(
@@ -860,18 +1018,46 @@ def crew_save(
 def employee_portal(request: Request):
     u = require_login(request)
     if not u: return login_redirect()
-    name = u.get("name", "")
-    jobs = rows("SELECT * FROM poolops2_jobs WHERE crew LIKE ? OR crew='Unassigned' ORDER BY id DESC", (f"%{name}%",))
-    return templates.TemplateResponse("employee_portal.html", ctx(request, jobs=jobs))
+    if is_client(u): return RedirectResponse("/client-portal", status_code=303)
+    employee = one("SELECT * FROM poolops2_employees WHERE id=?", (u.get("id"),)) if is_employee(u) else None
+    return templates.TemplateResponse("employee_portal.html", ctx(request, employee=employee, jobs=jobs_for_user(u), photos=photos_for_user(u)))
+
+@app.post("/employee/profile")
+def employee_profile_save(request: Request, name: str = Form(""), phone: str = Form(""), email: str = Form(""), username: str = Form(""), password: str = Form("")):
+    u = require_login(request)
+    if not u: return login_redirect()
+    if not is_employee(u): return admin_redirect(u)
+    exec_sql("UPDATE poolops2_employees SET name=?, phone=?, email=?, username=?, password=? WHERE id=?", (name, phone, email, username, password, u.get("id")))
+    u.update({"name": name, "username": username})
+    request.session["user"] = u
+    return RedirectResponse("/employee", status_code=303)
+
+@app.post("/employee/clock")
+def employee_clock(request: Request, action: str = Form("in"), lat: str = Form(""), lng: str = Form("")):
+    u = require_login(request)
+    if not u or not is_employee(u): return login_redirect()
+    now = datetime.now().isoformat(timespec="minutes")
+    clocked = action == "in"
+    exec_sql("UPDATE poolops2_employees SET clocked_in=?, clock_lat=?, clock_lng=?, clocked_in_at=?, last_seen_at=? WHERE id=?", (clocked, float(lat) if lat else None, float(lng) if lng else None, now if clocked else "", now, u.get("id")))
+    return RedirectResponse("/employee", status_code=303)
 
 @app.get("/client-portal", response_class=HTMLResponse)
 def client_portal(request: Request):
     u = require_login(request)
     if not u: return login_redirect()
-    client = one("SELECT * FROM poolops2_clients WHERE id=?", (u.get("id"),))
-    props = rows("SELECT * FROM poolops2_properties WHERE client_id=? OR client=?", (u.get("id"), client.get("name") if client else ""))
-    photos = rows("SELECT * FROM poolops2_photo_logs WHERE client=? ORDER BY id DESC", (client.get("name") if client else "",))
-    return templates.TemplateResponse("client_portal.html", ctx(request, client=client, properties=props, photos=photos))
+    if not is_client(u) and not is_admin(u):
+        return RedirectResponse("/employee", status_code=303)
+    client = one("SELECT * FROM poolops2_clients WHERE id=?", (u.get("id"),)) if is_client(u) else None
+    if is_admin(u) and not client:
+        # Admin can preview a generic client portal with no destructive access.
+        client = rows("SELECT * FROM poolops2_clients ORDER BY name LIMIT 1")
+        client = client[0] if client else None
+    cname = client.get("name") if client else ""
+    cid = client.get("id") if client else 0
+    props = rows("SELECT * FROM poolops2_properties WHERE client_id=? OR client=? ORDER BY address", (cid, cname))
+    photos = rows("SELECT * FROM poolops2_photo_logs WHERE client=? ORDER BY id DESC", (cname,))
+    jobs = rows("SELECT * FROM poolops2_jobs WHERE client=? ORDER BY id DESC", (cname,))
+    return templates.TemplateResponse("client_portal.html", ctx(request, client=client, properties=props, photos=photos, jobs=jobs))
 
 
 @app.get("/estimates", response_class=HTMLResponse)
@@ -899,13 +1085,19 @@ def job_costing_add(request: Request, job_id: int = Form(0), client: str = Form(
 @app.get("/field-logs", response_class=HTMLResponse)
 @app.get("/field-log", response_class=HTMLResponse)
 def field_logs(request: Request):
-    if not require_login(request): return login_redirect()
-    return templates.TemplateResponse("field_logs.html", ctx(request, logs=rows("SELECT * FROM field_logs ORDER BY id DESC")))
+    u = require_login(request)
+    if not u: return login_redirect()
+    if is_client(u): return RedirectResponse("/client-portal", status_code=303)
+    logs = rows("SELECT * FROM field_logs ORDER BY id DESC") if is_admin(u) else rows("SELECT * FROM field_logs WHERE employee_name=? ORDER BY id DESC", (u.get("name", ""),))
+    return templates.TemplateResponse("field_logs.html", ctx(request, logs=logs, jobs=jobs_for_user(u)))
 
 @app.post("/field-logs/add")
-def field_logs_add(request: Request, employee_name: str = Form(""), client: str = Form(""), property: str = Form(""), address: str = Form(""), date_str: str = Form(""), total_hours: float = Form(0), tools_used: str = Form(""), materials_used: str = Form(""), equipment_used: str = Form(""), work_completed: str = Form(""), issues: str = Form(""), next_steps: str = Form(""), weather: str = Form("")):
-    if not require_login(request): return login_redirect()
-    exec_sql("INSERT INTO field_logs (employee_name,client,property,address,date,total_hours,tools_used,materials_used,equipment_used,work_completed,issues,next_steps,weather,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)", (employee_name, client, property, address, date_str or date.today().isoformat(), total_hours, tools_used, materials_used, equipment_used, work_completed, issues, next_steps, weather, datetime.now().isoformat()))
+def field_logs_add(request: Request, employee_name: str = Form(""), client: str = Form(""), property: str = Form(""), address: str = Form(""), date_str: str = Form(""), total_hours: float = Form(0), tools_used: str = Form(""), materials_used: str = Form(""), equipment_used: str = Form(""), work_completed: str = Form(""), issues: str = Form(""), next_steps: str = Form(""), weather: str = Form(""), latitude: str = Form(""), longitude: str = Form("")):
+    u = require_login(request)
+    if not u: return login_redirect()
+    if is_client(u): return RedirectResponse("/client-portal", status_code=303)
+    emp_name = employee_name if is_admin(u) else u.get("name", "")
+    exec_sql("INSERT INTO field_logs (employee_name,client,property,address,date,total_hours,tools_used,materials_used,equipment_used,work_completed,issues,next_steps,weather,latitude,longitude,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", (emp_name, client, property, address, date_str or date.today().isoformat(), total_hours, tools_used, materials_used, equipment_used, work_completed, issues, next_steps, weather, float(latitude) if latitude else None, float(longitude) if longitude else None, datetime.now().isoformat()))
     return RedirectResponse("/field-logs", status_code=303)
 
 @app.get("/quickbooks", response_class=HTMLResponse)
@@ -920,8 +1112,10 @@ def weather(request: Request):
 
 @app.get("/map", response_class=HTMLResponse)
 def map_page(request: Request):
-    if not require_login(request): return login_redirect()
-    return templates.TemplateResponse("map.html", ctx(request, properties=rows("SELECT * FROM poolops2_properties ORDER BY client,address")))
+    u = require_login(request)
+    if not u: return login_redirect()
+    employees = rows("SELECT * FROM poolops2_employees WHERE clocked_in=?", (True if USE_POSTGRES else 1,)) if is_admin(u) else []
+    return templates.TemplateResponse("map.html", ctx(request, properties=properties_for_user(u), employees=employees))
 
 
 @app.get("/invisible-office", response_class=HTMLResponse)
@@ -929,6 +1123,8 @@ def invisible_office(request: Request):
     u = require_login(request)
     if not u:
         return login_redirect()
+    if not is_admin(u):
+        return admin_redirect(u)
     notes = rows("SELECT * FROM poolops2_office_notes ORDER BY id DESC LIMIT 25")
     return templates.TemplateResponse("invisible_office.html", {"request": request, "user": u, "theme": theme(), "notes": notes})
 
@@ -938,6 +1134,8 @@ def invisible_office_note(request: Request, note: str = Form("")):
     u = require_login(request)
     if not u:
         return login_redirect()
+    if not is_admin(u):
+        return admin_redirect(u)
     if note.strip():
         exec_sql("INSERT INTO poolops2_office_notes (note, created_at) VALUES (?,?)", (note.strip(), datetime.now().strftime("%Y-%m-%d %I:%M %p")))
     return RedirectResponse("/invisible-office", status_code=303)
@@ -948,6 +1146,8 @@ def invisible_office_search(request: Request, q: str = ""):
     user = require_login(request)
     if not user:
         return RedirectResponse("/login", status_code=303)
+    if not is_admin(user):
+        return admin_redirect(user)
 
     q = (q or "").strip()
     results = []

@@ -23,6 +23,13 @@ class Employee(Base):
     card_image = Column(String, default="")
     username = Column(String, default="")
     password = Column(String, default="")
+    clocked_in = Column(Boolean, default=False)
+    clock_lat = Column(Float, nullable=True)
+    clock_lng = Column(Float, nullable=True)
+    clocked_in_at = Column(String, default="")
+    last_seen_at = Column(String, default="")
+    username = Column(String, default="")
+    password = Column(String, default="")
 
 
 class Client(Base):
@@ -209,6 +216,8 @@ class FieldLog(Base):
     next_steps = Column(Text, default="")
 
     weather = Column(String, default="")
+    latitude = Column(Float, nullable=True)
+    longitude = Column(Float, nullable=True)
 
     photo_count = Column(Integer, default=0)
 

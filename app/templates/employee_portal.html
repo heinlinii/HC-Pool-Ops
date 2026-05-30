@@ -1,1 +1,48 @@
-{% extends "base.html" %}{% block content %}<h1>My Jobs</h1><section class="list-grid">{% for j in jobs %}<a class="list-card" href="/jobs/{{ j.id }}"><h2>{{ j.client }}</h2><p>{{ j.address }}</p><p>{{ j.status }} · {{ j.date }}</p></a>{% endfor %}</section>{% endblock %}
+{% extends "base.html" %}{% block content %}
+<section class="section-head"><h1>Employee Portal</h1></section>
+{% if employee %}
+<section class="panel">
+  <h2>My Info</h2>
+  <form method="post" action="/employee/profile" class="form-grid">
+    <input name="name" value="{{ employee.name }}" placeholder="Name">
+    <input name="phone" value="{{ employee.phone }}" placeholder="Phone">
+    <input name="email" value="{{ employee.email }}" placeholder="Email">
+    <input name="username" value="{{ employee.username }}" placeholder="Username">
+    <input name="password" value="{{ employee.password }}" placeholder="Password / PIN">
+    <button class="primary wide">Update My Info</button>
+  </form>
+</section>
+<section class="panel">
+  <h2>Clock In / Out</h2>
+  <p>Status: <b>{% if employee.clocked_in %}Clocked In{% else %}Clocked Out{% endif %}</b></p>
+  <form id="clockForm" method="post" action="/employee/clock" class="form-grid">
+    <input type="hidden" name="action" id="clockAction" value="in">
+    <input type="hidden" name="lat" id="clockLat">
+    <input type="hidden" name="lng" id="clockLng">
+    <button type="button" class="primary" onclick="clockNow('in')">Clock In with GPS</button>
+    <button type="button" class="secondary-button" onclick="clockNow('out')">Clock Out</button>
+  </form>
+  <p class="muted">When clocked in, admin can see your latest GPS location on the map.</p>
+</section>
+{% endif %}
+<section class="quick-grid">
+  <a class="list-card" href="/field-logs"><h2>Field Ops</h2><p>Enter work performed, materials used, problems found, and next steps.</p></a>
+  <a class="list-card" href="/map"><h2>Map</h2><p>Open job/property map.</p></a>
+  <a class="list-card" href="/photos"><h2>Photos</h2><p>View/upload job and property photos.</p></a>
+  <a class="list-card" href="/weather"><h2>Weather</h2><p>Check jobsite conditions.</p></a>
+</section>
+<h2>My Jobs</h2>
+<section class="list-grid">{% for j in jobs %}<a class="list-card" href="/jobs/{{ j.id }}"><h2>{{ j.client }}</h2><p>{{ j.address }}</p><p>{{ j.status }} · {{ j.date }}</p></a>{% endfor %}</section>
+<script>
+function clockNow(action){
+  document.getElementById('clockAction').value = action;
+  if(action === 'out'){ document.getElementById('clockForm').submit(); return; }
+  if(!navigator.geolocation){ document.getElementById('clockForm').submit(); return; }
+  navigator.geolocation.getCurrentPosition(function(pos){
+    document.getElementById('clockLat').value = pos.coords.latitude;
+    document.getElementById('clockLng').value = pos.coords.longitude;
+    document.getElementById('clockForm').submit();
+  }, function(){ document.getElementById('clockForm').submit(); }, {enableHighAccuracy:true, timeout:8000});
+}
+</script>
+{% endblock %}

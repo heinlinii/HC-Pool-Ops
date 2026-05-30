@@ -1,1 +1,14 @@
-{% extends "base.html" %}{% block content %}<section class="panel"><h1>Field Log</h1><form method="post" action="/field-logs/add" class="form-grid"><input name="employee_name" placeholder="Employee"><input name="client" placeholder="Client"><input name="property" placeholder="Property"><input name="address" placeholder="Address"><input name="date_str" type="date"><input name="total_hours" type="number" step="0.25" placeholder="Hours"><textarea name="tools_used" placeholder="Tools used"></textarea><textarea name="materials_used" placeholder="Materials used"></textarea><textarea name="equipment_used" placeholder="Equipment used"></textarea><textarea class="wide" name="work_completed" placeholder="Work completed"></textarea><textarea class="wide" name="issues" placeholder="Issues"></textarea><textarea class="wide" name="next_steps" placeholder="Next steps"></textarea><input name="weather" placeholder="Weather"><button class="primary wide">Save Field Log</button></form></section><section class="list-grid">{% for l in logs %}<div class="list-card"><h2>{{ l.client }}</h2><p>{{ l.date }} · {{ l.employee_name }} · {{ l.total_hours }} hrs</p><p>{{ l.work_completed }}</p></div>{% endfor %}</section>{% endblock %}
+{% extends "base.html" %}{% block content %}
+<section class="panel"><h1>Field Ops / Work Performed</h1><form id="fieldLogForm" method="post" action="/field-logs/add" class="form-grid">{% if is_admin %}<input name="employee_name" placeholder="Employee">{% endif %}<input name="client" placeholder="Client"><input name="property" placeholder="Property"><input name="address" placeholder="Address"><input name="date_str" type="date"><input name="total_hours" type="number" step="0.25" placeholder="Hours"><textarea name="tools_used" placeholder="Tools used"></textarea><textarea name="materials_used" placeholder="Materials used"></textarea><textarea name="equipment_used" placeholder="Equipment used"></textarea><textarea class="wide" name="work_completed" placeholder="Work completed"></textarea><textarea class="wide" name="issues" placeholder="Issues"></textarea><textarea class="wide" name="next_steps" placeholder="Next steps"></textarea><input name="weather" placeholder="Weather"><input type="hidden" name="latitude" id="logLat"><input type="hidden" name="longitude" id="logLng"><button type="button" class="primary wide" onclick="saveFieldLog()">Save Field Log</button></form></section>
+<section class="list-grid">{% for l in logs %}<div class="list-card"><h2>{{ l.client }}</h2><p>{{ l.date }} · {{ l.employee_name }} · {{ l.total_hours }} hrs</p><p>{{ l.work_completed }}</p></div>{% endfor %}</section>
+<script>
+function saveFieldLog(){
+  if(!navigator.geolocation){ document.getElementById('fieldLogForm').submit(); return; }
+  navigator.geolocation.getCurrentPosition(function(pos){
+    document.getElementById('logLat').value=pos.coords.latitude;
+    document.getElementById('logLng').value=pos.coords.longitude;
+    document.getElementById('fieldLogForm').submit();
+  }, function(){ document.getElementById('fieldLogForm').submit(); }, {enableHighAccuracy:true, timeout:5000});
+}
+</script>
+{% endblock %}

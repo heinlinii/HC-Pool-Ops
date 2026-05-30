@@ -4,19 +4,37 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{ title or 'Heinlin Field Ops' }}</title>
-  <link rel="stylesheet" href="/static/style.css?v=heinlin-core-1">
+  <link rel="stylesheet" href="/static/style.css?v=role-portals-1">
 </head>
 <body class="hfo-body" {% if theme.background_image %}style="background-image:linear-gradient(rgba(4,12,18,.86),rgba(4,12,18,.94)),url('{{ theme.background_image }}');"{% endif %}>
   <nav class="topbar">
-    <a href="/dashboard">Dashboard</a>
-    <a href="/clients">Clients</a>
-    <a href="/properties">Properties</a>
-    <a href="/jobs">Jobs</a>
-    <a href="/schedule/month">Calendar</a>
-    <a href="/invisible-office">Invisible Office</a>
-    <a href="/photos">Photos</a>
-    <a href="/crew">Crew</a>
-    <a href="/field-logs">Field Log</a>
+    {% if is_admin %}
+      <a href="/dashboard">Dashboard</a>
+      <a href="/clients">Clients</a>
+      <a href="/properties">Properties</a>
+      <a href="/jobs">Jobs</a>
+      <a href="/schedule/month">Calendar</a>
+      <a href="/invisible-office">Invisible Office</a>
+      <a href="/photos">Photos</a>
+      <a href="/crew">Crew</a>
+      <a href="/field-logs">Field Log</a>
+      <a href="/map">Map</a>
+      <a href="/weather">Weather</a>
+    {% elif is_client %}
+      <a href="/client-portal">My Portal</a>
+      <a href="/schedule/month">Schedule</a>
+      <a href="/photos">Photos</a>
+      <a href="/weather">Weather</a>
+    {% elif is_employee %}
+      <a href="/employee">My Jobs</a>
+      <a href="/jobs">Jobs</a>
+      <a href="/photos">Photos</a>
+      <a href="/map">Map</a>
+      <a href="/weather">Weather</a>
+      <a href="/field-logs">Field Ops</a>
+    {% else %}
+      <a href="/login">Login</a>
+    {% endif %}
     <a href="/logout" class="danger">Logout</a>
   </nav>
   <main class="shell">

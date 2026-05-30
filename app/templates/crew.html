@@ -1,1 +1,37 @@
-{% extends "base.html" %}{% block content %}<h1>Crew</h1><section class="list-grid">{% for e in employees %}<form class="list-card" method="post" action="/crew/{{ e.id }}/save"><h2>{{ e.name }}</h2><input name="name" value="{{ e.name }}"><input name="role" value="{{ e.role }}"><input name="phone" value="{{ e.phone }}" placeholder="Phone"><input name="email" value="{{ e.email }}" placeholder="Email"><input name="username" value="{{ e.username }}" placeholder="Login username"><input name="password" value="{{ e.password }}" placeholder="Login password"><input type="hidden" name="active" value="1"><button class="primary">Save Employee</button></form>{% endfor %}</section>{% endblock %}
+{% extends "base.html" %}{% block content %}
+<section class="section-head"><h1>Crew Manager</h1></section>
+{% if is_admin %}
+<section class="panel">
+  <h2>+ Add Crew Member</h2>
+  <form method="post" action="/crew/new" class="form-grid">
+    <input name="name" placeholder="Name" required>
+    <input name="role" placeholder="Role" value="Crew">
+    <input name="phone" placeholder="Phone">
+    <input name="email" placeholder="Email">
+    <input name="username" placeholder="Login username">
+    <input name="password" placeholder="Login password / PIN" value="1234">
+    <button class="primary wide">Create Employee</button>
+  </form>
+</section>
+{% endif %}
+<section class="list-grid">
+{% for e in employees %}
+  <form class="list-card" method="post" action="/crew/{{ e.id }}/save">
+    <h2>{{ e.name }}</h2>
+    <input name="name" value="{{ e.name }}" placeholder="Name">
+    <input name="role" value="{{ e.role }}" placeholder="Role">
+    <input name="phone" value="{{ e.phone }}" placeholder="Phone">
+    <input name="email" value="{{ e.email }}" placeholder="Email">
+    <input name="username" value="{{ e.username }}" placeholder="Login username">
+    <input name="password" value="{{ e.password }}" placeholder="Login password">
+    <label class="checkline"><input type="checkbox" name="active" value="1" {% if e.active %}checked{% endif %}> Active</label>
+    <button class="primary">Save Employee</button>
+  </form>
+  {% if is_admin %}
+  <form method="post" action="/crew/{{ e.id }}/delete" onsubmit="return confirm('Delete this employee?');" class="delete-row">
+    <button class="danger-button">Delete Employee</button>
+  </form>
+  {% endif %}
+{% endfor %}
+</section>
+{% endblock %}

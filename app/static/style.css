@@ -13,3 +13,22 @@ button.danger, .danger {
 }
 button.danger:hover, .danger:hover { filter: brightness(1.08); }
 form .danger.wide, button.danger.wide { width: 100%; margin-top: 12px; }
+
+/* Role/portal security upgrade */
+.danger-button{
+  background:#b91c1c;
+  color:white;
+  border:0;
+  border-radius:12px;
+  padding:10px 14px;
+  font-weight:800;
+  cursor:pointer;
+  margin-top:10px;
+}
+.delete-row{margin:-18px 0 16px 0; padding:0 10px;}
+.checkline{display:flex;gap:8px;align-items:center;color:#e5e7eb;font-weight:700;}
+.quick-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin:16px 0;}
+.muted{color:#94a3b8;font-size:.95rem;}
+.primary-button,.secondary-button{display:inline-block;text-decoration:none;border-radius:12px;padding:10px 14px;font-weight:800;}
+.primary-button{background:#2563eb;color:white;}
+.secondary-button{background:#334155;color:white;}
