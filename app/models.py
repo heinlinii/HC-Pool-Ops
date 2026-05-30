@@ -21,6 +21,8 @@ class Employee(Base):
     email = Column(String, default="")
     active = Column(Boolean, default=True)
     card_image = Column(String, default="")
+    username = Column(String, default="")
+    password = Column(String, default="")
 
 
 class Client(Base):

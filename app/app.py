@@ -503,6 +503,42 @@ async def calendar_day_image(request: Request, day_date: str = Form(...), notes:
     return RedirectResponse("/dashboard", status_code=303)
 
 
+# =========================================
+# ADMIN DELETE HELPERS
+# =========================================
+def _safe_delete_upload(photo_url: str):
+    """Delete local uploaded file when it lives under /static/uploads/."""
+    if not photo_url:
+        return
+    try:
+        if not str(photo_url).startswith("/static/uploads/"):
+            return
+        rel = str(photo_url).replace("/static/", "", 1)
+        path = ROOT / "app" / "static" / rel
+        # Never allow a URL to escape the uploads folder.
+        uploads_root = (ROOT / "app" / "static" / "uploads").resolve()
+        resolved = path.resolve()
+        if uploads_root in resolved.parents or resolved == uploads_root:
+            if resolved.exists() and resolved.is_file():
+                resolved.unlink()
+    except Exception:
+        pass
+
+
+def _try_exec(sql, params=()):
+    try:
+        return exec_sql(sql, params)
+    except Exception:
+        return None
+
+
+def _delete_photo_records(photo_rows):
+    for ph in photo_rows or []:
+        _safe_delete_upload(ph.get("photo_url", ""))
+        _try_exec("DELETE FROM poolops2_photo_logs WHERE id=?", (ph.get("id"),))
+
+
+
 @app.get("/clients", response_class=HTMLResponse)
 def clients(request: Request, q: str = ""):
     if not require_login(request): return login_redirect()
@@ -538,6 +574,48 @@ async def client_new(request: Request, name: str = Form("New Client")):
     if not is_admin(require_login(request)): return login_redirect()
     cid = exec_sql("INSERT INTO poolops2_clients (name) VALUES (?)", (name.strip() or "New Client",))
     return RedirectResponse(f"/clients/{cid}", status_code=303)
+
+
+@app.post("/clients/{client_id}/delete")
+def client_delete(request: Request, client_id: int):
+    if not is_admin(require_login(request)):
+        return login_redirect()
+
+    client = one("SELECT * FROM poolops2_clients WHERE id=?", (client_id,))
+    if not client:
+        return RedirectResponse("/clients", status_code=303)
+
+    client_name = client.get("name", "")
+    props = rows("SELECT * FROM poolops2_properties WHERE client_id=? OR client=?", (client_id, client_name))
+    prop_ids = [p.get("id") for p in props if p.get("id") is not None]
+
+    # Delete related property photos/files.
+    photo_rows = rows("SELECT * FROM poolops2_photo_logs WHERE client=?", (client_name,))
+    for pid in prop_ids:
+        photo_rows += rows("SELECT * FROM poolops2_photo_logs WHERE property_id=?", (pid,))
+    seen = set()
+    unique_photos = []
+    for ph in photo_rows:
+        if ph.get("id") not in seen:
+            seen.add(ph.get("id"))
+            unique_photos.append(ph)
+    _delete_photo_records(unique_photos)
+
+    # Delete related jobs, job costs, invoices, equipment, and properties.
+    jobs = rows("SELECT * FROM poolops2_jobs WHERE client=?", (client_name,))
+    for j in jobs:
+        jid = j.get("id")
+        _try_exec("DELETE FROM poolops2_job_costs WHERE job_id=?", (jid,))
+        _try_exec("DELETE FROM poolops2_invoices WHERE job_id=?", (jid,))
+        _try_exec("DELETE FROM poolops2_jobs WHERE id=?", (jid,))
+
+    for pid in prop_ids:
+        _try_exec("DELETE FROM poolops2_equipment WHERE property_id=?", (pid,))
+        _try_exec("DELETE FROM poolops2_properties WHERE id=?", (pid,))
+
+    _safe_delete_upload(client.get("card_image", ""))
+    _try_exec("DELETE FROM poolops2_clients WHERE id=?", (client_id,))
+    return RedirectResponse("/clients", status_code=303)
 
 
 @app.get("/properties", response_class=HTMLResponse)
@@ -595,6 +673,33 @@ def property_new(request: Request, client: str = Form(""), address: str = Form("
     return RedirectResponse(f"/properties/{pid}", status_code=303)
 
 
+@app.post("/properties/{property_id}/delete")
+def property_delete(request: Request, property_id: int):
+    if not is_admin(require_login(request)):
+        return login_redirect()
+
+    prop = one("SELECT * FROM poolops2_properties WHERE id=?", (property_id,))
+    if not prop:
+        return RedirectResponse("/properties", status_code=303)
+
+    # Delete photos/files tied directly to this property.
+    _delete_photo_records(rows("SELECT * FROM poolops2_photo_logs WHERE property_id=?", (property_id,)))
+
+    # Delete jobs that belong to this property/address and their costs/photos.
+    jobs = rows("SELECT * FROM poolops2_jobs WHERE address=? OR property=?", (prop.get("address", ""), prop.get("property_name", "")))
+    for j in jobs:
+        jid = j.get("id")
+        _delete_photo_records(rows("SELECT * FROM poolops2_photo_logs WHERE job_id=?", (jid,)))
+        _try_exec("DELETE FROM poolops2_job_costs WHERE job_id=?", (jid,))
+        _try_exec("DELETE FROM poolops2_invoices WHERE job_id=?", (jid,))
+        _try_exec("DELETE FROM poolops2_jobs WHERE id=?", (jid,))
+
+    _try_exec("DELETE FROM poolops2_equipment WHERE property_id=?", (property_id,))
+    _safe_delete_upload(prop.get("card_image", ""))
+    _try_exec("DELETE FROM poolops2_properties WHERE id=?", (property_id,))
+    return RedirectResponse("/properties", status_code=303)
+
+
 @app.get("/jobs", response_class=HTMLResponse)
 def jobs(request: Request):
     if not require_login(request): return login_redirect()
@@ -623,6 +728,22 @@ def job_new(request: Request, client: str = Form(""), property: str = Form(""), 
     if not is_admin(require_login(request)): return login_redirect()
     jid = exec_sql("INSERT INTO poolops2_jobs (client,property,address,job_type,status,crew,date,scheduled_start,priority,notes) VALUES (?,?,?,?,?,?,?,?,?,?)", (client, property, address, job_type, "Scheduled", "Unassigned", date, date, "Normal", ""))
     return RedirectResponse(f"/jobs/{jid}", status_code=303)
+
+
+@app.post("/jobs/{job_id}/delete")
+def job_delete(request: Request, job_id: int):
+    if not is_admin(require_login(request)):
+        return login_redirect()
+
+    job = one("SELECT * FROM poolops2_jobs WHERE id=?", (job_id,))
+    if not job:
+        return RedirectResponse("/jobs", status_code=303)
+
+    _delete_photo_records(rows("SELECT * FROM poolops2_photo_logs WHERE job_id=?", (job_id,)))
+    _try_exec("DELETE FROM poolops2_job_costs WHERE job_id=?", (job_id,))
+    _try_exec("DELETE FROM poolops2_invoices WHERE job_id=?", (job_id,))
+    _try_exec("DELETE FROM poolops2_jobs WHERE id=?", (job_id,))
+    return RedirectResponse("/jobs", status_code=303)
 
 
 @app.get("/schedule")
@@ -672,15 +793,66 @@ async def photos_add(request: Request, job_id: int = Form(0), property_id: int =
     return RedirectResponse("/photos", status_code=303)
 
 
+@app.post("/photos/{photo_id}/delete")
+def photo_delete(request: Request, photo_id: int):
+    if not is_admin(require_login(request)):
+        return login_redirect()
+
+    ph = one("SELECT * FROM poolops2_photo_logs WHERE id=?", (photo_id,))
+    if ph:
+        _safe_delete_upload(ph.get("photo_url", ""))
+        _try_exec("DELETE FROM poolops2_photo_logs WHERE id=?", (photo_id,))
+    return RedirectResponse("/photos", status_code=303)
+
+
 @app.get("/crew", response_class=HTMLResponse)
 def crew(request: Request):
     if not require_login(request): return login_redirect()
     return templates.TemplateResponse("crew.html", ctx(request, employees=rows("SELECT * FROM poolops2_employees ORDER BY name")))
 
 @app.post("/crew/{emp_id}/save")
-def crew_save(request: Request, emp_id: int, name: str = Form(""), role: str = Form(""), phone: str = Form(""), email: str = Form(""), username: str = Form(""), password: str = Form(""), active: int = Form(1)):
-    if not is_admin(require_login(request)): return login_redirect()
-    exec_sql("UPDATE poolops2_employees SET name=?, role=?, phone=?, email=?, username=?, password=?, active=? WHERE id=?", (name, role, phone, email, username, password, active, emp_id))
+def crew_save(
+    request: Request,
+    emp_id: int,
+    name: str = Form(""),
+    role: str = Form(""),
+    phone: str = Form(""),
+    email: str = Form(""),
+    username: str = Form(""),
+    password: str = Form(""),
+    active: str = Form("1"),
+):
+    if not is_admin(require_login(request)):
+        return login_redirect()
+
+    # Render/Postgres stores active as a real boolean in some deployments,
+    # while the old local SQLite build used 1/0. Passing integer 1 into a
+    # Postgres boolean column can throw a save error, so normalize it here.
+    active_value = str(active).strip().lower() in ("1", "true", "yes", "on", "active")
+
+    # Some live employee tables were created before username/password existed.
+    # Update only columns that are actually present so Crew save never crashes
+    # from a schema mismatch.
+    cols = set(table_columns("poolops2_employees"))
+    updates = []
+    values = []
+    for col, val in [
+        ("name", name),
+        ("role", role),
+        ("phone", phone),
+        ("email", email),
+        ("username", username),
+        ("password", password),
+        ("active", active_value),
+    ]:
+        if col in cols:
+            updates.append(f"{col}=?")
+            values.append(val)
+
+    if updates:
+        values.append(emp_id)
+        exec_sql(f"UPDATE poolops2_employees SET {', '.join(updates)} WHERE id=?", tuple(values))
+
     return RedirectResponse("/crew", status_code=303)
 
 
