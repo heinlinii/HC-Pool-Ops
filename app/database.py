@@ -11,11 +11,12 @@ if not DATABASE_URL:
 
 
 if DATABASE_URL.startswith("postgres://"):
-    DATABASE_URL = DATABASE_URL.replace(
-        "postgres://",
-        "postgresql://",
-        1
-    )
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
+# Render and most examples provide postgresql:// URLs.
+# Use psycopg v3 driver when available so local Python 3.14 does not fight psycopg2-binary.
+if DATABASE_URL.startswith("postgresql://"):
+    DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+psycopg://", 1)
 
 
 connect_args = {}

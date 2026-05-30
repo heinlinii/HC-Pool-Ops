@@ -12,7 +12,7 @@ from typing import List
 from uuid import uuid4
 import importlib
 active_sessions = {}
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+client = None  # Disabled at startup so the app boots without requiring OPENAI_API_KEY locally
 
 try:
     requests = importlib.import_module("requests")
@@ -628,10 +628,9 @@ async def seed_users(request: Request):
         if existing:
             existing.password = password
             existing.role = role
-            existing.name = name
+            existing.name = name or username
         else:
-            db.add(User(username=username, password=password, role=role, name=name))
-
+          db.add(User(username=username, password=password, role=role, name=(name or username)))
     db.commit()
     db.close()
 
