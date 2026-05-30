@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portal Setup - Heinlin Field Ops</title>
+  <link rel="stylesheet" href="/static/style.css?v=portal-auth-1">
+</head>
+<body>
+{% include "_mobile_nav.html" %}
+<div class="ops-shell">
+  <header class="ops-page-header">
+    <div>
+      <div class="ops-kicker">ADMIN</div>
+      <h1>Portal Login Setup</h1>
+      <p>Seed employee and client logins from the cards you already have.</p>
+    </div>
+    <div class="ops-header-actions"><a class="secondary-button" href="/dashboard">Dashboard</a></div>
+  </header>
+  <section class="ops-panel">
+    <h2>One-click setup</h2>
+    <p>This creates employee logins in the main login system and fills blank client portal usernames/passwords.</p>
+    <form method="post" action="/portal-setup/seed"><button class="primary-button">Create / Repair Portal Logins</button></form>
+    <p class="jarvis-small-note">Employee default password uses last 4 of phone if available, otherwise 0318. Client default password uses their client ID padded to 4 digits.</p>
+  </section>
+  <section class="ops-grid-2" style="margin-top:18px;">
+    <div class="ops-panel"><h2>Employees</h2><p>{{ employees|length }} employee cards</p><a href="/employees" class="secondary-button">Open Employee Cards</a></div>
+    <div class="ops-panel"><h2>Clients</h2><p>{{ clients|length }} client cards</p><a href="/clients" class="secondary-button">Open Client Cards</a></div>
+  </section>
+  <section class="ops-panel" style="margin-top:18px;"><h2>Current Users</h2>{% for u in users %}<p><strong>{{ u.username }}</strong> — {{ u.role }} — {{ u.name }}</p>{% endfor %}</section>
+</div>
+</body>
+</html>

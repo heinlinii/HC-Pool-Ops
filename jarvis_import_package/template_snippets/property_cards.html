@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="page-shell">
+  <div class="page-header">
+    <div>
+      <p class="eyebrow">Heinlin Field Ops</p>
+      <h1>Property Cards</h1>
+      <p class="muted">Your properties are the center of the system: jobs, photos, schedule, service history, and invoices all connect here.</p>
+    </div>
+    <a class="primary-btn" href="/properties/new">+ Add Property</a>
+  </div>
+
+  <div class="property-card-grid">
+    {% for card in property_cards %}
+    <article class="property-card" style="background-image: linear-gradient(180deg, rgba(4,8,18,.25), rgba(4,8,18,.88)), url('{{ card.card_image or card.latest_photo_url or "/static/uploads/fountain.jpg" }}');">
+      <div class="property-card-top">
+        <span class="status-pill">{{ card.latest_job_status or "No active job" }}</span>
+        {% if card.needs_review %}
+        <span class="review-pill">Review Address</span>
+        {% endif %}
+      </div>
+
+      <div class="property-card-body">
+        <h2>{{ card.property_name }}</h2>
+        <p>{{ card.client_name }}</p>
+        <p class="small">{{ card.full_address or "No address yet" }}</p>
+      </div>
+
+      <div class="property-card-actions">
+        <a href="/properties/{{ card.property_db_id }}">Open Card</a>
+        <a href="/jobs/new?property_id={{ card.property_db_id }}">Add Job</a>
+        <a href="/photos/new?property_id={{ card.property_db_id }}">Add Photo</a>
+        {% if card.google_maps_url %}
+        <a href="{{ card.google_maps_url }}" target="_blank">Map</a>
+        {% endif %}
+      </div>
+    </article>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

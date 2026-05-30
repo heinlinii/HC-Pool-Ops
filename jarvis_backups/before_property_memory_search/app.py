@@ -11,12 +11,6 @@ import os
 import shutil
 import sqlite3
 import uuid
-try:
-    import psycopg
-    from psycopg.rows import dict_row
-except Exception:
-    psycopg = None
-    dict_row = None
 
 ROOT = Path(__file__).resolve().parent.parent
 DB_PATH = ROOT / "poolops2_local.db"
@@ -52,17 +46,7 @@ DEFAULT_THEME = {
 }
 
 
-
-DATABASE_URL = os.environ.get("DATABASE_URL", "").strip()
-USE_POSTGRES = bool(DATABASE_URL and DATABASE_URL.startswith(("postgres://", "postgresql://")))
-
-
 def db():
-    """Return a SQLite connection locally, or Postgres on Render when DATABASE_URL is set."""
-    if USE_POSTGRES:
-        if psycopg is None:
-            raise RuntimeError("psycopg is required for Postgres DATABASE_URL")
-        return psycopg.connect(DATABASE_URL, row_factory=dict_row)
     if not DB_PATH.exists() and LEGACY_DB_PATH.exists():
         shutil.copy2(LEGACY_DB_PATH, DB_PATH)
     con = sqlite3.connect(DB_PATH)
@@ -70,71 +54,37 @@ def db():
     return con
 
 
-def _convert_placeholders(sql: str) -> str:
-    # The app was originally written with SQLite '?' placeholders.
-    # psycopg uses '%s'. This simple conversion is safe for our parameterized app queries.
-    return sql.replace("?", "%s")
-
-
 def rows(sql, params=()):
     con = db()
     try:
-        if USE_POSTGRES:
-            s = sql.strip()
-            low = s.lower()
-            if "sqlite_master" in low:
-                with con.cursor() as cur:
-                    cur.execute("SELECT tablename AS name FROM pg_tables WHERE schemaname='public' ORDER BY tablename")
-                    return [dict(r) for r in cur.fetchall()]
-            if low.startswith("pragma table_info"):
-                table = s[s.find("(")+1:s.rfind(")")].strip().strip('"')
-                with con.cursor() as cur:
-                    cur.execute("SELECT column_name AS name FROM information_schema.columns WHERE table_schema='public' AND table_name=%s ORDER BY ordinal_position", (table,))
-                    return [dict(r) for r in cur.fetchall()]
-            with con.cursor() as cur:
-                cur.execute(_convert_placeholders(sql), params)
-                return [dict(r) for r in cur.fetchall()]
-        else:
-            return [dict(r) for r in con.execute(sql, params).fetchall()]
+        return [dict(r) for r in con.execute(sql, params).fetchall()]
     finally:
         con.close()
 
 
 def one(sql, params=()):
-    data = rows(sql, params)
-    return data[0] if data else None
+    con = db()
+    try:
+        r = con.execute(sql, params).fetchone()
+        return dict(r) if r else None
+    finally:
+        con.close()
 
 
 def exec_sql(sql, params=()):
     con = db()
     try:
-        if USE_POSTGRES:
-            with con.cursor() as cur:
-                cur.execute(_convert_placeholders(sql), params)
-                new_id = None
-                try:
-                    if cur.description:
-                        row = cur.fetchone()
-                        if row:
-                            new_id = list(dict(row).values())[0]
-                except Exception:
-                    pass
-                con.commit()
-                return new_id
-        else:
-            cur = con.execute(sql, params)
-            con.commit()
-            return cur.lastrowid
+        cur = con.execute(sql, params)
+        con.commit()
+        return cur.lastrowid
     finally:
         con.close()
 
 
 def table_columns(table):
-    if USE_POSTGRES:
-        return [r["name"] for r in rows("SELECT column_name AS name FROM information_schema.columns WHERE table_schema='public' AND table_name=? ORDER BY ordinal_position", (table,))]
     con = db()
     try:
-        return [r["name"] for r in con.execute(f"PRAGMA table_info({table})").fetchall()]
+        return {r[1] for r in con.execute(f"PRAGMA table_info({table})").fetchall()}
     finally:
         con.close()
 
@@ -151,152 +101,81 @@ def ensure_schema():
     con = db()
     try:
         c = con.cursor()
-        if USE_POSTGRES:
-            c.execute("""CREATE TABLE IF NOT EXISTS poolops2_users (
-                id SERIAL PRIMARY KEY,
-                username TEXT UNIQUE NOT NULL,
-                password TEXT NOT NULL,
-                role TEXT DEFAULT 'admin',
-                name TEXT DEFAULT ''
-            )""")
-            c.execute("""CREATE TABLE IF NOT EXISTS poolops2_clients (
-                id SERIAL PRIMARY KEY,
-                name TEXT NOT NULL,
-                contact_name TEXT DEFAULT '', phone TEXT DEFAULT '', mobile TEXT DEFAULT '', email TEXT DEFAULT '',
-                billing_address TEXT DEFAULT '', shipping_address TEXT DEFAULT '', city TEXT DEFAULT '', state TEXT DEFAULT '', zip_code TEXT DEFAULT '',
-                company TEXT DEFAULT '', notes TEXT DEFAULT '', portal_username TEXT DEFAULT '', portal_password TEXT DEFAULT '', card_image TEXT DEFAULT ''
-            )""")
-            c.execute("""CREATE TABLE IF NOT EXISTS poolops2_properties (
-                id SERIAL PRIMARY KEY,
-                client_id INTEGER, client TEXT DEFAULT '', property_name TEXT DEFAULT '', address TEXT DEFAULT '', city TEXT DEFAULT '', state TEXT DEFAULT '', zip_code TEXT DEFAULT '',
-                pool_type TEXT DEFAULT '', pool_size TEXT DEFAULT '', pool_depth TEXT DEFAULT '', cover_type TEXT DEFAULT '', finish_type TEXT DEFAULT '',
-                pump_model TEXT DEFAULT '', filter_model TEXT DEFAULT '', heater_model TEXT DEFAULT '', sanitizer TEXT DEFAULT '', automation_system TEXT DEFAULT '',
-                gate_code TEXT DEFAULT '', service_plan TEXT DEFAULT '', notes TEXT DEFAULT '', card_image TEXT DEFAULT '', latitude REAL, longitude REAL,
-                pool_notes TEXT DEFAULT '', equipment_notes TEXT DEFAULT ''
-            )""")
-            c.execute("""CREATE TABLE IF NOT EXISTS poolops2_jobs (
-                id SERIAL PRIMARY KEY,
-                client TEXT DEFAULT '', property TEXT DEFAULT '', address TEXT DEFAULT '', job_type TEXT DEFAULT '', status TEXT DEFAULT 'Pending', crew TEXT DEFAULT 'Unassigned',
-                date TEXT DEFAULT '', priority TEXT DEFAULT 'Normal', notes TEXT DEFAULT '', scheduled_start TEXT, scheduled_end TEXT, card_image TEXT DEFAULT ''
-            )""")
-            c.execute("""CREATE TABLE IF NOT EXISTS poolops2_employees (
-                id SERIAL PRIMARY KEY,
-                name TEXT DEFAULT '', role TEXT DEFAULT '', phone TEXT DEFAULT '', email TEXT DEFAULT '', active INTEGER DEFAULT 1, card_image TEXT DEFAULT '', username TEXT DEFAULT '', password TEXT DEFAULT ''
-            )""")
-            c.execute("""CREATE TABLE IF NOT EXISTS poolops2_photo_logs (
-                id SERIAL PRIMARY KEY,
-                job_id INTEGER, property_id INTEGER, client TEXT DEFAULT '', photo_type TEXT DEFAULT 'Progress', title TEXT DEFAULT '',
-                photo_url TEXT DEFAULT '', date TEXT DEFAULT '', notes TEXT DEFAULT '', latitude REAL, longitude REAL
-            )""")
-            c.execute("""CREATE TABLE IF NOT EXISTS poolops2_calendar_day_images (
-                id SERIAL PRIMARY KEY,
-                day_date TEXT UNIQUE NOT NULL,
-                image_url TEXT DEFAULT '',
-                notes TEXT DEFAULT ''
-            )""")
-            c.execute("""CREATE TABLE IF NOT EXISTS poolops2_equipment (
-                id SERIAL PRIMARY KEY,
-                property_id INTEGER,
-                equipment_type TEXT DEFAULT '', brand TEXT DEFAULT '', model TEXT DEFAULT '', serial TEXT DEFAULT '', installed_date TEXT DEFAULT '', notes TEXT DEFAULT ''
-            )""")
-            c.execute("""CREATE TABLE IF NOT EXISTS poolops2_estimates (
-                id SERIAL PRIMARY KEY,
-                client TEXT DEFAULT '', property TEXT DEFAULT '', title TEXT DEFAULT '', status TEXT DEFAULT 'Draft', amount REAL DEFAULT 0, notes TEXT DEFAULT '', created_at TEXT DEFAULT ''
-            )""")
-            c.execute("""CREATE TABLE IF NOT EXISTS field_logs (
-                id SERIAL PRIMARY KEY,
-                employee_name TEXT DEFAULT '', crew TEXT DEFAULT '', client TEXT DEFAULT '', property TEXT DEFAULT '', address TEXT DEFAULT '', date TEXT DEFAULT '',
-                arrival_time TEXT DEFAULT '', departure_time TEXT DEFAULT '', total_hours REAL DEFAULT 0, tools_used TEXT DEFAULT '', materials_used TEXT DEFAULT '',
-                equipment_used TEXT DEFAULT '', work_completed TEXT DEFAULT '', issues TEXT DEFAULT '', next_steps TEXT DEFAULT '', weather TEXT DEFAULT '', photo_count INTEGER DEFAULT 0, created_at TEXT DEFAULT ''
-            )""")
-            c.execute("""CREATE TABLE IF NOT EXISTS poolops2_job_costs (
-                id SERIAL PRIMARY KEY,
-                job_id INTEGER, client TEXT DEFAULT '', labor REAL DEFAULT 0, materials REAL DEFAULT 0, subs REAL DEFAULT 0, equipment REAL DEFAULT 0, fuel REAL DEFAULT 0, other REAL DEFAULT 0, invoice_amount REAL DEFAULT 0, notes TEXT DEFAULT ''
-            )""")
-            c.execute("""CREATE TABLE IF NOT EXISTS poolops2_office_notes (
-                id SERIAL PRIMARY KEY,
-                note TEXT DEFAULT '',
-                created_at TEXT DEFAULT ''
-            )""")
-            c.execute("""CREATE TABLE IF NOT EXISTS poolops2_invoices (
-                id SERIAL PRIMARY KEY,
-                job_id INTEGER, client TEXT DEFAULT '', description TEXT DEFAULT '', amount REAL DEFAULT 0, status TEXT DEFAULT 'Draft', date TEXT DEFAULT '', notes TEXT DEFAULT ''
-            )""")
-        else:
-            c.execute("""CREATE TABLE IF NOT EXISTS poolops2_users (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                username TEXT UNIQUE NOT NULL,
-                password TEXT NOT NULL,
-                role TEXT DEFAULT 'admin',
-                name TEXT DEFAULT ''
-            )""")
-            c.execute("""CREATE TABLE IF NOT EXISTS poolops2_clients (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                name TEXT NOT NULL,
-                contact_name TEXT DEFAULT '', phone TEXT DEFAULT '', mobile TEXT DEFAULT '', email TEXT DEFAULT '',
-                billing_address TEXT DEFAULT '', shipping_address TEXT DEFAULT '', city TEXT DEFAULT '', state TEXT DEFAULT '', zip_code TEXT DEFAULT '',
-                company TEXT DEFAULT '', notes TEXT DEFAULT '', portal_username TEXT DEFAULT '', portal_password TEXT DEFAULT '', card_image TEXT DEFAULT ''
-            )""")
-            c.execute("""CREATE TABLE IF NOT EXISTS poolops2_properties (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                client_id INTEGER, client TEXT DEFAULT '', property_name TEXT DEFAULT '', address TEXT DEFAULT '', city TEXT DEFAULT '', state TEXT DEFAULT '', zip_code TEXT DEFAULT '',
-                pool_type TEXT DEFAULT '', pool_size TEXT DEFAULT '', pool_depth TEXT DEFAULT '', cover_type TEXT DEFAULT '', finish_type TEXT DEFAULT '',
-                pump_model TEXT DEFAULT '', filter_model TEXT DEFAULT '', heater_model TEXT DEFAULT '', sanitizer TEXT DEFAULT '', automation_system TEXT DEFAULT '',
-                gate_code TEXT DEFAULT '', service_plan TEXT DEFAULT '', notes TEXT DEFAULT '', card_image TEXT DEFAULT '', latitude REAL, longitude REAL,
-                pool_notes TEXT DEFAULT '', equipment_notes TEXT DEFAULT ''
-            )""")
-            c.execute("""CREATE TABLE IF NOT EXISTS poolops2_jobs (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                client TEXT DEFAULT '', property TEXT DEFAULT '', address TEXT DEFAULT '', job_type TEXT DEFAULT '', status TEXT DEFAULT 'Pending', crew TEXT DEFAULT 'Unassigned',
-                date TEXT DEFAULT '', priority TEXT DEFAULT 'Normal', notes TEXT DEFAULT '', scheduled_start TEXT, scheduled_end TEXT, card_image TEXT DEFAULT ''
-            )""")
-            c.execute("""CREATE TABLE IF NOT EXISTS poolops2_employees (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                name TEXT DEFAULT '', role TEXT DEFAULT '', phone TEXT DEFAULT '', email TEXT DEFAULT '', active INTEGER DEFAULT 1, card_image TEXT DEFAULT '', username TEXT DEFAULT '', password TEXT DEFAULT ''
-            )""")
-            c.execute("""CREATE TABLE IF NOT EXISTS poolops2_photo_logs (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                job_id INTEGER, property_id INTEGER, client TEXT DEFAULT '', photo_type TEXT DEFAULT 'Progress', title TEXT DEFAULT '',
-                photo_url TEXT DEFAULT '', date TEXT DEFAULT '', notes TEXT DEFAULT '', latitude REAL, longitude REAL
-            )""")
-            c.execute("""CREATE TABLE IF NOT EXISTS poolops2_calendar_day_images (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                day_date TEXT UNIQUE NOT NULL,
-                image_url TEXT DEFAULT '',
-                notes TEXT DEFAULT ''
-            )""")
-            c.execute("""CREATE TABLE IF NOT EXISTS poolops2_equipment (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                property_id INTEGER,
-                equipment_type TEXT DEFAULT '', brand TEXT DEFAULT '', model TEXT DEFAULT '', serial TEXT DEFAULT '', installed_date TEXT DEFAULT '', notes TEXT DEFAULT ''
-            )""")
-            c.execute("""CREATE TABLE IF NOT EXISTS poolops2_estimates (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                client TEXT DEFAULT '', property TEXT DEFAULT '', title TEXT DEFAULT '', status TEXT DEFAULT 'Draft', amount REAL DEFAULT 0, notes TEXT DEFAULT '', created_at TEXT DEFAULT ''
-            )""")
-            c.execute("""CREATE TABLE IF NOT EXISTS field_logs (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                employee_name TEXT DEFAULT '', crew TEXT DEFAULT '', client TEXT DEFAULT '', property TEXT DEFAULT '', address TEXT DEFAULT '', date TEXT DEFAULT '',
-                arrival_time TEXT DEFAULT '', departure_time TEXT DEFAULT '', total_hours REAL DEFAULT 0, tools_used TEXT DEFAULT '', materials_used TEXT DEFAULT '',
-                equipment_used TEXT DEFAULT '', work_completed TEXT DEFAULT '', issues TEXT DEFAULT '', next_steps TEXT DEFAULT '', weather TEXT DEFAULT '', photo_count INTEGER DEFAULT 0, created_at TEXT DEFAULT ''
-            )""")
-            c.execute("""CREATE TABLE IF NOT EXISTS poolops2_job_costs (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                job_id INTEGER, client TEXT DEFAULT '', labor REAL DEFAULT 0, materials REAL DEFAULT 0, subs REAL DEFAULT 0, equipment REAL DEFAULT 0, fuel REAL DEFAULT 0, other REAL DEFAULT 0, invoice_amount REAL DEFAULT 0, notes TEXT DEFAULT ''
-            )""")
-            c.execute("""CREATE TABLE IF NOT EXISTS poolops2_office_notes (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                note TEXT DEFAULT '',
-                created_at TEXT DEFAULT ''
-            )""")
-            c.execute("""CREATE TABLE IF NOT EXISTS poolops2_invoices (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                job_id INTEGER, client TEXT DEFAULT '', description TEXT DEFAULT '', amount REAL DEFAULT 0, status TEXT DEFAULT 'Draft', date TEXT DEFAULT '', notes TEXT DEFAULT ''
-            )""")
+        c.execute("""CREATE TABLE IF NOT EXISTS poolops2_users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE NOT NULL,
+            password TEXT NOT NULL,
+            role TEXT DEFAULT 'admin',
+            name TEXT DEFAULT ''
+        )""")
+        c.execute("""CREATE TABLE IF NOT EXISTS poolops2_clients (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            contact_name TEXT DEFAULT '', phone TEXT DEFAULT '', mobile TEXT DEFAULT '', email TEXT DEFAULT '',
+            billing_address TEXT DEFAULT '', shipping_address TEXT DEFAULT '', city TEXT DEFAULT '', state TEXT DEFAULT '', zip_code TEXT DEFAULT '',
+            company TEXT DEFAULT '', notes TEXT DEFAULT '', portal_username TEXT DEFAULT '', portal_password TEXT DEFAULT '', card_image TEXT DEFAULT ''
+        )""")
+        c.execute("""CREATE TABLE IF NOT EXISTS poolops2_properties (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            client_id INTEGER, client TEXT DEFAULT '', property_name TEXT DEFAULT '', address TEXT DEFAULT '', city TEXT DEFAULT '', state TEXT DEFAULT '', zip_code TEXT DEFAULT '',
+            pool_type TEXT DEFAULT '', pool_size TEXT DEFAULT '', pool_depth TEXT DEFAULT '', cover_type TEXT DEFAULT '', finish_type TEXT DEFAULT '',
+            pump_model TEXT DEFAULT '', filter_model TEXT DEFAULT '', heater_model TEXT DEFAULT '', sanitizer TEXT DEFAULT '', automation_system TEXT DEFAULT '',
+            gate_code TEXT DEFAULT '', service_plan TEXT DEFAULT '', notes TEXT DEFAULT '', card_image TEXT DEFAULT '', latitude REAL, longitude REAL,
+            pool_notes TEXT DEFAULT '', equipment_notes TEXT DEFAULT ''
+        )""")
+        c.execute("""CREATE TABLE IF NOT EXISTS poolops2_jobs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            client TEXT DEFAULT '', property TEXT DEFAULT '', address TEXT DEFAULT '', job_type TEXT DEFAULT '', status TEXT DEFAULT 'Pending', crew TEXT DEFAULT 'Unassigned',
+            date TEXT DEFAULT '', priority TEXT DEFAULT 'Normal', notes TEXT DEFAULT '', scheduled_start TEXT, scheduled_end TEXT, card_image TEXT DEFAULT ''
+        )""")
+        c.execute("""CREATE TABLE IF NOT EXISTS poolops2_employees (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT DEFAULT '', role TEXT DEFAULT '', phone TEXT DEFAULT '', email TEXT DEFAULT '', active INTEGER DEFAULT 1, card_image TEXT DEFAULT '', username TEXT DEFAULT '', password TEXT DEFAULT ''
+        )""")
+        c.execute("""CREATE TABLE IF NOT EXISTS poolops2_photo_logs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            job_id INTEGER, property_id INTEGER, client TEXT DEFAULT '', photo_type TEXT DEFAULT 'Progress', title TEXT DEFAULT '',
+            photo_url TEXT DEFAULT '', date TEXT DEFAULT '', notes TEXT DEFAULT '', latitude REAL, longitude REAL
+        )""")
+        c.execute("""CREATE TABLE IF NOT EXISTS poolops2_calendar_day_images (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            day_date TEXT UNIQUE NOT NULL,
+            image_url TEXT DEFAULT '',
+            notes TEXT DEFAULT ''
+        )""")
+        c.execute("""CREATE TABLE IF NOT EXISTS poolops2_equipment (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            property_id INTEGER,
+            equipment_type TEXT DEFAULT '', brand TEXT DEFAULT '', model TEXT DEFAULT '', serial TEXT DEFAULT '', installed_date TEXT DEFAULT '', notes TEXT DEFAULT ''
+        )""")
+        c.execute("""CREATE TABLE IF NOT EXISTS poolops2_estimates (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            client TEXT DEFAULT '', property TEXT DEFAULT '', title TEXT DEFAULT '', status TEXT DEFAULT 'Draft', amount REAL DEFAULT 0, notes TEXT DEFAULT '', created_at TEXT DEFAULT ''
+        )""")
+        c.execute("""CREATE TABLE IF NOT EXISTS field_logs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            employee_name TEXT DEFAULT '', crew TEXT DEFAULT '', client TEXT DEFAULT '', property TEXT DEFAULT '', address TEXT DEFAULT '', date TEXT DEFAULT '',
+            arrival_time TEXT DEFAULT '', departure_time TEXT DEFAULT '', total_hours REAL DEFAULT 0, tools_used TEXT DEFAULT '', materials_used TEXT DEFAULT '',
+            equipment_used TEXT DEFAULT '', work_completed TEXT DEFAULT '', issues TEXT DEFAULT '', next_steps TEXT DEFAULT '', weather TEXT DEFAULT '', photo_count INTEGER DEFAULT 0, created_at TEXT DEFAULT ''
+        )""")
+        c.execute("""CREATE TABLE IF NOT EXISTS poolops2_job_costs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            job_id INTEGER, client TEXT DEFAULT '', labor REAL DEFAULT 0, materials REAL DEFAULT 0, subs REAL DEFAULT 0, equipment REAL DEFAULT 0, fuel REAL DEFAULT 0, other REAL DEFAULT 0, invoice_amount REAL DEFAULT 0, notes TEXT DEFAULT ''
+        )""")
+        c.execute("""CREATE TABLE IF NOT EXISTS poolops2_office_notes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            note TEXT DEFAULT '',
+            created_at TEXT DEFAULT ''
+        )""")
+        c.execute("""CREATE TABLE IF NOT EXISTS poolops2_invoices (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            job_id INTEGER, client TEXT DEFAULT '', description TEXT DEFAULT '', amount REAL DEFAULT 0, status TEXT DEFAULT 'Draft', date TEXT DEFAULT '', notes TEXT DEFAULT ''
+        )""")
         con.commit()
     finally:
         con.close()
 
+    # add missing columns safely
     for table, cols in {
         "poolops2_clients": [("portal_username", "TEXT DEFAULT ''"), ("portal_password", "TEXT DEFAULT ''"), ("card_image", "TEXT DEFAULT ''")],
         "poolops2_properties": [("card_image", "TEXT DEFAULT ''"), ("pool_notes", "TEXT DEFAULT ''"), ("equipment_notes", "TEXT DEFAULT ''"), ("latitude", "REAL"), ("longitude", "REAL")],
@@ -309,6 +188,7 @@ def ensure_schema():
 
     if not one("SELECT id FROM poolops2_users WHERE username=?", ("mike",)):
         exec_sql("INSERT INTO poolops2_users (username,password,role,name) VALUES (?,?,?,?)", ("mike", "mike", "admin", "Mike"))
+
 
 @app.on_event("startup")
 def startup():
@@ -778,226 +658,41 @@ def invisible_office_search(request: Request, q: str = ""):
         return RedirectResponse("/login", status_code=303)
 
     q = (q or "").strip()
+    like = f"%{q}%"
     results = []
 
-    def get_tables():
+    def add_results(kind, sql, params, url_prefix, title_fields, detail_fields):
         try:
-            return [r.get("name") for r in rows("SELECT name FROM sqlite_master WHERE type='table'") if r.get("name")]
+            for row in rows(sql, params):
+                title = " ".join(str(row.get(f) or "") for f in title_fields).strip() or kind
+                detail = " | ".join(str(row.get(f) or "") for f in detail_fields if row.get(f)).strip()
+                results.append({"kind": kind, "title": title, "detail": detail, "url": f"{url_prefix}{row.get('id')}"})
         except Exception:
-            return []
-
-    def get_cols(table):
-        try:
-            return [r.get("name") for r in rows(f"PRAGMA table_info({table})") if r.get("name")]
-        except Exception:
-            return []
-
-    def find_table(*keys):
-        for t in get_tables():
-            low = t.lower()
-            if all(k.lower() in low for k in keys):
-                return t
-        return None
-
-    def title_for(row, cols):
-        for combo in [
-            ["client_name"], ["property_name"], ["name"], ["contact_name"],
-            ["address"], ["job_name"], ["title"], ["description"]
-        ]:
-            vals = [str(row.get(c) or "") for c in combo if c in cols and row.get(c)]
-            if vals:
-                return " ".join(vals)
-        return "Record"
-
-    def detail_for(row, cols):
-        preferred = ["address", "city", "state", "zip", "phone", "email", "job_type", "status", "date", "scheduled_date", "notes", "description"]
-        out = []
-        for c in preferred:
-            if c in cols and row.get(c):
-                val = str(row.get(c))
-                if len(val) > 120:
-                    val = val[:120] + "..."
-                out.append(val)
-            if len(out) >= 5:
-                break
-        return " | ".join(out)
-
-    def kind_for(table):
-        t = table.lower()
-        if "propert" in t:
-            return "Property"
-        if "client" in t:
-            return "Client"
-        if "job" in t:
-            return "Job"
-        if "photo" in t:
-            return "Photo"
-        if "field" in t:
-            return "Field Log"
-        if "employee" in t or "crew" in t:
-            return "Crew"
-        if "estimate" in t:
-            return "Estimate"
-        if "cost" in t:
-            return "Job Cost"
-        if "invoice" in t or "quickbook" in t:
-            return "Billing"
-        return table
-
-    def url_for(table, row):
-        rid = row.get("id") or ""
-        t = table.lower()
-        if "propert" in t:
-            return f"/properties/{rid}" if rid else "/properties"
-        if "client" in t:
-            return f"/clients/{rid}" if rid else "/clients"
-        if "job" in t:
-            return f"/jobs/{rid}" if rid else "/jobs"
-        if "photo" in t:
-            return "/photos"
-        if "field" in t:
-            return "/field-logs"
-        if "employee" in t or "crew" in t:
-            return "/crew"
-        if "estimate" in t:
-            return "/estimates"
-        if "cost" in t:
-            return "/job-costing"
-        if "invoice" in t or "quickbook" in t:
-            return "/quickbooks"
-        return "/invisible-office"
-
-    def add_result(kind, title, detail, url, badge=""):
-        results.append({"kind": kind, "title": title, "detail": detail, "url": url, "badge": badge})
-
-    def search_table(table, q, limit=25):
-        cols = get_cols(table)
-        search_cols = [c for c in cols if c.lower() not in ["id"]]
-        if not search_cols:
-            return []
-        where = " OR ".join([f"CAST({c} AS TEXT) LIKE ?" for c in search_cols])
-        try:
-            return rows(f"SELECT * FROM {table} WHERE {where} LIMIT {limit}", tuple([f"%{q}%"] * len(search_cols)))
-        except Exception:
-            return []
+            pass
 
     if q:
-        tables = get_tables()
-        property_table = find_table("propert")
-        client_table = find_table("client")
-        job_table = find_table("job")
-        photo_table = find_table("photo")
-        field_table = find_table("field")
+        add_results("Client",
+            "SELECT * FROM poolops2_clients WHERE client_name LIKE ? OR contact_name LIKE ? OR phone LIKE ? OR email LIKE ? OR notes LIKE ? LIMIT 25",
+            (like, like, like, like, like), "/clients/", ["client_name"], ["contact_name", "phone", "email", "notes"])
 
-        matched_properties = []
+        add_results("Property",
+            "SELECT * FROM poolops2_properties WHERE property_name LIKE ? OR address LIKE ? OR city LIKE ? OR notes LIKE ? LIMIT 25",
+            (like, like, like, like), "/properties/", ["property_name"], ["address", "city", "notes"])
 
-        # First, prioritize property cards because property is the center of the system.
-        if property_table:
-            pcols = get_cols(property_table)
-            for p in search_table(property_table, q, 20):
-                matched_properties.append(p)
-                title = title_for(p, pcols)
-                detail = detail_for(p, pcols)
-                add_result("Property Card", title, detail, url_for(property_table, p), "Open Property Brain")
+        add_results("Job",
+            "SELECT * FROM poolops2_jobs WHERE client_name LIKE ? OR property_name LIKE ? OR job_type LIKE ? OR description LIKE ? OR notes LIKE ? LIMIT 25",
+            (like, like, like, like, like), "/jobs/", ["client_name", "property_name"], ["job_type", "status", "description", "notes"])
 
-                # Pull related jobs by property_id, client_id, property name, or address if possible.
-                if job_table:
-                    jcols = get_cols(job_table)
-                    clauses = []
-                    params = []
-                    if "property_id" in jcols and p.get("id"):
-                        clauses.append("CAST(property_id AS TEXT)=?")
-                        params.append(str(p.get("id")))
-                    if "client_id" in jcols and p.get("client_id"):
-                        clauses.append("CAST(client_id AS TEXT)=?")
-                        params.append(str(p.get("client_id")))
-                    for key in ["property_name", "name", "address"]:
-                        if key in pcols and p.get(key):
-                            for jc in ["property_name", "client_name", "description", "notes", "address"]:
-                                if jc in jcols:
-                                    clauses.append(f"CAST({jc} AS TEXT) LIKE ?")
-                                    params.append(f"%{p.get(key)}%")
-                    if clauses:
-                        try:
-                            for j in rows(f"SELECT * FROM {job_table} WHERE {' OR '.join(clauses)} LIMIT 8", tuple(params)):
-                                add_result("Related Job", title_for(j, jcols), detail_for(j, jcols), url_for(job_table, j), "Linked to Property")
-                        except Exception:
-                            pass
-
-                # Pull related photos by property_id or property text.
-                if photo_table:
-                    phcols = get_cols(photo_table)
-                    clauses = []
-                    params = []
-                    if "property_id" in phcols and p.get("id"):
-                        clauses.append("CAST(property_id AS TEXT)=?")
-                        params.append(str(p.get("id")))
-                    for key in ["property_name", "name", "address"]:
-                        if key in pcols and p.get(key):
-                            for pc in ["property_name", "caption", "description", "notes", "filename", "path"]:
-                                if pc in phcols:
-                                    clauses.append(f"CAST({pc} AS TEXT) LIKE ?")
-                                    params.append(f"%{p.get(key)}%")
-                    if clauses:
-                        try:
-                            for ph in rows(f"SELECT * FROM {photo_table} WHERE {' OR '.join(clauses)} LIMIT 8", tuple(params)):
-                                add_result("Related Photo", title_for(ph, phcols), detail_for(ph, phcols), url_for(photo_table, ph), "Photo Memory")
-                        except Exception:
-                            pass
-
-                # Pull related field logs.
-                if field_table:
-                    fcols = get_cols(field_table)
-                    clauses = []
-                    params = []
-                    if "property_id" in fcols and p.get("id"):
-                        clauses.append("CAST(property_id AS TEXT)=?")
-                        params.append(str(p.get("id")))
-                    for key in ["property_name", "name", "address"]:
-                        if key in pcols and p.get(key):
-                            for fc in ["property_name", "client_name", "notes", "description", "work_performed"]:
-                                if fc in fcols:
-                                    clauses.append(f"CAST({fc} AS TEXT) LIKE ?")
-                                    params.append(f"%{p.get(key)}%")
-                    if clauses:
-                        try:
-                            for fl in rows(f"SELECT * FROM {field_table} WHERE {' OR '.join(clauses)} LIMIT 8", tuple(params)):
-                                add_result("Related Field Log", title_for(fl, fcols), detail_for(fl, fcols), url_for(field_table, fl), "Field Memory")
-                        except Exception:
-                            pass
-
-        # Then do a broad fallback search across operational tables.
-        for table in tables:
-            if not any(k in table.lower() for k in ["client", "propert", "job", "photo", "field", "employee", "crew", "estimate", "cost", "invoice", "quickbook", "office_note"]):
-                continue
-            cols = get_cols(table)
-            for row in search_table(table, q, 12):
-                add_result(kind_for(table), title_for(row, cols), detail_for(row, cols), url_for(table, row), "Search Match")
-            if len(results) >= 75:
-                break
-
-        # De-duplicate by kind/title/detail/url.
-        seen = set()
-        clean = []
-        for r in results:
-            key = (r.get("kind"), r.get("title"), r.get("detail"), r.get("url"))
-            if key not in seen:
-                clean.append(r)
-                seen.add(key)
-        results = clean[:75]
+        try:
+            for row in rows("SELECT * FROM poolops2_office_notes WHERE note LIKE ? ORDER BY id DESC LIMIT 25", (like,)):
+                results.append({"kind": "Office Note", "title": row.get("created_at") or "Note", "detail": row.get("note") or "", "url": "/invisible-office"})
+        except Exception:
+            pass
 
     try:
         notes = rows("SELECT * FROM poolops2_office_notes ORDER BY id DESC LIMIT 25")
     except Exception:
         notes = []
 
-    return templates.TemplateResponse("invisible_office.html", {
-        "request": request,
-        "user": user,
-        "theme": theme(),
-        "notes": notes,
-        "q": q,
-        "results": results,
-        "title": "Invisible Office"
-    })
+    return templates.TemplateResponse("invisible_office.html", {"request": request, "user": user, "theme": theme(), "notes": notes, "q": q, "results": results, "title": "Invisible Office"})
 
