@@ -953,7 +953,7 @@ def schedule_year(request: Request):
 
 @app.get("/schedule")
 def schedule(request: Request):
-    return RedirectResponse("/schedule/month", status_code=303)
+    return RedirectResponse("/schedule/year", status_code=303)
 
 @app.get("/schedule/month", response_class=HTMLResponse)
 def schedule_month(request: Request):
