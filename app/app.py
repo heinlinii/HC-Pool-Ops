@@ -11,6 +11,7 @@ import os
 import shutil
 import sqlite3
 import uuid
+import boto3
 try:
     import psycopg
     from psycopg.rows import dict_row
@@ -23,6 +24,23 @@ DB_PATH = ROOT / "poolops2_local.db"
 LEGACY_DB_PATH = ROOT / "poolops_local.db"
 UPLOAD_DIR = ROOT / "app" / "static" / "uploads"
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+R2_ENABLED = os.environ.get("R2_ENABLED", "").lower() == "true"
+R2_ACCOUNT_ID = os.environ.get("R2_ACCOUNT_ID", "")
+R2_ACCESS_KEY_ID = os.environ.get("R2_ACCESS_KEY_ID", "")
+R2_SECRET_ACCESS_KEY = os.environ.get("R2_SECRET_ACCESS_KEY", "")
+R2_BUCKET_NAME = os.environ.get("R2_BUCKET_NAME", "")
+R2_PUBLIC_URL = os.environ.get("R2_PUBLIC_URL", "").rstrip("/")
+
+def r2_client():
+    if not (R2_ENABLED and R2_ACCOUNT_ID and R2_ACCESS_KEY_ID and R2_SECRET_ACCESS_KEY and R2_BUCKET_NAME):
+        return None
+    return boto3.client(
+        "s3",
+        endpoint_url=f"https://{R2_ACCOUNT_ID}.r2.cloudflarestorage.com",
+        aws_access_key_id=R2_ACCESS_KEY_ID,
+        aws_secret_access_key=R2_SECRET_ACCESS_KEY,
+        region_name="auto",
+    )
 THEME_FILE = ROOT / "app" / "dashboard_theme.json"
 
 app = FastAPI(title="Heinlin Field Ops")
@@ -448,11 +466,36 @@ def safe_filename(filename):
 async def save_upload(file: UploadFile | None):
     if not file or not file.filename:
         return ""
+
     name = safe_filename(file.filename)
+    content = await file.read()
+
+    client = r2_client()
+
+    if client:
+        try:
+            key = f"uploads/{name}"
+
+            client.put_object(
+                Bucket=R2_BUCKET_NAME,
+                Key=key,
+                Body=content,
+                ContentType=file.content_type or "application/octet-stream",
+            )
+
+            if R2_PUBLIC_URL:
+                return f"{R2_PUBLIC_URL}/{key}"
+
+            return f"https://pub-{R2_ACCOUNT_ID}.r2.dev/{key}"
+
+        except Exception as e:
+            print(f"R2 upload failed, falling back to local storage: {e}")
+
     path = UPLOAD_DIR / name
+
     with path.open("wb") as f:
-        content = await file.read()
         f.write(content)
+
     return f"/static/uploads/{name}"
 
 
