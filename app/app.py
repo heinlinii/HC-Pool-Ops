@@ -923,6 +923,33 @@ def job_delete(request: Request, job_id: int):
     _try_exec("DELETE FROM poolops2_jobs WHERE id=?", (job_id,))
     return RedirectResponse("/jobs", status_code=303)
 
+@app.get("/schedule/year", response_class=HTMLResponse)
+def schedule_year(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+
+    today = date.today()
+    year = int(request.query_params.get("year", today.year))
+
+    months = []
+    for month in range(1, 13):
+        cal = calendar.Calendar(firstweekday=6)
+        days = []
+        for week in cal.monthdayscalendar(year, month):
+            days.extend(week)
+
+        months.append({
+            "year": year,
+            "month": month,
+            "name": calendar.month_name[month],
+            "days": days,
+        })
+
+    return templates.TemplateResponse(
+        "schedule_year.html",
+        ctx(request, months=months, year=year)
+    )
 
 @app.get("/schedule")
 def schedule(request: Request):

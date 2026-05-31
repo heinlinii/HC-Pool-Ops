@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="panel calendar">
+  <div class="section-head">
+    <div>
+      <h1>Year Calendar</h1>
+      <p class="muted">Full-year scheduling overview.</p>
+    </div>
+    <div class="actions">
+      <a class="btn" href="/schedule/day">Day</a>
+      <a class="btn" href="/schedule/week">Week</a>
+      <a class="btn" href="/schedule/month">Month</a>
+      <a class="btn primary" href="/schedule/year">Year</a>
+    </div>
+  </div>
+
+  <div class="year-grid">
+    {% for m in months %}
+    <div class="month-card">
+      <h2>{{ m.name }}</h2>
+      <div class="mini-week">
+        <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
+      </div>
+      <div class="mini-days">
+        {% for d in m.days %}
+          {% if d == 0 %}
+            <div class="mini-day empty"></div>
+          {% else %}
+            <a class="mini-day" href="/schedule/day?date={{ m.year }}-{{ '%02d'|format(m.month) }}-{{ '%02d'|format(d) }}">
+              {{ d }}
+            </a>
+          {% endif %}
+        {% endfor %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+
+<style>
+.year-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+  gap:16px;
+}
+.month-card{
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:18px;
+  padding:16px;
+}
+.month-card h2{
+  margin:0 0 12px;
+}
+.mini-week,.mini-days{
+  display:grid;
+  grid-template-columns:repeat(7,1fr);
+  gap:6px;
+}
+.mini-week span{
+  font-size:12px;
+  color:#cbd5e1;
+  text-align:center;
+}
+.mini-day{
+  min-height:34px;
+  border-radius:10px;
+  background:rgba(255,255,255,.06);
+  color:white;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-decoration:none;
+  font-weight:700;
+}
+.mini-day:hover{
+  background:rgba(56,189,248,.25);
+}
+.mini-day.empty{
+  background:transparent;
+}
+</style>
+{% endblock %}
