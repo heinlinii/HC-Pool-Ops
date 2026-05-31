@@ -1,5 +1,35 @@
-{% extends "base.html" %}{% block content %}
-<h1>Map / Property List</h1>
-{% if is_admin and employees %}<section class="panel"><h2>Clocked-In Employees</h2><section class="list-grid">{% for e in employees %}<a class="list-card" target="_blank" href="https://www.google.com/maps/search/?api=1&query={{ e.clock_lat }},{{ e.clock_lng }}"><h2>{{ e.name }}</h2><p>{{ e.last_seen_at }}</p><p>{{ e.clock_lat }}, {{ e.clock_lng }}</p></a>{% endfor %}</section></section>{% endif %}
-<section class="list-grid">{% for p in properties %}<a class="list-card" href="https://www.google.com/maps/search/?api=1&query={{ (p.address ~ ' ' ~ p.city ~ ' ' ~ p.state)|urlencode }}" target="_blank"><h2>{{ p.client }}</h2><p>{{ p.address }} {{ p.city }} {{ p.state }}</p></a>{% endfor %}</section>
+{% extends "base.html" %}
+{% block content %}
+<section class="panel">
+  <h1>Map / Property List</h1>
+
+  {% if is_admin and employees %}
+  <section class="panel">
+    <h2>Clocked-In Employees</h2>
+    <div class="list-grid">
+      {% for e in employees %}
+      <div class="list-card">
+        <h2>{{ e.name or e.username or "Employee" }}</h2>
+        <p>Status: Clocked In</p>
+        {% if e.clock_lat and e.clock_lng %}
+          <p>GPS: {{ e.clock_lat }}, {{ e.clock_lng }}</p>
+          <a class="btn primary" target="_blank" href="https://www.google.com/maps/search/?api=1&query={{ e.clock_lat }},{{ e.clock_lng }}">Open Location</a>
+        {% else %}
+          <p class="muted">No GPS location saved yet.</p>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  <section class="list-grid">
+    {% for p in properties %}
+      <a class="list-card" target="_blank" href="https://www.google.com/maps/search/?api=1&query={{ p.address }}">
+        <h2>{{ p.name or p.address }}</h2>
+        <p>{{ p.address }}</p>
+      </a>
+    {% endfor %}
+  </section>
+</section>
 {% endblock %}
