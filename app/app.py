@@ -951,6 +951,42 @@ def schedule_year(request: Request):
         ctx(request, months=months, year=year)
     )
 
+@app.get("/organize-my-day", response_class=HTMLResponse)
+def organize_my_day(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+
+    today = date.today().isoformat()
+
+    today_jobs = [
+        j for j in jobs_for_user(u)
+        if schedule_date(j) == today
+    ]
+
+    overdue_jobs = [
+        j for j in jobs_for_user(u)
+        if schedule_date(j) and schedule_date(j) < today and str(j.get("status", "")).lower() not in ("complete", "completed", "done")
+    ]
+
+    clocked_in = []
+    if is_admin(u):
+        clocked_in = rows(
+            "SELECT * FROM poolops2_employees WHERE clocked_in=? ORDER BY name",
+            (True if USE_POSTGRES else 1,)
+        )
+
+    return templates.TemplateResponse(
+        "organize_my_day.html",
+        ctx(
+            request,
+            today=today,
+            today_jobs=today_jobs,
+            overdue_jobs=overdue_jobs,
+            clocked_in=clocked_in,
+        )
+    )
+
 @app.get("/schedule")
 def schedule(request: Request):
     return RedirectResponse("/schedule/year", status_code=303)
