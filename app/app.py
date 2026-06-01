@@ -923,6 +923,33 @@ def job_delete(request: Request, job_id: int):
     _try_exec("DELETE FROM poolops2_jobs WHERE id=?", (job_id,))
     return RedirectResponse("/jobs", status_code=303)
 
+@app.post("/jobs/{job_id}/start")
+def start_job(job_id: int, request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+
+    execute(
+        "UPDATE poolops2_jobs SET status=? WHERE id=?",
+        ("In Progress", job_id)
+    )
+
+    return RedirectResponse(f"/jobs/{job_id}", status_code=303)
+
+
+@app.post("/jobs/{job_id}/complete")
+def complete_job(job_id: int, request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+
+    execute(
+        "UPDATE poolops2_jobs SET status=? WHERE id=?",
+        ("Complete", job_id)
+    )
+
+    return RedirectResponse(f"/jobs/{job_id}", status_code=303)
+
 @app.get("/schedule/year", response_class=HTMLResponse)
 def schedule_year(request: Request):
     u = require_login(request)

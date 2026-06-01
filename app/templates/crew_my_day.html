@@ -28,10 +28,20 @@
         <p><strong>Status:</strong> {{ j.status or "Open" }}</p>
 
         <div class="actions">
-          <a class="btn primary" href="/jobs/{{ j.id }}">Open Job</a>
-          <a class="btn" href="/photos">Upload Photos</a>
-          <a class="btn" href="/field-logs">Field Log</a>
-        </div>
+  <a class="btn primary" href="/jobs/{{ j.id }}">Open Job</a>
+
+  <form method="post" action="/jobs/{{ j.id }}/start" style="display:inline;">
+    <button class="btn" type="submit">Start Job</button>
+  </form>
+
+  <a class="btn" href="/photos">Upload Photos</a>
+
+  <a class="btn" href="/field-logs">Field Log</a>
+
+  <form method="post" action="/jobs/{{ j.id }}/complete" style="display:inline;">
+    <button class="btn danger" type="submit">Complete Job</button>
+  </form>
+</div>
       </div>
       {% endfor %}
     </div>
