@@ -987,6 +987,27 @@ def organize_my_day(request: Request):
         )
     )
 
+@app.get("/crew/my-day", response_class=HTMLResponse)
+def crew_my_day(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+
+    today = date.today().isoformat()
+    job_rows = jobs_for_user(u)
+
+    my_jobs = []
+    for j in job_rows:
+        jd = schedule_date(j)
+        status = str(j.get("status", "") or "").lower()
+        if jd == today and status not in ("complete", "completed", "done"):
+            my_jobs.append(j)
+
+    return templates.TemplateResponse(
+        "crew_my_day.html",
+        ctx(request, today=today, my_jobs=my_jobs)
+    )
+
 @app.get("/schedule")
 def schedule(request: Request):
     return RedirectResponse("/schedule/year", status_code=303)

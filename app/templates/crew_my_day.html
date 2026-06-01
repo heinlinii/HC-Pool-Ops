@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block content %}
+
+<section class="panel">
+  <div class="section-head">
+    <div>
+      <h1>My Day</h1>
+      <p class="muted">Today’s assigned jobs. Open a job, add photos, add notes, and complete it.</p>
+    </div>
+    <div class="actions">
+      <a class="btn" href="/dashboard">Dashboard</a>
+      <a class="btn" href="/organize-my-day">Organize My Day</a>
+    </div>
+  </div>
+</section>
+
+<section class="panel">
+  <h2>Today’s Jobs</h2>
+
+  {% if my_jobs %}
+    <div class="list-grid">
+      {% for j in my_jobs %}
+      <div class="list-card">
+        <h2>{{ j.job_type or j.title or "Job" }}</h2>
+
+        <p><strong>Client:</strong> {{ j.client or j.client_name or "Not set" }}</p>
+        <p><strong>Property:</strong> {{ j.property or j.property_name or j.address or "Not set" }}</p>
+        <p><strong>Status:</strong> {{ j.status or "Open" }}</p>
+
+        <div class="actions">
+          <a class="btn primary" href="/jobs/{{ j.id }}">Open Job</a>
+          <a class="btn" href="/photos">Upload Photos</a>
+          <a class="btn" href="/field-logs">Field Log</a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="muted">No jobs assigned for today.</p>
+  {% endif %}
+</section>
+
+<section class="panel">
+  <h2>Quick Crew Actions</h2>
+  <div class="actions">
+    <a class="btn primary" href="/crew/my-day">Refresh My Day</a>
+    <a class="btn" href="/map">Crew Map</a>
+    <a class="btn" href="/weather">Weather</a>
+    <a class="btn" href="/field-logs">Field Logs</a>
+    <a class="btn" href="/photos">Photos</a>
+  </div>
+</section>
+
+{% endblock %}
