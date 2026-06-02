@@ -4,8 +4,22 @@
 <section class="hero jarvis-hero">
   <div>
     <p class="kicker">HEINLIN FIELD OPS</p>
+
     <h1>Welcome {{ user.name or user.username or "Boss" }}!</h1>
+
     <p>What can I help you with today?</p>
+
+    <form method="get" action="/jarvis/search" class="search">
+      <input
+        name="q"
+        placeholder="Show today's jobs, find a client, upload photos..."
+        autofocus
+      >
+      <button class="btn primary" type="submit">
+        Ask Jarvis
+      </button>
+    </form>
+
   </div>
 </section>
 
@@ -33,16 +47,6 @@
       <p>Properties and employee locations.</p>
     </a>
   </div>
-</section>
-
-<section class="panel">
-  <h2>Jarvis</h2>
-  <p class="muted">What do you need?</p>
-
-  <form method="get" action="/jarvis/search" class="search">
-    <input name="q" placeholder="Example: show today’s jobs, find a client, upload photos..." autofocus>
-    <button class="btn primary" type="submit">Ask Jarvis</button>
-  </form>
 </section>
 
 <section class="panel">
