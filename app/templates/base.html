@@ -5,9 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{ title or 'Heinlin Field Ops' }}</title>
   <link rel="stylesheet" href="/static/style.css?v=role-portals-1">
+  <link rel="stylesheet" href="/static/hfo-theme.css">
 </head>
 <body class="hfo-body" {% if theme.background_image %}style="background-image:linear-gradient(rgba(4,12,18,.86),rgba(4,12,18,.94)),url('{{ theme.background_image }}');"{% endif %}>
-  <nav class="topbar">
+  {% if request.url.path != "/jarvis" %}
+<nav class="topbar">
+    ...
+</nav>
+{% endif %}
     {% if is_admin %}
       <a href="/dashboard">Dashboard</a>
       <a href="/organize-my-day">Organize My Day</a>
