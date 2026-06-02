@@ -1243,7 +1243,7 @@ def client_portal(request: Request):
     u = require_login(request)
     if not u: return login_redirect()
     if not is_client(u) and not is_admin(u):
-        return RedirectResponse("/employeereturn RedirectResponse("/return RedirectResponse("/jarvis", status_code=303)", status_code=303)", status_code=303)
+        return RedirectResponse("/jarvis", status_code=303)
     client = one("SELECT * FROM poolops2_clients WHERE id=?", (u.get("id"),)) if is_client(u) else None
     if is_admin(u) and not client:
         # Admin can preview a generic client portal with no destructive access.
