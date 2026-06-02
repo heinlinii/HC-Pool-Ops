@@ -374,9 +374,9 @@ def is_employee(user):
 
 def admin_redirect(user):
     if is_client(user):
-        return RedirectResponse("/client-portal", status_code=303)
+        return RedirectResponse("jarvis", status_code=303)
     if is_employee(user):
-        return RedirectResponse("/employee", status_code=303)
+        return RedirectResponse("/jarvis", status_code=303)
     return login_redirect()
 
 
@@ -544,7 +544,7 @@ def ctx(request, **kw):
 @app.get("/", response_class=HTMLResponse)
 def root(request: Request):
     if current_user(request):
-        return RedirectResponse("/dashboard", status_code=303)
+        return RedirectResponse("/jarvis", status_code=303)
     return RedirectResponse("/login", status_code=303)
 
 
@@ -561,15 +561,15 @@ def login(request: Request, username: str = Form(""), password: str = Form("")):
     u = one("SELECT * FROM poolops2_users WHERE lower(username)=lower(?) AND password=?", (username, password))
     if u:
         request.session["user"] = {"id": u["id"], "username": u["username"], "role": u["role"], "name": u["name"]}
-        return RedirectResponse("/dashboard", status_code=303)
+        return RedirectResponse("/jarvis", status_code=303)
     e = one("SELECT * FROM poolops2_employees WHERE lower(coalesce(username,name))=lower(?) AND coalesce(password,'')=?", (username, password))
     if e:
         request.session["user"] = {"id": e["id"], "username": e.get("username") or e["name"], "role": "employee", "name": e["name"]}
-        return RedirectResponse("/employee", status_code=303)
+        return RedirectResponse("/jarvis", status_code=303)
     c = one("SELECT * FROM poolops2_clients WHERE lower(portal_username)=lower(?) AND portal_password=?", (username, password))
     if c:
         request.session["user"] = {"id": c["id"], "username": c["portal_username"], "role": "client", "name": c["name"]}
-        return RedirectResponse("/client-portal", status_code=303)
+        return RedirectResponse("jarvis", status_code=303)
     return templates.TemplateResponse("login.html", ctx(request, error="Login not found. Try mike / mike or check the card username/password."))
 
 
@@ -578,6 +578,49 @@ def logout(request: Request):
     request.session.clear()
     return RedirectResponse("/login", status_code=303)
 
+@app.get("/jarvis", response_class=HTMLResponse)
+def jarvis_landing(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+
+    today = date.today().isoformat()
+
+    return templates.TemplateResponse(
+        "jarvis.html",
+        ctx(
+            request,
+            today=today,
+            jobs=jobs_for_user(u),
+            properties=properties_for_user(u),
+            photos=photos_for_user(u),
+        )
+    )
+
+@app.get("/jarvis/search")
+def jarvis_search(request: Request, q: str = ""):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+
+    text = (q or "").lower()
+
+    if "today" in text or "day" in text:
+        return RedirectResponse("/organize-my-day", status_code=303)
+    if "job" in text:
+        return RedirectResponse("/jobs", status_code=303)
+    if "client" in text:
+        return RedirectResponse("/clients", status_code=303)
+    if "property" in text or "pool" in text:
+        return RedirectResponse("/properties", status_code=303)
+    if "photo" in text:
+        return RedirectResponse("/photos", status_code=303)
+    if "map" in text or "crew" in text:
+        return RedirectResponse("/map", status_code=303)
+    if "weather" in text:
+        return RedirectResponse("/weather", status_code=303)
+
+    return RedirectResponse("/jarvis", status_code=303)
 
 @app.get("/dashboard", response_class=HTMLResponse)
 def dashboard(request: Request, y: int = None, m: int = None):
@@ -585,9 +628,9 @@ def dashboard(request: Request, y: int = None, m: int = None):
     if not u:
         return login_redirect()
     if u.get("role") == "employee":
-        return RedirectResponse("/employee", status_code=303)
+        return RedirectResponse("/jarvis", status_code=303)
     if u.get("role") == "client":
-        return RedirectResponse("/client-portal", status_code=303)
+        return RedirectResponse("jarvis", status_code=303)
     stats = {
         "clients": one("SELECT count(*) c FROM poolops2_clients")["c"],
         "properties": one("SELECT count(*) c FROM poolops2_properties")["c"],
@@ -629,7 +672,7 @@ async def dashboard_theme_save(request: Request,
         if url:
             t[key] = url
     save_theme(t)
-    return RedirectResponse("/dashboard", status_code=303)
+    return RedirectResponse("/jarvis", status_code=303)
 
 
 @app.post("/calendar/day-image")
@@ -643,7 +686,7 @@ async def calendar_day_image(request: Request, day_date: str = Form(...), notes:
         exec_sql("UPDATE poolops2_calendar_day_images SET image_url=coalesce(nullif(?,''), image_url), notes=? WHERE day_date=?", (url, notes, day_date))
     else:
         exec_sql("INSERT INTO poolops2_calendar_day_images (day_date,image_url,notes) VALUES (?,?,?)", (day_date, url, notes))
-    return RedirectResponse("/dashboard", status_code=303)
+    return RedirectResponse("/jarvis", status_code=303)
 
 
 # =========================================
@@ -722,7 +765,7 @@ async def client_save(request: Request, client_id: int, name: str = Form(""), co
             exec_sql("UPDATE poolops2_clients SET name=?, contact_name=?, phone=?, mobile=?, email=?, billing_address=?, city=?, state=?, zip_code=?, notes=?, portal_username=?, portal_password=? WHERE id=?", (name, contact_name, phone, mobile, email, billing_address, city, state, zip_code, notes, portal_username, portal_password, client_id))
     else:
         exec_sql("UPDATE poolops2_clients SET name=?, contact_name=?, phone=?, mobile=?, email=?, billing_address=?, city=?, state=?, zip_code=?, notes=? WHERE id=?", (name, contact_name, phone, mobile, email, billing_address, city, state, zip_code, notes, client_id))
-    return RedirectResponse("/client-portal" if is_client(u) else f"/clients/{client_id}", status_code=303)
+    return RedirectResponse("jarvis" if is_client(u) else f"/clients/{client_id}", status_code=303)
 
 
 @app.post("/clients/new")
@@ -778,7 +821,7 @@ def client_delete(request: Request, client_id: int):
 def properties(request: Request, q: str = ""):
     u = require_login(request)
     if not u: return login_redirect()
-    if is_client(u): return RedirectResponse("/client-portal", status_code=303)
+    if is_client(u): return RedirectResponse("jarvis", status_code=303)
     qlike = f"%{q.strip()}%"
     if is_admin(u):
         data = rows("SELECT * FROM poolops2_properties WHERE client LIKE ? OR address LIKE ? OR property_name LIKE ? ORDER BY client,address", (qlike, qlike, qlike)) if q else rows("SELECT * FROM poolops2_properties ORDER BY client,address")
@@ -825,7 +868,7 @@ async def property_save(request: Request, property_id: int, client: str = Form("
 async def property_photo(request: Request, property_id: int, title: str = Form("Property Photo"), notes: str = Form(""), photo: UploadFile = File(None)):
     u = require_login(request)
     if not u: return login_redirect()
-    if is_client(u): return RedirectResponse("/client-portal", status_code=303)
+    if is_client(u): return RedirectResponse("jarvis", status_code=303)
     prop = one("SELECT * FROM poolops2_properties WHERE id=?", (property_id,))
     url = await save_upload(photo)
     if url and prop:
@@ -878,7 +921,7 @@ def property_delete(request: Request, property_id: int):
 def jobs(request: Request):
     u = require_login(request)
     if not u: return login_redirect()
-    if is_client(u): return RedirectResponse("/client-portal", status_code=303)
+    if is_client(u): return RedirectResponse("jarvis", status_code=303)
     return templates.TemplateResponse("jobs.html", ctx(request, jobs=jobs_for_user(u), properties=properties_for_user(u)))
 
 
@@ -886,7 +929,7 @@ def jobs(request: Request):
 def job_detail(request: Request, job_id: int):
     u = require_login(request)
     if not u: return login_redirect()
-    if is_client(u): return RedirectResponse("/client-portal", status_code=303)
+    if is_client(u): return RedirectResponse("jarvis", status_code=303)
     job = one("SELECT * FROM poolops2_jobs WHERE id=?", (job_id,))
     if not job or not employee_can_access_job(u, job): return RedirectResponse("/jobs", status_code=303)
     costs = rows("SELECT * FROM poolops2_job_costs WHERE job_id=?", (job_id,))
@@ -1078,7 +1121,7 @@ def photos(request: Request):
 async def photos_add(request: Request, job_id: int = Form(0), property_id: int = Form(0), photo_type: str = Form("Progress"), title: str = Form("Photo"), date_str: str = Form(""), notes: str = Form(""), photo_files: list[UploadFile] = File(None)):
     u = require_login(request)
     if not u: return login_redirect()
-    if is_client(u): return RedirectResponse("/client-portal", status_code=303)
+    if is_client(u): return RedirectResponse("jarvis", status_code=303)
     prop = one("SELECT * FROM poolops2_properties WHERE id=?", (property_id,)) if property_id else None
     job = one("SELECT * FROM poolops2_jobs WHERE id=?", (job_id,)) if job_id else None
     client = (prop or job or {}).get("client", "")
@@ -1172,7 +1215,7 @@ def crew_save(
 def employee_portal(request: Request):
     u = require_login(request)
     if not u: return login_redirect()
-    if is_client(u): return RedirectResponse("/client-portal", status_code=303)
+    if is_client(u): return RedirectResponse("jarvis", status_code=303)
     employee = one("SELECT * FROM poolops2_employees WHERE id=?", (u.get("id"),)) if is_employee(u) else None
     return templates.TemplateResponse("employee_portal.html", ctx(request, employee=employee, jobs=jobs_for_user(u), photos=photos_for_user(u)))
 
@@ -1184,7 +1227,7 @@ def employee_profile_save(request: Request, name: str = Form(""), phone: str = F
     exec_sql("UPDATE poolops2_employees SET name=?, phone=?, email=?, username=?, password=? WHERE id=?", (name, phone, email, username, password, u.get("id")))
     u.update({"name": name, "username": username})
     request.session["user"] = u
-    return RedirectResponse("/employee", status_code=303)
+    
 
 @app.post("/employee/clock")
 def employee_clock(request: Request, action: str = Form("in"), lat: str = Form(""), lng: str = Form("")):
@@ -1193,14 +1236,14 @@ def employee_clock(request: Request, action: str = Form("in"), lat: str = Form("
     now = datetime.now().isoformat(timespec="minutes")
     clocked = action == "in"
     exec_sql("UPDATE poolops2_employees SET clocked_in=?, clock_lat=?, clock_lng=?, clocked_in_at=?, last_seen_at=? WHERE id=?", (clocked, float(lat) if lat else None, float(lng) if lng else None, now if clocked else "", now, u.get("id")))
-    return RedirectResponse("/employee", status_code=303)
+    return RedirectResponse("/jarvis", status_code=303)
 
-@app.get("/client-portal", response_class=HTMLResponse)
+@app.get("jarvis", response_class=HTMLResponse)
 def client_portal(request: Request):
     u = require_login(request)
     if not u: return login_redirect()
     if not is_client(u) and not is_admin(u):
-        return RedirectResponse("/employee", status_code=303)
+        return RedirectResponse("/employeereturn RedirectResponse("/return RedirectResponse("/jarvis", status_code=303)", status_code=303)", status_code=303)
     client = one("SELECT * FROM poolops2_clients WHERE id=?", (u.get("id"),)) if is_client(u) else None
     if is_admin(u) and not client:
         # Admin can preview a generic client portal with no destructive access.
@@ -1241,7 +1284,7 @@ def job_costing_add(request: Request, job_id: int = Form(0), client: str = Form(
 def field_logs(request: Request):
     u = require_login(request)
     if not u: return login_redirect()
-    if is_client(u): return RedirectResponse("/client-portal", status_code=303)
+    if is_client(u): return RedirectResponse("jarvis", status_code=303)
     logs = rows("SELECT * FROM field_logs ORDER BY id DESC") if is_admin(u) else rows("SELECT * FROM field_logs WHERE employee_name=? ORDER BY id DESC", (u.get("name", ""),))
     return templates.TemplateResponse("field_logs.html", ctx(request, logs=logs, jobs=jobs_for_user(u)))
 
@@ -1249,7 +1292,7 @@ def field_logs(request: Request):
 def field_logs_add(request: Request, employee_name: str = Form(""), client: str = Form(""), property: str = Form(""), address: str = Form(""), date_str: str = Form(""), total_hours: float = Form(0), tools_used: str = Form(""), materials_used: str = Form(""), equipment_used: str = Form(""), work_completed: str = Form(""), issues: str = Form(""), next_steps: str = Form(""), weather: str = Form(""), latitude: str = Form(""), longitude: str = Form("")):
     u = require_login(request)
     if not u: return login_redirect()
-    if is_client(u): return RedirectResponse("/client-portal", status_code=303)
+    if is_client(u): return RedirectResponse("jarvis", status_code=303)
     emp_name = employee_name if is_admin(u) else u.get("name", "")
     exec_sql("INSERT INTO field_logs (employee_name,client,property,address,date,total_hours,tools_used,materials_used,equipment_used,work_completed,issues,next_steps,weather,latitude,longitude,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", (emp_name, client, property, address, date_str or date.today().isoformat(), total_hours, tools_used, materials_used, equipment_used, work_completed, issues, next_steps, weather, float(latitude) if latitude else None, float(longitude) if longitude else None, datetime.now().isoformat()))
     return RedirectResponse("/field-logs", status_code=303)

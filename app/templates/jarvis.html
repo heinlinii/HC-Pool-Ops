@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block content %}
+
+<section class="hero jarvis-hero">
+  <div>
+    <p class="kicker">HEINLIN FIELD OPS</p>
+    <h1>Welcome back, {{ user.name or user.username or "Boss" }}.</h1>
+    <p>Jarvis is online. Tell me what you need and I’ll take you there.</p>
+  </div>
+</section>
+
+<section class="panel">
+  <h2>Jarvis</h2>
+  <p class="muted">What do you need?</p>
+
+  <form method="get" action="/jarvis/search" class="search">
+    <input name="q" placeholder="Example: show today’s jobs, find a client, upload photos..." autofocus>
+    <button class="btn primary" type="submit">Ask Jarvis</button>
+  </form>
+</section>
+
+<section class="panel">
+  <h2>Quick Commands</h2>
+
+  <div class="quick-grid">
+    <a class="list-card" href="/organize-my-day"><h2>Organize My Day</h2><p>Today, overdue work, crew status.</p></a>
+    <a class="list-card" href="/crew/my-day"><h2>My Day</h2><p>Crew workflow and assigned jobs.</p></a>
+    <a class="list-card" href="/jobs"><h2>Jobs</h2><p>Open, schedule, and complete jobs.</p></a>
+    <a class="list-card" href="/clients"><h2>Clients</h2><p>Find customer records.</p></a>
+    <a class="list-card" href="/properties"><h2>Properties</h2><p>Pool/property brain cards.</p></a>
+    <a class="list-card" href="/map"><h2>Crew Map</h2><p>See crews and properties.</p></a>
+    <a class="list-card" href="/photos"><h2>Photos</h2><p>Upload jobsite photos.</p></a>
+    <a class="list-card" href="/field-logs"><h2>Field Logs</h2><p>Add notes from the field.</p></a>
+    <a class="list-card" href="/weather"><h2>Weather</h2><p>Check jobsite conditions.</p></a>
+  </div>
+</section>
+
+{% endblock %}
