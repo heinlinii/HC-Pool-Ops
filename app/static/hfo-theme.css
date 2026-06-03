@@ -137,3 +137,68 @@
     grid-template-columns:repeat(2,1fr);
   }
 }
+
+.hfo-login-command{
+  min-height:calc(100vh - 120px);
+  display:grid;
+  grid-template-columns:1.25fr .75fr;
+  gap:28px;
+  align-items:center;
+}
+
+.hfo-login-legacy{
+  border:1px solid rgba(214,179,106,.35);
+  border-radius:32px;
+  padding:42px;
+  background:
+    linear-gradient(135deg, rgba(214,179,106,.10), transparent 38%),
+    radial-gradient(circle at top right, rgba(255,122,24,.18), transparent 34%),
+    #0b1218;
+  box-shadow:0 28px 90px rgba(0,0,0,.5);
+}
+
+.hfo-login-legacy h1{
+  font-size:clamp(3rem, 9vw, 7rem);
+  line-height:.9;
+  margin:18px 0;
+  letter-spacing:-.04em;
+}
+
+.login-oath{
+  color:#d6b36a;
+  font-weight:900;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+  font-size:1.1rem;
+  margin-top:24px;
+}
+
+.login-subline{
+  color:rgba(255,255,255,.76);
+  font-weight:800;
+  max-width:720px;
+}
+
+.hfo-login-card{
+  display:grid;
+  gap:16px;
+}
+
+.hfo-login-card h2{
+  margin-top:0;
+}
+
+.hfo-login-card button{
+  min-height:58px;
+  text-transform:uppercase;
+}
+
+@media(max-width:850px){
+  .hfo-login-command{
+    grid-template-columns:1fr;
+  }
+
+  .hfo-login-legacy{
+    padding:28px;
+  }
+}

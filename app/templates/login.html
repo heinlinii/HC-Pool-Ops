@@ -1,2 +1,50 @@
-<!doctype html><html><head><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="stylesheet" href="/static/style.css?v=heinlin-core-1"><title>Login</title></head>
-<body class="hfo-body"><main class="login-shell"><form class="panel" method="post" action="/login"><div class="kicker">HEINLIN FIELD OPS</div><h1>Login</h1>{% if error %}<p class="alert">{{ error }}</p>{% endif %}<label>Username<input name="username" autocomplete="username"></label><label>Password<input name="password" type="password" autocomplete="current-password"></label><button class="primary">Login</button><p class="muted">Temporary admin: mike / mike</p></form></main></body></html>
+{% extends "base.html" %}
+{% block content %}
+
+<section class="hfo-login-command">
+
+  <div class="hfo-login-legacy">
+    <p class="kicker">HEINLIN FIELD OPS</p>
+
+    <h1>Built by Hand.<br>Run Like a Machine.</h1>
+
+    <p class="heritage">
+      Founded 1907 • 5th Generation
+    </p>
+
+    <p class="login-oath">
+      Always Having a Damn Good Time.
+    </p>
+
+    <p class="login-subline">
+      Make the Heinlin name proud. Make this country proud.
+    </p>
+  </div>
+
+  <form method="post" action="/login" class="panel hfo-login-card">
+
+    <h2>Enter Command Center</h2>
+
+    {% if error %}
+      <p class="alert">{{ error }}</p>
+    {% endif %}
+
+    <label>
+      Username
+      <input name="username" autocomplete="username" required>
+    </label>
+
+    <label>
+      Password
+      <input name="password" type="password" autocomplete="current-password" required>
+    </label>
+
+    <button class="btn primary" type="submit">
+      Enter Command Center
+    </button>
+
+  </form>
+
+</section>
+
+{% endblock %}
