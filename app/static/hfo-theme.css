@@ -482,3 +482,361 @@
     grid-template-columns:1fr;
   }
 }
+
+.hfo-command-v2{
+  display:grid;
+  grid-template-columns:170px 1fr;
+  gap:18px;
+}
+
+.hfo-v2-sidebar,
+.hfo-v2-header,
+.hfo-v2-jarvis,
+.hfo-v2-weather,
+.hfo-v2-map,
+.hfo-v2-command,
+.hfo-v2-card,
+.hfo-v2-footer{
+  background:#0b1218;
+  border:1px solid rgba(214,179,106,.24);
+  border-radius:18px;
+  box-shadow:0 20px 60px rgba(0,0,0,.35);
+}
+
+.hfo-v2-sidebar{
+  padding:14px;
+}
+
+.hfo-v2-shield{
+  width:86px;
+  height:86px;
+  margin:0 auto 20px;
+  border:3px solid #d6b36a;
+  border-radius:18px;
+  color:#d6b36a;
+  display:grid;
+  place-items:center;
+  font-size:2.4rem;
+  font-weight:900;
+}
+
+.hfo-v2-shield span{
+  display:block;
+  font-size:.7rem;
+}
+
+.hfo-v2-side{
+  display:block;
+  text-decoration:none;
+  color:white;
+  font-weight:900;
+  text-transform:uppercase;
+  padding:16px 12px;
+  border-radius:12px;
+  margin-bottom:8px;
+}
+
+.hfo-v2-side.active,
+.hfo-v2-side:hover{
+  background:linear-gradient(135deg,#d6b36a,#8f641f);
+  color:#080d11;
+}
+
+.hfo-v2-side-legacy{
+  margin-top:28px;
+  padding-top:18px;
+  border-top:1px solid rgba(255,255,255,.12);
+  color:#d6b36a;
+  text-transform:uppercase;
+  font-weight:900;
+  font-size:.8rem;
+  letter-spacing:.08em;
+}
+
+.hfo-v2-main{
+  display:block;
+}
+
+.hfo-v2-header{
+  display:grid;
+  grid-template-columns:1fr 1fr 1.2fr;
+  gap:16px;
+  align-items:center;
+  padding:22px;
+  margin-bottom:18px;
+}
+
+.hfo-v2-header h1{
+  margin:0;
+  font-size:clamp(2.2rem,5vw,4.2rem);
+  line-height:.9;
+}
+
+.hfo-v2-header p,
+.hfo-v2-award,
+.hfo-v2-tag span{
+  color:#d6b36a;
+  text-transform:uppercase;
+  font-weight:900;
+  letter-spacing:.08em;
+}
+
+.hfo-v2-award{
+  text-align:center;
+  border:1px solid rgba(214,179,106,.25);
+  border-radius:14px;
+  padding:16px;
+}
+
+.hfo-v2-tag{
+  color:white;
+  text-transform:uppercase;
+  font-weight:900;
+  font-size:1.1rem;
+}
+
+.hfo-v2-tag span{
+  display:block;
+  margin-top:8px;
+}
+
+.hfo-v2-grid{
+  display:grid;
+  grid-template-columns:1.7fr .9fr;
+  gap:18px;
+}
+
+.hfo-v2-jarvis{
+  grid-row:span 2;
+  padding:28px;
+}
+
+.hfo-v2-jarvis h2{
+  font-size:clamp(3.5rem,8vw,6rem);
+  line-height:.9;
+  margin:0;
+}
+
+.hfo-v2-jarvis h2 span{
+  color:#22c55e;
+  font-size:1.2rem;
+}
+
+.hfo-v2-jarvis h3{
+  font-size:2rem;
+  margin:22px 0;
+}
+
+.hfo-v2-pulse{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:12px;
+  padding:20px 0;
+  border-top:1px solid rgba(255,255,255,.12);
+  border-bottom:1px solid rgba(255,255,255,.12);
+}
+
+.hfo-v2-pulse strong{
+  color:#d6b36a;
+  display:block;
+  font-size:2.2rem;
+}
+
+.hfo-v2-pulse span{
+  color:rgba(255,255,255,.75);
+  text-transform:uppercase;
+  font-weight:900;
+  font-size:.75rem;
+}
+
+.hfo-v2-handle-card{
+  margin-top:26px;
+  padding:26px;
+  border-radius:22px;
+  border:1px solid rgba(214,179,106,.65);
+  background:
+    radial-gradient(circle at bottom, rgba(214,179,106,.18), transparent 42%),
+    linear-gradient(135deg, rgba(214,179,106,.12), transparent),
+    #111820;
+  box-shadow:0 0 32px rgba(214,179,106,.18);
+  text-align:center;
+}
+
+.hfo-v2-handle-card h4{
+  color:#d6b36a;
+  font-size:clamp(2rem,5vw,3.5rem);
+  text-transform:uppercase;
+  letter-spacing:.06em;
+  margin:0 0 20px;
+}
+
+.hfo-v2-search{
+  display:grid;
+  grid-template-columns:1fr 190px;
+  gap:14px;
+}
+
+.hfo-v2-search input{
+  min-height:64px;
+  border-radius:14px;
+  font-size:1.05rem;
+}
+
+.hfo-v2-search button{
+  min-height:64px;
+  font-weight:900;
+  text-transform:uppercase;
+}
+
+.hfo-v2-handle-card p{
+  color:#d6b36a;
+  text-transform:uppercase;
+  font-weight:900;
+  letter-spacing:.08em;
+  margin-bottom:0;
+}
+
+.hfo-v2-weather,
+.hfo-v2-map{
+  padding:24px;
+}
+
+.hfo-v2-weather h3,
+.hfo-v2-map h3,
+.hfo-v2-command h2,
+.hfo-v2-card h3{
+  color:#d6b36a;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+}
+
+.hfo-v2-temp{
+  font-size:4.5rem;
+  font-weight:900;
+}
+
+.hfo-v2-weather-stats{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+  margin-top:20px;
+  padding-top:16px;
+  border-top:1px solid rgba(255,255,255,.12);
+}
+
+.hfo-v2-weather-stats strong{
+  color:#d6b36a;
+  font-size:2rem;
+}
+
+.hfo-v2-weather-stats span{
+  display:block;
+  text-transform:uppercase;
+  font-size:.75rem;
+  font-weight:900;
+}
+
+.hfo-v2-fake-map{
+  height:220px;
+  border-radius:16px;
+  background:
+    linear-gradient(45deg, rgba(255,255,255,.08) 25%, transparent 25%),
+    #111a22;
+  display:grid;
+  place-items:center;
+  color:#d6b36a;
+  font-weight:900;
+  letter-spacing:.2em;
+}
+
+.hfo-v2-command{
+  padding:22px;
+  margin-top:18px;
+}
+
+.hfo-v2-buttons{
+  display:grid;
+  grid-template-columns:repeat(8,1fr);
+  gap:12px;
+}
+
+.hfo-v2-buttons a{
+  color:white;
+  text-decoration:none;
+  text-align:center;
+  padding:18px 8px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.14);
+  background:rgba(255,255,255,.04);
+  font-weight:900;
+}
+
+.hfo-v2-buttons a:hover{
+  border-color:#d6b36a;
+  color:#d6b36a;
+}
+
+.hfo-v2-lower{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:18px;
+  margin-top:18px;
+}
+
+.hfo-v2-card{
+  padding:24px;
+}
+
+.hfo-v2-footer{
+  margin-top:18px;
+  padding:26px;
+  text-align:center;
+}
+
+.hfo-v2-footer strong{
+  display:block;
+  color:#d6b36a;
+  text-transform:uppercase;
+  letter-spacing:.12em;
+  font-size:1.4rem;
+}
+
+.hfo-v2-footer span{
+  display:block;
+  margin-top:12px;
+  color:rgba(255,255,255,.78);
+  text-transform:uppercase;
+  font-weight:900;
+  letter-spacing:.06em;
+}
+
+@media(max-width:950px){
+  .hfo-command-v2,
+  .hfo-v2-grid,
+  .hfo-v2-lower{
+    grid-template-columns:1fr;
+  }
+
+  .hfo-v2-sidebar{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:8px;
+  }
+
+  .hfo-v2-mark,
+  .hfo-v2-side-legacy{
+    display:none;
+  }
+
+  .hfo-v2-header{
+    grid-template-columns:1fr;
+  }
+
+  .hfo-v2-search{
+    grid-template-columns:1fr;
+  }
+
+  .hfo-v2-buttons{
+    grid-template-columns:repeat(2,1fr);
+  }
+}
