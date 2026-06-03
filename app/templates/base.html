@@ -3,49 +3,30 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{{ title or 'Heinlin Field Ops' }}</title>
+  <title>{{ title or "Heinlin Field Ops" }}</title>
   <link rel="stylesheet" href="/static/style.css?v=role-portals-1">
   <link rel="stylesheet" href="/static/hfo-theme.css">
 </head>
-<body class="hfo-body" {% if theme.background_image %}style="background-image:linear-gradient(rgba(4,12,18,.86),rgba(4,12,18,.94)),url('{{ theme.background_image }}');"{% endif %}>
- {% if request.url.path != "/jarvis" %}
-<nav class="topbar">
-    ...
-</nav>
-{% endif %}
-    {% if is_admin %}
-      <a href="/dashboard">Dashboard</a>
-      <a href="/organize-my-day">Organize My Day</a>
-      <a href="/crew/my-day">My Day</a>
-      <a href="/clients">Clients</a>
-      <a href="/properties">Properties</a>
-      <a href="/jobs">Jobs</a>
-      <a href="/schedule/year">Calendar</a>
-      <a href="/invisible-office">Invisible Office</a>
-      <a href="/photos">Photos</a>
-      <a href="/crew">Crew</a>
-      <a href="/field-logs">Field Log</a>
-      <a href="/map">Map</a>
-      <a href="/weather">Weather</a>
-    {% elif is_client %}
-      <a href="/client-portal">My Portal</a>
-      <a href="/schedule/year">Schedule</a>
-      <a href="/photos">Photos</a>
-      <a href="/weather">Weather</a>
-    {% elif is_employee %}
-      <a href="/employee">My Jobs</a>
-      <a href="/jobs">Jobs</a>
-      <a href="/photos">Photos</a>
-      <a href="/map">Map</a>
-      <a href="/weather">Weather</a>
-      <a href="/field-logs">Field Ops</a>
-    {% else %}
-      <a href="/login">Login</a>
-    {% endif %}
-    <a href="/logout" class="danger">Logout</a>
-  </nav>
+
+<body class="hfo-body">
   <main class="shell">
     {% block content %}{% endblock %}
   </main>
+
+  {% if user %}
+  <div class="bottom-action-bar">
+    <button class="btn" onclick="history.back()">← Back</button>
+
+    {% if is_employee %}
+      <a class="btn primary" href="/crew/my-day">Dashboard</a>
+    {% elif is_client %}
+      <a class="btn primary" href="/client-portal">Dashboard</a>
+    {% else %}
+      <a class="btn primary" href="/jarvis">Dashboard</a>
+    {% endif %}
+
+    <a class="btn danger" href="/logout">Logout</a>
+  </div>
+  {% endif %}
 </body>
 </html>
