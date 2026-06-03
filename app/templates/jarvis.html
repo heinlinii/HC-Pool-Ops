@@ -1,55 +1,117 @@
 {% extends "base.html" %}
 {% block content %}
 
-<section class="hfo-command-hero">
-  <div class="hfo-brand-row">
-    <div>
-      <p class="kicker">HEINLIN FIELD OPS</p>
-      <p class="heritage">Founded 1907 • 5th Generation</p>
-    </div>
-    <div class="tagline">
-      Built by Hand. Run Like a Machine.
-    </div>
-  </div>
+<div class="hfo-command-layout">
 
-  <div class="jarvis-core">
-    <h1>JARVIS <span>ONLINE</span></h1>
-    <h2>{{ greeting }}, {{ user.name or user.username or "Boss" }}.</h2>
+  <aside class="hfo-sidebar">
+    <div class="side-title">HEINLIN<br><span>FIELD OPS</span></div>
 
-    <p class="jarvis-line">What needs handled?</p>
+    <a href="/jarvis" class="side-link active">Command Center</a>
+    <a href="/jobs" class="side-link">Jobs</a>
+    <a href="/schedule/year" class="side-link">Schedule</a>
+    <a href="/clients" class="side-link">Clients</a>
+    <a href="/properties" class="side-link">Properties</a>
+    <a href="/map" class="side-link">Map</a>
+    <a href="/photos" class="side-link">Photos</a>
+    <a href="/field-logs" class="side-link">Field Logs</a>
+    <a href="/employees" class="side-link">Employees</a>
+  </aside>
 
-    <form method="get" action="/jarvis/search" class="jarvis-search">
-      <input name="q" placeholder="Find a client, job, property, photo, log, map, weather..." autofocus>
-      <button class="btn primary" type="submit">Handle It</button>
-    </form>
-  </div>
-</section>
+  <main class="hfo-main">
 
-<section class="hfo-legacy-strip">
-  <div><strong>1907</strong><span>Founded</span></div>
-  <div><strong>5th</strong><span>Generation</span></div>
-  <div><strong>119+</strong><span>Years Standing</span></div>
-  <div><strong>1</strong><span>Standard</span></div>
-</section>
+    <section class="hfo-top-brand">
+      <div>
+        <h1>HEINLIN FIELD OPS</h1>
+        <p>Founded 1907 • 5th Generation</p>
+      </div>
 
-<section class="panel">
-  <h2>Command Center</h2>
+      <div class="hfo-badge">H<br><span>1907</span></div>
 
-  <div class="quick-grid">
-    <a class="list-card" href="/organize-my-day"><h2>Today's Work</h2><p>See what needs handled.</p></a>
-    <a class="list-card" href="/crew/my-day"><h2>My Day</h2><p>Crew workflow.</p></a>
-    <a class="list-card" href="/jobs"><h2>Jobs</h2><p>Open and scheduled work.</p></a>
-    <a class="list-card" href="/clients"><h2>Clients</h2><p>Find customer records.</p></a>
-    <a class="list-card" href="/properties"><h2>Properties</h2><p>Pool/property brain cards.</p></a>
-    <a class="list-card" href="/photos"><h2>Photos</h2><p>Jobsite photo history.</p></a>
-    <a class="list-card" href="/field-logs"><h2>Field Logs</h2><p>Notes from the field.</p></a>
-    <a class="list-card" href="/map"><h2>Map</h2><p>Crews and properties.</p></a>
-    <a class="list-card" href="/weather"><h2>Weather</h2><p>Jobsite conditions.</p></a>
-  </div>
-</section>
+      <div class="hfo-tagline">
+        Built by Hand. Run Like a Machine.
+        <span>Always Having a Damn Good Time.</span>
+      </div>
+    </section>
 
-<section class="hfo-oath">
-  <p>Make the Heinlin name proud. Make this country proud. Leave things better than you found them.</p>
-</section>
+    <section class="hfo-dashboard-grid">
+
+      <div class="hfo-jarvis-panel">
+        <h2>JARVIS <span>● ONLINE</span></h2>
+        <h3>{{ greeting }}, {{ user.name or user.username or "Boss" }}.</h3>
+
+        <div class="hfo-pulse">
+          <div><strong>3</strong><span>Employees Clocked In</span></div>
+          <div><strong>12</strong><span>Jobs Scheduled</span></div>
+          <div><strong>1</strong><span>Priority Issue</span></div>
+        </div>
+
+        <p class="hfo-question">What needs handled?</p>
+
+        <form method="get" action="/jarvis/search" class="hfo-jarvis-search">
+          <input name="q" placeholder="Find a client, job, property, photo, log, map, weather..." autofocus>
+          <button class="btn primary" type="submit">Handle It</button>
+        </form>
+      </div>
+
+      <div class="hfo-side-card">
+        <h3>Weather</h3>
+        <div class="weather-big">72°</div>
+        <p>Partly cloudy</p>
+        <small>Rain chance after 2:00 PM</small>
+      </div>
+
+      <div class="hfo-side-card">
+        <h3>Today’s Map</h3>
+        <div class="fake-map">MAP</div>
+        <a href="/map">View full map</a>
+      </div>
+
+    </section>
+
+    <section class="hfo-command-center">
+      <h2>Command Center</h2>
+
+      <div class="hfo-command-buttons">
+        <a href="/organize-my-day">Today’s Work</a>
+        <a href="/crew/my-day">My Day</a>
+        <a href="/clients">Clients</a>
+        <a href="/properties">Properties</a>
+        <a href="/jobs">Jobs</a>
+        <a href="/photos">Photos</a>
+        <a href="/map">Map</a>
+        <a href="/weather">Weather</a>
+      </div>
+    </section>
+
+    <section class="hfo-lower-grid">
+      <div class="hfo-info-card">
+        <h3>Priority Items</h3>
+        <p>Smith Pool — Heater not working</p>
+        <p>Johnson Project — Awaiting approval</p>
+        <p>Weather Delay — Rain expected tomorrow</p>
+      </div>
+
+      <div class="hfo-info-card">
+        <h3>Today’s Schedule</h3>
+        <p>7:30 AM — Kendall Residence</p>
+        <p>9:30 AM — Thompson Pool</p>
+        <p>11:30 AM — Smith Residence</p>
+      </div>
+
+      <div class="hfo-info-card">
+        <h3>Recent Activity</h3>
+        <p>Marty uploaded 12 photos</p>
+        <p>Aaron completed Job #147</p>
+        <p>Field log added</p>
+      </div>
+    </section>
+
+    <section class="hfo-footer-legacy">
+      <p>Built by Heinlin. Powered by Jarvis.</p>
+      <span>Make the Heinlin name proud. Make this country proud. Leave things better than you found them.</span>
+    </section>
+
+  </main>
+</div>
 
 {% endblock %}
