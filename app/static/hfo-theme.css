@@ -99,3 +99,41 @@
     width:100%;
   }
 }
+
+.hfo-legacy-strip{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:12px;
+  margin:0 0 22px;
+}
+
+.hfo-legacy-strip div{
+  background:rgba(255,255,255,.045);
+  border:1px solid rgba(214,179,106,.24);
+  border-radius:18px;
+  padding:16px;
+  text-align:center;
+}
+
+.hfo-legacy-strip strong{
+  display:block;
+  color:#d6b36a;
+  font-size:1.8rem;
+  line-height:1;
+}
+
+.hfo-legacy-strip span{
+  display:block;
+  margin-top:6px;
+  color:rgba(255,255,255,.72);
+  text-transform:uppercase;
+  letter-spacing:.08em;
+  font-size:.78rem;
+  font-weight:800;
+}
+
+@media(max-width:700px){
+  .hfo-legacy-strip{
+    grid-template-columns:repeat(2,1fr);
+  }
+}
