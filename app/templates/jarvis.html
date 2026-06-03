@@ -1,68 +1,48 @@
 {% extends "base.html" %}
 {% block content %}
 
-<section class="hero jarvis-hero">
-  <div>
-    <p class="kicker">HEINLIN FIELD OPS</p>
+<section class="hfo-command-hero">
+  <div class="hfo-brand-row">
+    <div>
+      <p class="kicker">HEINLIN FIELD OPS</p>
+      <p class="heritage">Founded 1907 • 5th Generation</p>
+    </div>
+    <div class="tagline">
+      Built by Hand. Run Like a Machine.
+    </div>
+  </div>
 
-    <h1>Welcome {{ user.name or user.username or "Boss" }}!</h1>
+  <div class="jarvis-core">
+    <h1>JARVIS <span>ONLINE</span></h1>
+    <h2>{{ greeting }}, {{ user.name or user.username or "Boss" }}.</h2>
 
-    <p>What can I help you with today?</p>
+    <p class="jarvis-line">What needs handled?</p>
 
-    <form method="get" action="/jarvis/search" class="search">
-      <input
-        name="q"
-        placeholder="Show today's jobs, find a client, upload photos..."
-        autofocus
-      >
-      <button class="btn primary" type="submit">
-        Ask Jarvis
-      </button>
+    <form method="get" action="/jarvis/search" class="jarvis-search">
+      <input name="q" placeholder="Find a client, job, property, photo, log, map, weather..." autofocus>
+      <button class="btn primary" type="submit">Handle It</button>
     </form>
-
   </div>
 </section>
 
 <section class="panel">
-  <h2>Today's Snapshot</h2>
+  <h2>Command Center</h2>
 
   <div class="quick-grid">
-    <a class="list-card" href="/organize-my-day">
-      <h2>Today's Work</h2>
-      <p>See everything scheduled today.</p>
-    </a>
-
-    <a class="list-card" href="/crew/my-day">
-      <h2>Crew Status</h2>
-      <p>See assigned jobs and crews.</p>
-    </a>
-
-    <a class="list-card" href="/weather">
-      <h2>Weather</h2>
-      <p>Current conditions and forecast.</p>
-    </a>
-
-    <a class="list-card" href="/map">
-      <h2>Map</h2>
-      <p>Properties and employee locations.</p>
-    </a>
-  </div>
-</section>
-
-<section class="panel">
-  <h2>Quick Commands</h2>
-
-  <div class="quick-grid">
-    <a class="list-card" href="/organize-my-day"><h2>Organize My Day</h2><p>Today, overdue work, crew status.</p></a>
-    <a class="list-card" href="/crew/my-day"><h2>My Day</h2><p>Crew workflow and assigned jobs.</p></a>
-    <a class="list-card" href="/jobs"><h2>Jobs</h2><p>Open, schedule, and complete jobs.</p></a>
+    <a class="list-card" href="/organize-my-day"><h2>Today's Work</h2><p>See what needs handled.</p></a>
+    <a class="list-card" href="/crew/my-day"><h2>My Day</h2><p>Crew workflow.</p></a>
+    <a class="list-card" href="/jobs"><h2>Jobs</h2><p>Open and scheduled work.</p></a>
     <a class="list-card" href="/clients"><h2>Clients</h2><p>Find customer records.</p></a>
     <a class="list-card" href="/properties"><h2>Properties</h2><p>Pool/property brain cards.</p></a>
-    <a class="list-card" href="/map"><h2>Crew Map</h2><p>See crews and properties.</p></a>
-    <a class="list-card" href="/photos"><h2>Photos</h2><p>Upload jobsite photos.</p></a>
-    <a class="list-card" href="/field-logs"><h2>Field Logs</h2><p>Add notes from the field.</p></a>
-    <a class="list-card" href="/weather"><h2>Weather</h2><p>Check jobsite conditions.</p></a>
+    <a class="list-card" href="/photos"><h2>Photos</h2><p>Jobsite photo history.</p></a>
+    <a class="list-card" href="/field-logs"><h2>Field Logs</h2><p>Notes from the field.</p></a>
+    <a class="list-card" href="/map"><h2>Map</h2><p>Crews and properties.</p></a>
+    <a class="list-card" href="/weather"><h2>Weather</h2><p>Jobsite conditions.</p></a>
   </div>
+</section>
+
+<section class="hfo-oath">
+  <p>Make the Heinlin name proud. Make this country proud. Leave things better than you found them.</p>
 </section>
 
 {% endblock %}
