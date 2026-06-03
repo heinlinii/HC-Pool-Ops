@@ -2,6 +2,7 @@ from fastapi import FastAPI, Request, Form, UploadFile, File
 from fastapi.responses import RedirectResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from httpx import request
 from starlette.middleware.sessions import SessionMiddleware
 from pathlib import Path
 from datetime import datetime, date, timedelta
@@ -584,6 +585,17 @@ def jarvis_landing(request: Request):
     if not u:
         return login_redirect()
 
+    from datetime import datetime
+
+    hour = datetime.now().hour
+
+    if hour < 12:
+        greeting = "Good morning"
+    elif hour < 17:
+        greeting = "Good afternoon"
+    else:
+        greeting = "Good evening"
+
     today = date.today().isoformat()
 
     return templates.TemplateResponse(
@@ -591,11 +603,9 @@ def jarvis_landing(request: Request):
         ctx(
             request,
             today=today,
-            jobs=jobs_for_user(u),
-            properties=properties_for_user(u),
-            photos=photos_for_user(u),
-        )
-    )
+            greeting=greeting,
+        )                                                                           
+    ) 
 
 @app.get("/jarvis/search")
 def jarvis_search(request: Request, q: str = ""):
@@ -972,7 +982,7 @@ def start_job(job_id: int, request: Request):
     if not u:
         return login_redirect()
 
-    execute(
+    exec_sql(
         "UPDATE poolops2_jobs SET status=? WHERE id=?",
         ("In Progress", job_id)
     )
@@ -986,7 +996,7 @@ def complete_job(job_id: int, request: Request):
     if not u:
         return login_redirect()
 
-    execute(
+    exec_sql(
         "UPDATE poolops2_jobs SET status=? WHERE id=?",
         ("Complete", job_id)
     )
