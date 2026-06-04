@@ -649,27 +649,28 @@
   font-size:.75rem;
 }
 
-.hfo-v2-handle-card{
+
+ .hfo-v2-handle-card{
   margin-top:26px;
-  padding:26px;
-  border-radius:22px;
-  border:1px solid rgba(214,179,106,.65);
+  padding:34px;
+  border-radius:28px;
+  border:2px solid rgba(214,179,106,.75);
+
   background:
-    radial-gradient(circle at bottom, rgba(214,179,106,.18), transparent 42%),
-    linear-gradient(135deg, rgba(214,179,106,.12), transparent),
+    radial-gradient(circle at bottom,
+    rgba(214,179,106,.20),
+    transparent 42%),
+    linear-gradient(135deg,
+    rgba(214,179,106,.14),
+    transparent),
     #111820;
-  box-shadow:0 0 32px rgba(214,179,106,.18);
+
+  box-shadow:
+    0 0 40px rgba(214,179,106,.20),
+    0 20px 60px rgba(0,0,0,.45);
+
   text-align:center;
 }
-
-.hfo-v2-handle-card h4{
-  color:#d6b36a;
-  font-size:clamp(2rem,5vw,3.5rem);
-  text-transform:uppercase;
-  letter-spacing:.06em;
-  margin:0 0 20px;
-}
-
 .hfo-v2-search{
   display:grid;
   grid-template-columns:1fr 190px;
@@ -688,12 +689,12 @@
   text-transform:uppercase;
 }
 
-.hfo-v2-handle-card p{
+.hfo-v2-handle-card h4{
   color:#d6b36a;
+  font-size:clamp(2.5rem,6vw,4.5rem);
   text-transform:uppercase;
-  font-weight:900;
   letter-spacing:.08em;
-  margin-bottom:0;
+  margin:0 0 22px;
 }
 
 .hfo-v2-weather,
@@ -838,5 +839,174 @@
 
   .hfo-v2-buttons{
     grid-template-columns:repeat(2,1fr);
+  }
+}
+
+.hfo-live-ops{
+  margin-top:18px;
+  padding:22px;
+  background:#0b1218;
+  border:1px solid rgba(214,179,106,.24);
+  border-radius:18px;
+}
+
+.hfo-live-ops h2{
+  color:#d6b36a;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+}
+
+.hfo-live-buttons{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:12px;
+}
+
+.hfo-live-buttons a{
+  text-decoration:none;
+  color:white;
+  text-align:center;
+  padding:20px;
+  border-radius:14px;
+  font-weight:900;
+  background:linear-gradient(
+    135deg,
+    rgba(214,179,106,.18),
+    rgba(255,255,255,.04)
+  );
+  border:1px solid rgba(214,179,106,.30);
+}
+
+.hfo-live-buttons a:hover{
+  color:#d6b36a;
+}
+
+/* =========================================================
+   JARVIS COMMAND CENTER V2 — NO SIDEBAR FIX
+   Added by Jarvis
+   Purpose:
+   - Remove leftover sidebar layout spacing
+   - Make Command Center fill full width
+   - Keep Live Operations under Jarvis
+   - Protect mobile layout
+   ========================================================= */
+
+.hfo-command-v2{
+  display:block !important;
+  width:100%;
+}
+
+.hfo-v2-main{
+  width:100%;
+  max-width:100%;
+}
+
+.hfo-v2-sidebar{
+  display:none !important;
+}
+
+.hfo-v2-grid{
+  display:grid;
+  grid-template-columns:minmax(0,1.7fr) minmax(260px,.9fr);
+  gap:18px;
+  align-items:stretch;
+}
+
+.hfo-v2-jarvis{
+  min-width:0;
+}
+
+.hfo-v2-handle-card{
+  margin-top:26px;
+  padding:34px;
+  border-radius:28px;
+  border:2px solid rgba(214,179,106,.75);
+  background:
+    radial-gradient(circle at bottom, rgba(214,179,106,.20), transparent 42%),
+    linear-gradient(135deg, rgba(214,179,106,.14), transparent),
+    #111820;
+  box-shadow:
+    0 0 40px rgba(214,179,106,.20),
+    0 20px 60px rgba(0,0,0,.45);
+  text-align:center;
+}
+
+.hfo-v2-handle-card h4{
+  color:#d6b36a;
+  font-size:clamp(2.5rem,6vw,4.5rem);
+  text-transform:uppercase;
+  letter-spacing:.08em;
+  margin:0 0 22px;
+}
+
+.hfo-live-ops{
+  margin-top:18px;
+  padding:22px;
+  background:#0b1218;
+  border:1px solid rgba(214,179,106,.24);
+  border-radius:18px;
+  box-shadow:0 20px 60px rgba(0,0,0,.35);
+}
+
+.hfo-live-ops h2{
+  color:#d6b36a;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+}
+
+.hfo-live-buttons{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:12px;
+}
+
+.hfo-live-buttons a{
+  text-decoration:none;
+  color:white;
+  text-align:center;
+  padding:20px;
+  border-radius:14px;
+  font-weight:900;
+  background:linear-gradient(135deg, rgba(214,179,106,.18), rgba(255,255,255,.04));
+  border:1px solid rgba(214,179,106,.30);
+}
+
+.hfo-live-buttons a:hover{
+  color:#d6b36a;
+  border-color:#d6b36a;
+}
+
+.hfo-award-line{
+  margin-top:8px;
+  color:#d6b36a !important;
+  text-transform:uppercase;
+  font-weight:900;
+  letter-spacing:.08em;
+  font-size:.85rem;
+}
+
+@media(max-width:950px){
+  .hfo-command-v2,
+  .hfo-v2-grid,
+  .hfo-v2-lower{
+    display:block !important;
+  }
+
+  .hfo-v2-weather,
+  .hfo-v2-map,
+  .hfo-v2-command,
+  .hfo-v2-card,
+  .hfo-live-ops{
+    margin-top:18px;
+  }
+
+  .hfo-v2-search,
+  .hfo-live-buttons,
+  .hfo-v2-buttons{
+    grid-template-columns:1fr !important;
+  }
+
+  .hfo-v2-header{
+    grid-template-columns:1fr !important;
   }
 }
