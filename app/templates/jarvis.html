@@ -1,131 +1,106 @@
 {% extends "base.html" %}
 {% block content %}
 
-<div class="hfo-command-v2">
+<div class="hfo-mobile-command">
 
-  <aside class="hfo-v2-sidebar">
-    <div class="hfo-v2-mark">
-      <div class="hfo-v2-shield">H<span>1907</span></div>
+  <section class="hfo-identity-card">
+    <div class="hfo-identity-copy">
+      <p class="hfo-mini-label">HEINLIN FIELD OPS</p>
+      <h1>HEINLIN FIELD<br>OPS</h1>
+      <p class="hfo-founded">Founded 1907 • 5th Generation</p>
     </div>
 
-    <a href="/organize-my-day" class="hfo-v2-side active">Today’s Work</a>
-    <a href="/crew/my-day" class="hfo-v2-side">My Day</a>
-    <a href="/weather" class="hfo-v2-side">Weather</a>
+    <div class="hfo-identity-mainline">
+      <div class="hfo-family-crest" aria-label="Heinlin family crest">
+        <div class="crest-helmet">♞</div>
+        <div class="crest-laurel left">❦</div>
+        <div class="crest-laurel right">❦</div>
+        <div class="crest-shield">H</div>
+        <div class="crest-ribbon">1907</div>
+      </div>
 
-    <div class="hfo-v2-side-legacy">
-      <p>5 Generations.</p>
-      <p>One Standard.</p>
-      <small>Make the Heinlin name proud.</small>
+      <div class="hfo-identity-taglines">
+        <p>Built by Hand.</p>
+        <p>Run Like a Machine.</p>
+        <strong>Always Having a Damn Good Time.</strong>
+      </div>
     </div>
-  </aside>
 
-  <main class="hfo-v2-main">
-
-    <section class="hfo-v2-header">
+    <div class="hfo-award-plaque">
+      <div class="hfo-award-seal">IN</div>
       <div>
-        <h1>HEINLIN FIELD OPS</h1>
-        <p>Founded 1907 • 5th Generation</p>
-      </div>
-
-      <div class="hfo-v2-award">
-        Indiana Historical Society<br>
+        <span>Indiana Historical Society</span>
         <strong>Centennial Business Award</strong>
+        <em>Recipient</em>
       </div>
+    </div>
+  </section>
 
-      <div class="hfo-v2-tag">
-        Built by Hand. Run Like a Machine.
-        <span>Always Having a Damn Good Time.</span>
+  <section class="hfo-jarvis-card">
+    <div class="hfo-jarvis-title-row">
+      <h2>JARVIS</h2>
+      <span class="hfo-online-dot"></span>
+    </div>
+
+    <p class="hfo-online-word">Online</p>
+
+    <h3>{{ greeting }}, {{ user.name or user.username or "Boss" }}.</h3>
+
+    <div class="hfo-mobile-stats">
+      <div>
+        <strong>3</strong>
+        <span>Employees<br>Clocked In</span>
       </div>
-    </section>
-
-    <section class="hfo-v2-grid">
-
-      <div class="hfo-v2-jarvis">
-        <h2>JARVIS <span>● ONLINE</span></h2>
-        <h3>{{ greeting }}, {{ user.name or user.username or "Boss" }}.</h3>
-
-        <div class="hfo-v2-pulse">
-          <div><strong>3</strong><span>Employees Clocked In</span></div>
-          <div><strong>12</strong><span>Jobs Scheduled</span></div>
-          <div><strong>1</strong><span>Priority Issue</span></div>
-        </div>
-
-        <div class="hfo-v2-handle-card">
-          <h4>What Needs Handled?</h4>
-
-          <form method="get" action="/jarvis/search" class="hfo-v2-search">
-            <input name="q" placeholder="Find a client, job, property, photo, log, map, weather..." autofocus>
-            <button class="btn primary" type="submit">Handle It</button>
-          </form>
-
-          <p>Talk to Jarvis</p>
-        </div>
+      <div>
+        <strong>12</strong>
+        <span>Jobs<br>Scheduled</span>
       </div>
-
-      <div class="hfo-v2-weather">
-        <h3>Today</h3>
-        <div class="hfo-v2-temp">83°</div>
-        <p>Sunny</p>
-        <small>Rain after 4 PM</small>
-
-        <div class="hfo-v2-weather-stats">
-          <div><strong>5</strong><span>Pools Scheduled</span></div>
-          <div><strong>0</strong><span>Weather Delays</span></div>
-        </div>
+      <div>
+        <strong>1</strong>
+        <span>Priority<br>Issue</span>
       </div>
+    </div>
 
-      <div class="hfo-v2-map">
-        <h3>Today’s Map</h3>
-        <div class="hfo-v2-fake-map">MAP</div>
-        <a href="/map">View full map</a>
-      </div>
+    <div class="hfo-handle-zone">
+      <h4>What needs handled?</h4>
 
-    </section>
+      <form method="get" action="/jarvis/search" class="hfo-mobile-search">
+        <input name="q" placeholder="Find a client, job, property, photo, log, map, weather..." autofocus>
+        <button class="btn primary" type="submit">Handle It</button>
+      </form>
 
-    <section class="hfo-v2-command">
-      <h2>Command Center</h2>
+      <a class="hfo-talk-link" href="/talk-to-jarvis">Talk to Jarvis</a>
+    </div>
+  </section>
 
-      <div class="hfo-v2-buttons">
-        <a href="/organize-my-day">Today’s Work</a>
-        <a href="/crew/my-day">My Day</a>
-        <a href="/jobs">Jobs</a>
-        <a href="/clients">Clients</a>
-        <a href="/properties">Properties</a>
-        <a href="/photos">Photos</a>
-        <a href="/map">Map</a>
-        <a href="/field-logs">Field Logs</a>
-      </div>
-    </section>
+  <section class="hfo-mobile-section hfo-live-operations-v3">
+    <h2>Live Operations</h2>
+    <div class="hfo-mobile-buttons three">
+      <a href="/organize-my-day">Today’s Work</a>
+      <a href="/crew/my-day">My Day</a>
+      <a href="/weather">Weather</a>
+    </div>
+  </section>
 
-    <section class="hfo-v2-lower">
-      <div class="hfo-v2-card priority">
-        <h3>Priority Items</h3>
-        <p>Smith Pool — Heater not working</p>
-        <p>Johnson Project — Awaiting approval</p>
-        <p>Weather Delay — Rain expected tomorrow</p>
-      </div>
+  <section class="hfo-mobile-section hfo-command-buttons-v3">
+    <h2>Command Center</h2>
+    <div class="hfo-mobile-buttons">
+      <a href="/clients">Clients</a>
+      <a href="/properties">Properties</a>
+      <a href="/jobs">Jobs</a>
+      <a href="/photos">Photos</a>
+      <a href="/map">Map</a>
+      <a href="/field-logs">Field Logs</a>
+      <a href="/employees">Employees</a>
+      <a href="/estimates">Estimates</a>
+    </div>
+  </section>
 
-      <div class="hfo-v2-card schedule">
-        <h3>Today’s Schedule</h3>
-        <p>7:30 AM — Kendall Residence</p>
-        <p>9:30 AM — Thompson Pool</p>
-        <p>11:30 AM — Smith Residence</p>
-      </div>
+  <section class="hfo-mobile-section hfo-footer-v3">
+    <strong>Built by Heinlin. Powered by Jarvis.</strong>
+    <span>Make the Heinlin name proud. Make this country proud. Leave things better than you found them.</span>
+  </section>
 
-      <div class="hfo-v2-card activity">
-        <h3>Recent Activity</h3>
-        <p>Marty uploaded 12 photos</p>
-        <p>Aaron completed Job #147</p>
-        <p>Field log added</p>
-      </div>
-    </section>
-
-    <section class="hfo-v2-footer">
-      <strong>Built by Heinlin. Powered by Jarvis.</strong>
-      <span>Make the Heinlin name proud. Make this country proud. Leave things better than you found them.</span>
-    </section>
-
-  </main>
 </div>
 
 {% endblock %}
