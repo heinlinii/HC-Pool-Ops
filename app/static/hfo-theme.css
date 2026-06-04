@@ -1102,94 +1102,59 @@ body.hfo-body{
   margin:8px 0 28px;
 }
 
-.hfo-family-crest{
-  position:relative;
+.hfo-v3-crest{
   width:220px;
-  height:210px;
-  margin:0;
-  color:#d9b963;
-  filter:drop-shadow(0 10px 30px rgba(0,0,0,.5));
+  min-height:190px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  color:#d6b36a;
+  position:relative;
+  margin:22px 0;
 }
 
-.crest-shield{
-  position:absolute;
-  left:50%;
-  top:52%;
-  transform:translate(-50%,-50%);
-  width:116px;
-  height:132px;
-  display:grid;
-  place-items:center;
-  color:#d9b963;
-  font-family:Georgia,serif;
-  font-size:4.7rem;
-  font-weight:900;
-  border:4px solid #d9b963;
-  border-radius:18px 18px 36px 36px;
-  background:linear-gradient(145deg, rgba(214,179,106,.10), rgba(0,0,0,.28));
-}
-
-.crest-shield:after{
+.hfo-v3-crest::before{
   content:"";
+  width:120px;
+  height:138px;
+  border:4px solid #d6b36a;
+  border-radius:56px 56px 24px 24px;
+  clip-path:polygon(0 0,100% 0,100% 72%,50% 100%,0 72%);
+  box-shadow:0 0 22px rgba(214,179,106,.22);
+}
+
+.hfo-v3-crest::after{
+  content:"1907";
   position:absolute;
-  left:14px;
-  right:14px;
-  bottom:-22px;
-  height:36px;
-  border-bottom:4px solid #d9b963;
-  border-left:4px solid #d9b963;
-  transform:skewY(-22deg);
-  border-radius:0 0 0 24px;
-}
-
-.crest-helmet{
-  position:absolute;
-  left:50%;
-  top:0;
-  transform:translateX(-50%);
-  font-size:3.05rem;
-  line-height:1;
-  opacity:.95;
-}
-
-.crest-laurel{
-  position:absolute;
-  top:42px;
-  font-size:6.6rem;
-  line-height:1;
-  opacity:.95;
-  font-family:Georgia,serif;
-}
-
-.crest-laurel.left{
-  left:0;
-  transform:rotate(-20deg);
-}
-
-.crest-laurel.right{
-  right:0;
-  transform:scaleX(-1) rotate(-20deg);
-}
-
-.crest-ribbon{
-  position:absolute;
-  left:50%;
-  bottom:0;
-  transform:translateX(-50%) rotate(-2deg);
-  min-width:148px;
-  padding:8px 18px;
-  color:#d9b963;
-  border:3px solid #d9b963;
-  border-radius:999px;
-  background:#060c0f;
-  font-size:1.45rem;
-  font-family:Georgia,serif;
-  font-style:italic;
+  bottom:4px;
   font-weight:900;
-  letter-spacing:.12em;
-  text-align:center;
+  font-style:italic;
+  letter-spacing:.08em;
 }
 
+.hfo-v3-crest .crest-h{
+  position:absolute;
+  top:48px;
+  font-size:4rem;
+  font-weight:900;
+  color:#d6b36a;
+}
+
+.hfo-v3-crest .crest-top{
+  position:absolute;
+  top:0;
+  font-size:2rem;
+}
+
+.hfo-v3-crest .crest-scroll{
+  position:absolute;
+  bottom:20px;
+  width:170px;
+  height:34px;
+  border:3px solid #d6b36a;
+  border-radius:999px;
+}
 .hfo-identity-taglines p,
 .hfo-identity-taglines strong{
   display:block;
@@ -1552,5 +1517,80 @@ body.hfo-body{
   .hfo-mobile-buttons,
   .hfo-mobile-buttons.three{
     grid-template-columns:1fr;
+  }
+}
+
+@media(max-width:700px){
+
+  .hfo-v3-brand,
+  .hfo-v3-jarvis,
+  .hfo-v3-live,
+  .hfo-v3-command,
+  .hfo-v3-footer{
+    padding:28px !important;
+    border-radius:26px !important;
+  }
+
+  .hfo-v3-brand h1{
+    font-size:4.2rem !important;
+    line-height:.92 !important;
+  }
+
+  .hfo-v3-brand .kicker{
+    font-size:.95rem !important;
+  }
+
+  .hfo-v3-brand .heritage{
+    font-size:1.05rem !important;
+    line-height:1.25 !important;
+  }
+
+  .hfo-v3-crest{
+    width:170px !important;
+    margin:22px 0 !important;
+  }
+
+  .hfo-v3-award{
+    padding:20px !important;
+    margin-top:24px !important;
+  }
+
+  .hfo-v3-award strong{
+    font-size:1.7rem !important;
+    line-height:1.05 !important;
+  }
+
+  .hfo-v3-jarvis h2{
+    font-size:4.8rem !important;
+  }
+
+  .hfo-v3-jarvis h3{
+    font-size:2.2rem !important;
+  }
+
+  .hfo-v3-handle h4{
+    font-size:2.5rem !important;
+    line-height:1.05 !important;
+  }
+
+  .hfo-v3-live-buttons,
+  .hfo-v3-buttons{
+    gap:14px !important;
+  }
+
+  .hfo-v3-live-buttons a,
+  .hfo-v3-buttons a{
+    min-height:82px !important;
+    padding:20px !important;
+    font-size:1.15rem !important;
+  }
+
+  .bottom-action-bar{
+    padding:10px !important;
+  }
+
+  .bottom-action-bar .btn{
+    padding:12px 18px !important;
+    font-size:1rem !important;
   }
 }
