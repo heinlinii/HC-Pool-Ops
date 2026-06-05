@@ -541,6 +541,16 @@ def ctx(request, **kw):
         **kw,
     }
 
+@app.get("/assistant-interview-live", response_class=HTMLResponse)
+async def assistant_interview_live_page(request: Request):
+    user = require_login(request)
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    return templates.TemplateResponse(
+        "assistant_interview_live.html",
+        ctx(request, user=user)
+    )
 
 @app.get("/", response_class=HTMLResponse)
 def root(request: Request):
