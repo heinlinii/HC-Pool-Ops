@@ -2578,3 +2578,93 @@ body.hfo-body:has(.heinlin-login-page) .shell {
     font-size: 1.85rem !important;
   }
 }
+/* =========================================================
+   LOGIN CREST FINAL SIZE CONTROL — desktop + mobile
+   ========================================================= */
+
+body.hfo-body:has(.heinlin-login-page) .shell {
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.heinlin-login-page {
+  width: min(760px, calc(100vw - 24px)) !important;
+  margin: 0 auto !important;
+  padding: 6px 0 20px !important;
+  gap: 8px !important;
+}
+
+.heinlin-identity-card {
+  padding: 0 !important;
+  margin: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  overflow: visible !important;
+}
+
+.crest-wrap {
+  padding: 0 !important;
+  margin: 0 auto !important;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  overflow: visible !important;
+}
+
+.heinlin-family-crest {
+  display: block !important;
+  width: auto !important;
+  max-width: 100% !important;
+  max-height: 32vh !important;
+  height: auto !important;
+  margin: 0 auto !important;
+  object-fit: contain !important;
+  object-position: center top !important;
+}
+
+.heinlin-login-panel {
+  margin-top: 0 !important;
+  padding: 18px 22px 22px !important;
+  border-radius: 24px !important;
+}
+
+.heinlin-login-panel h2 {
+  margin: 0 0 14px !important;
+  font-size: clamp(1.6rem, 4vw, 2.3rem) !important;
+}
+
+.heinlin-login-panel label {
+  margin: 10px 0 6px !important;
+}
+
+.heinlin-login-panel input {
+  min-height: 42px !important;
+}
+
+.heinlin-login-panel .login-submit {
+  min-height: 46px !important;
+  margin-top: 16px !important;
+}
+
+/* Phone tightening */
+@media (max-width: 720px) {
+  .heinlin-login-page {
+    width: calc(100vw - 16px) !important;
+    padding: 0 0 16px !important;
+    gap: 7px !important;
+  }
+
+  .heinlin-family-crest {
+    max-height: 30vh !important;
+  }
+
+  .heinlin-login-panel {
+    padding: 18px 18px 20px !important;
+  }
+
+  .heinlin-login-panel h2 {
+    font-size: 1.75rem !important;
+  }
+}
