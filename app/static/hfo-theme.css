@@ -1981,4 +1981,392 @@ body.hfo-body{
   .hfo-login-legacy{
     padding:30px;
   }
+}/* =========================================================
+   MOBILE ONLY — Heinlin login final layout fix
+   ========================================================= */
+
+@media (max-width: 720px) {
+  .hfo-login-legacy {
+    width: calc(100vw - 24px);
+    max-width: none;
+    margin: 0 auto 8px !important;
+    padding: 30px 24px 28px !important;
+    border-radius: 28px !important;
+    min-height: auto !important;{}
+
+  .hfo-login-legacy .login-brand-row {
+    display: block !important;
+    margin: 0 0 34px !important;
+  }
+
+  /* Hide the small top-left HEINLIN FIELD OPS on mobile */
+  .hfo-login-legacy .kicker {
+    display: none !important;
+  }
+
+  /* Make Founded line the only top identity line on mobile */
+  .hfo-login-legacy .heritage {
+    display: block !important;
+    margin: 0 !important;
+    color: #f3d78c !important;
+    font-size: clamp(1.28rem, 5.1vw, 1.9rem) !important;
+    line-height: 1.28 !important;
+    font-weight: 950 !important;
+    letter-spacing: 0.13em !important;
+    text-transform: uppercase !important;
+    text-align: left !important;
+    max-width: 100% !important;
+  }
+
+  .hfo-login-legacy h1 {
+    margin: 0 !important;
+    max-width: 100% !important;
+    color: #ffffff !important;
+    font-size: clamp(4.45rem, 18.5vw, 5.9rem) !important;
+    line-height: 0.86 !important;
+    font-weight: 1000 !important;
+    letter-spacing: -0.075em !important;
+    text-transform: uppercase !important;
+  }
+
+  .hfo-login-legacy .login-machine-line {
+    margin: 38px 0 0 !important;
+    max-width: 100% !important;
+    color: #ffffff !important;
+    font-size: clamp(1.15rem, 4.85vw, 1.55rem) !important;
+    line-height: 1.18 !important;
+    font-weight: 1000 !important;
+    letter-spacing: -0.025em !important;
+    text-transform: uppercase !important;
+  }
+
+  .login-card,
+  .login-panel,
+  .login-form-card,
+  .hfo-login-form-card {
+    margin-top: 8px !important;
+  }
+}
+
+@media (max-width: 430px) {
+  .hfo-login-legacy {
+    padding: 28px 22px 26px !important;
+  }
+
+  .hfo-login-legacy .login-brand-row {
+    margin-bottom: 32px !important;
+  }
+
+  .hfo-login-legacy .heritage {
+    font-size: 1.25rem !important;
+    line-height: 1.28 !important;
+    letter-spacing: 0.12em !important;
+  }
+
+  .hfo-login-legacy h1 {
+    font-size: clamp(4.1rem, 18.5vw, 5.2rem) !important;
+  }
+
+  .hfo-login-legacy .login-machine-line {
+    margin-top: 36px !important;
+    font-size: 1.12rem !important;
+  }
+}/* =========================================================
+   Heinlin Command Center Login — Crest + Steve Background
+   ========================================================= */
+
+.heinlin-login-page {
+  min-height: 100vh;
+}
+
+body.hfo-body:has(.heinlin-login-page) {
+  background:
+    linear-gradient(rgba(0, 0, 0, 0.62), rgba(0, 0, 0, 0.82)),
+    url("/static/Dedicated%20to%20Steve%20Meyerholtz.jpg");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+}
+
+.heinlin-login-page {
+  width: min(1120px, calc(100vw - 28px));
+  margin: 0 auto;
+  padding: 34px 0 42px;
+  display: grid;
+  gap: 18px;
+}
+
+.heinlin-identity-card {
+  border-radius: 34px;
+  padding: 18px;
+  background: rgba(5, 8, 12, 0.78);
+  border: 1px solid rgba(215, 168, 75, 0.36);
+  box-shadow: 0 28px 90px rgba(0, 0, 0, 0.62);
+  backdrop-filter: blur(12px);
+}
+
+.crest-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.heinlin-family-crest {
+  display: block;
+  width: min(760px, 100%);
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 22px 40px rgba(0, 0, 0, 0.72));
+}
+
+.heinlin-login-panel {
+  width: 100%;
+  margin: 0 auto;
+  padding: 28px 30px 32px;
+  border-radius: 28px;
+  background: rgba(7, 15, 22, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(14px);
+}
+
+.heinlin-login-panel h2 {
+  margin: 0 0 24px;
+  color: #ffffff;
+  font-size: clamp(1.8rem, 4vw, 3rem);
+  line-height: 1;
+  font-weight: 950;
+  letter-spacing: -0.04em;
+}
+
+.heinlin-login-panel label {
+  display: block;
+  margin: 16px 0 8px;
+  color: rgba(255, 255, 255, 0.86);
+  font-weight: 900;
+}
+
+.heinlin-login-panel input {
+  width: 100%;
+  min-height: 52px;
+  border-radius: 17px;
+  padding: 0 15px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(0, 0, 0, 0.32);
+  color: #ffffff;
+  font-size: 1rem;
+  outline: none;
+}
+
+.heinlin-login-panel input:focus {
+  border-color: rgba(215, 168, 75, 0.82);
+  box-shadow: 0 0 0 4px rgba(215, 168, 75, 0.14);
+}
+
+.heinlin-login-panel .login-submit {
+  width: 100%;
+  min-height: 54px;
+  margin-top: 24px;
+  border-radius: 18px;
+  font-size: 0.95rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.login-error {
+  color: #ffb4b4;
+  background: rgba(120, 25, 25, 0.3);
+  border: 1px solid rgba(255, 120, 120, 0.25);
+  border-radius: 14px;
+  padding: 12px 14px;
+  font-weight: 800;
+}
+
+/* Mobile login */
+@media (max-width: 720px) {
+  body.hfo-body:has(.heinlin-login-page) {
+    background-attachment: scroll;
+    background-position: center top;
+  }
+
+  .heinlin-login-page {
+    width: calc(100vw - 20px);
+    padding: 18px 0 28px;
+    gap: 10px;
+  }
+
+  .heinlin-identity-card {
+    border-radius: 28px;
+    padding: 10px;
+  }
+
+  .heinlin-family-crest {
+    width: 100%;
+    max-height: 64vh;
+    object-fit: contain;
+  }
+
+  .heinlin-login-panel {
+    padding: 24px 22px 28px;
+    border-radius: 25px;
+  }
+
+  .heinlin-login-panel h2 {
+    font-size: 2rem;
+  }
+
+  .heinlin-login-panel input {
+    min-height: 50px;
+  }
+}
+/* =========================================================
+   Heinlin Command Center Login — Crest + Steve Background
+   ========================================================= */
+
+.heinline-login-page,
+.heinlin-login-page {
+  min-height: 100vh;
+}
+
+body.hfo-body:has(.heinlin-login-page) {
+  background:
+    linear-gradient(rgba(0, 0, 0, 0.62), rgba(0, 0, 0, 0.82)),
+    url("/static/Dedicated%20to%20Steve%20Meyerholtz.jpg");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+}
+
+.heinlin-login-page {
+  width: min(1120px, calc(100vw - 28px));
+  margin: 0 auto;
+  padding: 34px 0 42px;
+  display: grid;
+  gap: 18px;
+}
+
+.heinlin-identity-card {
+  border-radius: 34px;
+  padding: 18px;
+  background: rgba(5, 8, 12, 0.78);
+  border: 1px solid rgba(215, 168, 75, 0.36);
+  box-shadow: 0 28px 90px rgba(0, 0, 0, 0.62);
+  backdrop-filter: blur(12px);
+}
+
+.crest-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.heinlin-family-crest {
+  display: block;
+  width: min(760px, 100%);
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 22px 40px rgba(0, 0, 0, 0.72));
+}
+
+.heinlin-login-panel {
+  width: 100%;
+  margin: 0 auto;
+  padding: 28px 30px 32px;
+  border-radius: 28px;
+  background: rgba(7, 15, 22, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(14px);
+}
+
+.heinlin-login-panel h2 {
+  margin: 0 0 24px;
+  color: #ffffff;
+  font-size: clamp(1.8rem, 4vw, 3rem);
+  line-height: 1;
+  font-weight: 950;
+  letter-spacing: -0.04em;
+}
+
+.heinlin-login-panel label {
+  display: block;
+  margin: 16px 0 8px;
+  color: rgba(255, 255, 255, 0.86);
+  font-weight: 900;
+}
+
+.heinlin-login-panel input {
+  width: 100%;
+  min-height: 52px;
+  border-radius: 17px;
+  padding: 0 15px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(0, 0, 0, 0.32);
+  color: #ffffff;
+  font-size: 1rem;
+  outline: none;
+}
+
+.heinlin-login-panel input:focus {
+  border-color: rgba(215, 168, 75, 0.82);
+  box-shadow: 0 0 0 4px rgba(215, 168, 75, 0.14);
+}
+
+.heinlin-login-panel .login-submit {
+  width: 100%;
+  min-height: 54px;
+  margin-top: 24px;
+  border-radius: 18px;
+  font-size: 0.95rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.login-error {
+  color: #ffb4b4;
+  background: rgba(120, 25, 25, 0.3);
+  border: 1px solid rgba(255, 120, 120, 0.25);
+  border-radius: 14px;
+  padding: 12px 14px;
+  font-weight: 800;
+}
+
+/* Mobile login */
+@media (max-width: 720px) {
+  body.hfo-body:has(.heinlin-login-page) {
+    background-attachment: scroll;
+    background-position: center top;
+  }
+
+  .heinlin-login-page {
+    width: calc(100vw - 20px);
+    padding: 18px 0 28px;
+    gap: 10px;
+  }
+
+  .heinlin-identity-card {
+    border-radius: 28px;
+    padding: 10px;
+  }
+
+  .heinlin-family-crest {
+    width: 100%;
+    max-height: 64vh;
+    object-fit: contain;
+  }
+
+  .heinlin-login-panel {
+    padding: 24px 22px 28px;
+    border-radius: 25px;
+  }
+
+  .heinlin-login-panel h2 {
+    font-size: 2rem;
+  }
+
+  .heinlin-login-panel input {
+    min-height: 50px;
+  }
 }

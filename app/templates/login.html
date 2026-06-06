@@ -1,48 +1,36 @@
 {% extends "base.html" %}
 {% block content %}
 
-<div class="hfo-login-legacy">
+<div class="heinlin-login-page">
 
-  <div class="login-brand-row">
-    <p class="kicker">HEINLIN FIELD OPS</p>
+  <section class="heinlin-identity-card">
+    <div class="crest-wrap">
+      <img
+        src="/static/heinlin-family-crest.png"
+        alt="Heinlin Concrete Family Crest"
+        class="heinlin-family-crest"
+      >
+    </div>
+  </section>
 
-    <p class="heritage">
-      Founded 1907 • 5 Generations Strong
-    </p>
-  </div>
-
-  <h1>Heinlin Field Ops</h1>
-
-  <p class="login-machine-line">
-    Built by the Hands that Perfected the Term “Work Hard Play Harder.”
-  </p>
-
-</div>
-
-  <form method="post" action="/login" class="panel hfo-login-card">
-
+  <form method="post" action="/login" class="panel heinlin-login-panel">
     <h2>Enter Command Center</h2>
 
     {% if error %}
-      <p class="alert">{{ error }}</p>
+      <p class="login-error">{{ error }}</p>
     {% endif %}
 
-    <label>
-      Username
-      <input name="username" autocomplete="username" required>
-    </label>
+    <label for="username">Username</label>
+    <input id="username" name="username" type="text" autocomplete="username" required>
 
-    <label>
-      Password
-      <input name="password" type="password" autocomplete="current-password" required>
-    </label>
+    <label for="password">Password</label>
+    <input id="password" name="password" type="password" autocomplete="current-password" required>
 
-    <button class="btn primary" type="submit">
+    <button type="submit" class="btn primary login-submit">
       Enter Command Center
     </button>
-
   </form>
 
-</section>
+</div>
 
 {% endblock %}
