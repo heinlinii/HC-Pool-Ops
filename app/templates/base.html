@@ -3,37 +3,43 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{{ title or "Heinlin Field Ops" }}</title>
+  <title>{{ title or "Heinlin Command Center" }}</title>
+
   <link rel="stylesheet" href="/static/style.css?v=role-portals-1">
   <link rel="stylesheet" href="/static/hfo-theme.css">
 </head>
-<script>
-  if ("scrollRestoration" in history) {
-    history.scrollRestoration = "manual";
-  }
-  window.addEventListener("load", function () {
-    window.scrollTo(0, 0);
-  });
-</script>
+
 <body class="hfo-body">
+
+  <script>
+    if ("scrollRestoration" in history) {
+      history.scrollRestoration = "manual";
+    }
+
+    window.addEventListener("load", function () {
+      window.scrollTo(0, 0);
+    });
+  </script>
+
+  {% if user and request.url.path != "/login" %}
+  <div class="top-action-bar">
+    <button class="btn" type="button" onclick="history.back()">← Back</button>
+
+    {% if is_employee %}
+      <a class="btn primary" href="/crew/my-day">Dashboard</a>
+    {% elif is_client %}
+      <a class="btn primary" href="/client-portal">Dashboard</a>
+    {% else %}
+      <a class="btn primary" href="/jarvis">Dashboard</a>
+    {% endif %}
+
+    <a class="btn danger" href="/logout">Logout</a>
+  </div>
+  {% endif %}
+
   <main class="shell">
     {% block content %}{% endblock %}
   </main>
 
-{% if user and request.url.path != "/login" %}
-<div class="top-action-bar">
-  <button class="btn" onclick="history.back()">← Back</button>
-
-  {% if is_employee %}
-    <a class="btn primary" href="/crew/my-day">Dashboard</a>
-  {% elif is_client %}
-    <a class="btn primary" href="/client-portal">Dashboard</a>
-  {% else %}
-    <a class="btn primary" href="/jarvis">Dashboard</a>
-  {% endif %}
-
-  <a class="btn danger" href="/logout">Logout</a>
-</div>
-{% endif %}
 </body>
 </html>
