@@ -3222,3 +3222,336 @@ body.hfo-body:has(.heinlin-login-page) .shell {
     min-height: 48px !important;
   }
 }
+/* =========================================================
+   JARVIS LOGIN — CREST INSIDE CARD FINAL
+   ========================================================= */
+
+body.hfo-body:has(.heinlin-login-page) {
+  margin: 0 !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  background: #03070a !important;
+  overflow-x: hidden !important;
+}
+
+body.hfo-body:has(.heinlin-login-page) .top-action-bar,
+body.hfo-body:has(.heinlin-login-page) .bottom-action-bar {
+  display: none !important;
+}
+
+body.hfo-body:has(.heinlin-login-page) .shell {
+  width: 100vw !important;
+  max-width: none !important;
+  min-height: 100vh !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.heinlin-login-page {
+  /*
+    QUICK CONTROLS
+
+    --login-bg-x        moves background left/right
+    --login-bg-y        moves background up/down
+    --login-bg-zoom     makes background bigger/smaller
+
+    --login-card-left   moves card left/right on desktop
+    --login-card-top    moves card up/down on desktop
+    --login-card-width  changes desktop card size
+
+    --login-crest-size  changes crest size inside card
+  */
+
+  --login-bg-x: 55%;
+  --login-bg-y: center;
+  --login-bg-zoom: 1.03;
+
+  --login-card-left: clamp(28px, 4.5vw, 72px);
+  --login-card-top: 53%;
+  --login-card-width: min(430px, 36vw);
+
+  --login-crest-size: 130px;
+
+  position: relative !important;
+  width: 100vw !important;
+  min-height: 100vh !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  isolation: isolate !important;
+  background: #03070a !important;
+}
+
+.login-photo-bg {
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 0 !important;
+
+  background:
+    linear-gradient(
+      90deg,
+      rgba(0, 0, 0, 0.50) 0%,
+      rgba(0, 0, 0, 0.22) 42%,
+      rgba(0, 0, 0, 0.16) 100%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(0, 0, 0, 0.05) 0%,
+      rgba(0, 0, 0, 0.24) 55%,
+      rgba(0, 0, 0, 0.55) 100%
+    ),
+    url("/static/heinlin-login-bg-truck.jpg") !important;
+
+  background-size: cover !important;
+  background-position: var(--login-bg-x) var(--login-bg-y) !important;
+  background-repeat: no-repeat !important;
+
+  transform: scale(var(--login-bg-zoom)) !important;
+  transform-origin: center !important;
+}
+
+/* Kill the old floating crest if the old HTML is still cached somewhere */
+.heinlin-identity-card {
+  display: none !important;
+}
+
+.heinlin-login-panel {
+  position: absolute !important;
+  left: var(--login-card-left) !important;
+  top: var(--login-card-top) !important;
+  right: auto !important;
+  bottom: auto !important;
+  transform: translateY(-50%) !important;
+
+  width: var(--login-card-width) !important;
+  margin: 0 !important;
+  padding: 26px 28px 30px !important;
+
+  border-radius: 26px !important;
+  background: rgba(5, 12, 18, 0.84) !important;
+  border: 1px solid rgba(215, 168, 75, 0.28) !important;
+  box-shadow: 0 28px 85px rgba(0, 0, 0, 0.58) !important;
+  backdrop-filter: blur(14px) !important;
+  z-index: 3 !important;
+}
+
+.login-panel-crest {
+  display: block !important;
+  width: var(--login-crest-size) !important;
+  max-width: 100% !important;
+  height: auto !important;
+  margin: 0 0 18px !important;
+  object-fit: contain !important;
+  filter: drop-shadow(0 18px 34px rgba(0, 0, 0, 0.72)) !important;
+}
+
+.heinlin-login-panel h2 {
+  margin: 0 0 8px !important;
+  color: #ffffff !important;
+  font-size: clamp(1.85rem, 3vw, 2.7rem) !important;
+  line-height: 0.96 !important;
+  font-weight: 950 !important;
+  letter-spacing: -0.06em !important;
+}
+
+.login-subtitle {
+  margin: 0 0 24px !important;
+  color: rgba(255, 255, 255, 0.66) !important;
+  font-size: 0.95rem !important;
+  font-weight: 700 !important;
+}
+
+.heinlin-login-panel label {
+  display: block !important;
+  margin: 13px 0 6px !important;
+  color: rgba(255, 255, 255, 0.92) !important;
+  font-size: 0.9rem !important;
+  font-weight: 900 !important;
+}
+
+.heinlin-login-panel input {
+  width: 100% !important;
+  min-height: 48px !important;
+  border-radius: 15px !important;
+  padding: 0 14px !important;
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  background: rgba(0, 0, 0, 0.34) !important;
+  color: #ffffff !important;
+  font-size: 1rem !important;
+  font-weight: 700 !important;
+  outline: none !important;
+}
+
+.heinlin-login-panel input:focus {
+  border-color: rgba(215, 168, 75, 0.86) !important;
+  box-shadow: 0 0 0 4px rgba(215, 168, 75, 0.16) !important;
+}
+
+.heinlin-login-panel .login-submit {
+  width: 100% !important;
+  min-height: 52px !important;
+  margin-top: 18px !important;
+  border: 0 !important;
+  border-radius: 16px !important;
+
+  color: #11110d !important;
+  background: linear-gradient(135deg, #b98239, #e0b76c) !important;
+  box-shadow: 0 18px 34px rgba(0, 0, 0, 0.38) !important;
+
+  font-size: 0.82rem !important;
+  font-weight: 950 !important;
+  letter-spacing: 0.11em !important;
+  text-transform: uppercase !important;
+  cursor: pointer !important;
+}
+
+.heinlin-login-panel .login-submit:active {
+  transform: translateY(1px) !important;
+}
+
+.login-error {
+  color: #ffb4b4 !important;
+  background: rgba(120, 25, 25, 0.3) !important;
+  border: 1px solid rgba(255, 120, 120, 0.25) !important;
+  border-radius: 12px !important;
+  padding: 8px 10px !important;
+  font-weight: 800 !important;
+}
+
+/* Tablet */
+@media (max-width: 980px) {
+  .heinlin-login-page {
+    --login-card-width: min(395px, 43vw);
+    --login-card-left: 28px;
+    --login-card-top: 54%;
+    --login-crest-size: 118px;
+  }
+}
+
+/* Phone */
+@media (max-width: 720px) {
+  body.hfo-body:has(.heinlin-login-page) {
+    min-height: 100svh !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+  }
+
+  body.hfo-body:has(.heinlin-login-page) .shell {
+    min-height: 100svh !important;
+  }
+
+  .heinlin-login-page {
+    --login-bg-x: 58%;
+    --login-bg-y: center;
+    --login-bg-zoom: 1;
+    --login-crest-size: min(145px, 38vw);
+
+    width: 100vw !important;
+    height: auto !important;
+    min-height: 100svh !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    display: block !important;
+  }
+
+  .login-photo-bg {
+    position: relative !important;
+    inset: auto !important;
+    width: 100% !important;
+    height: 48svh !important;
+    min-height: 310px !important;
+    max-height: 455px !important;
+    z-index: 0 !important;
+    transform: none !important;
+
+    background:
+      linear-gradient(
+        180deg,
+        rgba(0, 0, 0, 0.04) 0%,
+        rgba(0, 0, 0, 0.16) 46%,
+        rgba(3, 7, 10, 0.95) 100%
+      ),
+      url("/static/heinlin-login-bg-truck.jpg") !important;
+
+    background-size: cover !important;
+    background-position: var(--login-bg-x) var(--login-bg-y) !important;
+    background-repeat: no-repeat !important;
+  }
+
+  .heinlin-login-panel {
+    position: relative !important;
+    left: auto !important;
+    right: auto !important;
+    top: auto !important;
+    bottom: auto !important;
+    transform: none !important;
+
+    width: auto !important;
+    margin: -58px 16px 24px !important;
+    padding: 24px 22px 24px !important;
+    border-radius: 26px !important;
+    background: rgba(5, 12, 18, 0.93) !important;
+    z-index: 4 !important;
+  }
+
+  .login-panel-crest {
+    width: var(--login-crest-size) !important;
+    margin: 0 auto 18px !important;
+  }
+
+  .heinlin-login-panel h2 {
+    margin-bottom: 8px !important;
+    font-size: clamp(1.95rem, 8vw, 2.5rem) !important;
+    white-space: normal !important;
+  }
+
+  .login-subtitle {
+    margin-bottom: 22px !important;
+    font-size: 0.92rem !important;
+  }
+
+  .heinlin-login-panel label {
+    margin: 12px 0 6px !important;
+    font-size: 0.9rem !important;
+  }
+
+  .heinlin-login-panel input {
+    min-height: 48px !important;
+    border-radius: 14px !important;
+  }
+
+  .heinlin-login-panel .login-submit {
+    min-height: 52px !important;
+    margin-top: 16px !important;
+    font-size: 0.78rem !important;
+  }
+}
+
+/* Small / short phones */
+@media (max-width: 430px) and (max-height: 760px) {
+  .heinlin-login-page {
+    --login-crest-size: min(118px, 34vw);
+  }
+
+  .login-photo-bg {
+    height: 44svh !important;
+    min-height: 285px !important;
+  }
+
+  .heinlin-login-panel {
+    margin-top: -48px !important;
+    padding: 20px 18px 22px !important;
+  }
+
+  .heinlin-login-panel h2 {
+    font-size: 1.8rem !important;
+  }
+
+  .heinlin-login-panel input {
+    min-height: 44px !important;
+  }
+
+  .heinlin-login-panel .login-submit {
+    min-height: 48px !important;
+  }
+}
