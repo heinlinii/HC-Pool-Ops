@@ -1,0 +1,6 @@
+{% extends "base.html" %}{% block content %}
+<section class="panel"><h1>Photos</h1>
+{% if is_admin or is_employee %}<form method="post" action="/photos/add" enctype="multipart/form-data" class="form-grid"><select name="property_id"><option value="0">Choose property</option>{% for p in properties %}<option value="{{ p.id }}">{{ p.client }} — {{ p.address }}</option>{% endfor %}</select><select name="job_id"><option value="0">Optional job</option>{% for j in jobs %}<option value="{{ j.id }}">{{ j.client }} — {{ j.job_type }}</option>{% endfor %}</select><input name="photo_type" value="Progress"><input name="title" placeholder="Photo title"><input name="date_str" type="date"><input type="file" name="photo_files" accept="image/*" multiple><textarea class="wide" name="notes" placeholder="Notes"></textarea><button class="primary wide">Upload Photos</button></form>{% endif %}
+</section>
+<section class="photo-grid">{% for ph in photos %}<article><img src="{{ ph.photo_url }}"><b>{{ ph.title }}</b><p>{{ ph.client }} · {{ ph.date }}</p><p>{{ ph.notes }}</p>{% if is_admin %}<form method="post" action="/photos/{{ ph.id }}/delete" onsubmit="return confirm('Delete this photo?');"><button class="danger-button">Delete Photo</button></form>{% endif %}</article>{% endfor %}</section>
+{% endblock %}

@@ -1,0 +1,14 @@
+<header class="ops-page-header">
+    <div>
+        <div class="ops-kicker">HEINLIN FIELD OPS</div>
+        <h1>{{ title }}</h1>
+        <p>{{ subtitle }}</p>
+    </div>
+    <div class="ops-header-actions">
+        <button type="button" onclick="history.back()" class="secondary-button">← Back</button>
+        <a href="/dashboard" class="secondary-button">Dashboard</a>
+        {% if primary_href and primary_label %}
+        <a href="{{ primary_href }}" class="primary-button">{{ primary_label }}</a>
+        {% endif %}
+    </div>
+</header>

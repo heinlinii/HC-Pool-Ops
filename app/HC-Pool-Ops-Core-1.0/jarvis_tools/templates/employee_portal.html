@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Employee Portal - Heinlin Field Ops</title>
+  <link rel="stylesheet" href="/static/style.css?v=portal-auth-1">
+</head>
+<body>
+{% include "_mobile_nav.html" %}
+<div class="ops-shell">
+  <header class="ops-page-header">
+    <div>
+      <div class="ops-kicker">EMPLOYEE PORTAL</div>
+      <h1>{{ employee_name }}</h1>
+      <p>My jobs, schedule, field notes, and photo uploads.</p>
+    </div>
+    <div class="ops-header-actions">
+      <a class="secondary-button" href="/jobs">All Jobs</a>
+      <a class="secondary-button" href="/capture">Field Note</a>
+      <a class="secondary-button" href="/logout">Logout</a>
+    </div>
+  </header>
+
+  <section class="ops-panel">
+    <h2>My Jobs</h2>
+    <div class="ops-grid-2">
+      {% for job in jobs %}
+      <div class="ops-list-card">
+        <h3>{{ job.client or 'Job' }}</h3>
+        <p><strong>{{ job.job_type or 'Work Order' }}</strong> · {{ job.status or 'Pending' }}</p>
+        <p>{{ job.property or job.address or '' }}</p>
+        <p>{{ job.date or '' }}</p>
+        <a class="primary-button" href="/jobs/{{ job.id }}">Open Job Hub</a>
+      </div>
+      {% else %}
+      <div class="ops-panel"><p>No jobs assigned to you yet.</p></div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="ops-panel" style="margin-top:18px;">
+    <h2>Field Tools</h2>
+    <div class="ops-grid-3">
+      <a href="/capture" class="secondary-button">Add Field Note</a>
+      <a href="/photos" class="secondary-button">Photos</a>
+      <a href="/schedule/day" class="secondary-button">Daily Schedule</a>
+    </div>
+  </section>
+</div>
+</body>
+</html>

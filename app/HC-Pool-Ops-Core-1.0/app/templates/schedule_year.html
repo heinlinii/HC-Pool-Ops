@@ -1,0 +1,13 @@
+{% extends "base.html" %}{% block content %}
+<section class="section-head core-hero"><h1>Heinlin Yearly Operations Board</h1><p>Built by Hand. Run Like a Machine.</p><div><a class="secondary-button" href="/schedule/year?y={{ board.prev_year }}">← {{ board.prev_year }}</a> <b>{{ board.year }}</b> <a class="secondary-button" href="/schedule/year?y={{ board.next_year }}">{{ board.next_year }} →</a></div></section>
+<section class="year-grid">
+{% for m in board.months %}
+  <article class="year-card">
+    <h2>{{ m.name }}</h2><p class="muted">{{ m.count }} scheduled item{{ '' if m.count == 1 else 's' }}</p>
+    {% for j in m.jobs[:6] %}<a class="mini-job" href="/jobs/{{ j.id }}"><b>{{ j.date or j.scheduled_start }}</b><span>{{ j.client }} — {{ j.job_type }}</span></a>{% endfor %}
+    {% if m.count > 6 %}<p class="muted">+ {{ m.count - 6 }} more</p>{% endif %}
+  </article>
+{% endfor %}
+</section>
+<footer class="core-footer">Always Having a Damn Good Time.</footer>
+{% endblock %}

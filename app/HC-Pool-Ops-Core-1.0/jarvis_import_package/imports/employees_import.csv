@@ -1,0 +1,4 @@
+employee_id,name,phone,role,username,password,card_image,active
+3,Randall Heinlin,(812) 781-1416,Supervisor,randall,randall,,TRUE
+4,Martin Dear,(812) 453-6657,Crew,martin,martin,,TRUE
+1,Mike Heinlin II,(812) 449-6198,Admin,mike,mike,,TRUE

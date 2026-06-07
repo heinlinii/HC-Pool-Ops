@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Assistant Interview • Heinlin Pool Ops</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/style.css?v=34">
+</head>
+
+<body>
+{% include "_mobile_nav.html" %}
+
+<div class="topbar-back">
+    <button onclick="history.back()" class="back-btn">← Back</button>
+</div>
+
+<div class="app-layout">
+
+    {% include "_sidebar.html" %}
+
+    <main class="main-content with-sidebar">
+
+        <section class="hero-card">
+            <h1>Assistant Interview</h1>
+            <p>Pick a client, property, or job. PoolOps will ask what you know and save it into notes.</p>
+        </section>
+
+        <section class="content-card">
+
+            <form method="post" action="/assistant-interview" class="job-form">
+
+                <div class="form-grid">
+
+                    <div class="form-group">
+                        <label>Record Type</label>
+                        <select name="record_type" required>
+                            <option value="client">Client</option>
+                            <option value="property">Property</option>
+                            <option value="job">Job</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Record ID</label>
+                        <input
+                            type="number"
+                            name="record_id"
+                            placeholder="Client/Property/Job ID"
+                            required
+                        >
+                    </div>
+
+                    <div class="form-group form-full">
+                        <label>Answer PoolOps</label>
+                        {% include "_ai_prompt_panel.html" %}
+                        <textarea
+                            name="notes"
+                            rows="14"
+                            placeholder="Use phone microphone. Say everything you know..."
+                            required
+                        ></textarea>
+                    </div>
+
+                </div>
+
+                <button type="submit" class="primary-button">
+                    Save Interview Notes
+                </button>
+
+            </form>
+
+        </section>
+
+        <section class="content-card">
+            <h2>What PoolOps Will Ask You</h2>
+
+            <div class="quick-grid">
+
+                <div class="job-card">
+                    <h3>Client</h3>
+                    <p>Personality, preferred contact, payment habits, expectations, history.</p>
+                </div>
+
+                <div class="job-card">
+                    <h3>Property</h3>
+                    <p>Gate code, dogs, access, pool type, equipment, cover, heater, sanitizer.</p>
+                </div>
+
+                <div class="job-card">
+                    <h3>Job</h3>
+                    <p>Scope, urgency, deadlines, parts needed, crew notes, known problems.</p>
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+</div>
+
+<div class="mobile-sidebar-toggle" onclick="document.body.classList.toggle('sidebar-open')">
+    ☰
+</div>
+
+</body>
+</html>

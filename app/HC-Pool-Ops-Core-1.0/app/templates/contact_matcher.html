@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Contact Matcher</title>
+    <link rel="stylesheet" href="/static/style.css?v=15i">
+</head>
+<body>
+{% include "_mobile_nav.html" %}
+
+<main>
+    <h1>Contact Matcher</h1>
+    <p>Upload exported phone contacts as a CSV. PoolOps will compare them to your clients.</p>
+
+    <form method="post" action="/contact-matcher" enctype="multipart/form-data">
+        <input type="file" name="csv_file" accept=".csv" required>
+        <button class="btn" type="submit">Scan Contacts</button>
+    </form>
+
+    <a class="btn" href="/dashboard">Back to Dashboard</a>
+</main>
+
+</body>
+</html>

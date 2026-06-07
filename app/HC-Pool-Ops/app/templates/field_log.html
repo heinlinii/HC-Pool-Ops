@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PoolOps2 Field Logs</title>
+    <link rel="stylesheet" href="/static/style.css?v=fieldops-ready-2">
+</head>
+
+<body>
+{% include "_mobile_nav.html" %}
+<div class="topbar-back">
+  <button onclick="history.back()" class="back-btn">
+    ← Back
+  </button>
+</div>
+<div class="app-layout">
+
+    <aside class="sidebar">
+
+        <div class="sidebar-top">
+
+            <img
+                src="/static/logo.png"
+                alt="Heinlin Concrete Logo"
+                class="sidebar-logo"
+            >
+
+            <h1>POOLOPS2</h1>
+
+            <p>Heinlin Concrete LLC</p>
+
+        </div>
+
+        <nav class="sidebar-nav">
+
+            <a href="/dashboard">Dashboard</a>
+
+            <a href="/jobs">Jobs</a>
+
+            <a href="/schedule/day">Daily Schedule</a>
+
+            <a href="/schedule/week">Weekly Schedule</a>
+
+            <a href="/schedule/month">Monthly Schedule</a>
+
+            <a href="/weather">Weather</a>
+
+            <a href="/clients">Clients</a>
+
+            <a href="/properties">Properties</a>
+
+            <a href="/employees">Employees</a>
+
+            <a href="/billing">Billing</a>
+
+            <a href="/job-costing">Job Costing</a>
+
+            <a href="/photos">Photos</a>
+
+            <a href="/imports">Imports</a>
+
+            <a href="/quickbooks">QuickBooks</a>
+
+            <a href="/communication">Communication</a>
+
+            <a href="/field-logs" class="active">
+                Field Logs
+            </a>
+
+            <a href="/backups">Backups</a>
+
+            <a href="/crew">Crew View</a>
+
+            <a href="/health">Health</a>
+
+        </nav>
+
+        <div class="sidebar-bottom">
+
+            <p>{{ user.name }}</p>
+
+            <span>{{ user.role }}</span>
+
+            <a href="/logout" class="logout-button">
+                Logout
+            </a>
+
+        </div>
+
+    </aside>
+
+    <main class="main-content">
+
+        <div class="topbar">
+
+            <div>
+                <h2>Daily Field Logs</h2>
+
+                <p>
+                    Track time, materials, tools, travel, equipment, and jobsite activity.
+                </p>
+            </div>
+
+        </div>
+
+        <section class="stats-grid">
+
+            <div class="stat-card">
+                <h3>Total Logs</h3>
+
+                <div class="stat-number">
+                    {{ logs|length }}
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <h3>Total Hours</h3>
+
+                <div class="stat-number">
+                    {{ total_hours }}
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <h3>Total Fuel</h3>
+
+                <div class="stat-number">
+                    ${{ total_fuel }}
+                </div>
+            </div>
+
+        </section>
+
+        <section class="content-card">
+
+            <div class="card-header">
+                <h3>Create Field Log</h3>
+            </div>
+
+            <form
+                method="post"
+                action="/field-logs/add"
+                class="job-form"
+            >
+
+                <div class="form-grid">
+
+                    <div class="form-group">
+                        <label>Employee</label>
+
+                        <input
+                            type="text"
+                            name="employee_name"
+                            required
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label>Crew</label>
+
+                        <input
+                            type="text"
+                            name="crew"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label>Client</label>
+
+                        <input
+                            type="text"
+                            name="client"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label>Property</label>
+
+                        <input
+                            type="text"
+                            name="property"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label>Address</label>
+
+                        <input
+                            type="text"
+                            name="address"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label>Date</label>
+
+                        <input
+                            type="text"
+                            name="date"
+                            placeholder="MM/DD/YYYY"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label>Arrival Time</label>
+
+                        <input
+                            type="text"
+                            name="arrival_time"
+                            placeholder="7:00 AM"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label>Departure Time</label>
+
+                        <input
+                            type="text"
+                            name="departure_time"
+                            placeholder="4:30 PM"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label>Total Hours</label>
+
+                        <input
+                            type="number"
+                            step="0.25"
+                            name="total_hours"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label>Truck</label>
+
+                        <input
+                            type="text"
+                            name="truck"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label>Trailer</label>
+
+                        <input
+                            type="text"
+                            name="trailer"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label>Fuel Cost</label>
+
+                        <input
+                            type="number"
+                            step="0.01"
+                            name="fuel_cost"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label>Weather</label>
+
+                        <input
+                            type="text"
+                            name="weather"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label>Photo Count</label>
+
+                        <input
+                            type="number"
+                            name="photo_count"
+                        >
+                    </div>
+
+                    <div class="form-group form-full">
+                        <label>Tools Used</label>
+
+                        <textarea
+                            rows="4"
+                            name="tools_used"
+                        ></textarea>
+                    </div>
+
+                    <div class="form-group form-full">
+                        <label>Materials Used</label>
+
+                        <textarea
+                            rows="4"
+                            name="materials_used"
+                        ></textarea>
+                    </div>
+
+                    <div class="form-group form-full">
+                        <label>Equipment Used</label>
+
+                        <textarea
+                            rows="4"
+                            name="equipment_used"
+                        ></textarea>
+                    </div>
+
+                    <div class="form-group form-full">
+                        <label>Work Completed</label>
+
+                        <textarea
+                            rows="5"
+                            name="work_completed"
+                        ></textarea>
+                    </div>
+
+                    <div class="form-group form-full">
+                        <label>Issues / Problems</label>
+
+                        <textarea
+                            rows="4"
+                            name="issues"
+                        ></textarea>
+                    </div>
+
+                    <div class="form-group form-full">
+                        <label>Next Steps</label>
+
+                        <textarea
+                            rows="4"
+                            name="next_steps"
+                        ></textarea>
+                    </div>
+
+                </div>
+
+                <button type="submit">
+                    Save Field Log
+                </button>
+
+            </form>
+
+        </section>
+
+        <section class="content-card">
+
+            <div class="card-header">
+                <h3>Recent Field Logs</h3>
+            </div>
+
+            <div class="jobs-grid">
+
+                {% for log in logs %}
+
+                <div class="job-card">
+
+                    <div class="job-top">
+
+                        <div>
+
+                            <h3>{{ log.employee_name }}</h3>
+
+                            <p>{{ log.client }}</p>
+
+                        </div>
+
+                        <span class="status-pill">
+                            {{ log.date }}
+                        </span>
+
+                    </div>
+
+                    <div class="job-details">
+
+                        <div class="detail-row">
+                            <strong>Hours:</strong>
+
+                            <span>{{ log.total_hours }}</span>
+                        </div>
+
+                        <div class="detail-row">
+                            <strong>Truck:</strong>
+
+                            <span>{{ log.truck }}</span>
+                        </div>
+
+                        <div class="detail-row">
+                            <strong>Fuel:</strong>
+
+                            <span>${{ log.fuel_cost }}</span>
+                        </div>
+
+                        <div class="detail-row">
+                            <strong>Photos:</strong>
+
+                            <span>{{ log.photo_count }}</span>
+                        </div>
+
+                    </div>
+
+                    <div class="job-notes">
+                        {{ log.work_completed }}
+                    </div>
+
+                </div>
+
+                {% endfor %}
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+</body>
+</html>

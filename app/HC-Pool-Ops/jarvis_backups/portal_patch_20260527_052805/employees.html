@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Employees - Heinlin Field Ops</title><link rel="stylesheet" href="/static/style.css?v=portal-auth-1"></head>
+<body>
+{% include "_mobile_nav.html" %}
+<div class="ops-shell">
+    {% set title = "Employee Cards" %}
+    {% set subtitle = "Crew cards with login setup, field portal access, and phone-friendly controls." %}
+    {% set primary_href = "#add-employee" %}
+    {% set primary_label = "+ Add Employee" %}
+    {% include "_ops_header.html" %}
+
+    <section class="ops-card-grid">
+        {% for employee in employees %}
+        <div class="ops-card">
+          <div class="ops-card-bg" style="background-image:url('{{ employee.card_image or '/static/uploads/fountain.jpg' }}');"></div>
+          <div class="ops-card-body">
+            <h3>{{ employee.name }}</h3>
+            <p>{{ employee.role }}</p>
+            <p>{{ employee.phone or employee.email or "No contact saved" }}</p>
+            <div class="ops-card-meta"><span class="ops-pill">{{ 'Active' if employee.active else 'Inactive' }}</span></div>
+          </div>
+        </div>
+        {% if user.role == "admin" %}
+        <section class="jarvis-portal-box">
+          <h3>Login for {{ employee.name }}</h3>
+          <form method="post" action="/employees/{{ employee.id }}/portal-login" class="jarvis-credential-row">
+            <div><label>Username</label><input name="username" value="{{ employee.email or employee.name|lower|replace(' ', '') }}"></div>
+            <div><label>Password</label><input name="password" placeholder="Last 4 phone or 0318"></div>
+            <button class="primary-button">Save Login</button>
+          </form>
+          <p class="jarvis-small-note">Employee logs in at <strong>/employee-login</strong>.</p>
+        </section>
+        {% endif %}
+        {% else %}<div class="ops-panel"><p>No employees saved yet.</p></div>{% endfor %}
+    </section>
+
+    {% if user.role == "admin" %}
+    <section id="add-employee" class="ops-panel only-admin" style="margin-top:20px;">
+        <h2>Add Employee</h2>
+        <form method="post" action="/employees/add" class="ops-form-grid">
+            <div><label>Name</label><input name="name" required></div>
+            <div><label>Role</label><input name="role" value="Crew"></div>
+            <div><label>Phone</label><input name="phone"></div>
+            <div><label>Email</label><input name="email"></div>
+            <div class="full"><button class="primary-button">Save Employee</button></div>
+        </form>
+        <p class="role-note">After saving, use the login box on the employee card.</p>
+    </section>
+    {% endif %}
+</div>
+</body></html>

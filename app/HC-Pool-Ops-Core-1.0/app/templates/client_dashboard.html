@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ client.name }} Portal - Heinlin Field Ops</title>
+    <link rel="stylesheet" href="/static/style.css?v=fieldops-ready-2">
+</head>
+<body>
+{% include "_mobile_nav.html" %}
+<div class="ops-mobile-bar"><button onclick="history.back()" class="ops-mobile-btn">← Back</button><a href="/client-dashboard" class="ops-mobile-btn">Home</a><a href="/client-logout" class="ops-mobile-btn danger">Logout</a></div>
+<div class="client-portal-shell ops-shell">
+    <header class="ops-page-header">
+        <div><div class="ops-kicker">CLIENT PORTAL</div><h1>{{ client.name }}</h1><p>History, schedule, weather, photos, and work requests.</p></div>
+        <div class="ops-header-actions"><a href="/client-request" class="primary-button">Request Work</a><a href="/client-logout" class="secondary-button">Logout</a></div>
+    </header>
+
+    <section class="ops-card-grid">
+        {% for property in properties %}
+        {% set bg = property.card_image or client.card_image or '/static/uploads/fountain.jpg' %}
+        <div class="ops-card"><div class="ops-card-bg" style="background-image:url('{{ bg }}');"></div><div class="ops-card-body"><h3>{{ property.property_name or property.address }}</h3><p>{{ property.address }} {{ property.city }} {{ property.state }}</p><div class="ops-card-meta"><span class="ops-pill">Your Property</span></div></div></div>
+        {% else %}<div class="ops-panel"><p>No properties are linked to this portal yet.</p></div>{% endfor %}
+    </section>
+
+    <div class="ops-grid-2" style="margin-top:20px;">
+        <section class="ops-panel">
+            <h2>Your Job History</h2>
+            {% for job in jobs %}<div class="ops-list-card"><h4>{{ job.job_type or "Work" }}</h4><p>{{ job.status }} · {{ job.date or "" }}</p><p>{{ job.notes }}</p></div>{% else %}<p>No job history yet.</p>{% endfor %}
+        </section>
+        <section class="ops-panel">
+            <h2>Available / Public Schedule</h2>
+            {% for job in public_schedule[:8] %}<div class="ops-list-card"><h4>{{ job.date or (job.scheduled_start.strftime('%b %d') if job.scheduled_start else 'Open / Unscheduled') }}</h4><p>{{ job.status }} · {{ job.job_type }}</p></div>{% endfor %}
+            <a href="/client-request" class="primary-button">Claim / Request a Day</a>
+        </section>
+    </div>
+
+    <section class="ops-panel" style="margin-top:20px;">
+        <h2>Photos</h2>
+        <div class="ops-card-grid">
+            {% for photo in photos[:8] %}<div class="ops-card"><div class="ops-card-bg" style="background-image:url('{{ photo.photo_url }}');"></div><div class="ops-card-body"><h3>{{ photo.title }}</h3><p>{{ photo.date }}</p></div></div>{% else %}<p>No photos are attached yet.</p>{% endfor %}
+        </div>
+    </section>
+</div>
+</body>
+</html>

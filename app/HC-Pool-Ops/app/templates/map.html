@@ -1,0 +1,5 @@
+{% extends "base.html" %}{% block content %}
+<h1>Map / Property List</h1>
+{% if is_admin and employees %}<section class="panel"><h2>Clocked-In Employees</h2><section class="list-grid">{% for e in employees %}<a class="list-card" target="_blank" href="https://www.google.com/maps/search/?api=1&query={{ e.clock_lat }},{{ e.clock_lng }}"><h2>{{ e.name }}</h2><p>{{ e.last_seen_at }}</p><p>{{ e.clock_lat }}, {{ e.clock_lng }}</p></a>{% endfor %}</section></section>{% endif %}
+<section class="list-grid">{% for p in properties %}<a class="list-card" href="https://www.google.com/maps/search/?api=1&query={{ (p.address ~ ' ' ~ p.city ~ ' ' ~ p.state)|urlencode }}" target="_blank"><h2>{{ p.client }}</h2><p>{{ p.address }} {{ p.city }} {{ p.state }}</p></a>{% endfor %}</section>
+{% endblock %}

@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quick Add • PoolOps2</title>
+    <link rel="stylesheet" href="/static/style.css?v=21">
+</head>
+
+<body>
+{% include "_mobile_nav.html" %}
+
+<div class="app-layout">
+
+    {% include "_sidebar.html" %}
+
+    <main class="main-content with-sidebar">
+
+        <div class="topbar">
+
+            <div>
+                <h2>Quick Add Job</h2>
+
+                <p>
+                    Fast customer intake for texts, calls, and field requests.
+                </p>
+            </div>
+
+        </div>
+
+        <section class="content-card">
+
+            <form
+                method="post"
+                action="/quick-add"
+                class="job-form"
+            >
+
+                <div class="form-grid">
+
+                    <div class="form-group">
+
+                        <label>Client Name</label>
+
+                        <input
+                            type="text"
+                            name="client"
+                            placeholder="Jennie Smith"
+                            required
+                        >
+
+                    </div>
+
+                    <div class="form-group">
+
+                        <label>Phone</label>
+
+                        <input
+                            type="text"
+                            name="phone"
+                            placeholder="812-555-1234"
+                        >
+
+                    </div>
+
+                    <div class="form-group form-full">
+
+                        <label>Address</label>
+
+                        <input
+                            type="text"
+                            name="address"
+                            placeholder="123 Main St"
+                        >
+
+                    </div>
+
+                    <div class="form-group">
+
+                        <label>Job Type</label>
+
+                        <select name="job_type">
+
+                            <option>Opening</option>
+                            <option>Closing</option>
+                            <option>Repair</option>
+                            <option>Service</option>
+                            <option>Heater</option>
+                            <option>Cover</option>
+                            <option>Estimate</option>
+                            <option>Concrete</option>
+
+                        </select>
+
+                    </div>
+
+                    <div class="form-group">
+
+                        <label>Status</label>
+
+                        <select name="status">
+
+                            <option>Requested</option>
+                            <option>Scheduled</option>
+                            <option>Follow-Up Needed</option>
+                            <option>Waiting On Parts</option>
+
+                        </select>
+
+                    </div>
+
+                    <div class="form-group">
+
+                        <label>Priority</label>
+
+                        <select name="priority">
+
+                            <option>Low</option>
+                            <option selected>Normal</option>
+                            <option>High</option>
+                            <option>Urgent</option>
+
+                        </select>
+
+                    </div>
+
+                    <div class="form-group">
+
+                        <label>Requested Date</label>
+
+                        <input
+                            type="text"
+                            name="date"
+                            placeholder="Memorial Day / ASAP / Friday"
+                        >
+
+                    </div>
+
+                    <div class="form-group form-full">
+
+                        <label>Customer Notes / Text Summary</label>
+
+                        <textarea
+                            name="notes"
+                            rows="8"
+                            placeholder="Paste customer text details here..."
+                        ></textarea>
+
+                    </div>
+
+                </div>
+
+                <button
+                    type="submit"
+                    class="primary-button"
+                >
+                    Create Quick Job
+                </button>
+
+            </form>
+
+        </section>
+
+    </main>
+
+</div>
+
+<div class="mobile-sidebar-toggle" onclick="document.body.classList.toggle('sidebar-open')">
+    ☰
+</div>
+
+</body>
+</html>

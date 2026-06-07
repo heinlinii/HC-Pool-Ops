@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: hc-pool-ops-v3
+    env: python
+    plan: starter
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app.app:app -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: SESSION_SECRET
+        generateValue: true

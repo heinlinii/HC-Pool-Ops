@@ -1,0 +1,40 @@
+{% extends "base.html" %}{% block content %}
+<section class="section-head core-hero"><h1>{{ client.name if client else 'Client Portal' }}</h1><p>Future schedule, property history, photos, weather, and service requests.</p></section>
+{% if client %}
+<section class="panel">
+  <h2>Your Client Info</h2>
+  <form method="post" action="/clients/{{ client.id }}/save" class="form-grid">
+    <label>Name<input name="name" value="{{ client.name }}"></label>
+    <label>Contact<input name="contact_name" value="{{ client.contact_name }}"></label>
+    <label>Phone<input name="phone" value="{{ client.phone }}"></label>
+    <label>Mobile<input name="mobile" value="{{ client.mobile }}"></label>
+    <label>Email<input name="email" value="{{ client.email }}"></label>
+    <label>City<input name="city" value="{{ client.city }}"></label>
+    <label>State<input name="state" value="{{ client.state }}"></label>
+    <label>Zip<input name="zip_code" value="{{ client.zip_code }}"></label>
+    <label class="wide">Billing Address<textarea name="billing_address">{{ client.billing_address }}</textarea></label>
+    <label class="wide">Notes / Requests<textarea name="notes">{{ client.notes }}</textarea></label>
+    <button class="primary wide">Update My Info</button>
+  </form>
+</section>
+<section class="panel">
+  <h2>Request Service on an Available Day</h2>
+  <form method="post" action="/client-portal/request" class="form-grid">
+    <label>Property<select name="property_id">{% for p in properties %}<option value="{{ p.id }}">{{ p.property_name or p.address }}</option>{% endfor %}</select></label>
+    <label>Requested Date<input type="date" name="requested_date"></label>
+    <label>Request Type<select name="request_type"><option>Service</option><option>Opening</option><option>Closing</option><option>Repair</option><option>Quote</option><option>Warranty</option></select></label>
+    <label class="wide">What do you need?<textarea name="notes" placeholder="Tell us what is happening or what you want done."></textarea></label>
+    <button class="primary wide">Send Service Request</button>
+  </form>
+</section>
+{% endif %}
+<h2>Your Properties / Pool Info</h2>
+<section class="list-grid">{% for p in properties %}<a class="list-card" href="/properties/{{ p.id }}"><h2>{{ p.property_name or p.address }}</h2><p>{{ p.address }} {{ p.city }} {{ p.state }}</p><p>{{ p.pool_type }} {{ p.pool_size }}</p></a>{% endfor %}</section>
+<h2>Future Schedule / Work History</h2>
+<section class="list-grid">{% for j in jobs %}<div class="list-card"><h2>{{ j.job_type or j.client }}</h2><p>{{ j.status }} · {{ j.date or j.scheduled_start }}</p><p>{{ j.address }}</p><p>{{ j.notes }}</p></div>{% endfor %}</section>
+<h2>Service Requests</h2>
+<section class="list-grid">{% for r in service_requests %}<div class="list-card"><h2>{{ r.request_type }} — {{ r.status }}</h2><p>{{ r.requested_date }} · {{ r.property }}</p><p>{{ r.notes }}</p></div>{% else %}<p class="muted">No requests yet.</p>{% endfor %}</section>
+<h2>Your Photos</h2>
+<section class="photo-grid">{% for ph in photos %}<article><img src="{{ ph.photo_url }}"><b>{{ ph.title }}</b><p>{{ ph.date }}</p><p>{{ ph.notes }}</p></article>{% endfor %}</section>
+<section class="panel"><h2>Weather</h2><p><a class="primary-button" href="/weather">Open Weather Desk</a></p></section>
+{% endblock %}

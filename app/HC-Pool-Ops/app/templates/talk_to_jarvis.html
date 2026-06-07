@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Talk to Jarvis - PoolOps2</title>
+    <link rel="stylesheet" href="/static/style.css?v=22">
+</head>
+<body>
+{% include "_mobile_nav.html" %}
+    {% include "bottom_routes.html" %}   
+<div style="padding:16px; display:flex; gap:12px; background:#111827;">
+    <a href="/dashboard" class="secondary-button">Dashboard</a>
+</div>
+
+<main class="main-content">
+
+    <div class="topbar">
+        <div>
+            <h2>Talk to Jarvis</h2>
+            <p>Do you have a question for Jarvis, or do you need the Invisible Office?</p>
+        </div>
+    </div>
+
+    <section class="stats-grid">
+
+        <a href="/ai" class="stat-card" style="text-decoration:none;">
+            <h3>I have a question for Jarvis</h3>
+            <p>Ask Jarvis a pool, service, equipment, estimate, or business question.</p>
+            <div class="stat-number small-stat">Ask Jarvis</div>
+        </a>
+
+        <a href="/capture" class="stat-card" style="text-decoration:none;">
+            <h3>I need the Invisible Office</h3>
+            <p>Use this for rough job notes, billing notes, service notes, materials, and follow-ups.</p>
+            <div class="stat-number small-stat">Invisible Office</div>
+        </a>
+
+    </section>
+
+</main>
+
+</body>
+</html>

@@ -32,3 +32,27 @@ form .danger.wide, button.danger.wide { width: 100%; margin-top: 12px; }
 .primary-button,.secondary-button{display:inline-block;text-decoration:none;border-radius:12px;padding:10px 14px;font-weight:800;}
 .primary-button{background:#2563eb;color:white;}
 .secondary-button{background:#334155;color:white;}
+.bottom-action-bar{
+  position:fixed;
+  left:0;
+  right:0;
+  bottom:0;
+  z-index:999;
+  display:flex;
+  gap:8px;
+  justify-content:center;
+  padding:10px;
+  background:rgba(5,8,12,.94);
+  border-top:1px solid rgba(255,255,255,.12);
+  backdrop-filter:blur(12px);
+}
+
+.bottom-action-bar .btn{
+  flex:1;
+  max-width:220px;
+  min-height:52px;
+}
+
+body.hfo-body{
+  padding-bottom:86px;
+}

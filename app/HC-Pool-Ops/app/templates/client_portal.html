@@ -1,0 +1,68 @@
+{% extends "base.html" %}{% block content %}
+<section class="section-head"><h1>{{ client.name if client else 'Client Portal' }}</h1></section>
+{% if client %}
+<section class="panel">
+  <h2>Your Client Info</h2>
+  <form method="post" action="/clients/{{ client.id }}/save" class="form-grid">
+    <label>Name<input name="name" value="{{ client.name }}"></label>
+    <label>Contact<input name="contact_name" value="{{ client.contact_name }}"></label>
+    <label>Phone<input name="phone" value="{{ client.phone }}"></label>
+    <label>Mobile<input name="mobile" value="{{ client.mobile }}"></label>
+    <label>Email<input name="email" value="{{ client.email }}"></label>
+    <label>City<input name="city" value="{{ client.city }}"></label>
+    <label>State<input name="state" value="{{ client.state }}"></label>
+    <label>Zip<input name="zip_code" value="{{ client.zip_code }}"></label>
+    <label class="wide">Billing Address<textarea name="billing_address">{{ client.billing_address }}</textarea></label>
+    <label class="wide">Notes / Requests<textarea name="notes">{{ client.notes }}</textarea></label>
+    <button class="primary wide">Update My Info</button>
+  </form>
+</section>
+{% endif %}
+
+{% if request.query_params.get('requested') %}
+<section class="panel success-panel"><h2>Request Sent</h2><p>Your request was sent to Heinlin Field Ops and a job request was created.</p></section>
+{% endif %}
+<section class="panel">
+  <h2>Request Service</h2>
+  <p class="muted">Pick the pool/property, choose the type of request, and tell us what you need.</p>
+  <form method="post" action="/client-portal/request-service" class="form-grid">
+    <label>Property
+      <select name="property_id">
+        <option value="0">General / not sure</option>
+        {% for p in properties %}<option value="{{ p.id }}">{{ p.property_name or p.address }} — {{ p.address }}</option>{% endfor %}
+      </select>
+    </label>
+    <label>Request Type
+      <select name="request_type">
+        <option>Service</option>
+        <option>Opening</option>
+        <option>Closing</option>
+        <option>Repair</option>
+        <option>Estimate</option>
+        <option>Warranty</option>
+      </select>
+    </label>
+    <label>Preferred Date<input type="date" name="preferred_date"></label>
+    <label class="wide">What do you need?<textarea name="notes" placeholder="Tell us what is going on, what day works best, gate code reminders, etc."></textarea></label>
+    <button class="primary wide">Send Request</button>
+  </form>
+</section>
+
+<h2>Your Properties / Pool Info</h2>
+<section class="list-grid">
+{% for p in properties %}
+  <a class="list-card" href="/properties/{{ p.id }}"><h2>{{ p.property_name or p.address }}</h2><p>{{ p.address }} {{ p.city }} {{ p.state }}</p><p>{{ p.pool_type }} {{ p.pool_size }}</p></a>
+{% endfor %}
+</section>
+<h2>Work History / Schedule</h2>
+<section class="list-grid">
+{% for j in jobs %}
+  <div class="list-card"><h2>{{ j.job_type or j.client }}</h2><p>{{ j.status }} · {{ j.date }}</p><p>{{ j.address }}</p><p>{{ j.notes }}</p></div>
+{% endfor %}
+</section>
+<h2>Your Photos</h2>
+<section class="photo-grid">
+{% for ph in photos %}<article><img src="{{ ph.photo_url }}"><b>{{ ph.title }}</b><p>{{ ph.date }}</p><p>{{ ph.notes }}</p></article>{% endfor %}
+</section>
+<section class="panel"><h2>Weather</h2><p><a class="primary-button" href="/weather">Open Weather Desk</a></p></section>
+{% endblock %}

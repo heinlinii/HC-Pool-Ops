@@ -1,0 +1,1 @@
+{% extends "base.html" %}{% block content %}<h1>{{ title }}</h1><section class="list-grid">{% for j in jobs %}<a class="list-card" href="/jobs/{{ j.id }}"><h2>{{ j.client }}</h2><p>{{ j.address }}</p><p>{{ j.status }} · {{ j.date }}</p></a>{% endfor %}</section>{% endblock %}

@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PoolOps2 Backups</title>
+    <link rel="stylesheet" href="/static/style.css?v=16">
+</head>
+
+<body>
+{% include "_mobile_nav.html" %}
+<div class="topbar-back">
+  <button onclick="history.back()" class="back-btn">
+    ← Back
+  </button>
+</div>
+<div class="app-layout">
+
+    <aside class="sidebar">
+
+        <div class="sidebar-top">
+
+            <img
+                src="/static/logo.png"
+                alt="Heinlin Concrete Logo"
+                class="sidebar-logo"
+            >
+
+            <h1>POOLOPS2</h1>
+
+            <p>Heinlin Concrete LLC</p>
+
+        </div>
+
+        <nav class="sidebar-nav">
+
+            <a href="/dashboard">Dashboard</a>
+            <a href="/jobs">Jobs</a>
+            <a href="/schedule/day">Daily Schedule</a>
+            <a href="/schedule/week">Weekly Schedule</a>
+            <a href="/schedule/month">Monthly Schedule</a>
+            <a href="/weather">Weather</a>
+            <a href="/clients">Clients</a>
+            <a href="/properties">Properties</a>
+            <a href="/employees">Employees</a>
+            <a href="/billing">Billing</a>
+            <a href="/job-costing">Job Costing</a>
+            <a href="/photos">Photos</a>
+            <a href="/imports">Imports</a>
+            <a href="/quickbooks">QuickBooks</a>
+            <a href="/communication">Communication</a>
+
+            <a href="/backups" class="active">
+                Backups
+            </a>
+
+            <a href="/crew">Crew View</a>
+            <a href="/health">Health</a>
+
+        </nav>
+
+        <div class="sidebar-bottom">
+
+            <p>{{ user.name }}</p>
+
+            <span>{{ user.role }}</span>
+
+            <a href="/logout" class="logout-button">
+                Logout
+            </a>
+
+        </div>
+
+    </aside>
+
+    <main class="main-content">
+
+        <div class="topbar">
+
+            <div>
+                <h2>Database Backups</h2>
+
+                <p>
+                    Download CSV backups of your PoolOps2 production data.
+                </p>
+            </div>
+
+        </div>
+
+        <section class="content-card">
+
+            <div class="card-header">
+                <h3>Production Backup Downloads</h3>
+            </div>
+
+            <div class="jobs-grid">
+
+                <div class="job-card">
+
+                    <h3>Clients Backup</h3>
+
+                    <p>
+                        Export all clients into CSV format.
+                    </p>
+
+                    <a
+                        href="/backup/clients"
+                        class="primary-button"
+                        style="text-decoration:none;"
+                    >
+                        Download Clients CSV
+                    </a>
+
+                </div>
+
+                <div class="job-card">
+
+                    <h3>Jobs Backup</h3>
+
+                    <p>
+                        Export all jobs into CSV format.
+                    </p>
+
+                    <a
+                        href="/backup/jobs"
+                        class="primary-button"
+                        style="text-decoration:none;"
+                    >
+                        Download Jobs CSV
+                    </a>
+
+                </div>
+
+                <div class="job-card">
+
+                    <h3>Employees Backup</h3>
+
+                    <p>
+                        Export all employees into CSV format.
+                    </p>
+
+                    <a
+                        href="/backup/employees"
+                        class="primary-button"
+                        style="text-decoration:none;"
+                    >
+                        Download Employees CSV
+                    </a>
+
+                </div>
+
+                <div class="job-card">
+
+                    <h3>Invoices Backup</h3>
+
+                    <p>
+                        Export all invoices into CSV format.
+                    </p>
+
+                    <a
+                        href="/backup/invoices"
+                        class="primary-button"
+                        style="text-decoration:none;"
+                    >
+                        Download Invoices CSV
+                    </a>
+
+                </div>
+
+                <div class="job-card">
+
+                    <h3>Photo Logs Backup</h3>
+
+                    <p>
+                        Export all project photo logs into CSV format.
+                    </p>
+
+                    <a
+                        href="/backup/photos"
+                        class="primary-button"
+                        style="text-decoration:none;"
+                    >
+                        Download Photos CSV
+                    </a>
+
+                </div>
+
+            </div>
+
+        </section>
+
+        <section class="content-card">
+
+            <div class="card-header">
+                <h3>Recommended Backup Routine</h3>
+            </div>
+
+            <div class="workflow-steps">
+
+                <div class="workflow-step">
+
+                    <div class="workflow-number">1</div>
+
+                    <div>
+                        <h4>Weekly Backup</h4>
+
+                        <p>
+                            Download all CSV backups once per week.
+                        </p>
+                    </div>
+
+                </div>
+
+                <div class="workflow-step">
+
+                    <div class="workflow-number">2</div>
+
+                    <div>
+                        <h4>Save Locally</h4>
+
+                        <p>
+                            Store backups on your laptop and external drive.
+                        </p>
+                    </div>
+
+                </div>
+
+                <div class="workflow-step">
+
+                    <div class="workflow-number">3</div>
+
+                    <div>
+                        <h4>Cloud Backup</h4>
+
+                        <p>
+                            Save copies to Google Drive or OneDrive.
+                        </p>
+                    </div>
+
+                </div>
+
+                <div class="workflow-step">
+
+                    <div class="workflow-number">4</div>
+
+                    <div>
+                        <h4>Before Major Updates</h4>
+
+                        <p>
+                            Always run backups before changing app structure.
+                        </p>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+</body>
+</html>

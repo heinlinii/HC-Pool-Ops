@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Estimates • Heinlin Pool Ops</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/style.css?v=45">
+</head>
+
+<body>
+{% include "_mobile_nav.html" %}
+    {% include "bottom_routes.html" %}
+<div class="topbar-back">
+    <button onclick="history.back()" class="back-btn">← Back</button>
+</div>
+
+<div class="app-layout">
+
+    <main class="main-content with-sidebar">
+
+        <section class="hero-card">
+            <h1>Estimates</h1>
+            <p>Create, organize, capture, and prepare customer-facing proposals.</p>
+        </section>
+
+        <section class="content-card">
+
+            <h2>Choose Estimate Type</h2>
+
+            <div class="quick-grid">
+
+                <a class="job-card" href="/estimate/new?type=pool_build">
+                    <h3>Custom Pool Build</h3>
+                    <p>New concrete pool, spa, water feature, deck, equipment, and finish.</p>
+                </a>
+
+                <a class="job-card" href="/estimate/new?type=remodel">
+                    <h3>Pool Remodel</h3>
+                    <p>Tile, coping, plaster/ecoFINISH, lights, plumbing, equipment upgrades.</p>
+                </a>
+
+                <a class="job-card" href="/estimate/new?type=repair">
+                    <h3>Repair Estimate</h3>
+                    <p>Leaks, valves, pumps, filters, heaters, plumbing, electrical, structural repairs.</p>
+                </a>
+
+                <a class="job-card" href="/estimate/new?type=service">
+                    <h3>Service / Maintenance</h3>
+                    <p>Openings, closings, weekly service, cleanups, inspections, and seasonal work.</p>
+                </a>
+
+                <a class="job-card" href="/estimate/new?type=automation">
+                    <h3>Automation / Equipment</h3>
+                    <p>Heaters, pumps, actuators, automation, lighting, salt systems, controls.</p>
+                </a>
+
+                <a class="job-card" href="/estimate-capture">
+                    <h3>Estimate Capture</h3>
+                    <p>Quick intake form for rough leads, text-message requests, and fast customer capture.</p>
+                </a>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+<div class="mobile-sidebar-toggle" onclick="document.body.classList.toggle('sidebar-open')">
+    ☰
+</div>
+
+</body>
+</html>

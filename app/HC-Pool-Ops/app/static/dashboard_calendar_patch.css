@@ -1,0 +1,153 @@
+
+/* Jarvis monthly dashboard calendar patch */
+.monthly-calendar-panel {
+    margin-top: 18px;
+    overflow: hidden;
+}
+
+.calendar-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    align-items: center;
+    margin-bottom: 18px;
+}
+
+.calendar-head h2 {
+    margin: 0 0 4px 0;
+}
+
+.calendar-head p {
+    margin: 0;
+    opacity: .78;
+}
+
+.calendar-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.month-calendar {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.calendar-day-name {
+    text-align: center;
+    font-weight: 800;
+    opacity: .8;
+    padding: 8px 4px;
+    border-bottom: 1px solid rgba(255,255,255,.12);
+}
+
+.calendar-cell {
+    min-height: 118px;
+    border: 1px solid rgba(255,255,255,.13);
+    border-radius: 16px;
+    background: rgba(255,255,255,.045);
+    padding: 10px;
+    overflow: hidden;
+}
+
+.calendar-cell.today {
+    border-color: rgba(80, 180, 255, .85);
+    box-shadow: 0 0 0 1px rgba(80, 180, 255, .25), 0 0 24px rgba(80, 180, 255, .14);
+}
+
+.calendar-cell.muted {
+    opacity: .45;
+}
+
+.calendar-date {
+    font-weight: 900;
+    font-size: 1rem;
+    margin-bottom: 8px;
+}
+
+.calendar-job,
+.calendar-more {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+    border-radius: 10px;
+    padding: 7px 8px;
+    margin-bottom: 6px;
+    background: rgba(38, 132, 255, .22);
+    border-left: 3px solid rgba(76, 171, 255, .95);
+    line-height: 1.15;
+}
+
+.calendar-job span {
+    display: block;
+    font-weight: 800;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.calendar-job small {
+    display: block;
+    opacity: .75;
+    font-size: .78rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.calendar-more {
+    background: rgba(255,255,255,.08);
+    font-weight: 800;
+    opacity: .9;
+}
+
+.dashboard-link-card {
+    text-decoration: none;
+}
+
+.danger-button {
+    background: rgba(208, 66, 60, .92) !important;
+}
+
+@media (max-width: 800px) {
+    .calendar-head {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .calendar-actions a {
+        flex: 1 1 auto;
+        text-align: center;
+    }
+
+    .month-calendar {
+        display: flex;
+        gap: 12px;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        padding-bottom: 12px;
+    }
+
+    .calendar-day-name {
+        display: none;
+    }
+
+    .calendar-cell {
+        min-width: 82%;
+        min-height: 180px;
+        scroll-snap-align: start;
+    }
+
+    .calendar-date {
+        font-size: 1.35rem;
+    }
+
+    .calendar-job {
+        padding: 12px;
+    }
+
+    .dashboard-bottom-actions {
+        display: none !important;
+    }
+}

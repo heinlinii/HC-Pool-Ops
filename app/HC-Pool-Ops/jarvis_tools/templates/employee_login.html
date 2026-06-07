@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Employee Login - Heinlin Field Ops</title>
+  <link rel="stylesheet" href="/static/style.css?v=portal-auth-1">
+</head>
+<body>
+<div class="ops-shell" style="max-width:640px;padding-top:28px;">
+  <section class="ops-page-header">
+    <div>
+      <div class="ops-kicker">HEINLIN FIELD OPS</div>
+      <h1>Employee Login</h1>
+      <p>Crew access for jobs, schedule, field notes, and photos.</p>
+    </div>
+  </section>
+  <section class="ops-panel">
+    {% if error %}<p style="color:#ff6b6b;font-weight:800;">{{ error }}</p>{% endif %}
+    <form method="post" action="/employee-login" class="ops-form-grid">
+      <div class="full"><label>Username</label><input name="username" autocomplete="username" required></div>
+      <div class="full"><label>Password</label><input name="password" type="password" autocomplete="current-password" required></div>
+      <div class="full"><button class="primary-button">Login</button></div>
+    </form>
+    <p class="jarvis-small-note"><a href="/">Admin login</a> · <a href="/client-login">Client login</a></p>
+  </section>
+</div>
+</body>
+</html>

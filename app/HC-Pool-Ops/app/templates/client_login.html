@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Client Login - Heinlin Field Ops</title>
+    <link rel="stylesheet" href="/static/style.css?v=fieldops-ready-2">
+</head>
+<body style="min-height:100vh;background:url('/static/uploads/fountain.jpg') center/cover no-repeat fixed;">
+<div style="min-height:100vh;background:rgba(2,6,23,.72);display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box;">
+    <section class="ops-panel" style="width:100%;max-width:440px;">
+        <div class="ops-kicker">HEINLIN FIELD OPS</div>
+        <h1 style="margin:6px 0 8px;">Client Portal</h1>
+        <p class="role-note">Check history, schedule, weather, photos, and request work.</p>
+        {% if error %}<p style="color:#fecaca;">{{ error }}</p>{% endif %}
+        <form method="post" action="/client-login" class="ops-form-grid">
+            <div class="full"><label>Email / Username</label><input name="email_or_name" required></div>
+            <div class="full"><label>Password</label><input type="password" name="password" placeholder="Ask admin if not set yet"></div>
+            <div class="full"><button class="primary-button" style="width:100%;">Login</button></div>
+        </form>
+        <div class="ops-actions"><a href="/" class="secondary-button">Staff Login</a></div>
+    </section>
+</div>
+</body>
+</html>

@@ -1,0 +1,30 @@
+{% extends "base.html" %}{% block content %}
+<section class="section-head year-head">
+  <div>
+    <div class="kicker">HEINLIN OPERATIONS BOARD</div>
+    <h1>{{ year }} Year Calendar</h1>
+    <p>Openings, closings, builds, service, warranty, and requested work across the full year.</p>
+  </div>
+  <div class="year-actions">
+    <a class="secondary-button" href="/schedule/year?y={{ year - 1 }}">{{ year - 1 }}</a>
+    <a class="primary-button" href="/schedule/month">Month View</a>
+    <a class="secondary-button" href="/schedule/year?y={{ year + 1 }}">{{ year + 1 }}</a>
+  </div>
+</section>
+<section class="year-grid">
+{% for month in months %}
+  <article class="year-month">
+    <h2>{{ month.name }}</h2>
+    <div class="mini-weekdays"><span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span></div>
+    <div class="mini-days">
+    {% for d in month.days %}
+      <a class="mini-day {% if not d.in_month %}muted-day{% endif %} {% if d.is_today %}today{% endif %}" href="/schedule/month?y={{ year }}&m={{ month.number }}" title="{{ d.date }} — {{ d.jobs|length }} job(s)">
+        <span>{{ d.day }}</span>
+        {% if d.jobs %}<b>{{ d.jobs|length }}</b>{% endif %}
+      </a>
+    {% endfor %}
+    </div>
+  </article>
+{% endfor %}
+</section>
+{% endblock %}

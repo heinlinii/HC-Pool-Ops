@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Where Am I • PoolOps2</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body {
+      background: #07111f;
+      color: white;
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+
+    .card {
+      background: #0f172a;
+      border-radius: 20px;
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+
+    button {
+      width: 100%;
+      padding: 18px;
+      border: none;
+      border-radius: 16px;
+      background: #2563eb;
+      color: white;
+      font-size: 18px;
+      font-weight: 800;
+    }
+
+    #result {
+      margin-top: 18px;
+      line-height: 1.5;
+      color: #cbd5e1;
+    }
+  </style>
+</head>
+
+<body>
+{% include "_mobile_nav.html" %}
+    {% include "bottom_routes.html" %}
+<div class="card">
+  <h1>📍 Where Am I?</h1>
+
+  <p>
+    Jarvis will attempt to determine which saved property you are closest to.
+  </p>
+
+  <button onclick="checkLocation()">
+    Check Current Property
+  </button>
+
+  <div id="result"></div>
+</div>
+
+<script>
+async function checkLocation() {
+
+  const result = document.getElementById("result");
+
+  if (!navigator.geolocation) {
+    result.innerHTML = "GPS not supported on this device.";
+    return;
+  }
+
+  result.innerHTML = "Checking location...";
+
+  navigator.geolocation.getCurrentPosition(async function(position) {
+
+    const lat = position.coords.latitude;
+    const lng = position.coords.longitude;
+
+    const formData = new FormData();
+    formData.append("lat", lat);
+    formData.append("lng", lng);
+
+    const response = await fetch("/location-context", {
+      method: "POST",
+      body: formData
+    });
+
+    const html = await response.text();
+
+    result.innerHTML = html;
+
+  }, function(error) {
+
+    result.innerHTML = "Location permission denied or unavailable.";
+
+  });
+}
+</script>
+
+</body>
+</html>

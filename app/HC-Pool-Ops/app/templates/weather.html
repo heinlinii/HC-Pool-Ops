@@ -1,0 +1,121 @@
+{% extends "base.html" %}{% block content %}
+<section class="hero weather-hero">
+  <div>
+    <div class="kicker">WEATHER DESK</div>
+    <h1>Can We Work Today?</h1>
+    <p>Current conditions, live date/time, hourly forecast, and the week ahead for field work.</p>
+  </div>
+  <a class="btn" href="/dashboard">Back to Dashboard</a>
+</section>
+
+<section class="panel weather-panel">
+  <div class="weather-top">
+    <div>
+      <h2 id="weather-location">Evansville, IN</h2>
+      <p class="muted" id="weather-clock">Loading date and time...</p>
+    </div>
+    <button class="btn" onclick="loadWeather()">Refresh Weather</button>
+  </div>
+
+  <div class="weather-current">
+    <div class="weather-big">
+      <div id="weather-temp">--°</div>
+      <p id="weather-summary">Loading current weather...</p>
+    </div>
+    <div class="weather-details">
+      <div><b>Feels Like</b><span id="weather-feels">--°</span></div>
+      <div><b>Wind</b><span id="weather-wind">-- mph</span></div>
+      <div><b>Rain Chance</b><span id="weather-rain">--%</span></div>
+      <div><b>Humidity</b><span id="weather-humidity">--%</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="panel">
+  <h2>Hour by Hour — Remainder of Today</h2>
+  <div id="hourly-weather" class="hourly-strip"><p class="muted">Loading hourly forecast...</p></div>
+</section>
+
+<section class="panel">
+  <h2>Week Ahead</h2>
+  <div id="daily-weather" class="daily-grid"><p class="muted">Loading weekly forecast...</p></div>
+</section>
+
+<style>
+.weather-top{display:flex;justify-content:space-between;gap:14px;align-items:center}
+.weather-current{display:grid;grid-template-columns:1.1fr 2fr;gap:18px;margin-top:18px}
+.weather-big{border:1px solid rgba(255,255,255,.14);border-radius:22px;padding:22px;background:linear-gradient(135deg,rgba(28,138,255,.22),rgba(255,65,35,.12))}
+#weather-temp{font-size:4rem;font-weight:1000;line-height:1}
+.weather-details{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.weather-details div,.hour-card,.day-card{border:1px solid rgba(255,255,255,.14);border-radius:18px;padding:14px;background:rgba(255,255,255,.045)}
+.weather-details b,.weather-details span{display:block}.weather-details span{font-size:1.35rem;font-weight:900;margin-top:8px}
+.hourly-strip{display:flex;gap:12px;overflow-x:auto;padding-bottom:8px}
+.hour-card{min-width:118px;text-align:center}.hour-card b,.day-card b{display:block}.hour-temp{font-size:1.6rem;font-weight:1000;margin:8px 0}
+.daily-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:12px}.day-card{text-align:center}.day-hi{font-size:1.45rem;font-weight:1000;margin-top:8px}.day-low{opacity:.72}
+.work-callout{margin-top:10px;font-weight:900;color:#9ee7ff}
+@media(max-width:800px){.weather-top{flex-direction:column;align-items:stretch}.weather-current{grid-template-columns:1fr}.weather-details{grid-template-columns:1fr 1fr}.daily-grid{grid-template-columns:1fr 1fr}.hour-card{min-width:105px}}
+</style>
+
+<script>
+const DEFAULT_LAT = 37.9716;
+const DEFAULT_LON = -87.5711;
+
+function updateClock(){
+  const now = new Date();
+  document.getElementById("weather-clock").textContent = now.toLocaleString([], {weekday:"long", year:"numeric", month:"long", day:"numeric", hour:"numeric", minute:"2-digit"});
+}
+setInterval(updateClock, 30000);
+updateClock();
+
+function summaryFromCode(code){
+  const map = {1000:"Clear",1100:"Mostly clear",1101:"Partly cloudy",1102:"Mostly cloudy",1001:"Cloudy",2000:"Fog",4000:"Drizzle",4001:"Rain",4200:"Light rain",4201:"Heavy rain",5000:"Snow",8000:"Thunderstorm"};
+  return map[code] || "Field weather";
+}
+function value(item, key){ return item?.values?.[key]; }
+
+async function loadWeather(){
+  document.getElementById("weather-summary").textContent = "Loading Tomorrow.io weather...";
+  const res = await fetch(`/api/weather?lat=${DEFAULT_LAT}&lon=${DEFAULT_LON}`);
+  const data = await res.json();
+  if(data.ok === false || data.error){
+    document.getElementById("weather-summary").textContent = data.error || "Weather failed to load.";
+    return;
+  }
+  const hourly = data.timelines?.hourly || [];
+  const daily = data.timelines?.daily || [];
+  const current = hourly[0] || {};
+
+  document.getElementById("weather-temp").textContent = Math.round(value(current, "temperature") ?? 0) + "°";
+  document.getElementById("weather-summary").textContent = summaryFromCode(value(current, "weatherCode"));
+  document.getElementById("weather-feels").textContent = Math.round(value(current, "temperatureApparent") ?? value(current, "temperature") ?? 0) + "°";
+  document.getElementById("weather-wind").textContent = Math.round(value(current, "windSpeed") ?? 0) + " mph";
+  document.getElementById("weather-rain").textContent = Math.round(value(current, "precipitationProbability") ?? 0) + "%";
+  document.getElementById("weather-humidity").textContent = Math.round(value(current, "humidity") ?? 0) + "%";
+
+  const hWrap = document.getElementById("hourly-weather");
+  hWrap.innerHTML = "";
+  hourly.slice(0, 16).forEach(item => {
+    const dt = new Date(item.time);
+    const rain = Math.round(value(item, "precipitationProbability") ?? 0);
+    const card = document.createElement("div");
+    card.className = "hour-card";
+    card.innerHTML = `<b>${dt.toLocaleTimeString([], {hour:"numeric"})}</b><div class="hour-temp">${Math.round(value(item,"temperature") ?? 0)}°</div><small>${summaryFromCode(value(item,"weatherCode"))}</small><div class="work-callout">${rain}% rain</div>`;
+    hWrap.appendChild(card);
+  });
+
+  const dWrap = document.getElementById("daily-weather");
+  dWrap.innerHTML = "";
+  daily.slice(0, 7).forEach(item => {
+    const dt = new Date(item.time);
+    const rain = Math.round(value(item, "precipitationProbabilityAvg") ?? value(item, "precipitationProbabilityMax") ?? 0);
+    const card = document.createElement("div");
+    card.className = "day-card";
+    card.innerHTML = `<b>${dt.toLocaleDateString([], {weekday:"short"})}</b><small>${dt.toLocaleDateString([], {month:"numeric", day:"numeric"})}</small><div class="day-hi">${Math.round(value(item,"temperatureMax") ?? 0)}°</div><div class="day-low">Low ${Math.round(value(item,"temperatureMin") ?? 0)}°</div><p>${summaryFromCode(value(item,"weatherCodeMax"))}</p><div class="work-callout">${rain}% rain</div>`;
+    dWrap.appendChild(card);
+  });
+}
+loadWeather().catch(() => {
+  document.getElementById("weather-summary").textContent = "Weather failed to load. Check TOMORROW_API_KEY in Render.";
+});
+</script>
+{% endblock %}

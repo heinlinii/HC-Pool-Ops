@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Client Interview • Heinlin Pool Ops</title>
+    <link rel="stylesheet" href="/static/style.css?v=32">
+</head>
+
+<body>
+{% include "_mobile_nav.html" %}
+
+<div class="topbar-back">
+    <button onclick="history.back()" class="back-btn">← Back</button>
+</div>
+
+<div class="app-layout">
+
+    {% include "_sidebar.html" %}
+
+    <main class="main-content with-sidebar">
+
+        <section class="hero-card">
+            <h1>Client Interview</h1>
+            <p>Let PoolOps ask you what you know so client records get filled in fast.</p>
+        </section>
+
+        <section class="content-card">
+
+            <form method="post" action="/client-interview" class="job-form">
+
+                <div class="form-grid">
+
+                    <div class="form-group form-full">
+                        <label>Select Client</label>
+
+                        <select name="client_id" required>
+                            {% for client in clients %}
+                            <option value="{{ client.id }}">
+                                {{ client.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group form-full">
+                        <label>Answer What You Know</label>
+
+{% include "_ai_prompt_panel.html" %}
+
+                        <textarea
+                            name="notes"
+                            rows="14"
+                            placeholder="Use your phone microphone. Example: automatic cover, Pentair heater, dog in backyard, west gate, prefers text..."
+                        ></textarea>
+                    </div>
+
+                </div>
+
+                <button type="submit" class="primary-button">
+                    Save Interview Notes
+                </button>
+
+            </form>
+
+        </section>
+
+        <section class="content-card">
+            <h2>What PoolOps Wants To Know</h2>
+
+            <div class="quick-grid">
+
+                <div class="job-card">
+                    <h3>Access</h3>
+                    <p>Gate code, dog, preferred entrance, call/text before arrival.</p>
+                </div>
+
+                <div class="job-card">
+                    <h3>Equipment</h3>
+                    <p>Pump, filter, heater, sanitizer, automation, cover system.</p>
+                </div>
+
+                <div class="job-card">
+                    <h3>Pool Details</h3>
+                    <p>Surface, pool type, spa, water features, problem areas.</p>
+                </div>
+
+                <div class="job-card">
+                    <h3>Service Notes</h3>
+                    <p>Opening/closing quirks, recurring problems, customer preferences.</p>
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+</div>
+
+<div class="mobile-sidebar-toggle" onclick="document.body.classList.toggle('sidebar-open')">
+    ☰
+</div>
+
+</body>
+</html>

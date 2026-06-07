@@ -1,0 +1,36 @@
+<button class="menu-toggle" onclick="toggleRouteMenu()">☰ Menu</button>
+
+<div id="routeMenu" class="route-menu">
+    <button class="menu-close" onclick="toggleRouteMenu()">× Close</button>
+
+    <a href="/dashboard">Dashboard</a>
+    <a href="/talk-to-jarvis">Talk to Jarvis</a>
+    <a href="/ai">Ask Jarvis</a>
+    <a href="/capture">Invisible Office</a>
+
+    <a href="/clients">Clients</a>
+    <a href="/properties">Properties</a>
+    <a href="/jobs">Jobs</a>
+    <a href="/schedule">Schedule</a>
+    <a href="/crew">Crew View</a>
+
+    <a href="/billing">Billing</a>
+    <a href="/job-costing">Job Costing</a>
+    <a href="/photos">Photos</a>
+    <a href="/employees">Employees</a>
+
+    <a href="/map">Map</a>
+    <a href="/where-am-i">Where Am I?</a>
+    <a href="/quickbooks">QuickBooks</a>
+    <a href="/weather">Weather</a>
+    <a href="/health">Health</a>
+
+    <a href="/logout">Logout</a>
+</div>
+
+<script>
+function toggleRouteMenu() {
+    const menu = document.getElementById("routeMenu");
+    menu.classList.toggle("open");
+}
+</script>

@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PoolOps2 AI Assistant</title>
+
+    <style>
+        body {
+            background: #111827;
+            color: white;
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+
+        h1 {
+            color: #60a5fa;
+        }
+
+        textarea {
+            width: 100%;
+            height: 180px;
+            padding: 12px;
+            border-radius: 10px;
+            border: none;
+            margin-top: 10px;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+
+        button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .response-box {
+            background: #1f2937;
+            padding: 20px;
+            border-radius: 12px;
+            margin-top: 25px;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+{% include "_mobile_nav.html" %}
+    {% include "bottom_routes.html" %}
+    <div style="padding:16px; display:flex; gap:12px; background:#111827;">
+    <a href="/dashboard" class="secondary-button">Dashboard</a>
+    <a href="/talk-to-jarvis" class="secondary-button">Back</a>
+</div>
+<h1>🤖 PoolOps2 AI Assistant</h1>
+
+<form method="post" action="/ai">
+    <textarea
+        name="question"
+        placeholder="Ask PoolOps2 AI anything..."
+        required>{{ question or "" }}</textarea>
+
+    <button type="submit">
+        Ask AI
+    </button>
+</form>
+
+{% if answer %}
+<div class="response-box">
+    {{ answer }}
+</div>
+{% endif %}
+
+</body>
+</html>

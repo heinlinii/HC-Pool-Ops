@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Add Property - PoolOps2</title>
+    <link rel="stylesheet" href="/static/style.css?v=fieldops-ready-2">
+</head>
+<body>
+{% include "_mobile_nav.html" %}
+   
+<div style="padding:16px; display:flex; gap:12px; background:#111827;">
+    <a href="/dashboard" class="secondary-button">Dashboard</a>
+    <a href="/clients" class="secondary-button">Clients</a>
+    <a href="/properties" class="secondary-button">Properties</a>
+    <a href="/jobs" class="secondary-button">Jobs</a>
+</div>
+<main class="main-content">
+
+    <div class="topbar">
+        <div>
+            <h2>Add Property</h2>
+            <p>Pick the client first, then add the pool/location details.</p>
+        </div>
+
+        <a href="/clients" class="secondary-button">Back to Clients</a>
+    </div>
+
+    <form method="post" action="/properties/new" class="panel">
+
+        <label>Client</label>
+        <select name="client_id" required>
+            <option value="">Choose client</option>
+            {% for client in clients %}
+            <option value="{{ client.id }}">{{ client.name }}</option>
+            {% endfor %}
+        </select>
+
+        <label>Property Name</label>
+        <input type="text" name="property_name" placeholder="Example: Brookshire, Newburgh Rd, Main House">
+
+        <label>Street Address</label>
+        <input type="text" name="address" placeholder="Street address" required>
+
+        <label>City</label>
+        <input type="text" name="city" value="Evansville">
+
+        <label>State</label>
+        <input type="text" name="state" value="IN">
+
+        <label>Zip</label>
+        <input type="text" name="zip_code">
+
+        <label>Pool Type</label>
+        <input type="text" name="pool_type" placeholder="Concrete, vinyl, fiberglass">
+
+        <label>Pool Size</label>
+        <input type="text" name="pool_size" placeholder="20x40, etc.">
+
+        <label>Pool Depth</label>
+        <input type="text" name="pool_depth" placeholder="4-8, sport pool, etc.">
+
+        <label>Cover Type</label>
+        <input type="text" name="cover_type" placeholder="Auto cover, mesh, solid, none">
+
+        <label>Finish Type</label>
+        <input type="text" name="finish_type" placeholder="ecoFINISH, plaster, paint, tile">
+
+        <label>Pump Model</label>
+        <input type="text" name="pump_model">
+
+        <label>Filter Model</label>
+        <input type="text" name="filter_model">
+
+        <label>Heater Model</label>
+        <input type="text" name="heater_model">
+
+        <label>Sanitizer</label>
+        <input type="text" name="sanitizer" placeholder="Chlorinator, salt, tabs, etc.">
+
+        <label>Automation</label>
+        <input type="text" name="automation_system">
+
+        <label>Gate Code</label>
+        <input type="text" name="gate_code">
+
+        <label>Service Plan</label>
+        <input type="text" name="service_plan" placeholder="Weekly, opening only, service as needed">
+
+        <label>Property Notes</label>
+        <textarea name="notes" rows="5" placeholder="Access notes, dogs, equipment issues, service history..."></textarea>
+
+        <button type="submit" class="primary-button">Save Property</button>
+
+    </form>
+
+</main>
+
+</body>
+</html>

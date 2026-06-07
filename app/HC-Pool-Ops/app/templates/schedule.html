@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Heinlin Field Ops Schedule</title>
+    <link rel="stylesheet" href="/static/style.css?v=fieldops-ready-2">
+</head>
+<body>
+{% include "_mobile_nav.html" %}
+<div class="ops-shell">
+    {% set title = "Calendar Schedule" %}
+    {% set subtitle = "Click any day to see work scheduled for that date. Mobile is set up as its own field-friendly view." %}
+    {% set primary_href = "/jobs" %}
+    {% set primary_label = "+ Add Job" %}
+    {% include "_ops_header.html" %}
+
+    <div class="ops-calendar-wrap">
+        <section class="ops-calendar">
+            <div class="ops-calendar-top">
+                <a class="secondary-button" href="/schedule?month={{ calendar_data.prev_month }}">← Previous</a>
+                <div class="ops-calendar-title">{{ calendar_data.current.strftime("%B %Y") }}</div>
+                <a class="secondary-button" href="/schedule?month={{ calendar_data.next_month }}">Next →</a>
+            </div>
+
+            <div class="ops-calendar-weekdays">
+                <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+            </div>
+
+            {% for week in calendar_data.weeks %}
+            <div class="ops-calendar-week">
+                {% for cell in week %}
+                <a href="/schedule?month={{ calendar_data.current.strftime('%Y-%m') }}&day={{ cell.key }}"
+                   class="ops-day {% if not cell.in_month %}muted{% endif %} {% if cell.is_today %}today{% endif %} {% if cell.is_selected %}selected{% endif %}">
+                    <div class="ops-day-number">{{ cell.date.day }}</div>
+                    {% for job in cell.jobs[:3] %}
+                        <span class="ops-day-job">{{ job.client }} · {{ job.job_type or job.status }}</span>
+                    {% endfor %}
+                    {% if cell.jobs|length > 3 %}
+                        <span class="ops-day-job">+ {{ cell.jobs|length - 3 }} more</span>
+                    {% endif %}
+                </a>
+                {% endfor %}
+            </div>
+            {% endfor %}
+        </section>
+
+        <aside class="ops-panel">
+            <h2>{{ calendar_data.selected.strftime("%A, %B %d") }}</h2>
+            <p class="role-note">Selected day work. Admin can update status. Crew can open job details.</p>
+            {% for job in calendar_data.selected_jobs %}
+            <div class="ops-list-card">
+                <h4>{{ job.client }}</h4>
+                <p>{{ job.address or job.property or "No address saved" }}</p>
+                <p>{{ job.job_type or "Job" }} · {{ job.crew or "Unassigned" }}</p>
+                <div class="ops-card-meta">
+                    <span class="ops-pill">{{ job.status }}</span>
+                    <span class="ops-pill">{{ job.priority }}</span>
+                </div>
+                <div class="ops-actions">
+                    <a href="/jobs/{{ job.id }}" class="secondary-button">Open Job</a>
+                    {% if user.role == "admin" %}
+                    <form method="post" action="/schedule/status/{{ job.id }}" style="display:flex; gap:8px; flex:1;">
+                        <select name="status">
+                            <option {% if job.status == "Requested" %}selected{% endif %}>Requested</option>
+                            <option {% if job.status == "Scheduled" %}selected{% endif %}>Scheduled</option>
+                            <option {% if job.status == "In Progress" %}selected{% endif %}>In Progress</option>
+                            <option {% if job.status == "Completed" %}selected{% endif %}>Completed</option>
+                        </select>
+                        <button class="primary-button" type="submit">Save</button>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+            {% else %}
+            <div class="ops-list-card">
+                <h4>No jobs on this day</h4>
+                <p>This day is open for scheduling or client request claims.</p>
+            </div>
+            {% endfor %}
+
+            {% if calendar_data.unscheduled_jobs %}
+            <h3>Unscheduled</h3>
+            {% for job in calendar_data.unscheduled_jobs[:6] %}
+            <div class="ops-list-card">
+                <h4>{{ job.client }}</h4>
+                <p>{{ job.job_type }} · {{ job.status }}</p>
+                <a href="/jobs/{{ job.id }}" class="secondary-button">Open</a>
+            </div>
+            {% endfor %}
+            {% endif %}
+        </aside>
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,45 @@
+<section class="content-card ai-prompt-panel">
+
+    <h2>How should PoolOps guide you?</h2>
+
+    <div class="quick-grid">
+
+        <button type="button" class="ai-prompt-btn" onclick="setAIPromptMode('voice')">
+            🎙️ Voice Interview
+            <span>Use phone microphone and answer out loud.</span>
+        </button>
+
+        <button type="button" class="ai-prompt-btn" onclick="setAIPromptMode('screen')">
+            📝 On-Screen Prompts
+            <span>Use written questions one at a time.</span>
+        </button>
+
+    </div>
+
+    <div id="aiPromptQuestions" class="ai-question-stack">
+        <div class="question-card">1. What is the customer/client name?</div>
+        <div class="question-card">2. What property, pool, or job is this about?</div>
+        <div class="question-card">3. What problem, request, or important detail should PoolOps know?</div>
+        <div class="question-card">4. Is this urgent, scheduled, waiting on parts, or just a note?</div>
+        <div class="question-card">5. Should this become a job, note, estimate, invoice, or follow-up?</div>
+    </div>
+
+    <p id="aiPromptModeNote" class="muted">
+        Choose voice or on-screen prompts before answering.
+    </p>
+
+</section>
+
+<script>
+function setAIPromptMode(mode) {
+    const note = document.getElementById("aiPromptModeNote");
+
+    if (mode === "voice") {
+        note.innerText = "Voice mode: tap the answer box below, hit your phone microphone, and answer naturally.";
+    }
+
+    if (mode === "screen") {
+        note.innerText = "Prompt mode: answer the questions above one at a time in the answer box below.";
+    }
+}
+</script>

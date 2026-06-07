@@ -1,0 +1,6 @@
+photo_id,job_id,client_name,photo_type,title,photo_url,date,notes,property_id,latitude,longitude
+1,1,Smith Residence,Before,Sample before photo,/static/logo.png,Today,Temporary sample photo.,,,
+2,2,Johnson Backyard,Before,out with the old,/static/uploads/20250111_033818069_iOS.jpg,5/02/2026,,,,
+3,4,Jamie Heinlin,Before,fountain,/static/uploads/20200407_160436.jpg,Today,vhjfkghdfgcvbcmbkxh,,,
+4,4,Jamie Heinlin,Progress,wow,/static/uploads/20200402_155632.jpg,Today,gyludfkyxvckgh,,,
+5,4,Jamie Heinlin,After,done,/static/uploads/20200401_161101.jpg,Today,bjkgkfuydtylfgkj.;,,,

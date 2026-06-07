@@ -1,0 +1,12 @@
+{% extends "base.html" %}{% block content %}
+<section class="panel"><h1>{{ job.client }} — {{ job.job_type }}</h1>
+{% if is_admin %}
+<form method="post" action="/jobs/{{ job.id }}/save" class="form-grid"><label>Client<input name="client" value="{{ job.client }}"></label><label>Property<input name="property" value="{{ job.property }}"></label><label class="wide">Address<input name="address" value="{{ job.address }}"></label><label>Job Type<input name="job_type" value="{{ job.job_type }}"></label><label>Status<input name="status" value="{{ job.status }}"></label><label>Crew<input name="crew" value="{{ job.crew }}"></label><label>Date<input name="date" type="date" value="{{ job.date[:10] if job.date }}"></label><label>Priority<input name="priority" value="{{ job.priority }}"></label><label class="wide">Notes<textarea name="notes">{{ job.notes }}</textarea></label><button class="primary wide">Save Job</button></form>
+<form method="post" action="/jobs/{{ job.id }}/delete" onsubmit="return confirm('Delete this job?');"><button class="danger-button">Delete Job</button></form>
+{% else %}
+<div class="list-card"><p><b>Client:</b> {{ job.client }}</p><p><b>Property:</b> {{ job.property }}</p><p><b>Address:</b> {{ job.address }}</p><p><b>Status:</b> {{ job.status }}</p><p><b>Date:</b> {{ job.date }}</p><p><b>Notes:</b> {{ job.notes }}</p></div>
+<a class="primary-button" href="/field-logs">Enter Field Ops Log</a>
+{% endif %}
+</section>
+<h2>Photos</h2><section class="photo-grid">{% for ph in photos %}<article><img src="{{ ph.photo_url }}"><b>{{ ph.title }}</b><p>{{ ph.notes }}</p>{% if is_admin %}<form method="post" action="/photos/{{ ph.id }}/delete" onsubmit="return confirm('Delete this photo?');"><button class="danger-button">Delete Photo</button></form>{% endif %}</article>{% endfor %}</section>
+{% endblock %}
