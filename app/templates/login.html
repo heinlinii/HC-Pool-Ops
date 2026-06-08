@@ -1,8 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
 
-<!-- LOGIN BUILD: crest-card-only-1 -->
-
 <div class="heinlin-login-page">
 
   <form method="post" action="/login" class="panel heinlin-login-panel">
@@ -15,10 +13,10 @@
       >
     </div>
 
-    <p class="login-kicker">Founded 1907 · 5 Generations Strong</p>
+    <p class="login-kicker">Founded 1907 • 5 Generations Strong</p>
 
-    <h2>Heinlin Command Center</h2>
-    <p class="login-subtitle">Historic roots. Modern field access.</p>
+    <h2>Heinlin Operations Center</h2>
+    <p class="login-subtitle">Historic Roots • Modern Technology</p>
 
     {% if error %}
       <p class="login-error">{{ error }}</p>
@@ -31,7 +29,7 @@
     <input id="password" name="password" type="password" autocomplete="current-password" required>
 
     <button type="submit" class="btn primary login-submit">
-      Enter Command Center
+      Enter Operations Center
     </button>
   </form>
 
