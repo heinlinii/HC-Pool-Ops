@@ -1,22 +1,24 @@
 {% extends "base.html" %}
 {% block content %}
 
-<!-- LOGIN BUILD: crest-inside-card-4 -->
+<!-- LOGIN BUILD: crest-card-only-1 -->
 
 <div class="heinlin-login-page">
 
-  <div class="login-photo-bg" aria-hidden="true"></div>
-
   <form method="post" action="/login" class="panel heinlin-login-panel">
 
-    <img
-      src="/static/heinlin-family-crest.png"
-      alt="Heinlin Concrete Family Crest"
-      class=.login-panel-crest
-    >
+    <div class="login-crest-wrap">
+      <img
+        src="/static/heinlin-family-crest.png"
+        alt="Heinlin Concrete Family Crest"
+        class="login-panel-crest"
+      >
+    </div>
+
+    <p class="login-kicker">Founded 1907 · 5 Generations Strong</p>
 
     <h2>Heinlin Command Center</h2>
-    <p class="login-subtitle">Secure access portal</p>
+    <p class="login-subtitle">Historic roots. Modern field access.</p>
 
     {% if error %}
       <p class="login-error">{{ error }}</p>
@@ -29,7 +31,7 @@
     <input id="password" name="password" type="password" autocomplete="current-password" required>
 
     <button type="submit" class="btn primary login-submit">
-      Enter
+      Enter Command Center
     </button>
   </form>
 
