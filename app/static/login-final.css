@@ -568,3 +568,74 @@ body.hfo-body:has(.heinlin-login-page) .shell {
     font-size: 0.78rem !important;
   }
 }
+/* =========================================================
+   DESKTOP LOGIN FINAL OVERRIDE
+   Keep mobile as-is, make desktop match the wide mockup
+   ========================================================= */
+
+@media (min-width: 721px) {
+  body.hfo-body:has(.heinlin-login-page) {
+    background:
+      linear-gradient(
+        rgba(3, 6, 10, 0.48),
+        rgba(3, 6, 10, 0.76)
+      ),
+      url("/static/login-american-flag-bg.jpg"),
+      linear-gradient(180deg, #071018 0%, #030609 100%) !important;
+
+    background-size: cover, cover, cover !important;
+    background-position: center center, center center, center center !important;
+    background-repeat: no-repeat !important;
+  }
+
+  .heinlin-login-panel {
+    width: calc(100vw - 18px) !important;
+    height: calc(100dvh - 18px) !important;
+    max-width: none !important;
+    max-height: calc(100dvh - 18px) !important;
+
+    padding: 8px 34px 12px !important;
+    justify-content: flex-start !important;
+
+    background:
+      radial-gradient(circle at top center, rgba(214, 179, 106, 0.08), transparent 32%),
+      linear-gradient(180deg, rgba(7, 14, 20, 0.36), rgba(3, 7, 10, 0.54)) !important;
+
+    border-radius: 18px !important;
+  }
+
+  .login-panel-crest {
+    width: min(96vw, 1220px) !important;
+    max-width: min(96vw, 1220px) !important;
+    max-height: 50dvh !important;
+  }
+
+  .login-kicker {
+    margin: 0 0 5px !important;
+    font-size: clamp(0.82rem, 1.3vw, 1.05rem) !important;
+  }
+
+  .heinlin-login-panel h2 {
+    font-size: clamp(2.5rem, 5.3vw, 4.8rem) !important;
+    line-height: 0.9 !important;
+  }
+
+  .login-subtitle {
+    margin: 5px 0 8px !important;
+  }
+
+  .heinlin-login-panel label {
+    margin: 5px 0 3px !important;
+  }
+
+  .heinlin-login-panel input {
+    height: 36px !important;
+    min-height: 36px !important;
+  }
+
+  .heinlin-login-panel .login-submit {
+    height: 42px !important;
+    min-height: 42px !important;
+    margin-top: 8px !important;
+  }
+}

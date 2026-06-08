@@ -381,3 +381,146 @@ body.hfo-body:has(.heinlin-login-page) .bottom-action-bar{
     font-size:.9rem;
   }
 }
+/* =========================================================
+   MOBILE DASHBOARD EMERGENCY CLEANUP
+   Fixes post-login page layout
+   ========================================================= */
+
+@media (max-width: 720px) {
+  body.hfo-body:not(:has(.heinlin-login-page)) {
+    padding-top: 72px !important;
+    background: #05090d !important;
+    overflow-x: hidden !important;
+  }
+
+  body.hfo-body:not(:has(.heinlin-login-page)) .shell {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 14px !important;
+    margin: 0 !important;
+    overflow-x: hidden !important;
+  }
+
+  .top-action-bar {
+    top: 10px !important;
+    left: 10px !important;
+    right: 10px !important;
+    width: auto !important;
+    max-width: none !important;
+
+    display: grid !important;
+    grid-template-columns: 1fr 1fr 1fr !important;
+    gap: 8px !important;
+
+    padding: 8px !important;
+    border-radius: 20px !important;
+    background: rgba(4, 10, 15, 0.94) !important;
+  }
+
+  .top-action-bar .btn {
+    width: 100% !important;
+    min-height: 44px !important;
+    padding: 10px 8px !important;
+    font-size: 0.95rem !important;
+    text-align: center !important;
+    border-radius: 14px !important;
+  }
+
+  .hfo-mobile-command,
+  .hfo-command-v2,
+  .hfo-v2-main,
+  .hfo-v2-grid,
+  .hfo-dashboard-grid,
+  .hfo-command-layout {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+  }
+
+  .hfo-identity-card,
+  .hfo-jarvis-card,
+  .hfo-mobile-section,
+  .hfo-v2-header,
+  .hfo-v2-jarvis,
+  .hfo-v2-weather,
+  .hfo-v2-map,
+  .hfo-v2-command,
+  .hfo-v2-card,
+  .hfo-live-ops {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 14px 0 !important;
+    padding: 22px !important;
+    border-radius: 22px !important;
+    box-sizing: border-box !important;
+  }
+
+  .hfo-identity-card h1,
+  .hfo-v2-header h1 {
+    font-size: clamp(2.4rem, 12vw, 4rem) !important;
+    line-height: 0.92 !important;
+    word-break: normal !important;
+  }
+
+  .hfo-jarvis-card h2,
+  .hfo-v2-jarvis h2 {
+    font-size: clamp(3rem, 16vw, 5rem) !important;
+    line-height: 0.9 !important;
+  }
+
+  .hfo-jarvis-card h3,
+  .hfo-v2-jarvis h3 {
+    font-size: clamp(1.8rem, 8vw, 2.6rem) !important;
+    line-height: 1.05 !important;
+  }
+
+  .hfo-mobile-stats,
+  .hfo-v2-pulse {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
+  .hfo-mobile-search,
+  .hfo-v2-search {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+    width: 100% !important;
+  }
+
+  .hfo-mobile-search input,
+  .hfo-v2-search input,
+  .hfo-jarvis-search input {
+    width: 100% !important;
+    min-height: 56px !important;
+    font-size: 1rem !important;
+    box-sizing: border-box !important;
+  }
+
+  .hfo-mobile-search button,
+  .hfo-v2-search button,
+  .hfo-jarvis-search button {
+    width: 100% !important;
+    min-height: 52px !important;
+  }
+
+  .hfo-mobile-buttons,
+  .hfo-mobile-buttons.three,
+  .hfo-v2-buttons,
+  .hfo-command-buttons,
+  .hfo-live-buttons {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
+  .hfo-mobile-buttons a,
+  .hfo-v2-buttons a,
+  .hfo-command-buttons a,
+  .hfo-live-buttons a {
+    min-height: 54px !important;
+    padding: 14px !important;
+    font-size: 1rem !important;
+  }
+}
