@@ -39,6 +39,14 @@ body.hfo-body:has(.heinlin-login-page) .shell {
   margin: 0 !important;
   padding: 0 !important;
 }
+body.hfo-body:has(.heinlin-login-page) .shell {
+  width: 100vw !important;
+  max-width: none !important;
+  min-height: 100vh !important;
+  min-height: 100svh !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
 
 body.hfo-body:has(.heinlin-login-page) .top-action-bar,
 body.hfo-body:has(.heinlin-login-page) .bottom-action-bar {
@@ -93,11 +101,11 @@ body.hfo-body:has(.heinlin-login-page) .bottom-action-bar {
   width: auto !important;
   height: auto !important;
 
-  max-width: min(100%, 430px) !important;
-  max-height: 38vh !important;
+  max-width: min(100%, 1180px) !important;
+  max-height: 46vh !important;
 
   object-fit: contain !important;
-  filter: drop-shadow(0 18px 30px rgba(0, 0, 0, 0.65)) !important;
+  filter: drop-shadow(0 18px 34px rgba(0, 0, 0, 0.76)) !important;
 }
 
 .login-kicker {
@@ -228,9 +236,10 @@ body.hfo-body:has(.heinlin-login-page) .bottom-action-bar {
   }
 
   .login-panel-crest {
-    max-width: min(100%, 320px) !important;
-    max-height: 31vh !important;
-  }
+  width: 122vw !important;
+  max-width: 122vw !important;
+  max-height: 44vh !important;
+}
 
   .login-kicker {
     margin-bottom: 8px !important;
