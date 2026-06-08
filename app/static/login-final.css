@@ -779,3 +779,198 @@ body.hfo-body:has(.heinlin-login-page) .shell {
     margin-top: 12px !important;
   }
 }
+/* =========================================================
+   DESKTOP SIDE-BY-SIDE CLEANUP
+   Crest content left, login controls right
+   operations-final-7
+   ========================================================= */
+
+@media (min-width: 900px) {
+  .heinlin-login-panel {
+    display: grid !important;
+    grid-template-columns: minmax(520px, 1.12fr) minmax(420px, 0.88fr) !important;
+    gap: clamp(30px, 5vw, 84px) !important;
+    align-items: center !important;
+
+    width: calc(100vw - 18px) !important;
+    height: calc(100dvh - 18px) !important;
+    max-width: none !important;
+    max-height: calc(100dvh - 18px) !important;
+
+    padding: clamp(18px, 3vh, 42px) clamp(34px, 5vw, 92px) !important;
+
+    background:
+      radial-gradient(circle at 25% 45%, rgba(214, 179, 106, 0.10), transparent 34%),
+      linear-gradient(180deg, rgba(7, 14, 20, 0.42), rgba(3, 7, 10, 0.66)) !important;
+
+    border-radius: 18px !important;
+    overflow: hidden !important;
+  }
+
+  .login-left,
+  .login-right {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .login-left {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .login-right {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    justify-content: center !important;
+  }
+
+  .login-crest-wrap {
+    width: 100% !important;
+    margin: 0 0 12px !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+  }
+
+  .login-panel-crest {
+    width: min(58vw, 900px) !important;
+    max-width: min(58vw, 900px) !important;
+    max-height: 72dvh !important;
+    object-fit: contain !important;
+  }
+
+  .login-kicker {
+    width: 100% !important;
+    margin: 6px 0 8px !important;
+    text-align: center !important;
+    color: #d6b36a !important;
+    font-size: clamp(0.86rem, 1.25vw, 1.12rem) !important;
+    font-weight: 1000 !important;
+    letter-spacing: 0.16em !important;
+    text-transform: uppercase !important;
+  }
+
+  .login-heritage-line {
+    width: 100% !important;
+    margin: 0 !important;
+    text-align: center !important;
+    color: rgba(255, 255, 255, 0.78) !important;
+    font-size: clamp(0.95rem, 1.4vw, 1.22rem) !important;
+    font-weight: 900 !important;
+  }
+
+  .login-right h2 {
+    width: 100% !important;
+    margin: 0 0 28px !important;
+    text-align: left !important;
+    color: #ffffff !important;
+    font-size: clamp(3.5rem, 5.4vw, 6.4rem) !important;
+    line-height: 0.88 !important;
+    font-weight: 1000 !important;
+    letter-spacing: -0.065em !important;
+  }
+
+  .login-right .login-error,
+  .login-right label,
+  .login-right input,
+  .login-right .login-submit {
+    width: 100% !important;
+    max-width: 620px !important;
+  }
+
+  .login-right label {
+    margin: 12px 0 6px !important;
+    color: #d6b36a !important;
+    font-size: 0.98rem !important;
+    font-weight: 950 !important;
+  }
+
+  .login-right input {
+    height: 52px !important;
+    min-height: 52px !important;
+    border-radius: 15px !important;
+  }
+
+  .login-right .login-submit {
+    height: 56px !important;
+    min-height: 56px !important;
+    margin-top: 18px !important;
+    border-radius: 15px !important;
+    font-size: 0.92rem !important;
+  }
+}
+
+/* Short desktop / laptop screens */
+@media (min-width: 900px) and (max-height: 760px) {
+  .heinlin-login-panel {
+    grid-template-columns: minmax(440px, 1.05fr) minmax(390px, 0.95fr) !important;
+    gap: 42px !important;
+    padding: 16px 46px !important;
+  }
+
+  .login-panel-crest {
+    width: min(52vw, 760px) !important;
+    max-width: min(52vw, 760px) !important;
+    max-height: 68dvh !important;
+  }
+
+  .login-kicker {
+    font-size: 0.86rem !important;
+    margin-bottom: 5px !important;
+  }
+
+  .login-heritage-line {
+    font-size: 0.95rem !important;
+  }
+
+  .login-right h2 {
+    font-size: clamp(3rem, 4.8vw, 5.4rem) !important;
+    margin-bottom: 16px !important;
+  }
+
+  .login-right input {
+    height: 42px !important;
+    min-height: 42px !important;
+  }
+
+  .login-right .login-submit {
+    height: 46px !important;
+    min-height: 46px !important;
+    margin-top: 12px !important;
+  }
+}
+
+/* Mobile stays stacked and clean */
+@media (max-width: 899px) {
+  .login-left,
+  .login-right {
+    width: 100% !important;
+  }
+
+  .login-left {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+  }
+
+  .login-right {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+
+  .login-heritage-line {
+    margin: 4px 0 8px !important;
+    text-align: center !important;
+    color: rgba(255, 255, 255, 0.78) !important;
+    font-size: 0.9rem !important;
+    font-weight: 900 !important;
+  }
+
+  .login-right h2 {
+    text-align: center !important;
+  }
+}
