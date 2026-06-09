@@ -506,3 +506,269 @@ body.hfo-body:has(.heinlin-login-page) .bottom-action-bar {
     margin-top: 10px !important;
   }
 }
+/* =========================================================
+   OPERATIONS FINAL 10
+   Wide crest on desktop and mobile
+   Brighter flag background
+   Desktop side-by-side layout
+   ========================================================= */
+
+body.hfo-body:has(.heinlin-login-page) {
+  background:
+    linear-gradient(
+      rgba(3, 6, 10, 0.34),
+      rgba(3, 6, 10, 0.72)
+    ),
+    url("/static/login-american-flag-bg.jpg"),
+    linear-gradient(180deg, #071018 0%, #030609 100%) !important;
+
+  background-size: cover, cover, cover !important;
+  background-position: center center, center center, center center !important;
+  background-repeat: no-repeat !important;
+  overflow: hidden !important;
+}
+
+body.hfo-body:has(.heinlin-login-page) .shell {
+  width: 100vw !important;
+  max-width: none !important;
+  height: 100dvh !important;
+  min-height: 100dvh !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+}
+
+.heinlin-login-page {
+  width: 100vw !important;
+  height: 100dvh !important;
+  min-height: 100dvh !important;
+  padding: 8px !important;
+  overflow: hidden !important;
+}
+
+.heinlin-login-panel {
+  width: calc(100vw - 16px) !important;
+  height: calc(100dvh - 16px) !important;
+  max-width: none !important;
+  max-height: calc(100dvh - 16px) !important;
+  margin: 0 auto !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+
+  background:
+    radial-gradient(circle at 28% 45%, rgba(214, 179, 106, 0.10), transparent 34%),
+    linear-gradient(180deg, rgba(7, 14, 20, 0.34), rgba(3, 7, 10, 0.58)) !important;
+
+  border: 1px solid rgba(214, 179, 106, 0.34) !important;
+  border-radius: 18px !important;
+}
+
+/* Desktop */
+@media (min-width: 900px) {
+  .heinlin-login-panel {
+    display: grid !important;
+    grid-template-columns: minmax(500px, 1.05fr) minmax(380px, 0.95fr) !important;
+    gap: clamp(20px, 3.2vw, 52px) !important;
+    align-items: center !important;
+    padding: clamp(16px, 3vh, 34px) clamp(24px, 4vw, 64px) !important;
+  }
+
+  .login-left,
+  .login-right {
+    min-width: 0 !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .login-left {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .login-right {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    justify-content: center !important;
+  }
+
+  .login-crest-wrap {
+    width: 100% !important;
+    margin: 0 0 10px !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+  }
+
+  .login-panel-crest {
+    display: block !important;
+    width: min(50vw, 780px) !important;
+    max-width: min(50vw, 780px) !important;
+    max-height: 68dvh !important;
+    object-fit: contain !important;
+    filter: drop-shadow(0 18px 34px rgba(0, 0, 0, 0.78)) !important;
+  }
+
+  .login-kicker {
+    margin: 8px 0 6px !important;
+    text-align: center !important;
+    color: #d6b36a !important;
+    font-size: clamp(0.74rem, 1.05vw, 0.95rem) !important;
+    font-weight: 1000 !important;
+    letter-spacing: 0.14em !important;
+    text-transform: uppercase !important;
+  }
+
+  .login-heritage-line {
+    margin: 0 !important;
+    text-align: center !important;
+    color: rgba(255, 255, 255, 0.82) !important;
+    font-size: clamp(0.78rem, 1.05vw, 1rem) !important;
+    font-weight: 900 !important;
+    line-height: 1.2 !important;
+  }
+
+  .login-right h2 {
+    width: 100% !important;
+    margin: 0 0 22px !important;
+    text-align: left !important;
+    color: #ffffff !important;
+    font-size: clamp(2.5rem, 4.25vw, 4.85rem) !important;
+    line-height: 0.9 !important;
+    font-weight: 1000 !important;
+    letter-spacing: -0.065em !important;
+  }
+
+  .login-right label,
+  .login-right input,
+  .login-right .login-submit,
+  .login-right .login-error {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .login-right label {
+    margin: 10px 0 5px !important;
+    color: #d6b36a !important;
+    font-size: 0.9rem !important;
+    font-weight: 950 !important;
+  }
+
+  .login-right input {
+    height: 44px !important;
+    min-height: 44px !important;
+    border-radius: 13px !important;
+    border: 1px solid rgba(214, 179, 106, 0.42) !important;
+    background: rgba(255, 255, 255, 0.045) !important;
+    color: #ffffff !important;
+  }
+
+  .login-right .login-submit {
+    height: 48px !important;
+    min-height: 48px !important;
+    margin-top: 14px !important;
+    border-radius: 13px !important;
+    background: linear-gradient(135deg, #b7833d 0%, #e0c172 100%) !important;
+    color: #111317 !important;
+    font-size: 0.82rem !important;
+    font-weight: 1000 !important;
+    letter-spacing: 0.14em !important;
+    text-transform: uppercase !important;
+  }
+}
+
+/* Short desktop/laptop */
+@media (min-width: 900px) and (max-height: 720px) {
+  .heinlin-login-panel {
+    grid-template-columns: minmax(400px, 0.95fr) minmax(340px, 0.86fr) !important;
+    gap: 24px !important;
+    padding: 14px 34px !important;
+  }
+
+  .login-panel-crest {
+    width: min(46vw, 660px) !important;
+    max-width: min(46vw, 660px) !important;
+    max-height: 62dvh !important;
+  }
+
+  .login-right h2 {
+    font-size: clamp(2.2rem, 4vw, 4.2rem) !important;
+    margin-bottom: 14px !important;
+  }
+
+  .login-right input {
+    height: 38px !important;
+    min-height: 38px !important;
+  }
+
+  .login-right .login-submit {
+    height: 42px !important;
+    min-height: 42px !important;
+    margin-top: 10px !important;
+  }
+}
+
+/* Mobile keeps the stacked layout */
+@media (max-width: 899px) {
+  .heinlin-login-panel {
+    width: 100vw !important;
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+    border-radius: 0 !important;
+    border-left: 0 !important;
+    border-right: 0 !important;
+    padding: 8px 18px 12px !important;
+
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .login-left,
+  .login-right {
+    width: 100% !important;
+  }
+
+  .login-left {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+  }
+
+  .login-right {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+
+  .login-panel-crest {
+    width: 126vw !important;
+    max-width: 126vw !important;
+    max-height: 42dvh !important;
+    object-fit: contain !important;
+  }
+
+  .login-kicker {
+    margin: 0 0 4px !important;
+    text-align: center !important;
+    font-size: 0.78rem !important;
+  }
+
+  .login-heritage-line {
+    margin: 4px 0 8px !important;
+    text-align: center !important;
+    color: rgba(255, 255, 255, 0.78) !important;
+    font-size: 0.9rem !important;
+    font-weight: 900 !important;
+  }
+
+  .login-right h2 {
+    text-align: center !important;
+    font-size: clamp(2rem, 10vw, 3.55rem) !important;
+    line-height: 0.9 !important;
+  }
+}
