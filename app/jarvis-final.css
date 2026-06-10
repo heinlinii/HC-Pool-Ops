@@ -1,0 +1,287 @@
+/* JARVIS COMMAND CENTER FINAL */
+
+.hfo-command-page {
+  width: 100%;
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 110px 18px 42px;
+  box-sizing: border-box;
+  display: grid;
+  gap: 22px;
+}
+
+.hfo-hero-card,
+.hfo-jarvis-card,
+.hfo-mobile-section {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 28px;
+  border-radius: 28px;
+  background:
+    radial-gradient(circle at top right, rgba(214, 179, 106, .11), transparent 34%),
+    rgba(8, 15, 21, .94);
+  border: 1px solid rgba(214, 179, 106, .28);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, .42);
+  overflow: hidden;
+}
+
+.hfo-hero-card {
+  display: grid;
+  grid-template-columns: 1.15fr .85fr;
+  gap: 24px;
+  align-items: stretch;
+}
+
+.hfo-mini-label {
+  margin: 0 0 12px;
+  color: #d6b36a;
+  font-size: .85rem;
+  font-weight: 950;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+}
+
+.hfo-hero-card h1 {
+  margin: 0;
+  color: #fff;
+  font-size: clamp(3.4rem, 7vw, 6.6rem);
+  line-height: .88;
+  letter-spacing: -.065em;
+  text-transform: uppercase;
+}
+
+.hfo-founded {
+  margin: 18px 0 24px;
+  color: rgba(238, 244, 255, .78);
+  font-size: 1.15rem;
+  font-weight: 800;
+}
+
+.hfo-award-plaque {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  max-width: 520px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: rgba(0, 0, 0, .24);
+  border: 1px solid rgba(214, 179, 106, .24);
+}
+
+.hfo-award-seal {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #d6b36a;
+  color: #071017;
+  font-weight: 1000;
+}
+
+.hfo-award-plaque span,
+.hfo-award-plaque strong,
+.hfo-award-plaque em {
+  display: block;
+}
+
+.hfo-award-plaque span {
+  color: rgba(255,255,255,.72);
+}
+
+.hfo-award-plaque strong {
+  color: #fff;
+}
+
+.hfo-award-plaque em {
+  color: #d6b36a;
+}
+
+.hfo-way-card {
+  height: 100%;
+  min-height: 230px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 12px;
+  padding: 24px;
+  border-radius: 24px;
+  background: linear-gradient(135deg, rgba(214,179,106,.16), rgba(255,255,255,.035));
+  border: 1px solid rgba(214,179,106,.22);
+}
+
+.hfo-way-card p {
+  margin: 0 0 8px;
+  color: #d6b36a;
+  font-weight: 950;
+  text-transform: uppercase;
+  letter-spacing: .10em;
+}
+
+.hfo-way-card strong {
+  display: block;
+  color: #fff;
+  font-size: clamp(1.4rem, 3vw, 2.25rem);
+  line-height: 1;
+}
+
+.hfo-jarvis-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 10px;
+}
+
+.hfo-jarvis-card h2,
+.hfo-mobile-section h2 {
+  margin: 0;
+  color: #fff;
+  font-size: clamp(2.5rem, 5vw, 4.6rem);
+  line-height: .9;
+  letter-spacing: -.045em;
+  text-transform: uppercase;
+}
+
+.hfo-online-dot {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #24e07b;
+  box-shadow: 0 0 22px rgba(36, 224, 123, .8);
+}
+
+.hfo-jarvis-card h3 {
+  margin: 12px 0 22px;
+  color: rgba(255,255,255,.82);
+  font-size: 1.3rem;
+}
+
+.hfo-mobile-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin: 0 0 24px;
+}
+
+.hfo-mobile-stats div {
+  padding: 18px;
+  border-radius: 20px;
+  background: rgba(255,255,255,.045);
+  border: 1px solid rgba(214,179,106,.18);
+}
+
+.hfo-mobile-stats strong {
+  display: block;
+  font-size: 2.4rem;
+  line-height: 1;
+  color: #d6b36a;
+}
+
+.hfo-mobile-stats span {
+  color: rgba(255,255,255,.78);
+  font-weight: 800;
+}
+
+.hfo-handle-zone h4 {
+  margin: 0 0 12px;
+  color: #fff;
+  font-size: 1.25rem;
+}
+
+.hfo-mobile-search {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.hfo-mobile-search input {
+  width: 100%;
+  min-height: 62px;
+  box-sizing: border-box;
+  padding: 0 20px;
+  border-radius: 20px;
+  border: 1px solid rgba(214,179,106,.24);
+  background: rgba(0,0,0,.22);
+  color: #fff;
+  font-size: 1.05rem;
+  outline: none;
+}
+
+.hfo-mobile-search button {
+  min-height: 62px;
+  padding: 0 28px;
+  border-radius: 20px;
+  border: none;
+}
+
+.hfo-talk-link {
+  color: #d6b36a;
+  font-weight: 950;
+  text-decoration: none;
+}
+
+.hfo-mobile-buttons {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.hfo-mobile-buttons.three {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.hfo-mobile-buttons a {
+  min-height: 76px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  border-radius: 20px;
+  background: rgba(255,255,255,.055);
+  border: 1px solid rgba(214,179,106,.20);
+  color: #fff;
+  text-decoration: none;
+  text-align: center;
+  text-transform: uppercase;
+  font-weight: 950;
+  letter-spacing: .03em;
+}
+
+.hfo-footer-v3 {
+  text-align: center;
+  color: rgba(255,255,255,.82);
+  font-size: 1.15rem;
+}
+
+@media (max-width: 760px) {
+  .hfo-command-page {
+    padding: 92px 12px 28px;
+  }
+
+  .hfo-hero-card {
+    grid-template-columns: 1fr;
+  }
+
+  .hfo-hero-card,
+  .hfo-jarvis-card,
+  .hfo-mobile-section {
+    padding: 20px;
+    border-radius: 24px;
+  }
+
+  .hfo-hero-card h1 {
+    font-size: clamp(3rem, 13vw, 4.5rem);
+  }
+
+  .hfo-mobile-stats,
+  .hfo-mobile-search,
+  .hfo-mobile-buttons,
+  .hfo-mobile-buttons.three {
+    grid-template-columns: 1fr;
+  }
+}

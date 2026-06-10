@@ -1,46 +1,13 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{{ title or "Heinlin Operations Center" }}</title>
-
-  <link rel="stylesheet" href="/static/style.css?v=role-portals-1">
-<link rel="stylesheet" href="/static/hfo-theme.css?v=dark-brass-1">
-  <link rel="stylesheet" href="/static/login-final.css?v=operations-final-9">
-</head>
-
-<body class="hfo-body">
-
-  <script>
-    if ("scrollRestoration" in history) {
-      history.scrollRestoration = "manual";
-    }
-
-    window.addEventListener("load", function () {
-      window.scrollTo(0, 0);
-    });
-  </script>
-
-  {% if user and request.url.path != "/login" %}
-  <div class="top-action-bar">
-    <button class="btn" type="button" onclick="history.back()">← Back</button>
-
-    {% if is_employee %}
-      <a class="btn primary" href="/crew/my-day">Dashboard</a>
-    {% elif is_client %}
-      <a class="btn primary" href="/client-portal">Dashboard</a>
-    {% else %}
-      <a class="btn primary" href="/jarvis">Dashboard</a>
-    {% endif %}
-
-    <a class="btn danger" href="/logout">Logout</a>
-  </div>
-  {% endif %}
-
-  <main class="shell">
-    {% block content %}{% endblock %}
-  </main>
-
-</body>
-</html>
+{% extends "base.html" %}{% block content %}
+<section class="hero"><div><div class="kicker">{{ theme.title }}</div><h1>{{ theme.hero_title }}</h1><p>{{ theme.hero_subtitle }}</p><p class="muted">{{ theme.subtitle }}</p></div><a class="btn" href="/dashboard/theme">Edit Dashboard</a></section>
+<section class="calendar panel" {% if theme.calendar_background %}style="background-image:linear-gradient(rgba(9,18,25,.82),rgba(9,18,25,.92)),url('{{ theme.calendar_background }}');"{% endif %}>
+  <div class="section-head"><h2>Monthly Calendar</h2><a class="btn" href="/schedule/git add app/app.py
+git commit -m "Set calendar button to year view"
+git push origin core-1.0">Full Calendar</a></div>
+  <div class="month-grid"><b>Sun</b><b>Mon</b><b>Tue</b><b>Wed</b><b>Thu</b><b>Fri</b><b>Sat</b>{% for d in days %}<div class="day {% if not d.in_month %}dim{% endif %} {% if d.is_today %}today{% endif %}" {% if d.image %}style="background-image:linear-gradient(rgba(0,0,0,.55),rgba(0,0,0,.75)),url('{{ d.image }}')"{% endif %}><span>{{ d.day }}</span>{% for j in d.jobs[:2] %}<a class="event" href="/jobs/{{ j.id }}">{{ j.client or j.property or 'Job' }}</a>{% endfor %}{% if user.role == 'admin' %}<form class="tiny-upload" action="/calendar/day-image" method="post" enctype="multipart/form-data"><input type="hidden" name="day_date" value="{{ d.date }}"><input name="image" type="file" accept="image/*"><button>Photo</button></form>{% endif %}</div>{% endfor %}</div>
+</section>
+<section class="card-grid">
+{% set cards=[('Clients','Open client cards','/clients',theme.clients_image),('Properties','Open property cards','/properties',theme.properties_image),('Jobs','Open job hub','/jobs',theme.jobs_image),('Daily Schedule','Today’s field plan','/schedule/day',theme.schedule_image),('Monthly Schedule','Calendar board','/schedule/year',theme.schedule_image),('Invisible Office','Jarvis command desk','/invisible-office',theme.field_log_image),('Photos','Field photos','/photos',theme.photos_image),('Crew','Employees and assignments','/crew',theme.crew_image),('Estimates','Build estimates','/estimates',theme.estimates_image),('Job Costing','Track costs','/job-costing',theme.job_costing_image),('QuickBooks','Export prep','/quickbooks',theme.quickbooks_image),('Weather','Weather notes','/weather',theme.weather_image),('Map','Properties map list','/map',theme.map_image),('Field Log','Daily notes','/field-logs',theme.field_log_image)] %}
+{% for title,sub,url,img in cards %}<a class="dash-card" href="{{ url }}"><div class="card-bg" style="background-image:url('{{ img }}')"></div><div><h2>{{ title }}</h2><p>{{ sub }}</p></div></a>{% endfor %}
+</section>
+{% endblock %}
