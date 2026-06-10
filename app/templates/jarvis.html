@@ -1,42 +1,49 @@
 {% extends "base.html" %}
 {% block content %}
 
-<div class="hfo-command-page">
+<div class="hfo-mobile-command">
 
-  <section class="hfo-hero-card">
-    <div class="hfo-hero-left">
+  <section class="hfo-identity-card">
+    <div class="hfo-identity-copy">
       <p class="hfo-mini-label">HEINLIN FIELD OPS</p>
-      <h1>Heinlin Field Ops</h1>
-      <p class="hfo-founded">Founded 1907 • 5 Generations Strong</p>
+      <h1>HEINLIN FIELD<br>OPS</h1>
+      <p class="hfo-founded">Founded 1907 • 5th Generation</p>
+    </div>
 
-      <div class="hfo-award-plaque">
-        <span class="hfo-award-seal">IN</span>
-        <div>
-          <span>Indiana Historical Society</span>
-          <strong>Centennial Business Award</strong>
-          <em>Recipient</em>
-        </div>
+    <div class="hfo-identity-mainline">
+      <div class="hfo-family-crest" aria-label="Heinlin family crest">
+        <div class="hfo-v3-crest">
+  <div class="crest-top">♞</div>
+  <div class="crest-h">H</div>
+  <div class="crest-scroll"></div>
+</div>
+
+      <div class="hfo-identity-taglines">
+        <p>The Heinlin Way</p>
+        <p>Built by Hand</p>
+        <p>Run Like a Machine</p>
+        <p>Look Like a Million Bucks</p>
+        <strong>While Always Having a Damn Good Time.</strong>
       </div>
     </div>
 
-    <div class="hfo-hero-right">
-      <div class="hfo-way-card">
-        <p>The Heinlin Way</p>
-        <strong>Built by Hand</strong>
-        <strong>Run Like a Machine</strong>
-        <strong>Look Like a Million Bucks</strong>
+    <div class="hfo-award-plaque">
+      <div class="hfo-award-seal">IN</div>
+      <div>
+        <span>Indiana Historical Society</span>
+        <strong>Centennial Business Award</strong>
+        <em>Recipient</em>
       </div>
     </div>
   </section>
 
   <section class="hfo-jarvis-card">
     <div class="hfo-jarvis-title-row">
-      <div>
-        <p class="hfo-mini-label">ONLINE</p>
-        <h2>Jarvis</h2>
-      </div>
+      <h2>JARVIS</h2>
       <span class="hfo-online-dot"></span>
     </div>
+
+    <p class="hfo-online-word">Online</p>
 
     <h3>{{ greeting }}, {{ user.name or user.username or "Boss" }}.</h3>
 
@@ -69,7 +76,6 @@
 
   <section class="hfo-mobile-section hfo-live-operations-v3">
     <h2>Live Operations</h2>
-
     <div class="hfo-mobile-buttons three">
       <a href="/jarvis">Today's Work</a>
       <a href="/employee-portal">My Day</a>
@@ -79,7 +85,6 @@
 
   <section class="hfo-mobile-section hfo-command-buttons-v3">
     <h2>Command Center</h2>
-
     <div class="hfo-mobile-buttons">
       <a href="/clients">Clients</a>
       <a href="/properties">Properties</a>
@@ -93,7 +98,7 @@
   </section>
 
   <section class="hfo-mobile-section hfo-footer-v3">
-    <strong>All the knowledge of concrete and pools from 5 generations of the Heinlin family now lives inside Jarvis.</strong>
+    <strong>All the Knowledge of Concrete & Pools from 5 Generations of the Heinlin Family, Now Reside Inside Jarvis.</strong>
   </section>
 
 </div>
