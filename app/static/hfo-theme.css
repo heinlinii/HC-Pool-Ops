@@ -1369,3 +1369,164 @@ body.hfo-body {
     max-height: 360px !important;
   }
 }
+/* =========================================================
+   IDENTITY CARD POLISH PASS
+   Certificate + crest hero card
+   ========================================================= */
+
+/* stronger flag background behind dashboard */
+body.hfo-body {
+  background:
+    linear-gradient(rgba(2, 6, 10, 0.42), rgba(2, 6, 10, 0.70)),
+    url("/static/login-american-flag-bg.jpg"),
+    linear-gradient(180deg, #071017 0%, #020609 100%) !important;
+  background-size: cover !important;
+  background-position: center center !important;
+  background-attachment: fixed !important;
+}
+
+/* top identity card layout */
+.hfo-identity-card-rebuilt {
+  min-height: 620px !important;
+  padding: clamp(34px, 4.2vw, 62px) !important;
+  gap: clamp(34px, 4vw, 62px) !important;
+  align-items: center !important;
+
+  background:
+    radial-gradient(circle at 82% 44%, rgba(214, 179, 106, 0.11), transparent 30%),
+    linear-gradient(90deg, rgba(4, 11, 17, 0.96), rgba(9, 14, 15, 0.89)),
+    rgba(8, 15, 21, 0.94) !important;
+
+  border: 1px solid rgba(214, 179, 106, 0.42) !important;
+  box-shadow:
+    0 30px 90px rgba(0, 0, 0, 0.58),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.035) !important;
+}
+
+/* title: powerful but cleaner */
+.hfo-identity-card-rebuilt h1 {
+  margin: 0 0 30px !important;
+  font-size: clamp(3.6rem, 5vw, 6.6rem) !important;
+  line-height: 0.9 !important;
+  letter-spacing: -0.07em !important;
+  text-shadow:
+    0 4px 0 rgba(0, 0, 0, 0.28),
+    0 18px 38px rgba(0, 0, 0, 0.45) !important;
+}
+
+/* certificate frame: more like a display case */
+.hfo-certificate-frame {
+  max-width: 720px !important;
+  min-height: 330px !important;
+  padding: 16px !important;
+  border-radius: 28px !important;
+
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.025)),
+    rgba(0, 0, 0, 0.24) !important;
+
+  border: 1px solid rgba(214, 179, 106, 0.42) !important;
+  box-shadow:
+    0 20px 55px rgba(0, 0, 0, 0.42),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.05) !important;
+}
+
+.hfo-ibhs-certificate {
+  width: 100% !important;
+  max-height: 395px !important;
+  object-fit: contain !important;
+  border-radius: 18px !important;
+  box-shadow: 0 14px 32px rgba(0,0,0,.35) !important;
+}
+
+/* crest side: make it feel featured instead of pasted */
+.hfo-identity-right {
+  position: relative !important;
+  min-height: 460px !important;
+  padding: 22px !important;
+  border-radius: 30px !important;
+
+  background:
+    radial-gradient(circle at 50% 45%, rgba(214, 179, 106, 0.16), transparent 42%),
+    rgba(0, 0, 0, 0.18) !important;
+
+  border: 1px solid rgba(214, 179, 106, 0.22) !important;
+}
+
+.hfo-identity-right::before {
+  content: "" !important;
+  position: absolute !important;
+  inset: 18px !important;
+  border-radius: 26px !important;
+  border: 1px solid rgba(214, 179, 106, 0.12) !important;
+  pointer-events: none !important;
+}
+
+.hfo-dashboard-crest {
+  width: min(100%, 820px) !important;
+  max-height: 500px !important;
+  object-fit: contain !important;
+  filter:
+    brightness(1.10)
+    contrast(1.08)
+    saturate(1.08)
+    drop-shadow(0 28px 38px rgba(0, 0, 0, 0.68)) !important;
+}
+
+/* reduce the harsh black rectangle look around crest images */
+.hfo-dashboard-crest[src$=".png"] {
+  mix-blend-mode: normal !important;
+}
+
+/* keep rest of dashboard matching */
+.hfo-jarvis-card,
+.hfo-mobile-section {
+  border-color: rgba(214, 179, 106, 0.34) !important;
+  background:
+    radial-gradient(circle at 95% 10%, rgba(214, 179, 106, 0.09), transparent 30%),
+    linear-gradient(90deg, rgba(4, 11, 17, 0.96), rgba(10, 14, 14, 0.90)),
+    rgba(8, 15, 21, 0.94) !important;
+}
+
+/* desktop: keep title and images balanced */
+@media (min-width: 1100px) {
+  .hfo-identity-card-rebuilt {
+    grid-template-columns: 0.98fr 1.02fr !important;
+  }
+
+  .hfo-identity-left {
+    padding-left: 10px !important;
+  }
+}
+
+/* mobile/tablet polish */
+@media (max-width: 860px) {
+  .hfo-identity-card-rebuilt {
+    min-height: auto !important;
+    padding: 22px !important;
+    gap: 22px !important;
+  }
+
+  .hfo-identity-card-rebuilt h1 {
+    font-size: clamp(2.6rem, 11vw, 4.4rem) !important;
+    margin-bottom: 18px !important;
+  }
+
+  .hfo-certificate-frame {
+    min-height: 210px !important;
+    padding: 10px !important;
+  }
+
+  .hfo-ibhs-certificate {
+    max-height: 280px !important;
+  }
+
+  .hfo-identity-right {
+    min-height: auto !important;
+    padding: 14px !important;
+  }
+
+  .hfo-dashboard-crest {
+    max-height: 360px !important;
+  }
+}
