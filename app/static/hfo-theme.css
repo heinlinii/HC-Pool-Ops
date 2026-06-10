@@ -1530,3 +1530,140 @@ body.hfo-body {
     max-height: 360px !important;
   }
 }
+/* =========================================================
+   IDENTITY CARD POLISH PASS 2 — OBVIOUS VERSION
+   Bigger breathing room, cleaner framing, brighter background
+   ========================================================= */
+
+/* Move whole dashboard down so top buttons don't cover title */
+body.hfo-body .shell {
+  padding-top: 130px !important;
+  max-width: 1500px !important;
+}
+
+/* Brighter American flag background behind cards */
+body.hfo-body {
+  background:
+    linear-gradient(rgba(2, 6, 10, 0.34), rgba(2, 6, 10, 0.66)),
+    url("/static/login-american-flag-bg.jpg"),
+    linear-gradient(180deg, #071017 0%, #020609 100%) !important;
+  background-size: cover !important;
+  background-position: center center !important;
+  background-attachment: fixed !important;
+}
+
+/* Main identity card */
+.hfo-identity-card-rebuilt {
+  min-height: 650px !important;
+  padding: 46px 56px !important;
+  gap: 54px !important;
+  grid-template-columns: 0.96fr 1.04fr !important;
+  align-items: center !important;
+  border-radius: 34px !important;
+
+  background:
+    linear-gradient(90deg, rgba(3, 9, 14, 0.88), rgba(9, 12, 12, 0.76)),
+    rgba(8, 15, 21, 0.82) !important;
+
+  border: 1px solid rgba(214, 179, 106, 0.48) !important;
+  box-shadow:
+    0 34px 90px rgba(0, 0, 0, 0.58),
+    inset 0 0 0 1px rgba(255,255,255,0.04) !important;
+}
+
+/* Title fully visible and balanced */
+.hfo-identity-card-rebuilt h1 {
+  margin: 0 0 34px !important;
+  font-size: clamp(3.6rem, 4.7vw, 5.8rem) !important;
+  line-height: 0.92 !important;
+  letter-spacing: -0.06em !important;
+  white-space: nowrap !important;
+}
+
+/* Certificate: smaller, straighter display case feel */
+.hfo-certificate-frame {
+  max-width: 650px !important;
+  min-height: 350px !important;
+  padding: 18px !important;
+  border-radius: 28px !important;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.025)),
+    rgba(0,0,0,.30) !important;
+  border: 1px solid rgba(214,179,106,.44) !important;
+  box-shadow:
+    0 20px 52px rgba(0,0,0,.44),
+    inset 0 0 0 1px rgba(255,255,255,.055) !important;
+}
+
+.hfo-ibhs-certificate {
+  max-height: 390px !important;
+  border-radius: 18px !important;
+  filter: brightness(1.04) contrast(1.04) !important;
+}
+
+/* Crest panel: brighter and cleaner */
+.hfo-identity-right {
+  min-height: 500px !important;
+  padding: 26px !important;
+  border-radius: 30px !important;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(214,179,106,.20), transparent 46%),
+    rgba(0,0,0,.18) !important;
+  border: 1px solid rgba(214,179,106,.30) !important;
+  box-shadow:
+    0 22px 54px rgba(0,0,0,.40),
+    inset 0 0 0 1px rgba(255,255,255,.045) !important;
+}
+
+.hfo-dashboard-crest {
+  width: 100% !important;
+  max-height: 520px !important;
+  object-fit: contain !important;
+  filter:
+    brightness(1.18)
+    contrast(1.08)
+    saturate(1.08)
+    drop-shadow(0 28px 42px rgba(0,0,0,.70)) !important;
+}
+
+/* Make top nav a little smaller so it doesn't dominate */
+.top-action-bar {
+  transform: scale(0.88) !important;
+  transform-origin: top left !important;
+}
+
+/* Tablet/mobile */
+@media (max-width: 900px) {
+  body.hfo-body .shell {
+    padding-top: 105px !important;
+  }
+
+  .top-action-bar {
+    transform: none !important;
+  }
+
+  .hfo-identity-card-rebuilt {
+    grid-template-columns: 1fr !important;
+    min-height: auto !important;
+    padding: 24px !important;
+    gap: 24px !important;
+  }
+
+  .hfo-identity-card-rebuilt h1 {
+    white-space: normal !important;
+    font-size: clamp(2.7rem, 11vw, 4.4rem) !important;
+  }
+
+  .hfo-certificate-frame {
+    min-height: 230px !important;
+  }
+
+  .hfo-identity-right {
+    min-height: auto !important;
+    padding: 14px !important;
+  }
+
+  .hfo-dashboard-crest {
+    max-height: 360px !important;
+  }
+}
