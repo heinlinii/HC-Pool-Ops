@@ -1053,3 +1053,181 @@ body.hfo-body .shell {
     width: 100% !important;
   }
 }
+/* =========================================================
+   DASHBOARD CLEANUP PASS 2
+   Tightens spacing, fixes hero right panel, prevents title clipping
+   ========================================================= */
+
+/* Reduce huge empty space at top */
+body.hfo-body .shell {
+  padding-top: 86px !important;
+}
+
+/* Keep fixed buttons smaller and out of the way */
+.top-action-bar {
+  top: 14px !important;
+  left: 14px !important;
+  transform: scale(0.92) !important;
+  transform-origin: top left !important;
+}
+
+/* Give dashboard cards a little breathing room from fixed nav */
+.hfo-mobile-command {
+  padding-top: 10px !important;
+}
+
+/* Main Heinlin card: make right side wider and cleaner */
+.hfo-identity-card {
+  grid-template-columns: 1fr 0.95fr !important;
+  gap: 34px !important;
+  min-height: 390px !important;
+  align-items: center !important;
+}
+
+/* Left title stays strong but not oversized */
+.hfo-identity-card h1 {
+  font-size: clamp(4rem, 6.7vw, 6.1rem) !important;
+  line-height: 0.9 !important;
+}
+
+/* Right-side panel layout */
+.hfo-identity-mainline {
+  grid-template-columns: 110px 1fr !important;
+  gap: 22px !important;
+  align-items: center !important;
+  min-height: 170px !important;
+  padding: 22px 24px !important;
+  overflow: visible !important;
+}
+
+/* Crest no longer squeezes text */
+.hfo-family-crest,
+.hfo-v3-crest {
+  width: 98px !important;
+  height: 128px !important;
+  min-width: 98px !important;
+}
+
+.crest-h {
+  font-size: 3.9rem !important;
+}
+
+/* Taglines clean readable stack */
+.hfo-identity-taglines {
+  min-width: 0 !important;
+  overflow: visible !important;
+}
+
+.hfo-identity-taglines p,
+.hfo-identity-taglines strong {
+  display: block !important;
+  margin: 0 0 8px !important;
+  font-size: clamp(1rem, 1.35vw, 1.28rem) !important;
+  line-height: 1.08 !important;
+  white-space: normal !important;
+  max-width: 100% !important;
+}
+
+.hfo-identity-taglines strong {
+  font-size: clamp(1rem, 1.3vw, 1.22rem) !important;
+}
+
+/* Award plaque sits underneath the right panel cleanly */
+.hfo-award-plaque {
+  grid-column: 2 / 3 !important;
+  justify-self: stretch !important;
+  width: auto !important;
+  max-width: none !important;
+  margin-top: 14px !important;
+  padding: 16px 18px !important;
+}
+
+.hfo-award-seal {
+  width: 50px !important;
+  height: 50px !important;
+}
+
+/* Jarvis card should not be hidden behind fixed buttons when scrolled */
+.hfo-jarvis-card,
+.hfo-mobile-section {
+  scroll-margin-top: 120px !important;
+}
+
+/* Big section titles need top padding so they do not clip */
+.hfo-jarvis-card h2,
+.hfo-mobile-section h2 {
+  padding-top: 8px !important;
+  margin-bottom: 28px !important;
+  font-size: clamp(3.2rem, 5.2vw, 5rem) !important;
+  line-height: 0.95 !important;
+}
+
+/* Jarvis card first title was getting chopped at top */
+.hfo-jarvis-card {
+  padding-top: 36px !important;
+}
+
+/* Live Operations and Command Center cards */
+.hfo-mobile-section {
+  padding-top: 36px !important;
+}
+
+/* Button cards a touch cleaner */
+.hfo-mobile-buttons a {
+  min-height: 72px !important;
+  border-radius: 18px !important;
+}
+
+/* Desktop layout max width cleanup */
+@media (min-width: 1000px) {
+  body.hfo-body .shell {
+    max-width: 1340px !important;
+  }
+}
+
+/* Mobile */
+@media (max-width: 760px) {
+  body.hfo-body .shell {
+    padding-top: 88px !important;
+  }
+
+  .top-action-bar {
+    transform: none !important;
+  }
+
+  .hfo-identity-card {
+    grid-template-columns: 1fr !important;
+    gap: 18px !important;
+    min-height: auto !important;
+  }
+
+  .hfo-identity-card h1 {
+    font-size: clamp(3rem, 13vw, 4.5rem) !important;
+  }
+
+  .hfo-identity-mainline {
+    grid-template-columns: 84px 1fr !important;
+    gap: 14px !important;
+    min-height: auto !important;
+  }
+
+  .hfo-family-crest,
+  .hfo-v3-crest {
+    width: 78px !important;
+    height: 104px !important;
+    min-width: 78px !important;
+  }
+
+  .crest-h {
+    font-size: 3rem !important;
+  }
+
+  .hfo-award-plaque {
+    grid-column: 1 / -1 !important;
+  }
+
+  .hfo-jarvis-card h2,
+  .hfo-mobile-section h2 {
+    font-size: clamp(2.7rem, 12vw, 4rem) !important;
+  }
+}
