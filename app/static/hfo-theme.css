@@ -1949,3 +1949,23 @@ body.hfo-body .shell {
     font-size: clamp(2.7rem, 12vw, 4.2rem) !important;
   }
 }
+/* =========================================================
+   DARK BRASS CREST TREATMENT
+   Keeps crest antique, heavy, and less shiny
+   ========================================================= */
+
+.hfo-dashboard-crest {
+  filter:
+    brightness(0.92)
+    contrast(1.16)
+    saturate(0.94)
+    sepia(0.08)
+    drop-shadow(0 24px 38px rgba(0, 0, 0, 0.78)) !important;
+}
+
+.hfo-identity-right {
+  background:
+    radial-gradient(circle at 50% 50%, rgba(132, 95, 38, 0.16), transparent 44%),
+    rgba(0, 0, 0, 0.28) !important;
+  border-color: rgba(154, 117, 55, 0.34) !important;
+}
