@@ -1231,3 +1231,141 @@ body.hfo-body .shell {
     font-size: clamp(2.7rem, 12vw, 4rem) !important;
   }
 }
+/* =========================================================
+   REBUILT TOP IDENTITY CARD
+   Certificate left / crest right / flag background
+   ========================================================= */
+
+/* brighter American flag background behind all dashboard cards */
+body.hfo-body {
+  background:
+    linear-gradient(rgba(3, 7, 10, 0.56), rgba(3, 7, 10, 0.78)),
+    url("/static/login-american-flag-bg.jpg"),
+    linear-gradient(180deg, #071017 0%, #020609 100%) !important;
+  background-size: cover !important;
+  background-position: center center !important;
+  background-attachment: fixed !important;
+}
+
+/* rebuild top card from scratch */
+.hfo-identity-card-rebuilt {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 34px !important;
+  align-items: center !important;
+
+  min-height: 560px !important;
+  padding: clamp(28px, 4vw, 54px) !important;
+
+  background:
+    linear-gradient(90deg, rgba(4, 11, 17, 0.94), rgba(10, 13, 13, 0.86)),
+    rgba(8, 15, 21, 0.92) !important;
+
+  border: 1px solid rgba(214, 179, 106, 0.34) !important;
+  border-radius: 32px !important;
+  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.48) !important;
+  overflow: hidden !important;
+}
+
+/* kill old top-card leftovers */
+.hfo-identity-card-rebuilt .hfo-identity-copy,
+.hfo-identity-card-rebuilt .hfo-identity-mainline,
+.hfo-identity-card-rebuilt .hfo-family-crest,
+.hfo-identity-card-rebuilt .hfo-v3-crest,
+.hfo-identity-card-rebuilt .hfo-identity-taglines,
+.hfo-identity-card-rebuilt .hfo-award-plaque {
+  display: none !important;
+}
+
+.hfo-identity-left,
+.hfo-identity-right {
+  min-width: 0 !important;
+  width: 100% !important;
+}
+
+/* top-left title */
+.hfo-identity-card-rebuilt h1 {
+  margin: 0 0 28px !important;
+  color: #fff !important;
+  text-transform: uppercase !important;
+  font-size: clamp(3.2rem, 5.2vw, 6.2rem) !important;
+  line-height: 0.88 !important;
+  letter-spacing: -0.065em !important;
+  max-width: 100% !important;
+}
+
+/* certificate */
+.hfo-certificate-frame {
+  width: 100% !important;
+  max-width: 720px !important;
+  min-height: 250px !important;
+
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  padding: 18px !important;
+  border-radius: 24px !important;
+  background: rgba(255, 255, 255, 0.055) !important;
+  border: 1px solid rgba(214, 179, 106, 0.28) !important;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.045) !important;
+}
+
+.hfo-ibhs-certificate {
+  display: block !important;
+  width: 100% !important;
+  max-height: 360px !important;
+  object-fit: contain !important;
+  border-radius: 14px !important;
+}
+
+/* crest right half */
+.hfo-identity-right {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.hfo-dashboard-crest {
+  display: block !important;
+  width: min(100%, 760px) !important;
+  max-height: 470px !important;
+  object-fit: contain !important;
+  filter: drop-shadow(0 24px 36px rgba(0, 0, 0, 0.55)) !important;
+}
+
+/* keep next cards below clean */
+.hfo-jarvis-card,
+.hfo-mobile-section {
+  background:
+    linear-gradient(90deg, rgba(4, 11, 17, 0.94), rgba(10, 13, 13, 0.86)),
+    rgba(8, 15, 21, 0.92) !important;
+}
+
+/* mobile */
+@media (max-width: 860px) {
+  .hfo-identity-card-rebuilt {
+    grid-template-columns: 1fr !important;
+    gap: 24px !important;
+    min-height: auto !important;
+    padding: 22px !important;
+  }
+
+  .hfo-identity-card-rebuilt h1 {
+    font-size: clamp(2.65rem, 12vw, 4.5rem) !important;
+    margin-bottom: 20px !important;
+  }
+
+  .hfo-certificate-frame {
+    min-height: 180px !important;
+    padding: 12px !important;
+  }
+
+  .hfo-ibhs-certificate {
+    max-height: 280px !important;
+  }
+
+  .hfo-dashboard-crest {
+    max-height: 360px !important;
+  }
+}
