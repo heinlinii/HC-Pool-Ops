@@ -913,3 +913,143 @@ body.hfo-body .shell {
     grid-template-columns: 1fr !important;
   }
 }
+/* =========================================================
+   CLEAN UP HEINLIN HERO RIGHT SIDE
+   Fixes crest / taglines / award overlap
+   ========================================================= */
+
+.hfo-identity-card {
+  grid-template-columns: 1fr 0.82fr !important;
+  min-height: 360px !important;
+  align-items: center !important;
+}
+
+.hfo-identity-mainline {
+  display: grid !important;
+  grid-template-columns: 120px 1fr !important;
+  gap: 22px !important;
+  align-items: center !important;
+
+  padding: 22px !important;
+  border-radius: 24px !important;
+  background: rgba(0, 0, 0, 0.20) !important;
+  border: 1px solid rgba(214, 179, 106, 0.20) !important;
+}
+
+.hfo-family-crest {
+  width: 110px !important;
+  height: 150px !important;
+  border-radius: 42px !important;
+  overflow: hidden !important;
+}
+
+.hfo-v3-crest {
+  width: 100% !important;
+  height: 100% !important;
+  border-radius: 42px !important;
+  background:
+    linear-gradient(180deg, rgba(214,179,106,.18), rgba(0,0,0,.30)) !important;
+}
+
+.crest-h {
+  font-size: 4.4rem !important;
+}
+
+.hfo-identity-taglines {
+  display: grid !important;
+  gap: 8px !important;
+  align-content: center !important;
+}
+
+.hfo-identity-taglines p,
+.hfo-identity-taglines strong {
+  margin: 0 !important;
+  line-height: 1.05 !important;
+  white-space: normal !important;
+  word-break: normal !important;
+  overflow-wrap: normal !important;
+}
+
+.hfo-identity-taglines p {
+  color: rgba(255,255,255,.82) !important;
+  font-size: clamp(1.05rem, 1.8vw, 1.45rem) !important;
+  font-weight: 900 !important;
+}
+
+.hfo-identity-taglines p:first-child {
+  color: #d6b36a !important;
+  font-size: .82rem !important;
+  letter-spacing: .15em !important;
+  text-transform: uppercase !important;
+}
+
+.hfo-identity-taglines strong {
+  color: #fff !important;
+  font-size: clamp(1.1rem, 1.9vw, 1.55rem) !important;
+  font-weight: 950 !important;
+}
+
+.hfo-award-plaque {
+  grid-column: 2 / 3 !important;
+  justify-self: stretch !important;
+  width: auto !important;
+  margin-top: 16px !important;
+  padding: 16px 18px !important;
+  transform: none !important;
+}
+
+.hfo-award-plaque div {
+  display: grid !important;
+  gap: 2px !important;
+}
+
+.hfo-award-plaque span,
+.hfo-award-plaque strong,
+.hfo-award-plaque em {
+  line-height: 1.08 !important;
+}
+
+.hfo-award-plaque span {
+  font-size: .95rem !important;
+}
+
+.hfo-award-plaque strong {
+  font-size: 1rem !important;
+}
+
+.hfo-award-plaque em {
+  font-size: .95rem !important;
+}
+
+/* Keep hero text from getting hidden under top buttons */
+.hfo-mobile-command {
+  padding-top: 18px !important;
+}
+
+/* Mobile cleanup */
+@media (max-width: 760px) {
+  .hfo-identity-card {
+    grid-template-columns: 1fr !important;
+    min-height: auto !important;
+  }
+
+  .hfo-identity-mainline {
+    grid-template-columns: 92px 1fr !important;
+    gap: 14px !important;
+    padding: 16px !important;
+  }
+
+  .hfo-family-crest {
+    width: 86px !important;
+    height: 118px !important;
+  }
+
+  .crest-h {
+    font-size: 3.4rem !important;
+  }
+
+  .hfo-award-plaque {
+    grid-column: 1 / -1 !important;
+    width: 100% !important;
+  }
+}
