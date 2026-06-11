@@ -377,7 +377,7 @@ def admin_redirect(user):
     if is_client(user):
         return RedirectResponse("jarvis", status_code=303)
     if is_employee(user):
-        return RedirectResponse("/jarvis", status_code=303)
+        return RedirectResponse("/organize-my-day", status_code=303)
     return login_redirect()
 
 

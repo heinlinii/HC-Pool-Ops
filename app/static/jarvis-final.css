@@ -1091,4 +1091,20 @@
   .hfo-command-subtitle {
     font-size: 17px !important;
   }
+}/* =========================================================
+   LIVE OPERATIONS FOUR BUTTON ROW
+   ========================================================= */
+
+.hfo-mobile-buttons.four {
+  grid-template-columns: repeat(4, 1fr) !important;
+}
+
+.hfo-talk-link {
+  display: none !important;
+}
+
+@media (max-width: 900px) {
+  .hfo-mobile-buttons.four {
+    grid-template-columns: 1fr !important;
+  }
 }
