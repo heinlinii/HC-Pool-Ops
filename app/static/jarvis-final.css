@@ -1,0 +1,1094 @@
+/* =========================================================
+   HEINLIN FIELD OPS - JARVIS DASHBOARD FINAL
+   ========================================================= */
+
+.hfo-body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top left, rgba(214, 165, 78, 0.08), transparent 32%),
+    linear-gradient(rgba(0, 0, 0, 0.72), rgba(0, 0, 0, 0.9)),
+    url("/static/login-american-flag.png");
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  color: #f5f0e6;
+}
+
+.shell {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}
+
+.hfo-top-actions {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  gap: 10px;
+  padding: 12px 18px;
+  background: rgba(0, 0, 0, 0.62);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(207, 160, 75, 0.22);
+}
+
+.hfo-top-actions .btn,
+.hfo-top-actions button {
+  border: 1px solid rgba(207, 160, 75, 0.38);
+  border-radius: 14px;
+  padding: 12px 18px;
+  font-weight: 900;
+  text-decoration: none;
+  color: #fff;
+  background: rgba(18, 27, 34, 0.94);
+  cursor: pointer;
+}
+
+.hfo-top-actions .primary {
+  background: linear-gradient(135deg, #1f7fff, #2c5de8);
+}
+
+.hfo-top-actions .danger {
+  background: linear-gradient(135deg, #b51616, #7f1010);
+}
+
+.hfo-mobile-command {
+  width: min(1500px, calc(100% - 42px));
+  margin: 28px auto 80px;
+}
+
+/* =========================================================
+   HERITAGE STRIP
+   ========================================================= */
+
+.hfo-identity-card {
+  display: grid;
+  grid-template-columns: 1fr 1.05fr;
+  gap: 26px;
+  align-items: stretch;
+  padding: 24px;
+  border: 1px solid rgba(207, 160, 75, 0.32);
+  border-radius: 30px;
+  background:
+    linear-gradient(135deg, rgba(8, 14, 18, 0.96), rgba(21, 24, 24, 0.9));
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
+}
+
+.hfo-identity-left h1 {
+  margin: 0 0 18px;
+  font-size: clamp(44px, 6vw, 92px);
+  line-height: 0.92;
+  letter-spacing: -3px;
+  color: #fff;
+  text-transform: uppercase;
+}
+
+.hfo-certificate-frame,
+.hfo-identity-right {
+  border: 1px solid rgba(207, 160, 75, 0.28);
+  border-radius: 24px;
+  padding: 14px;
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.hfo-ibhs-certificate {
+  width: 100%;
+  height: 360px;
+  object-fit: cover;
+  object-position: center;
+  border-radius: 14px;
+  display: block;
+}
+
+.hfo-dashboard-crest {
+  width: 100%;
+  height: 100%;
+  max-height: 470px;
+  object-fit: contain;
+  display: block;
+  filter: contrast(1.08) saturate(1.08);
+}
+
+/* =========================================================
+   JARVIS CARD
+   ========================================================= */
+
+.hfo-jarvis-card,
+.hfo-mobile-section,
+.hfo-footer-v3 {
+  margin-top: 28px;
+  padding: 28px;
+  border: 1px solid rgba(207, 160, 75, 0.28);
+  border-radius: 28px;
+  background:
+    linear-gradient(135deg, rgba(8, 14, 18, 0.96), rgba(21, 24, 24, 0.92));
+  box-shadow: 0 20px 70px rgba(0, 0, 0, 0.38);
+}
+
+.hfo-jarvis-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.hfo-jarvis-title-row h2,
+.hfo-mobile-section h2 {
+  margin: 0;
+  font-size: clamp(36px, 4.6vw, 72px);
+  line-height: 0.95;
+  letter-spacing: -2px;
+  color: #fff;
+  text-transform: uppercase;
+}
+
+.hfo-online-dot {
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: #1fe377;
+  box-shadow: 0 0 30px rgba(31, 227, 119, 0.9);
+}
+
+.hfo-online-word {
+  margin: 10px 0 12px;
+  color: #23ef7c;
+  font-weight: 900;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+}
+
+.hfo-jarvis-card h3 {
+  margin: 0 0 22px;
+  color: #d7aa52;
+  font-size: clamp(22px, 2.2vw, 34px);
+  text-transform: uppercase;
+}
+
+.hfo-mobile-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+  margin: 22px 0 28px;
+}
+
+.hfo-mobile-stats > div {
+  min-height: 105px;
+  padding: 20px 24px;
+  border-radius: 22px;
+  border: 1px solid rgba(207, 160, 75, 0.18);
+  background: rgba(13, 21, 27, 0.92);
+}
+
+.hfo-mobile-stats strong {
+  display: block;
+  font-size: 48px;
+  color: #d7aa52;
+  line-height: 1;
+}
+
+.hfo-mobile-stats span {
+  display: block;
+  margin-top: 6px;
+  color: #f5f0e6;
+  font-weight: 800;
+  font-size: 18px;
+}
+
+.hfo-handle-zone h4 {
+  margin: 0 0 12px;
+  font-size: 24px;
+  color: #fff;
+}
+
+.hfo-mobile-search {
+  display: grid;
+  grid-template-columns: 1fr 180px;
+  gap: 14px;
+}
+
+.hfo-mobile-search input {
+  width: 100%;
+  min-height: 64px;
+  padding: 0 22px;
+  border-radius: 20px;
+  border: 1px solid rgba(207, 160, 75, 0.24);
+  background: rgba(5, 10, 14, 0.9);
+  color: #fff;
+  font-size: 18px;
+  outline: none;
+}
+
+.hfo-mobile-search button,
+.hfo-talk-link {
+  min-height: 64px;
+  border-radius: 20px;
+  border: 1px solid rgba(207, 160, 75, 0.28);
+  background: linear-gradient(135deg, #1f7fff, #2d63ed);
+  color: #fff;
+  font-weight: 900;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.hfo-talk-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 14px;
+  padding: 0 22px;
+  text-decoration: none;
+  color: #d7aa52;
+  background: transparent;
+}
+
+/* =========================================================
+   BUTTON SECTIONS
+   ========================================================= */
+
+.hfo-mobile-buttons {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.hfo-mobile-buttons.three {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.hfo-mobile-buttons a {
+  min-height: 118px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 22px;
+  border: 1px solid rgba(207, 160, 75, 0.22);
+  background:
+    linear-gradient(145deg, rgba(22, 31, 38, 0.96), rgba(8, 13, 17, 0.95));
+  color: #d7aa52;
+  text-decoration: none;
+  text-transform: uppercase;
+  font-weight: 950;
+  letter-spacing: 0.8px;
+  font-size: 18px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 18px 35px rgba(0, 0, 0, 0.25);
+  transition: transform 0.12s ease, border-color 0.12s ease, background 0.12s ease;
+}
+
+.hfo-mobile-buttons a:hover {
+  transform: translateY(-2px);
+  border-color: rgba(207, 160, 75, 0.58);
+  background:
+    linear-gradient(145deg, rgba(45, 60, 68, 0.98), rgba(11, 18, 24, 0.98));
+}
+
+.hfo-footer-v3 {
+  text-align: center;
+  color: #f5f0e6;
+  font-size: 22px;
+}
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 900px) {
+  .hfo-mobile-command {
+    width: calc(100% - 22px);
+    margin-top: 18px;
+  }
+
+  .hfo-identity-card {
+    grid-template-columns: 1fr;
+  }
+
+  .hfo-ibhs-certificate {
+    height: auto;
+  }
+
+  .hfo-mobile-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .hfo-mobile-search {
+    grid-template-columns: 1fr;
+  }
+
+  .hfo-mobile-buttons,
+  .hfo-mobile-buttons.three {
+    grid-template-columns: 1fr;
+  }
+
+  .hfo-top-actions {
+    gap: 8px;
+    padding: 10px;
+  }
+
+  .hfo-top-actions .btn,
+  .hfo-top-actions button {
+    padding: 10px 12px;
+    font-size: 14px;
+  }
+}
+/* =========================================================
+   MIKE HEINLIN COMMAND CENTER OVERRIDE
+   Put this at the VERY BOTTOM of jarvis-final.css
+   ========================================================= */
+
+.hfo-mobile-command {
+  width: min(1500px, calc(100% - 32px)) !important;
+  margin: 18px auto 70px !important;
+}
+
+.hfo-identity-card {
+  display: grid !important;
+  grid-template-columns: 0.75fr 1fr !important;
+  gap: 20px !important;
+  padding: 18px !important;
+  margin-top: 12px !important;
+}
+
+.hfo-identity-left h1 {
+  font-size: clamp(36px, 4.8vw, 70px) !important;
+  line-height: 0.9 !important;
+  letter-spacing: -3px !important;
+  margin: 0 0 12px !important;
+}
+
+.hfo-certificate-frame {
+  padding: 10px !important;
+}
+
+.hfo-ibhs-certificate {
+  height: 250px !important;
+  object-fit: cover !important;
+  object-position: center !important;
+}
+
+.hfo-identity-right {
+  padding: 10px !important;
+}
+
+.hfo-dashboard-crest {
+  max-height: 330px !important;
+  object-fit: contain !important;
+}
+
+.hfo-jarvis-card,
+.hfo-mobile-section,
+.hfo-footer-v3 {
+  margin-top: 18px !important;
+  padding: 22px !important;
+  border-radius: 24px !important;
+}
+
+.hfo-jarvis-title-row h2,
+.hfo-mobile-section h2 {
+  font-size: clamp(34px, 4vw, 58px) !important;
+  line-height: 0.95 !important;
+}
+
+.hfo-mobile-stats {
+  grid-template-columns: repeat(3, 1fr) !important;
+  gap: 14px !important;
+  margin: 18px 0 22px !important;
+}
+
+.hfo-mobile-stats > div {
+  min-height: 86px !important;
+  padding: 16px 20px !important;
+}
+
+.hfo-mobile-stats strong {
+  font-size: 40px !important;
+}
+
+.hfo-mobile-search {
+  grid-template-columns: 1fr 160px !important;
+}
+
+.hfo-mobile-search input,
+.hfo-mobile-search button {
+  min-height: 58px !important;
+}
+
+.hfo-mobile-buttons {
+  grid-template-columns: repeat(4, 1fr) !important;
+  gap: 14px !important;
+  margin-top: 18px !important;
+}
+
+.hfo-mobile-buttons.three {
+  grid-template-columns: repeat(3, 1fr) !important;
+}
+
+.hfo-mobile-buttons a {
+  min-height: 86px !important;
+  border-radius: 18px !important;
+  font-size: 17px !important;
+  background:
+    linear-gradient(145deg, rgba(28, 34, 38, 0.98), rgba(6, 11, 15, 0.98)) !important;
+}
+
+.hfo-footer-v3 {
+  font-size: 18px !important;
+  padding: 22px !important;
+}
+
+@media (max-width: 900px) {
+  .hfo-identity-card {
+    grid-template-columns: 1fr !important;
+  }
+
+  .hfo-mobile-buttons,
+  .hfo-mobile-buttons.three {
+    grid-template-columns: 1fr !important;
+  }
+
+  .hfo-mobile-stats {
+    grid-template-columns: 1fr !important;
+  }
+
+  .hfo-mobile-search {
+    grid-template-columns: 1fr !important;
+  }
+
+  .hfo-ibhs-certificate {
+    height: auto !important;
+  }
+}
+/* =========================================================
+   HARD FIX - TIGHTEN JARVIS DASHBOARD TOP LAYOUT
+   ========================================================= */
+
+.hfo-top-actions {
+  position: sticky !important;
+  top: 0 !important;
+  padding: 10px 16px !important;
+  min-height: auto !important;
+}
+
+.hfo-top-actions .btn,
+.hfo-top-actions button {
+  min-height: 54px !important;
+  padding: 10px 18px !important;
+  font-size: 18px !important;
+  border-radius: 16px !important;
+}
+
+.hfo-mobile-command {
+  width: min(1500px, calc(100% - 40px)) !important;
+  margin: 24px auto 60px !important;
+  padding: 0 !important;
+}
+
+.hfo-identity-card,
+.hfo-identity-card-rebuilt {
+  display: grid !important;
+  grid-template-columns: 0.92fr 1.08fr !important;
+  align-items: center !important;
+  gap: 24px !important;
+  margin: 0 !important;
+  padding: 24px !important;
+  min-height: auto !important;
+  overflow: hidden !important;
+}
+
+.hfo-identity-left {
+  min-width: 0 !important;
+  overflow: hidden !important;
+}
+
+.hfo-identity-left h1 {
+  font-size: clamp(42px, 5vw, 76px) !important;
+  line-height: 0.9 !important;
+  letter-spacing: -4px !important;
+  margin: 0 0 18px 0 !important;
+  max-width: 100% !important;
+  white-space: normal !important;
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+.hfo-certificate-frame {
+  padding: 10px !important;
+  border-radius: 22px !important;
+  max-height: 310px !important;
+  overflow: hidden !important;
+}
+
+.hfo-ibhs-certificate {
+  width: 100% !important;
+  height: 285px !important;
+  object-fit: cover !important;
+  object-position: center center !important;
+  border-radius: 14px !important;
+}
+
+.hfo-identity-right {
+  min-width: 0 !important;
+  padding: 10px !important;
+  border-radius: 22px !important;
+  max-height: 385px !important;
+  overflow: hidden !important;
+}
+
+.hfo-dashboard-crest {
+  width: 100% !important;
+  height: 355px !important;
+  max-height: 355px !important;
+  object-fit: contain !important;
+  object-position: center center !important;
+  display: block !important;
+}
+
+.hfo-jarvis-card {
+  margin-top: 22px !important;
+}
+
+.hfo-mobile-section {
+  margin-top: 22px !important;
+}
+
+@media (max-width: 1000px) {
+  .hfo-identity-card,
+  .hfo-identity-card-rebuilt {
+    grid-template-columns: 1fr !important;
+  }
+
+  .hfo-identity-left h1 {
+    font-size: clamp(38px, 10vw, 64px) !important;
+  }
+
+  .hfo-ibhs-certificate {
+    height: auto !important;
+  }
+
+  .hfo-dashboard-crest {
+    height: auto !important;
+    max-height: none !important;
+  }
+}
+/* =========================================================
+   COMMAND FIRST LAYOUT - MOVE HERITAGE DOWN
+   ========================================================= */
+
+.hfo-mobile-command {
+  margin-top: 18px !important;
+}
+
+.hfo-jarvis-card {
+  margin-top: 18px !important;
+  border-radius: 28px !important;
+  background:
+    linear-gradient(135deg, rgba(5, 10, 14, 0.98), rgba(18, 24, 25, 0.95)) !important;
+}
+
+.hfo-jarvis-title-row h2 {
+  font-size: clamp(46px, 6vw, 88px) !important;
+}
+
+.hfo-identity-card,
+.hfo-identity-card-rebuilt {
+  margin-top: 22px !important;
+  grid-template-columns: 0.55fr 1fr !important;
+  padding: 18px !important;
+}
+
+.hfo-identity-left h1 {
+  font-size: clamp(28px, 3.4vw, 48px) !important;
+  letter-spacing: -1px !important;
+  line-height: 1 !important;
+  color: #d7aa52 !important;
+}
+
+.hfo-ibhs-certificate {
+  height: 210px !important;
+  object-fit: cover !important;
+}
+
+.hfo-dashboard-crest {
+  height: 260px !important;
+  max-height: 260px !important;
+}
+
+.hfo-mobile-section h2 {
+  font-size: clamp(38px, 4.5vw, 68px) !important;
+}
+
+.hfo-mobile-buttons a {
+  min-height: 96px !important;
+  font-size: 18px !important;
+}
+/* =========================================================
+   HEINLIN COMMAND CENTER - NO MUSEUM LAYOUT
+   ========================================================= */
+
+.hfo-top-actions {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 999 !important;
+  display: flex !important;
+  gap: 10px !important;
+  padding: 10px 14px !important;
+  min-height: auto !important;
+  background: rgba(0, 0, 0, 0.72) !important;
+  backdrop-filter: blur(12px) !important;
+}
+
+.hfo-top-actions .btn,
+.hfo-top-actions button {
+  min-height: 46px !important;
+  padding: 9px 16px !important;
+  font-size: 16px !important;
+  border-radius: 14px !important;
+}
+
+.hfo-mobile-command.hfo-command-first {
+  width: min(1540px, calc(100% - 36px)) !important;
+  margin: 18px auto 60px !important;
+}
+
+.hfo-main-command-card {
+  margin-top: 18px !important;
+  padding: 24px !important;
+}
+
+.hfo-command-hero {
+  display: grid !important;
+  grid-template-columns: 1fr 360px !important;
+  gap: 24px !important;
+  align-items: center !important;
+  margin-bottom: 18px !important;
+}
+
+.hfo-kicker {
+  margin: 0 0 8px !important;
+  color: #d7aa52 !important;
+  font-weight: 950 !important;
+  letter-spacing: 3px !important;
+  text-transform: uppercase !important;
+}
+
+.hfo-command-hero h1 {
+  margin: 0 !important;
+  font-size: clamp(46px, 5.8vw, 92px) !important;
+  line-height: 0.9 !important;
+  letter-spacing: -4px !important;
+  color: #fff !important;
+  text-transform: uppercase !important;
+}
+
+.hfo-command-subtitle {
+  margin: 14px 0 0 !important;
+  max-width: 780px !important;
+  color: rgba(245, 240, 230, 0.84) !important;
+  font-size: 20px !important;
+  font-weight: 700 !important;
+}
+
+.hfo-mini-crest-wrap {
+  border: 1px solid rgba(207, 160, 75, 0.25) !important;
+  border-radius: 22px !important;
+  padding: 10px !important;
+  background: rgba(0, 0, 0, 0.35) !important;
+}
+
+.hfo-mini-crest {
+  width: 100% !important;
+  height: 210px !important;
+  object-fit: contain !important;
+  display: block !important;
+}
+
+.hfo-jarvis-status-row {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 18px !important;
+  margin: 18px 0 !important;
+  padding: 16px 18px !important;
+  border-radius: 18px !important;
+  border: 1px solid rgba(207, 160, 75, 0.18) !important;
+  background: rgba(7, 12, 16, 0.72) !important;
+}
+
+.hfo-jarvis-status-row strong {
+  display: block !important;
+  color: #22ee7a !important;
+  text-transform: uppercase !important;
+  letter-spacing: 3px !important;
+  font-size: 18px !important;
+}
+
+.hfo-jarvis-status-row span {
+  display: block !important;
+  color: #d7aa52 !important;
+  font-size: 24px !important;
+  font-weight: 900 !important;
+  text-transform: uppercase !important;
+}
+
+.hfo-mobile-stats {
+  grid-template-columns: repeat(3, 1fr) !important;
+  gap: 14px !important;
+  margin: 18px 0 22px !important;
+}
+
+.hfo-mobile-stats > div {
+  min-height: 82px !important;
+  padding: 16px 20px !important;
+}
+
+.hfo-mobile-stats strong {
+  font-size: 38px !important;
+}
+
+.hfo-mobile-stats span {
+  font-size: 17px !important;
+}
+
+.hfo-handle-zone h4 {
+  font-size: 22px !important;
+}
+
+.hfo-mobile-search {
+  grid-template-columns: 1fr 160px !important;
+  gap: 14px !important;
+}
+
+.hfo-mobile-search input,
+.hfo-mobile-search button {
+  min-height: 56px !important;
+}
+
+.hfo-talk-link {
+  min-height: 54px !important;
+  width: fit-content !important;
+  padding: 0 26px !important;
+  margin-top: 14px !important;
+}
+
+.hfo-mobile-section {
+  margin-top: 18px !important;
+  padding: 24px !important;
+}
+
+.hfo-mobile-section h2 {
+  font-size: clamp(38px, 4.4vw, 66px) !important;
+}
+
+.hfo-mobile-buttons {
+  grid-template-columns: repeat(4, 1fr) !important;
+  gap: 14px !important;
+  margin-top: 18px !important;
+}
+
+.hfo-mobile-buttons.three {
+  grid-template-columns: repeat(3, 1fr) !important;
+}
+
+.hfo-mobile-buttons a {
+  min-height: 92px !important;
+  font-size: 18px !important;
+  border-radius: 18px !important;
+}
+
+.hfo-legacy-strip {
+  margin-top: 18px !important;
+  padding: 18px !important;
+  border: 1px solid rgba(207, 160, 75, 0.24) !important;
+  border-radius: 24px !important;
+  background:
+    linear-gradient(135deg, rgba(8, 14, 18, 0.96), rgba(21, 24, 24, 0.9)) !important;
+  display: grid !important;
+  grid-template-columns: 1fr 420px !important;
+  gap: 18px !important;
+  align-items: center !important;
+}
+
+.hfo-legacy-copy strong {
+  display: block !important;
+  color: #d7aa52 !important;
+  font-size: 28px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 1px !important;
+}
+
+.hfo-legacy-copy span {
+  display: block !important;
+  margin-top: 6px !important;
+  color: rgba(245, 240, 230, 0.86) !important;
+  font-size: 18px !important;
+  font-weight: 700 !important;
+}
+
+.hfo-legacy-images {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 10px !important;
+}
+
+.hfo-legacy-images img {
+  width: 100% !important;
+  height: 115px !important;
+  object-fit: cover !important;
+  border-radius: 14px !important;
+  border: 1px solid rgba(207, 160, 75, 0.22) !important;
+  background: rgba(0, 0, 0, 0.35) !important;
+}
+
+.hfo-identity-card,
+.hfo-identity-card-rebuilt {
+  display: none !important;
+}
+
+.hfo-jarvis-title-row,
+.hfo-online-word,
+.hfo-jarvis-card > h3 {
+  display: none !important;
+}
+
+.hfo-footer-v3 {
+  display: none !important;
+}
+
+@media (max-width: 900px) {
+  .hfo-command-hero,
+  .hfo-legacy-strip {
+    grid-template-columns: 1fr !important;
+  }
+
+  .hfo-mini-crest {
+    height: 180px !important;
+  }
+
+  .hfo-mobile-stats,
+  .hfo-mobile-buttons,
+  .hfo-mobile-buttons.three {
+    grid-template-columns: 1fr !important;
+  }
+
+  .hfo-mobile-search {
+    grid-template-columns: 1fr !important;
+  }
+
+  .hfo-command-hero h1 {
+    font-size: clamp(38px, 11vw, 64px) !important;
+  }
+}
+/* Remove top command hero spacing */
+.hfo-command-hero,
+.hfo-kicker,
+.hfo-command-subtitle,
+.hfo-mini-crest-wrap {
+  display: none !important;
+}
+
+.hfo-main-command-card {
+  margin-top: 18px !important;
+  padding-top: 22px !important;
+}
+/* =========================================================
+   SMALL HEINLIN BRAND STRIP
+   ========================================================= */
+
+.hfo-brand-strip {
+  display: flex !important;
+  align-items: center !important;
+  gap: 14px !important;
+  margin-bottom: 16px !important;
+}
+
+.hfo-tiny-crest {
+  width: 62px !important;
+  height: 46px !important;
+  object-fit: contain !important;
+  border-radius: 8px !important;
+  border: 1px solid rgba(207, 160, 75, 0.28) !important;
+  background: rgba(0, 0, 0, 0.45) !important;
+  padding: 4px !important;
+}
+
+.hfo-brand-strip .hfo-kicker {
+  margin: 0 !important;
+  color: #d7aa52 !important;
+  font-weight: 950 !important;
+  letter-spacing: 2.5px !important;
+  text-transform: uppercase !important;
+  font-size: 15px !important;
+}
+
+.hfo-brand-strip .hfo-command-subtitle {
+  margin: 3px 0 0 !important;
+  color: rgba(245, 240, 230, 0.86) !important;
+  font-size: 18px !important;
+  font-weight: 800 !important;
+}
+/* =========================================================
+   FINAL FIX - JARVIS TOP CARD BRAND / STATUS / HANDLE BAR
+   ========================================================= */
+
+.hfo-command-hero,
+.hfo-jarvis-title-row,
+.hfo-online-word,
+.hfo-jarvis-card > h3,
+.hfo-mobile-stats {
+  display: none !important;
+}
+
+.hfo-main-command-card {
+  margin-top: 18px !important;
+  padding: 24px !important;
+  min-height: auto !important;
+}
+
+.hfo-command-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 24px !important;
+  margin: 0 0 22px 0 !important;
+  padding: 0 !important;
+}
+
+.hfo-command-brand {
+  display: flex !important;
+  align-items: center !important;
+  gap: 16px !important;
+}
+
+.hfo-tiny-crest {
+  width: 94px !important;
+  height: 64px !important;
+  object-fit: contain !important;
+  flex: 0 0 auto !important;
+  border-radius: 12px !important;
+  border: 1px solid rgba(207, 160, 75, 0.35) !important;
+  background: rgba(0, 0, 0, 0.45) !important;
+  padding: 6px !important;
+}
+
+.hfo-command-brand .hfo-kicker,
+.hfo-kicker {
+  display: block !important;
+  margin: 0 !important;
+  color: #d7aa52 !important;
+  font-size: 18px !important;
+  font-weight: 950 !important;
+  letter-spacing: 3px !important;
+  text-transform: uppercase !important;
+  line-height: 1.1 !important;
+}
+
+.hfo-command-brand .hfo-command-subtitle,
+.hfo-command-subtitle {
+  display: block !important;
+  margin: 6px 0 0 0 !important;
+  color: rgba(245, 240, 230, 0.92) !important;
+  font-size: 22px !important;
+  font-weight: 850 !important;
+  line-height: 1.25 !important;
+}
+
+.hfo-command-status {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 14px !important;
+  min-width: 270px !important;
+  padding: 14px 18px !important;
+  border-radius: 18px !important;
+  border: 1px solid rgba(207, 160, 75, 0.22) !important;
+  background: rgba(4, 9, 12, 0.74) !important;
+}
+
+.hfo-command-status .hfo-online-dot {
+  display: block !important;
+  width: 18px !important;
+  height: 18px !important;
+  flex: 0 0 auto !important;
+  border-radius: 999px !important;
+  background: #25ef7d !important;
+  box-shadow: 0 0 26px rgba(37, 239, 125, 0.9) !important;
+}
+
+.hfo-command-status strong {
+  display: block !important;
+  margin: 0 !important;
+  color: #25ef7d !important;
+  text-transform: uppercase !important;
+  letter-spacing: 2px !important;
+  font-size: 15px !important;
+  line-height: 1.1 !important;
+}
+
+.hfo-command-status span {
+  display: block !important;
+  margin-top: 4px !important;
+  color: #d7aa52 !important;
+  font-weight: 900 !important;
+  font-size: 18px !important;
+  line-height: 1.1 !important;
+}
+
+.hfo-handle-zone-compact {
+  margin-top: 0 !important;
+}
+
+.hfo-handle-zone-compact h4 {
+  margin: 0 0 12px 0 !important;
+  color: #fff !important;
+  font-size: 26px !important;
+}
+
+.hfo-mobile-search {
+  display: grid !important;
+  grid-template-columns: 1fr 180px !important;
+  gap: 14px !important;
+  align-items: center !important;
+}
+
+.hfo-mobile-search input {
+  min-height: 62px !important;
+}
+
+.hfo-mobile-search button {
+  min-height: 62px !important;
+}
+
+.hfo-talk-link {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: fit-content !important;
+  min-height: 54px !important;
+  margin-top: 16px !important;
+  padding: 0 28px !important;
+}
+
+@media (max-width: 900px) {
+  .hfo-command-header {
+    align-items: flex-start !important;
+    flex-direction: column !important;
+  }
+
+  .hfo-command-status {
+    width: 100% !important;
+    min-width: 0 !important;
+    justify-content: flex-start !important;
+  }
+
+  .hfo-mobile-search {
+    grid-template-columns: 1fr !important;
+  }
+
+  .hfo-command-brand .hfo-command-subtitle,
+  .hfo-command-subtitle {
+    font-size: 17px !important;
+  }
+}

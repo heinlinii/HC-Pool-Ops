@@ -1,71 +1,56 @@
 {% extends "base.html" %}
 {% block content %}
 
-<div class="hfo-mobile-command">
+<div class="hfo-mobile-command hfo-command-first">
 
-  <section class="hfo-identity-card hfo-identity-card-rebuilt">
+  <section class="hfo-jarvis-card hfo-main-command-card">
 
-    <div class="hfo-identity-left">
-      <h1>HEINLIN FIELD OPS</h1>
-
-      <div class="hfo-certificate-frame">
-        <img
-          src="/static/ibhs-certificate.png"
-          alt="Indiana Historical Society Centennial Business Award Certificate"
-          class="hfo-ibhs-certificate"
-        >
-      </div>
-    </div>
-
-    <div class="hfo-identity-right">
+  <div class="hfo-command-header">
+    <div class="hfo-command-brand">
       <img
-        src="/static/heinlin-wide-crest.png"
-        alt="Heinlin family crest"
-        class="hfo-dashboard-crest"
+        src="/static/heinlin-wide-crest.png?v=3"
+        alt="Heinlin crest"
+        class="hfo-tiny-crest"
       >
+
+      <div>
+        <p class="hfo-kicker">HEINLIN FIELD OPS</p>
+        <p class="hfo-command-subtitle">
+          Built by the hands that perfected the term “work hard but play harder.”
+        </p>
+      </div>
     </div>
 
-  </section>
-
-  <section class="hfo-jarvis-card">
-    <div class="hfo-jarvis-title-row">
-      <h2>JARVIS</h2>
+    <div class="hfo-command-status">
       <span class="hfo-online-dot"></span>
-    </div>
-
-    <p class="hfo-online-word">Online</p>
-
-    <h3>{{ greeting }}, {{ user.name or user.username or "Boss" }}.</h3>
-
-    <div class="hfo-mobile-stats">
       <div>
-        <strong>3</strong>
-        <span>Employees<br>Clocked In</span>
-      </div>
-      <div>
-        <strong>12</strong>
-        <span>Jobs<br>Scheduled</span>
-      </div>
-      <div>
-        <strong>1</strong>
-        <span>Priority<br>Issue</span>
+        <strong>Online</strong>
+        <span>{{ greeting }}, {{ user.name or user.username or "Boss" }}.</span>
       </div>
     </div>
+  </div>
 
-    <div class="hfo-handle-zone">
-      <h4>What needs handled?</h4>
+  <div class="hfo-handle-zone hfo-handle-zone-compact">
+    <h4>What needs handled?</h4>
 
-      <form method="get" action="/jarvis/search" class="hfo-mobile-search">
-        <input name="q" placeholder="Find a client, job, property, photo, log, map, weather..." autofocus>
-        <button class="btn primary" type="submit">Handle It</button>
-      </form>
+    <form method="get" action="/jarvis/search" class="hfo-mobile-search">
+      <input
+        name="q"
+        placeholder="Find a client, job, property, photo, log, map, weather..."
+        autofocus
+      >
+      <button class="btn primary" type="submit">Handle It</button>
+    </form>
 
-      <a class="hfo-talk-link" href="/assistant-interview-live">Talk to Jarvis</a>
-    </div>
+    <a class="hfo-talk-link" href="/assistant-interview-live">Talk to Jarvis</a>
+  </div>
+
+</section>
   </section>
 
   <section class="hfo-mobile-section hfo-live-operations-v3">
     <h2>Live Operations</h2>
+
     <div class="hfo-mobile-buttons three">
       <a href="/organize-my-day">Today's Work</a>
       <a href="/crew/my-day">My Day</a>
@@ -75,6 +60,7 @@
 
   <section class="hfo-mobile-section hfo-command-buttons-v3">
     <h2>Command Center</h2>
+
     <div class="hfo-mobile-buttons">
       <a href="/clients">Clients</a>
       <a href="/properties">Properties</a>
@@ -87,8 +73,22 @@
     </div>
   </section>
 
-  <section class="hfo-mobile-section hfo-footer-v3">
-    <strong>All the Knowledge of Concrete & Pools from 5 Generations of the Heinlin Family, Now Reside Inside Jarvis.</strong>
+  <section class="hfo-legacy-strip">
+    <div class="hfo-legacy-copy">
+      <strong>5 Generations Strong</strong>
+      <span>Heinlin Concrete LLC • Founded 1907 • Field-built knowledge inside Jarvis</span>
+    </div>
+
+    <div class="hfo-legacy-images">
+      <img
+        src="/static/ibhs-certificate.png"
+        alt="Indiana Historical Society Centennial Business Award"
+      >
+      <img
+        src="/static/heinlin-wide-crest.png?v=3"
+        alt="Heinlin family crest"
+      >
+    </div>
   </section>
 
 </div>
