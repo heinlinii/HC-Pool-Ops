@@ -587,6 +587,14 @@ def login_post(request: Request, username: str = Form(""), password: str = Form(
     username = username.strip()
     password = password.strip()
 
+    if not username or not password:
+        return templates.TemplateResponse(
+            "login.html",
+            ctx(request, error="Enter a username and password.")
+        )
+
+    username_l = username.lower()
+
     # 1. Admin login from users table
     u = one(
         """
@@ -601,33 +609,47 @@ def login_post(request: Request, username: str = Form(""), password: str = Form(
     if u:
         request.session["user"] = {
             "id": u["id"],
-            "username": u.get("username") or u["name"],
+            "username": u.get("username") or u.get("name") or username,
             "role": "admin",
-            "name": u.get("name") or u["username"]
+            "name": u.get("name") or u.get("username") or username
         }
         return RedirectResponse("/jarvis", status_code=303)
 
-    # 2. Crew / employee login from employees table
-    e = one(
+    # 2. Crew / employee login
+    employees = rows(
         """
         SELECT * FROM poolops2_employees
-        WHERE lower(coalesce(nullif(username,''), name))=lower(?)
-          AND coalesce(password,'')=?
+        WHERE coalesce(password,'')=?
           AND coalesce(active, 1)=1
         """,
-        (username, password)
+        (password,)
     )
 
-    if e:
-        request.session["user"] = {
-            "id": e["id"],
-            "username": e.get("username") or e["name"],
-            "role": "employee",
-            "name": e["name"]
-        }
-        return RedirectResponse("/jarvis", status_code=303)
+    for e in employees:
+        emp_username = str(e.get("username") or "").strip().lower()
+        emp_name = str(e.get("name") or "").strip().lower()
+        emp_first = emp_name.split(" ")[0] if emp_name else ""
+        emp_dot_name = emp_name.replace(" ", ".")
+        emp_nospace_name = emp_name.replace(" ", "")
 
-    # 3. Safety fallback: crew/employee records accidentally stored in users table
+        accepted_names = {
+            emp_username,
+            emp_name,
+            emp_first,
+            emp_dot_name,
+            emp_nospace_name,
+        }
+
+        if username_l in accepted_names:
+            request.session["user"] = {
+                "id": e["id"],
+                "username": e.get("username") or e.get("name") or username,
+                "role": "employee",
+                "name": e.get("name") or e.get("username") or username
+            }
+            return RedirectResponse("/jarvis", status_code=303)
+
+    # 3. Crew/employee fallback from users table
     crew_user = one(
         """
         SELECT * FROM poolops2_users
@@ -641,9 +663,9 @@ def login_post(request: Request, username: str = Form(""), password: str = Form(
     if crew_user:
         request.session["user"] = {
             "id": crew_user["id"],
-            "username": crew_user["username"],
+            "username": crew_user.get("username") or username,
             "role": "employee",
-            "name": crew_user.get("name") or crew_user["username"]
+            "name": crew_user.get("name") or crew_user.get("username") or username
         }
         return RedirectResponse("/jarvis", status_code=303)
 
