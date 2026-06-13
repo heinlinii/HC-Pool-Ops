@@ -41,27 +41,34 @@
       >
       <button class="btn primary" type="submit">Handle It</button>
     </form>
->
-  </div>
+   </div>
 
 </section>
   </section>
 
+{% if is_admin or is_client %}
   <section class="hfo-mobile-section hfo-live-operations-v3">
-  <h2>Live Operations</h2>
+    <h2>Live Operations</h2>
 
-  <div class="hfo-mobile-buttons four">
-    <a href="/organize-my-day">Today's Work</a>
-    <a href="/employee">Clock In / My Day</a>
-    <a href="/assistant-interview-live">Talk to Jarvis</a>
-    <a href="/weather">Weather</a>
-  </div>
-</section>
+    <div class="hfo-mobile-buttons four">
+      {% if is_admin %}
+        <a href="/organize-my-day">Today's Work</a>
+        <a href="/employee">Clock In / My Day</a>
+        <a href="/assistant-interview-live">Talk to Jarvis</a>
+        <a href="/weather">Weather</a>
+      {% elif is_client %}
+        <a href="/jobs">My Jobs</a>
+        <a href="/photos">Photos</a>
+        <a href="/weather">Weather</a>
+      {% endif %}
+    </div>
+  </section>
+{% endif %}
+ <section class="hfo-mobile-section hfo-command-buttons-v3">
+  <h2>Command Center</h2>
 
-  <section class="hfo-mobile-section hfo-command-buttons-v3">
-    <h2>Command Center</h2>
-
-    <div class="hfo-mobile-buttons">
+  <div class="hfo-mobile-buttons">
+    {% if is_admin %}
       <a href="/clients">Clients</a>
       <a href="/properties">Properties</a>
       <a href="/jobs">Jobs</a>
@@ -70,9 +77,24 @@
       <a href="/field-logs">Field Logs</a>
       <a href="/crew">Employees</a>
       <a href="/estimates">Estimates</a>
-    </div>
-  </section>
-
+    {% elif is_employee %}
+      <a href="/employee">Clock In / My Day</a>
+      <a href="/crew/my-day">Today's Jobs</a>
+      <a href="/jobs">Jobs</a>
+      <a href="/photos">Photos</a>
+      <a href="/field-logs">Field Logs</a>
+      <a href="/map">Map</a>
+      <a href="/weather">Weather</a>
+    {% elif is_client %}
+      <a href="/properties">My Property</a>
+      <a href="/photos">Photos</a>
+      <a href="/jobs">Jobs</a>
+      <a href="/weather">Weather</a>
+    {% else %}
+      <a href="/jarvis">Dashboard</a>
+    {% endif %}
+  </div>
+</section>
   <section class="hfo-legacy-strip">
     <div class="hfo-legacy-copy">
       <strong>5 Generations Strong</strong>

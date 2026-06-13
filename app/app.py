@@ -370,14 +370,14 @@ def is_client(user):
 
 
 def is_employee(user):
-    return user and user.get("role") == "employee"
+    return user and str(user.get("role", "")).lower() in ("employee", "crew")
 
 
 def admin_redirect(user):
     if is_client(user):
         return RedirectResponse("jarvis", status_code=303)
     if is_employee(user):
-        return RedirectResponse("/organize-my-day", status_code=303)
+        return RedirectResponse("/employee", status_code=303)
     return login_redirect()
 
 
@@ -428,12 +428,28 @@ def employee_can_access_job(user, job):
 def jobs_for_user(user):
     if is_admin(user):
         return rows("SELECT * FROM poolops2_jobs ORDER BY id DESC")
+
     if is_employee(user):
-        name = user.get("name", "")
-        return rows("SELECT * FROM poolops2_jobs WHERE crew LIKE ? OR crew='' OR crew='Unassigned' ORDER BY id DESC", (f"%{name}%",))
+        name = str(user.get("name") or "").strip()
+        username = str(user.get("username") or "").strip()
+
+        return rows(
+            """
+            SELECT * FROM poolops2_jobs
+            WHERE crew LIKE ?
+               OR crew LIKE ?
+               OR crew=''
+               OR crew='Unassigned'
+               OR crew IS NULL
+            ORDER BY id DESC
+            """,
+            (f"%{name}%", f"%{username}%")
+        )
+
     if is_client(user):
         cname = client_name_for_user(user)
         return rows("SELECT * FROM poolops2_jobs WHERE client=? ORDER BY id DESC", (cname,))
+
     return []
 
 
@@ -565,24 +581,95 @@ def login_page(request: Request):
 
 
 @app.post("/login")
-def login(request: Request, username: str = Form(""), password: str = Form("")):
+def login_post(request: Request, username: str = Form(""), password: str = Form("")):
     ensure_schema()
+
     username = username.strip()
     password = password.strip()
-    u = one("SELECT * FROM poolops2_users WHERE lower(username)=lower(?) AND password=?", (username, password))
-    if u:
-        request.session["user"] = {"id": u["id"], "username": u["username"], "role": u["role"], "name": u["name"]}
-        return RedirectResponse("/jarvis", status_code=303)
-    e = one("SELECT * FROM poolops2_employees WHERE lower(coalesce(username,name))=lower(?) AND coalesce(password,'')=?", (username, password))
-    if e:
-        request.session["user"] = {"id": e["id"], "username": e.get("username") or e["name"], "role": "employee", "name": e["name"]}
-        return RedirectResponse("/jarvis", status_code=303)
-    c = one("SELECT * FROM poolops2_clients WHERE lower(portal_username)=lower(?) AND portal_password=?", (username, password))
-    if c:
-        request.session["user"] = {"id": c["id"], "username": c["portal_username"], "role": "client", "name": c["name"]}
-        return RedirectResponse("jarvis", status_code=303)
-    return templates.TemplateResponse("login.html", ctx(request, error="Login not found. Try mike / mike or check the card username/password."))
 
+    # 1. Admin login from users table
+    u = one(
+        """
+        SELECT * FROM poolops2_users
+        WHERE lower(username)=lower(?)
+          AND password=?
+          AND lower(coalesce(role,''))='admin'
+        """,
+        (username, password)
+    )
+
+    if u:
+        request.session["user"] = {
+            "id": u["id"],
+            "username": u.get("username") or u["name"],
+            "role": "admin",
+            "name": u.get("name") or u["username"]
+        }
+        return RedirectResponse("/jarvis", status_code=303)
+
+    # 2. Crew / employee login from employees table
+    e = one(
+        """
+        SELECT * FROM poolops2_employees
+        WHERE lower(coalesce(nullif(username,''), name))=lower(?)
+          AND coalesce(password,'')=?
+          AND coalesce(active, 1)=1
+        """,
+        (username, password)
+    )
+
+    if e:
+        request.session["user"] = {
+            "id": e["id"],
+            "username": e.get("username") or e["name"],
+            "role": "employee",
+            "name": e["name"]
+        }
+        return RedirectResponse("/jarvis", status_code=303)
+
+    # 3. Safety fallback: crew/employee records accidentally stored in users table
+    crew_user = one(
+        """
+        SELECT * FROM poolops2_users
+        WHERE lower(username)=lower(?)
+          AND password=?
+          AND lower(coalesce(role,'')) IN ('employee', 'crew')
+        """,
+        (username, password)
+    )
+
+    if crew_user:
+        request.session["user"] = {
+            "id": crew_user["id"],
+            "username": crew_user["username"],
+            "role": "employee",
+            "name": crew_user.get("name") or crew_user["username"]
+        }
+        return RedirectResponse("/jarvis", status_code=303)
+
+    # 4. Client portal login
+    c = one(
+        """
+        SELECT * FROM poolops2_clients
+        WHERE lower(portal_username)=lower(?)
+          AND portal_password=?
+        """,
+        (username, password)
+    )
+
+    if c:
+        request.session["user"] = {
+            "id": c["id"],
+            "username": c["portal_username"],
+            "role": "client",
+            "name": c["name"]
+        }
+        return RedirectResponse("/jarvis", status_code=303)
+
+    return templates.TemplateResponse(
+        "login.html",
+        ctx(request, error="Login not found. Check the username and password.")
+    )
 
 @app.get("/logout")
 def logout(request: Request):
@@ -623,41 +710,81 @@ def jarvis_search(request: Request, q: str = ""):
     if not u:
         return login_redirect()
 
-    text = (q or "").lower()
+    text = (q or "").strip().lower()
 
-    if "today" in text or "day" in text:
+    if not text:
         return RedirectResponse("/organize-my-day", status_code=303)
+
+    if "today" in text or "day" in text or "work" in text or "handle" in text:
+        return RedirectResponse("/organize-my-day", status_code=303)
+
+    if "my day" in text or "clock" in text or "clock in" in text or "employee" in text:
+        return RedirectResponse("/employee", status_code=303)
+
+    if "talk" in text or "jarvis" in text or "assistant" in text:
+        return RedirectResponse("/assistant-interview-live", status_code=303)
+
     if "job" in text:
         return RedirectResponse("/jobs", status_code=303)
+
     if "client" in text:
         return RedirectResponse("/clients", status_code=303)
+
     if "property" in text or "pool" in text:
         return RedirectResponse("/properties", status_code=303)
-    if "photo" in text:
+
+    if "photo" in text or "picture" in text:
         return RedirectResponse("/photos", status_code=303)
+
+    if "field log" in text or "log" in text:
+        return RedirectResponse("/field-logs", status_code=303)
+
     if "map" in text or "crew" in text:
         return RedirectResponse("/map", status_code=303)
+
     if "weather" in text:
         return RedirectResponse("/weather", status_code=303)
 
-    return RedirectResponse("/jarvis", status_code=303)
+    return RedirectResponse("/organize-my-day", status_code=303)
+
+@app.get("/jarvis", response_class=HTMLResponse)
+def jarvis_landing(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+
+    hour = datetime.now().hour
+
+    if hour < 12:
+        greeting = "Good morning"
+    elif hour < 17:
+        greeting = "Good afternoon"
+    else:
+        greeting = "Good evening"
+
+    today = date.today().isoformat()
+
+    return templates.TemplateResponse(
+        "jarvis.html",
+        ctx(
+            request,
+            today=today,
+            greeting=greeting,
+        )
+    )
 
 @app.get("/dashboard", response_class=HTMLResponse)
 def dashboard(request: Request, y: int = None, m: int = None):
     u = require_login(request)
     if not u:
         return login_redirect()
-    if u.get("role") == "employee":
-        return RedirectResponse("/jarvis", status_code=303)
-    if u.get("role") == "client":
-        return RedirectResponse("jarvis", status_code=303)
-    stats = {
-        "clients": one("SELECT count(*) c FROM poolops2_clients")["c"],
-        "properties": one("SELECT count(*) c FROM poolops2_properties")["c"],
-        "jobs": one("SELECT count(*) c FROM poolops2_jobs")["c"],
-        "photos": one("SELECT count(*) c FROM poolops2_photo_logs")["c"],
-    }
-    return templates.TemplateResponse("dashboard.html", ctx(request, stats=stats, days=month_grid(y, m)))
+    return RedirectResponse("/jarvis", status_code=303)
+@app.get("/detailed", response_class=HTMLResponse)
+def detailed_redirect(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    return RedirectResponse("/jarvis", status_code=303)
 
 
 @app.get("/dashboard/theme", response_class=HTMLResponse)
@@ -1234,10 +1361,29 @@ def crew_save(
 @app.get("/employee", response_class=HTMLResponse)
 def employee_portal(request: Request):
     u = require_login(request)
-    if not u: return login_redirect()
-    if is_client(u): return RedirectResponse("jarvis", status_code=303)
-    employee = one("SELECT * FROM poolops2_employees WHERE id=?", (u.get("id"),)) if is_employee(u) else None
-    return templates.TemplateResponse("employee_portal.html", ctx(request, employee=employee, jobs=jobs_for_user(u), photos=photos_for_user(u)))
+    if not u:
+        return login_redirect()
+
+    if is_client(u):
+        return RedirectResponse("/jarvis", status_code=303)
+
+    employee = None
+
+    if is_employee(u):
+        employee = one(
+            "SELECT * FROM poolops2_employees WHERE id=?",
+            (u.get("id"),)
+        )
+
+    return templates.TemplateResponse(
+        "employee_portal.html",
+        ctx(
+            request,
+            employee=employee,
+            jobs=jobs_for_user(u),
+            photos=photos_for_user(u)
+        )
+    )
 
 @app.post("/employee/profile")
 def employee_profile_save(request: Request, name: str = Form(""), phone: str = Form(""), email: str = Form(""), username: str = Form(""), password: str = Form("")):
@@ -1252,13 +1398,27 @@ def employee_profile_save(request: Request, name: str = Form(""), phone: str = F
 @app.post("/employee/clock")
 def employee_clock(request: Request, action: str = Form("in"), lat: str = Form(""), lng: str = Form("")):
     u = require_login(request)
-    if not u or not is_employee(u): return login_redirect()
+    if not u or not is_employee(u):
+        return login_redirect()
+
     now = datetime.now().isoformat(timespec="minutes")
     clocked = action == "in"
-    exec_sql("UPDATE poolops2_employees SET clocked_in=?, clock_lat=?, clock_lng=?, clocked_in_at=?, last_seen_at=? WHERE id=?", (clocked, float(lat) if lat else None, float(lng) if lng else None, now if clocked else "", now, u.get("id")))
-    return RedirectResponse("/jarvis", status_code=303)
 
-@app.get("jarvis", response_class=HTMLResponse)
+    exec_sql(
+        "UPDATE poolops2_employees SET clocked_in=?, clock_lat=?, clock_lng=?, clocked_in_at=?, last_seen_at=? WHERE id=?",
+        (
+            clocked,
+            float(lat) if lat else None,
+            float(lng) if lng else None,
+            now if clocked else "",
+            now,
+            u.get("id")
+        )
+    )
+
+    return RedirectResponse("/employee", status_code=303)
+
+@app.get("/client-portal", response_class=HTMLResponse)
 def client_portal(request: Request):
     u = require_login(request)
     if not u: return login_redirect()
@@ -1279,8 +1439,22 @@ def client_portal(request: Request):
 
 @app.get("/estimates", response_class=HTMLResponse)
 def estimates(request: Request):
-    if not require_login(request): return login_redirect()
-    return templates.TemplateResponse("simple_crud.html", ctx(request, title="Estimates", table="poolops2_estimates", records=rows("SELECT * FROM poolops2_estimates ORDER BY id DESC"), fields=["client","property","title","status","amount","notes"]))
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    if not is_admin(u):
+        return admin_redirect(u)
+
+    return templates.TemplateResponse(
+        "simple_crud.html",
+        ctx(
+            request,
+            title="Estimates",
+            table="poolops2_estimates",
+            records=rows("SELECT * FROM poolops2_estimates ORDER BY id DESC"),
+            fields=["client", "property", "title", "status", "amount", "notes"]
+        )
+    )
 
 @app.post("/estimates/add")
 def estimates_add(request: Request, client: str = Form(""), property: str = Form(""), title: str = Form(""), status: str = Form("Draft"), amount: float = Form(0), notes: str = Form("")):
@@ -1290,8 +1464,20 @@ def estimates_add(request: Request, client: str = Form(""), property: str = Form
 
 @app.get("/job-costing", response_class=HTMLResponse)
 def job_costing(request: Request):
-    if not require_login(request): return login_redirect()
-    return templates.TemplateResponse("job_costing.html", ctx(request, costs=rows("SELECT * FROM poolops2_job_costs ORDER BY id DESC"), jobs=rows("SELECT * FROM poolops2_jobs ORDER BY id DESC")))
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    if not is_admin(u):
+        return admin_redirect(u)
+
+    return templates.TemplateResponse(
+        "job_costing.html",
+        ctx(
+            request,
+            costs=rows("SELECT * FROM poolops2_job_costs ORDER BY id DESC"),
+            jobs=rows("SELECT * FROM poolops2_jobs ORDER BY id DESC")
+        )
+    )
 
 @app.post("/job-costing/add")
 def job_costing_add(request: Request, job_id: int = Form(0), client: str = Form(""), labor: float = Form(0), materials: float = Form(0), subs: float = Form(0), equipment: float = Form(0), fuel: float = Form(0), other: float = Form(0), invoice_amount: float = Form(0), notes: str = Form("")):
@@ -1319,7 +1505,12 @@ def field_logs_add(request: Request, employee_name: str = Form(""), client: str 
 
 @app.get("/quickbooks", response_class=HTMLResponse)
 def quickbooks(request: Request):
-    if not require_login(request): return login_redirect()
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    if not is_admin(u):
+        return admin_redirect(u)
+
     return templates.TemplateResponse("quickbooks.html", ctx(request))
 
 @app.get("/weather", response_class=HTMLResponse)

@@ -1,35 +1,92 @@
 {% extends "base.html" %}
 {% block content %}
-<section class="panel">
-  <h1>Map / Property List</h1>
 
-  {% if is_admin and employees %}
-  <section class="panel">
-    <h2>Clocked-In Employees</h2>
-    <div class="list-grid">
-      {% for e in employees %}
-      <div class="list-card">
-        <h2>{{ e.name or e.username or "Employee" }}</h2>
-        <p>Status: Clocked In</p>
-        {% if e.clock_lat and e.clock_lng %}
-          <p>GPS: {{ e.clock_lat }}, {{ e.clock_lng }}</p>
-          <a class="btn primary" target="_blank" href="https://www.google.com/maps/search/?api=1&query={{ e.clock_lat }},{{ e.clock_lng }}">Open Location</a>
-        {% else %}
-          <p class="muted">No GPS location saved yet.</p>
-        {% endif %}
-      </div>
-      {% endfor %}
-    </div>
-  </section>
-  {% endif %}
+<div class="hfo-mobile-command">
 
-  <section class="list-grid">
-    {% for p in properties %}
-      <a class="list-card" target="_blank" href="https://www.google.com/maps/search/?api=1&query={{ p.address }}">
-        <h2>{{ p.name or p.address }}</h2>
-        <p>{{ p.address }}</p>
-      </a>
-    {% endfor %}
+  <section class="hfo-mobile-section">
+    <h2>Field Map</h2>
+    <p class="muted">
+      Property pins, clocked-in employees, and jobsite locations.
+    </p>
+
+    <div id="hfoMap"></div>
   </section>
-</section>
+
+</div>
+
+<script>
+  const properties = {{ properties | tojson }};
+  const employees = {{ employees | tojson }};
+
+  const map = L.map("hfoMap").setView([37.9716, -87.5711], 11);
+
+  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom: 19,
+    attribution: '&copy; OpenStreetMap contributors'
+  }).addTo(map);
+
+  const propertyIcon = L.divIcon({
+    className: "hfo-map-pin hfo-property-pin",
+    html: "P",
+    iconSize: [34, 34],
+    iconAnchor: [17, 17]
+  });
+
+  const employeeIcon = L.divIcon({
+    className: "hfo-map-pin hfo-employee-pin",
+    html: "E",
+    iconSize: [34, 34],
+    iconAnchor: [17, 17]
+  });
+
+  let bounds = [];
+
+  properties.forEach(function(p) {
+    if (!p.latitude || !p.longitude) return;
+
+    const lat = parseFloat(p.latitude);
+    const lng = parseFloat(p.longitude);
+
+    if (isNaN(lat) || isNaN(lng)) return;
+
+    bounds.push([lat, lng]);
+
+    const title = p.property_name || p.address || "Property";
+    const client = p.client || "";
+    const address = p.address || "";
+
+    L.marker([lat, lng], { icon: propertyIcon })
+      .addTo(map)
+      .bindPopup(`
+        <strong>${title}</strong><br>
+        ${client}<br>
+        ${address}<br>
+        <a href="/properties/${p.id}">Open Property</a>
+      `);
+  });
+
+  employees.forEach(function(e) {
+    if (!e.clock_lat || !e.clock_lng) return;
+
+    const lat = parseFloat(e.clock_lat);
+    const lng = parseFloat(e.clock_lng);
+
+    if (isNaN(lat) || isNaN(lng)) return;
+
+    bounds.push([lat, lng]);
+
+    L.marker([lat, lng], { icon: employeeIcon })
+      .addTo(map)
+      .bindPopup(`
+        <strong>${e.name || "Employee"}</strong><br>
+        Clocked in<br>
+        ${e.clocked_in_at || ""}
+      `);
+  });
+
+  if (bounds.length > 0) {
+    map.fitBounds(bounds, { padding: [40, 40] });
+  }
+</script>
+
 {% endblock %}

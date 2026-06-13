@@ -1108,3 +1108,193 @@
     grid-template-columns: 1fr !important;
   }
 }
+/* =========================================================
+   EMPLOYEE PORTAL / CLOCK IN OUT
+   ========================================================= */
+
+.hfo-clock-card {
+  border-color: rgba(37, 239, 125, 0.35) !important;
+}
+
+.hfo-clock-form {
+  margin-top: 16px !important;
+}
+
+.hfo-clock-form button {
+  min-height: 64px !important;
+  min-width: 220px !important;
+  border-radius: 18px !important;
+  font-size: 20px !important;
+  font-weight: 900 !important;
+}
+
+.hfo-list {
+  display: grid !important;
+  gap: 12px !important;
+  margin-top: 16px !important;
+}
+
+.hfo-list-row {
+  display: grid !important;
+  gap: 4px !important;
+  padding: 18px !important;
+  border-radius: 18px !important;
+  text-decoration: none !important;
+  color: #f5f0e6 !important;
+  background: rgba(8, 14, 18, 0.94) !important;
+  border: 1px solid rgba(207, 160, 75, 0.22) !important;
+}
+
+.hfo-list-row strong {
+  color: #d7aa52 !important;
+  font-size: 20px !important;
+}
+
+.hfo-mobile-buttons.four {
+  grid-template-columns: repeat(4, 1fr) !important;
+}
+
+@media (max-width: 900px) {
+  .hfo-mobile-buttons.four {
+    grid-template-columns: 1fr !important;
+  }
+}
+/* =========================================================
+   FIELD MAP
+   ========================================================= */
+
+#hfoMap {
+  width: 100% !important;
+  height: 620px !important;
+  border-radius: 24px !important;
+  border: 1px solid rgba(207, 160, 75, 0.28) !important;
+  overflow: hidden !important;
+  background: #05090c !important;
+}
+
+.hfo-map-pin {
+  width: 34px !important;
+  height: 34px !important;
+  border-radius: 999px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-weight: 950 !important;
+  color: #05090c !important;
+  border: 2px solid rgba(255, 255, 255, 0.75) !important;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.65) !important;
+}
+
+.hfo-property-pin {
+  background: #d7aa52 !important;
+}
+
+.hfo-employee-pin {
+  background: #25ef7d !important;
+}
+
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+  background: #071016 !important;
+  color: #f5f0e6 !important;
+  border: 1px solid rgba(207, 160, 75, 0.35) !important;
+}
+
+.leaflet-popup-content a {
+  color: #d7aa52 !important;
+  font-weight: 900 !important;
+}
+/* =========================================================
+   WEATHER PAGE
+   ========================================================= */
+
+.hfo-weather-actions {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 12px !important;
+  margin: 18px 0 !important;
+}
+
+.hfo-weather-actions .btn {
+  min-height: 52px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 22px !important;
+  text-decoration: none !important;
+}
+
+.hfo-weather-alerts {
+  margin: 18px 0 !important;
+}
+
+.hfo-weather-alert {
+  padding: 16px !important;
+  border-radius: 18px !important;
+  border: 1px solid rgba(255, 80, 80, 0.5) !important;
+  background: rgba(80, 0, 0, 0.35) !important;
+  color: #f5f0e6 !important;
+  margin-bottom: 12px !important;
+}
+
+.hfo-weather-alert strong {
+  color: #ff7676 !important;
+  font-size: 20px !important;
+}
+
+.hfo-weather-clear {
+  padding: 16px !important;
+  border-radius: 18px !important;
+  border: 1px solid rgba(37, 239, 125, 0.35) !important;
+  background: rgba(0, 60, 30, 0.22) !important;
+  color: #25ef7d !important;
+  font-weight: 900 !important;
+}
+
+.hfo-weather-grid {
+  display: grid !important;
+  grid-template-columns: repeat(4, 1fr) !important;
+  gap: 14px !important;
+  margin-top: 18px !important;
+}
+
+.hfo-weather-card {
+  min-height: 180px !important;
+  padding: 18px !important;
+  border-radius: 18px !important;
+  border: 1px solid rgba(207, 160, 75, 0.22) !important;
+  background: rgba(8, 14, 18, 0.94) !important;
+}
+
+.hfo-weather-card h3 {
+  margin: 0 0 10px !important;
+  color: #d7aa52 !important;
+}
+
+.hfo-weather-card strong {
+  display: block !important;
+  color: #fff !important;
+  font-size: 34px !important;
+  margin-bottom: 8px !important;
+}
+
+.hfo-weather-card p {
+  color: #f5f0e6 !important;
+  font-weight: 700 !important;
+}
+
+.hfo-weather-card small {
+  color: rgba(245, 240, 230, 0.75) !important;
+}
+
+@media (max-width: 1000px) {
+  .hfo-weather-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+@media (max-width: 650px) {
+  .hfo-weather-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
