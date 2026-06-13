@@ -2,10 +2,10 @@ from fastapi import FastAPI, Request, Form, UploadFile, File
 from fastapi.responses import RedirectResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from httpx import request
 from starlette.middleware.sessions import SessionMiddleware
 from pathlib import Path
 from datetime import datetime, date, timedelta
-from app.routes import pool_monitoring
 import calendar
 import json
 import os
@@ -48,7 +48,6 @@ app = FastAPI(title="Heinlin Field Ops")
 app.add_middleware(SessionMiddleware, secret_key="heinlin-field-ops-local-secret")
 app.mount("/static", StaticFiles(directory=str(ROOT / "app" / "static")), name="static")
 templates = Jinja2Templates(directory=str(ROOT / "app" / "templates"))
-app.include_router(pool_monitoring.router)
 
 DEFAULT_THEME = {
     "title": "HEINLIN FIELD OPS",
@@ -194,22 +193,6 @@ def ensure_schema():
                 gate_code TEXT DEFAULT '', service_plan TEXT DEFAULT '', notes TEXT DEFAULT '', card_image TEXT DEFAULT '', latitude REAL, longitude REAL,
                 pool_notes TEXT DEFAULT '', equipment_notes TEXT DEFAULT ''
             )""")
-
-            c.execute("""CREATE TABLE IF NOT EXISTS pool_monitoring (
-                id SERIAL PRIMARY KEY,
-                client_id INTEGER REFERENCES poolops2_clients(id),
-                property_id INTEGER REFERENCES poolops2_properties(id),
-                system_brand TEXT DEFAULT 'Pentair',
-                system_type TEXT DEFAULT '',
-                pentair_account_email TEXT DEFAULT '',
-                monitoring_status TEXT DEFAULT 'Not Started',
-                last_checked DATE,
-                current_alert TEXT DEFAULT '',
-                equipment_notes TEXT DEFAULT '',
-                service_notes TEXT DEFAULT '',
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )""")
             c.execute("""CREATE TABLE IF NOT EXISTS poolops2_jobs (
                 id SERIAL PRIMARY KEY,
                 client TEXT DEFAULT '', property TEXT DEFAULT '', address TEXT DEFAULT '', job_type TEXT DEFAULT '', status TEXT DEFAULT 'Pending', crew TEXT DEFAULT 'Unassigned',
@@ -217,7 +200,7 @@ def ensure_schema():
             )""")
             c.execute("""CREATE TABLE IF NOT EXISTS poolops2_employees (
                 id SERIAL PRIMARY KEY,
-                name TEXT DEFAULT '', role TEXT DEFAULT '', phone TEXT DEFAULT '', email TEXT DEFAULT '', active BOOLEAN DEFAULT true, card_image TEXT DEFAULT '', username TEXT DEFAULT '', password TEXT DEFAULT ''
+                name TEXT DEFAULT '', role TEXT DEFAULT '', phone TEXT DEFAULT '', email TEXT DEFAULT '', active INTEGER DEFAULT 1, card_image TEXT DEFAULT '', username TEXT DEFAULT '', password TEXT DEFAULT ''
             )""")
             c.execute("""CREATE TABLE IF NOT EXISTS poolops2_photo_logs (
                 id SERIAL PRIMARY KEY,
@@ -281,32 +264,6 @@ def ensure_schema():
                 gate_code TEXT DEFAULT '', service_plan TEXT DEFAULT '', notes TEXT DEFAULT '', card_image TEXT DEFAULT '', latitude REAL, longitude REAL,
                 pool_notes TEXT DEFAULT '', equipment_notes TEXT DEFAULT ''
             )""")
-
-            c.execute("""CREATE TABLE IF NOT EXISTS poolops2_properties (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                client_id INTEGER, client TEXT DEFAULT '', property_name TEXT DEFAULT '', address TEXT DEFAULT '', city TEXT DEFAULT '', state TEXT DEFAULT '', zip_code TEXT DEFAULT '',
-                pool_type TEXT DEFAULT '', pool_size TEXT DEFAULT '', pool_depth TEXT DEFAULT '', cover_type TEXT DEFAULT '', finish_type TEXT DEFAULT '',
-                pump_model TEXT DEFAULT '', filter_model TEXT DEFAULT '', heater_model TEXT DEFAULT '', sanitizer TEXT DEFAULT '', automation_system TEXT DEFAULT '',
-                gate_code TEXT DEFAULT '', service_plan TEXT DEFAULT '', notes TEXT DEFAULT '', card_image TEXT DEFAULT '', latitude REAL, longitude REAL,
-                pool_notes TEXT DEFAULT '', equipment_notes TEXT DEFAULT ''
-            )""")
-
-            c.execute("""CREATE TABLE IF NOT EXISTS pool_monitoring (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                client_id INTEGER,
-                property_id INTEGER,
-                system_brand TEXT DEFAULT 'Pentair',
-                system_type TEXT DEFAULT '',
-                pentair_account_email TEXT DEFAULT '',
-                monitoring_status TEXT DEFAULT 'Not Started',
-                last_checked DATE,
-                current_alert TEXT DEFAULT '',
-                equipment_notes TEXT DEFAULT '',
-                service_notes TEXT DEFAULT '',
-                created_at TEXT DEFAULT '',
-                updated_at TEXT DEFAULT ''
-            )""")
-
             c.execute("""CREATE TABLE IF NOT EXISTS poolops2_jobs (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 client TEXT DEFAULT '', property TEXT DEFAULT '', address TEXT DEFAULT '', job_type TEXT DEFAULT '', status TEXT DEFAULT 'Pending', crew TEXT DEFAULT 'Unassigned',
@@ -314,7 +271,7 @@ def ensure_schema():
             )""")
             c.execute("""CREATE TABLE IF NOT EXISTS poolops2_employees (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                name TEXT DEFAULT '', role TEXT DEFAULT '', phone TEXT DEFAULT '', email TEXT DEFAULT '', active BOOLEAN DEFAULT true, card_image TEXT DEFAULT '', username TEXT DEFAULT '', password TEXT DEFAULT ''
+                name TEXT DEFAULT '', role TEXT DEFAULT '', phone TEXT DEFAULT '', email TEXT DEFAULT '', active INTEGER DEFAULT 1, card_image TEXT DEFAULT '', username TEXT DEFAULT '', password TEXT DEFAULT ''
             )""")
             c.execute("""CREATE TABLE IF NOT EXISTS poolops2_photo_logs (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -630,14 +587,6 @@ def login_post(request: Request, username: str = Form(""), password: str = Form(
     username = username.strip()
     password = password.strip()
 
-    if not username or not password:
-        return templates.TemplateResponse(
-            "login.html",
-            ctx(request, error="Enter a username and password.")
-        )
-
-    username_l = username.lower()
-
     # 1. Admin login from users table
     u = one(
         """
@@ -652,53 +601,33 @@ def login_post(request: Request, username: str = Form(""), password: str = Form(
     if u:
         request.session["user"] = {
             "id": u["id"],
-            "username": u.get("username") or u.get("name") or username,
+            "username": u.get("username") or u["name"],
             "role": "admin",
-            "name": u.get("name") or u.get("username") or username
+            "name": u.get("name") or u["username"]
         }
         return RedirectResponse("/jarvis", status_code=303)
 
-    # 2. Crew / employee login
-    if USE_POSTGRES:
-        employee_sql = """
-            SELECT * FROM poolops2_employees
-            WHERE coalesce(password,'')=?
-              AND coalesce(active::text, 'true') IN ('true', '1', 't')
+    # 2. Crew / employee login from employees table
+    e = one(
         """
-    else:
-        employee_sql = """
-            SELECT * FROM poolops2_employees
-            WHERE coalesce(password,'')=?
-              AND coalesce(active, 1)=1
-        """
+        SELECT * FROM poolops2_employees
+        WHERE lower(coalesce(nullif(username,''), name))=lower(?)
+          AND coalesce(password,'')=?
+          AND coalesce(active, 1)=1
+        """,
+        (username, password)
+    )
 
-    employees = rows(employee_sql, (password,))
-
-    for e in employees:
-        emp_username = str(e.get("username") or "").strip().lower()
-        emp_name = str(e.get("name") or "").strip().lower()
-        emp_first = emp_name.split(" ")[0] if emp_name else ""
-        emp_dot_name = emp_name.replace(" ", ".")
-        emp_nospace_name = emp_name.replace(" ", "")
-
-        accepted_names = {
-            emp_username,
-            emp_name,
-            emp_first,
-            emp_dot_name,
-            emp_nospace_name,
+    if e:
+        request.session["user"] = {
+            "id": e["id"],
+            "username": e.get("username") or e["name"],
+            "role": "employee",
+            "name": e["name"]
         }
+        return RedirectResponse("/jarvis", status_code=303)
 
-        if username_l in accepted_names:
-            request.session["user"] = {
-                "id": e["id"],
-                "username": e.get("username") or e.get("name") or username,
-                "role": "employee",
-                "name": e.get("name") or e.get("username") or username
-            }
-            return RedirectResponse("/jarvis", status_code=303)
-
-    # 3. Crew/employee fallback from users table
+    # 3. Safety fallback: crew/employee records accidentally stored in users table
     crew_user = one(
         """
         SELECT * FROM poolops2_users
@@ -712,9 +641,9 @@ def login_post(request: Request, username: str = Form(""), password: str = Form(
     if crew_user:
         request.session["user"] = {
             "id": crew_user["id"],
-            "username": crew_user.get("username") or username,
+            "username": crew_user["username"],
             "role": "employee",
-            "name": crew_user.get("name") or crew_user.get("username") or username
+            "name": crew_user.get("name") or crew_user["username"]
         }
         return RedirectResponse("/jarvis", status_code=303)
 
@@ -818,69 +747,22 @@ def jarvis_search(request: Request, q: str = ""):
 
     return RedirectResponse("/organize-my-day", status_code=303)
 
-@app.get("/jarvis", response_class=HTMLResponse)
-def jarvis_landing(request: Request):
-    u = require_login(request)
-    if not u:
-        return login_redirect()
-
-    hour = datetime.now().hour
-
-    if hour < 12:
-        greeting = "Good morning"
-    elif hour < 17:
-        greeting = "Good afternoon"
-    else:
-        greeting = "Good evening"
-
-    today = date.today().isoformat()
-
-    return templates.TemplateResponse(
-        "jarvis.html",
-        ctx(
-            request,
-            today=today,
-            greeting=greeting,
-        )
-    )
-
 @app.get("/dashboard", response_class=HTMLResponse)
 def dashboard(request: Request, y: int = None, m: int = None):
     u = require_login(request)
     if not u:
         return login_redirect()
-    return RedirectResponse("/jarvis", status_code=303)
-
-@app.get("/handle-it", response_class=HTMLResponse)
-def handle_it_alias(request: Request):
-    u = require_login(request)
-    if not u:
-        return login_redirect()
-    return RedirectResponse("/organize-my-day", status_code=303)
-
-
-@app.get("/crew-login", response_class=HTMLResponse)
-def crew_login_alias(request: Request):
-    return RedirectResponse("/login", status_code=303)
-
-
-@app.get("/my-day", response_class=HTMLResponse)
-def my_day_alias(request: Request):
-    u = require_login(request)
-    if not u:
-        return login_redirect()
-
-    if is_employee(u):
-        return RedirectResponse("/crew/my-day", status_code=303)
-
-    return RedirectResponse("/organize-my-day", status_code=303)
-
-@app.get("/detailed", response_class=HTMLResponse)
-def detailed_redirect(request: Request):
-    u = require_login(request)
-    if not u:
-        return login_redirect()
-    return RedirectResponse("/jarvis", status_code=303)
+    if u.get("role") == "employee":
+        return RedirectResponse("/jarvis", status_code=303)
+    if u.get("role") == "client":
+        return RedirectResponse("jarvis", status_code=303)
+    stats = {
+        "clients": one("SELECT count(*) c FROM poolops2_clients")["c"],
+        "properties": one("SELECT count(*) c FROM poolops2_properties")["c"],
+        "jobs": one("SELECT count(*) c FROM poolops2_jobs")["c"],
+        "photos": one("SELECT count(*) c FROM poolops2_photo_logs")["c"],
+    }
+    return templates.TemplateResponse("dashboard.html", ctx(request, stats=stats, days=month_grid(y, m)))
 
 
 @app.get("/dashboard/theme", response_class=HTMLResponse)

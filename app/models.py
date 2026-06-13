@@ -4,8 +4,10 @@ from sqlalchemy import (
     String,
     Text,
     Float,
+    Date,
     DateTime,
-    Boolean
+    Boolean,
+    ForeignKey,
 )
 from datetime import datetime
 from app.database import Base
@@ -28,8 +30,6 @@ class Employee(Base):
     clock_lng = Column(Float, nullable=True)
     clocked_in_at = Column(String, default="")
     last_seen_at = Column(String, default="")
-    username = Column(String, default="")
-    password = Column(String, default="")
 
 
 class Client(Base):
@@ -92,6 +92,29 @@ class Property(Base):
     longitude = Column(Float, nullable=True)
 
 
+class PoolMonitoring(Base):
+    __tablename__ = "pool_monitoring"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    client_id = Column(Integer, ForeignKey("poolops2_clients.id"), nullable=True)
+    property_id = Column(Integer, ForeignKey("poolops2_properties.id"), nullable=True)
+
+    system_brand = Column(String, default="Pentair")
+    system_type = Column(String, nullable=True)
+    pentair_account_email = Column(String, nullable=True)
+
+    monitoring_status = Column(String, default="Not Started")
+    last_checked = Column(Date, nullable=True)
+
+    current_alert = Column(String, nullable=True)
+    equipment_notes = Column(Text, nullable=True)
+    service_notes = Column(Text, nullable=True)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow)
+
+
 class Job(Base):
     __tablename__ = "poolops2_jobs"
 
@@ -113,10 +136,8 @@ class Job(Base):
     status = Column(String, default="Pending")
     crew = Column(String, default="Unassigned")
 
-    # Old string date kept temporarily so existing pages/data do not break.
     date = Column(String, default="")
 
-    # Real calendar scheduling fields.
     scheduled_start = Column(DateTime, nullable=True)
     scheduled_end = Column(DateTime, nullable=True)
 
@@ -179,10 +200,6 @@ class User(Base):
     name = Column(String, nullable=False)
 
 
-# =========================================
-# PHASE 11 — DAILY FIELD LOGS
-# =========================================
-
 class FieldLog(Base):
     __tablename__ = "field_logs"
 
@@ -221,7 +238,4 @@ class FieldLog(Base):
 
     photo_count = Column(Integer, default=0)
 
-    created_at = Column(
-        DateTime,
-        default=datetime.utcnow
-    )
+    created_at = Column(DateTime, default=datetime.utcnow)
