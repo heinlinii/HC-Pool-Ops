@@ -7,10 +7,70 @@
 
   <link rel="stylesheet" href="/static/hfo-theme.css">
   <link rel="stylesheet" href="/static/login-final.css">
-  <link rel="stylesheet" href="/static/jarvis-final.css?v=23">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-/>
+  <!-- <link rel="stylesheet" href="/static/jarvis-final.css?v=23"> -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <style>
+    .hfo-top-actions {
+      position: relative !important;
+      margin: 0 !important;
+      padding: 8px 24px !important;
+      min-height: auto !important;
+      display: flex !important;
+      gap: 12px !important;
+      align-items: center !important;
+    }
+
+    .hfo-top-actions .btn,
+    .hfo-top-actions a,
+    .hfo-top-actions button {
+      width: 126px !important;
+      height: 72px !important;
+      min-height: 72px !important;
+      padding: 0 !important;
+      border-radius: 18px !important;
+
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+
+      background: rgba(15, 18, 20, .92) !important;
+      color: #fff !important;
+      border: 1px solid rgba(255,255,255,.13) !important;
+      box-shadow: 0 14px 34px rgba(0,0,0,.38) !important;
+
+      font-size: 1.05rem !important;
+      font-weight: 1000 !important;
+      text-decoration: none !important;
+      line-height: 1 !important;
+      cursor: pointer !important;
+    }
+
+    .hfo-top-actions .btn:hover,
+    .hfo-top-actions a:hover,
+    .hfo-top-actions button:hover {
+      transform: translateY(-1px);
+      border-color: rgba(214,179,106,.35) !important;
+    }
+
+    @media (max-width: 640px) {
+      .hfo-top-actions {
+        padding: 8px 10px !important;
+        gap: 8px !important;
+      }
+
+      .hfo-top-actions .btn,
+      .hfo-top-actions a,
+      .hfo-top-actions button {
+        width: 108px !important;
+        height: 62px !important;
+        min-height: 62px !important;
+        font-size: .95rem !important;
+        border-radius: 16px !important;
+      }
+    }
+  </style>
 </head>
 
 <body class="hfo-body">
