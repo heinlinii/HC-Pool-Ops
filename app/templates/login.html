@@ -24,17 +24,17 @@
       font-family: Georgia, "Times New Roman", serif;
     }
 
-.heinlin-login-wrap {
-  min-height: 100vh;
-  display: grid;
-  grid-template-columns: 1.15fr .85fr;
-  gap: 24px;
-  align-items: start;
-  padding: 10px 24px 24px;
-  box-sizing: border-box;
-  max-width: 1380px;
-  margin: 0 auto;
-}
+    .heinlin-login-wrap {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 1.15fr .85fr;
+      gap: 24px;
+      align-items: start;
+      padding: 10px 24px 24px;
+      box-sizing: border-box;
+      max-width: 1380px;
+      margin: 0 auto;
+    }
 
     .heinlin-login-hero,
     .heinlin-login-card {
@@ -48,65 +48,65 @@
     }
 
     .heinlin-login-hero {
-  padding: 26px 34px 28px;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  min-height: 500px;
-}
+      padding: 26px 34px 28px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      min-height: 500px;
+    }
 
-.heinlin-hero-topline {
-  display: block;
-  margin-top: 22px;
-}
+    .heinlin-crest-stage {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 385px;
+      width: 100%;
+    }
 
-   .heinlin-hero-topline strong {
-  display: block;
-  color: #fff;
-  font-size: clamp(1.05rem, 1.45vw, 1.65rem);
-  line-height: 1.08;
-  font-weight: 1000;
-  letter-spacing: .08em;
-  text-transform: uppercase;
-}
+    .heinlin-crest-stage img {
+      width: 100%;
+      height: auto;
+      max-width: 100%;
+      max-height: 500px;
+      object-fit: contain;
+      border-radius: 30px;
+      border: 1px solid rgba(214,179,106,.45);
+      box-shadow: 0 22px 70px rgba(0,0,0,.62);
+      background: #000;
+    }
 
-   .heinlin-crest-stage {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 385px;
-  width: 100%;
-}
+    .heinlin-hero-topline {
+      display: block;
+      margin-top: 22px;
+    }
 
-.heinlin-crest-stage img {
-  width: 100%;
-  height: auto;
-  max-width: 100%;
-  max-height: 500px;
-  object-fit: contain;
-  border-radius: 30px;
-  border: 1px solid rgba(214,179,106,.45);
-  box-shadow: 0 22px 70px rgba(0,0,0,.62);
-  background: #000;
-}
+    .heinlin-hero-topline strong {
+      display: block;
+      color: #fff;
+      font-size: clamp(1.05rem, 1.45vw, 1.65rem);
+      line-height: 1.08;
+      font-weight: 1000;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
 
     .heinlin-login-card {
-  padding: 34px 34px 30px;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  min-height: 500px;
-}
+      padding: 34px 34px 30px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      min-height: 500px;
+    }
 
     .login-brand-kicker {
-  color: #d6b36a;
-  font-size: clamp(1rem, 1.35vw, 1.55rem);
-  font-weight: 1000;
-  letter-spacing: .22em;
-  text-transform: uppercase;
-  margin-bottom: 18px;
-}
+      color: #d6b36a;
+      font-size: clamp(1rem, 1.35vw, 1.55rem);
+      font-weight: 1000;
+      letter-spacing: .22em;
+      text-transform: uppercase;
+      margin-bottom: 18px;
+    }
 
     .login-card-head.compact {
       margin-bottom: 18px;
@@ -119,13 +119,6 @@
       line-height: .9;
       letter-spacing: -.045em;
       text-transform: uppercase;
-    }
-
-    .login-card-head.compact p {
-      margin: 8px 0 0;
-      color: rgba(255,255,255,.78);
-      font-size: 1.05rem;
-      font-weight: 800;
     }
 
     .heinlin-login-form {
@@ -203,47 +196,172 @@
       color: #d6b36a;
     }
 
+    .mobile-heritage-line,
+    .mobile-heritage-sub {
+      display: none;
+    }
+
     @media (max-width: 900px) {
+      html,
+      body {
+        min-height: 100vh;
+        overflow-x: hidden;
+        background:
+          linear-gradient(rgba(0,0,0,.58), rgba(0,0,0,.94)),
+          url("/static/uploads/Dedicated%20to%20Steve%20Meyerholtz.jpg");
+        background-size: cover;
+        background-position: center top;
+        background-attachment: scroll;
+      }
+
       .heinlin-login-wrap {
-        grid-template-columns: 1fr;
-        padding: 18px 14px 28px;
+        min-height: 100vh;
+        display: block;
+        padding: 0;
+        max-width: none;
+        margin: 0;
+      }
+
+      .heinlin-login-hero,
+      .heinlin-login-card {
+        border: none;
+        border-radius: 0;
+        box-shadow: none;
+        background: transparent;
       }
 
       .heinlin-login-hero {
-        min-height: auto;
-        padding: 24px;
+        padding: 0;
+        min-height: 0;
       }
 
       .heinlin-hero-topline {
-        display: block;
-        margin-bottom: 18px;
-      }
-
-      .heinlin-hero-topline span,
-      .heinlin-hero-topline strong {
-        display: block;
-        font-size: 1rem;
-        line-height: 1.2;
-        letter-spacing: .09em;
-      }
-
-      .heinlin-hero-topline span {
-        margin-bottom: 8px;
+        display: none;
       }
 
       .heinlin-crest-stage {
-        min-height: 280px;
+        min-height: 0;
+        width: 100%;
+        display: block;
+        padding: 0;
+        margin: 0;
       }
 
       .heinlin-crest-stage img {
+        display: block;
         width: 100%;
-        max-height: 360px;
+        max-width: none;
+        max-height: none;
+        height: auto;
+        object-fit: contain;
+        border: none;
+        border-radius: 0;
+        box-shadow: none;
+        background: transparent;
       }
 
       .heinlin-login-card {
-        padding: 22px;
-        padding-top: 28px;
+        padding: 14px 34px 44px;
         min-height: auto;
+      }
+
+      .login-brand-kicker {
+        display: none;
+      }
+
+      .mobile-heritage-line {
+        display: block;
+        text-align: center;
+        color: #d6b36a;
+        font-size: .95rem;
+        font-weight: 1000;
+        letter-spacing: .17em;
+        text-transform: uppercase;
+        margin: 8px 0 14px;
+      }
+
+      .mobile-heritage-sub {
+        display: block;
+        text-align: center;
+        color: rgba(255,255,255,.72);
+        font-size: 1rem;
+        font-weight: 900;
+        margin: 0 0 18px;
+      }
+
+      .login-card-head.compact {
+        text-align: center;
+        margin: 0 0 18px;
+      }
+
+      .login-card-head.compact h2 {
+        font-size: 0;
+        line-height: .86;
+        letter-spacing: -.055em;
+        text-align: center;
+      }
+
+      .login-card-head.compact h2::before {
+        content: "Heinlin Operations";
+        display: block;
+        color: #fff;
+        font-size: clamp(3rem, 13vw, 4.5rem);
+        line-height: .86;
+        letter-spacing: -.055em;
+      }
+
+      .login-card-head.compact h2::after {
+        content: "Center";
+        display: block;
+        color: #fff;
+        font-size: clamp(3rem, 13vw, 4.5rem);
+        line-height: .86;
+        letter-spacing: -.055em;
+      }
+
+      .heinlin-login-form {
+        gap: 14px;
+      }
+
+      .heinlin-login-form label {
+        color: #d6b36a;
+        font-size: 1rem;
+        letter-spacing: .02em;
+        text-transform: none;
+        margin-bottom: 4px;
+      }
+
+      .heinlin-login-form input {
+        min-height: 68px;
+        border-radius: 18px;
+        border: 1px solid rgba(214,179,106,.50);
+        background: rgba(7,14,20,.72);
+        color: #fff;
+        font-size: 1.15rem;
+      }
+
+      .heinlin-login-btn {
+        min-height: 78px;
+        margin-top: 10px;
+        border-radius: 22px;
+        background: linear-gradient(135deg, #42a5ff, #2563eb);
+        color: #071017;
+        font-size: 0;
+        letter-spacing: .18em;
+      }
+
+      .heinlin-login-btn::before {
+        content: "Enter Operations Center";
+        font-size: 1rem;
+        font-weight: 1000;
+      }
+
+      .login-footer-note {
+        display: none;
+      }
+
+      .login-error {
+        margin-bottom: 14px;
       }
     }
   </style>
@@ -254,22 +372,25 @@
   <div class="heinlin-login-wrap">
 
     <section class="heinlin-login-hero">
-  <div class="heinlin-crest-stage">
-    <img src="/static/heinlin-wide-crest.png" alt="Heinlin Crest">
-  </div>
+      <div class="heinlin-crest-stage">
+        <img src="/static/heinlin-wide-crest.png" alt="Heinlin Crest">
+      </div>
 
-  <div class="heinlin-hero-topline">
-    <strong>Built by the hands that perfected the term “work hard play harder.”</strong>
-  </div>
-</section>
+      <div class="heinlin-hero-topline">
+        <strong>Built by the hands that perfected the term “work hard play harder.”</strong>
+      </div>
+    </section>
 
-   <section class="heinlin-login-card">
+    <section class="heinlin-login-card">
 
-  <div class="login-brand-kicker">Heinlin Field Ops</div>
+      <div class="login-brand-kicker">Heinlin Field Ops</div>
 
-  <div class="login-card-head compact">
-    <h2>Login</h2>
-  </div>>
+      <div class="mobile-heritage-line">Founded 1907 • 5 Generations Strong</div>
+      <div class="mobile-heritage-sub">Historic Roots • Proud Heritage • Strong Community</div>
+
+      <div class="login-card-head compact">
+        <h2>Login</h2>
+      </div>
 
       {% if error %}
         <div class="login-error">{{ error }}</div>
@@ -298,15 +419,15 @@
 
   </div>
 
- <script>
-  if ("scrollRestoration" in history) {
-    history.scrollRestoration = "manual";
-  }
+  <script>
+    if ("scrollRestoration" in history) {
+      history.scrollRestoration = "manual";
+    }
 
-  window.addEventListener("load", function () {
-    window.scrollTo(0, 0);
-  });
-</script>
+    window.addEventListener("load", function () {
+      window.scrollTo(0, 0);
+    });
+  </script>
 
 </body>
 </html>
