@@ -43,7 +43,7 @@ def r2_client():
         region_name="auto",
     )
 THEME_FILE = ROOT / "app" / "dashboard_theme.json"
-
+DESIGN_FILE = ROOT / "app" / "design_studio.json"
 app = FastAPI(title="Heinlin Field Ops")
 app.add_middleware(SessionMiddleware, secret_key="heinlin-field-ops-local-secret")
 app.mount("/static", StaticFiles(directory=str(ROOT / "app" / "static")), name="static")
@@ -392,7 +392,53 @@ def theme():
 def save_theme(data):
     THEME_FILE.write_text(json.dumps(data, indent=2), encoding="utf-8")
 
+DEFAULT_DESIGN = {
+    "dashboard": {
+        "legacy_line": "Heinlin Field Ops • Founded 1907 • 5 Generations Strong",
+        "crest_image": "/static/heinlin-wide-crest.png",
+        "motto_first": "Work Hard.",
+        "motto_second": "Play Harder.",
+        "hero_subline": "Built by hand. Run like a machine. No lost notes. No mystery jobs.",
+        "search_title": "What needs handled?",
+        "search_subtitle": "Search it, say it, or hit the button.",
+        "search_placeholder": "Find a client, job, property, photo, log, map, weather...",
+        "handle_button": "Handle It",
 
+        "page_top_space": "54px",
+        "crest_width": "920px",
+        "crest_height": "420px",
+        "motto_size": "clamp(3rem, 7vw, 7.8rem)",
+        "motto_top_space": "22px",
+        "section_gap": "22px",
+        "button_height": "104px",
+    }
+}
+
+
+def deep_update(base, updates):
+    for key, value in updates.items():
+        if isinstance(value, dict) and isinstance(base.get(key), dict):
+            deep_update(base[key], value)
+        else:
+            base[key] = value
+    return base
+
+
+def design_settings():
+    data = json.loads(json.dumps(DEFAULT_DESIGN))
+
+    if DESIGN_FILE.exists():
+        try:
+            saved = json.loads(DESIGN_FILE.read_text(encoding="utf-8"))
+            deep_update(data, saved)
+        except Exception:
+            pass
+
+    return data
+
+
+def save_design_settings(data):
+    DESIGN_FILE.write_text(json.dumps(data, indent=2), encoding="utf-8")
 def current_user(request: Request):
     return request.session.get("user")
 
@@ -594,22 +640,12 @@ def ctx(request, **kw):
         "request": request,
         "user": u,
         "theme": theme(),
+        "design": design_settings(),
         "is_admin": is_admin(u),
         "is_client": is_client(u),
         "is_employee": is_employee(u),
         **kw,
     }
-
-@app.get("/assistant-interview-live", response_class=HTMLResponse)
-async def assistant_interview_live_page(request: Request):
-    user = require_login(request)
-    if not user:
-        return RedirectResponse(url="/", status_code=303)
-
-    return templates.TemplateResponse(
-        "assistant_interview_live.html",
-        ctx(request, user=user)
-    )
 
 @app.get("/", response_class=HTMLResponse)
 def root(request: Request):
@@ -917,6 +953,67 @@ async def dashboard_theme_save(request: Request,
     save_theme(t)
     return RedirectResponse("/jarvis", status_code=303)
 
+@app.get("/design-studio", response_class=HTMLResponse)
+def design_studio_page(request: Request):
+    u = require_login(request)
+    if not is_admin(u):
+        return login_redirect()
+
+    return templates.TemplateResponse(
+        "design_studio.html",
+        ctx(request, design=design_settings())
+    )
+
+
+@app.post("/design-studio")
+def design_studio_save(
+    request: Request,
+    legacy_line: str = Form(""),
+    crest_image: str = Form(""),
+    motto_first: str = Form(""),
+    motto_second: str = Form(""),
+    hero_subline: str = Form(""),
+    search_title: str = Form(""),
+    search_subtitle: str = Form(""),
+    search_placeholder: str = Form(""),
+    handle_button: str = Form(""),
+    page_top_space: str = Form("54px"),
+    crest_width: str = Form("920px"),
+    crest_height: str = Form("420px"),
+    motto_size: str = Form("clamp(3rem, 7vw, 7.8rem)"),
+    motto_top_space: str = Form("22px"),
+    section_gap: str = Form("22px"),
+    button_height: str = Form("104px"),
+):
+    u = require_login(request)
+    if not is_admin(u):
+        return login_redirect()
+
+    data = design_settings()
+
+    data["dashboard"] = {
+        "legacy_line": legacy_line.strip() or DEFAULT_DESIGN["dashboard"]["legacy_line"],
+        "crest_image": crest_image.strip() or DEFAULT_DESIGN["dashboard"]["crest_image"],
+        "motto_first": motto_first.strip() or DEFAULT_DESIGN["dashboard"]["motto_first"],
+        "motto_second": motto_second.strip() or DEFAULT_DESIGN["dashboard"]["motto_second"],
+        "hero_subline": hero_subline.strip() or DEFAULT_DESIGN["dashboard"]["hero_subline"],
+        "search_title": search_title.strip() or DEFAULT_DESIGN["dashboard"]["search_title"],
+        "search_subtitle": search_subtitle.strip() or DEFAULT_DESIGN["dashboard"]["search_subtitle"],
+        "search_placeholder": search_placeholder.strip() or DEFAULT_DESIGN["dashboard"]["search_placeholder"],
+        "handle_button": handle_button.strip() or DEFAULT_DESIGN["dashboard"]["handle_button"],
+
+        "page_top_space": page_top_space.strip() or "54px",
+        "crest_width": crest_width.strip() or "920px",
+        "crest_height": crest_height.strip() or "420px",
+        "motto_size": motto_size.strip() or "clamp(3rem, 7vw, 7.8rem)",
+        "motto_top_space": motto_top_space.strip() or "22px",
+        "section_gap": section_gap.strip() or "22px",
+        "button_height": button_height.strip() or "104px",
+    }
+
+    save_design_settings(data)
+
+    return RedirectResponse("/design-studio", status_code=303)
 
 @app.post("/calendar/day-image")
 async def calendar_day_image(request: Request, day_date: str = Form(...), notes: str = Form(""), image: UploadFile = File(None)):
@@ -1644,6 +1741,19 @@ def invisible_office_note(request: Request, note: str = Form("")):
         exec_sql("INSERT INTO poolops2_office_notes (note, created_at) VALUES (?,?)", (note.strip(), datetime.now().strftime("%Y-%m-%d %I:%M %p")))
     return RedirectResponse("/invisible-office", status_code=303)
 
+@app.get("/design-studio", response_class=HTMLResponse)
+def design_studio_page(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+
+    if not is_admin(u):
+        return RedirectResponse("/jarvis", status_code=303)
+
+    return templates.TemplateResponse(
+        "design_studio.html",
+        ctx(request, design=design_settings())
+    )
 
 @app.get("/invisible-office/search", response_class=HTMLResponse)
 def invisible_office_search(request: Request, q: str = ""):

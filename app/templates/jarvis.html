@@ -1,5 +1,90 @@
-{% extends "base.html" %}
-{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Heinlin Field Ops</title>
+
+  <link rel="stylesheet" href="/static/hfo-theme.css">
+  <link rel="stylesheet" href="/static/login-final.css">
+  <!-- <link rel="stylesheet" href="/static/jarvis-final.css?v=23"> -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <style>
+    .hfo-top-actions {
+      position: relative !important;
+      margin: 0 !important;
+      padding: 8px 24px !important;
+      min-height: auto !important;
+      display: flex !important;
+      gap: 12px !important;
+      align-items: center !important;
+    }
+
+    .hfo-top-actions .btn,
+    .hfo-top-actions a,
+    .hfo-top-actions button {
+      width: 126px !important;
+      height: 72px !important;
+      min-height: 72px !important;
+      padding: 0 !important;
+      border-radius: 18px !important;
+
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+
+      background: rgba(15, 18, 20, .92) !important;
+      color: #fff !important;
+      border: 1px solid rgba(255,255,255,.13) !important;
+      box-shadow: 0 14px 34px rgba(0,0,0,.38) !important;
+
+      font-size: 1.05rem !important;
+      font-weight: 1000 !important;
+      text-decoration: none !important;
+      line-height: 1 !important;
+      cursor: pointer !important;
+    }
+
+    .hfo-top-actions .btn:hover,
+    .hfo-top-actions a:hover,
+    .hfo-top-actions button:hover {
+      transform: translateY(-1px);
+      border-color: rgba(214,179,106,.35) !important;
+    }
+
+    @media (max-width: 640px) {
+      .hfo-top-actions {
+        padding: 8px 10px !important;
+        gap: 8px !important;
+      }
+
+      .hfo-top-actions .btn,
+      .hfo-top-actions a,
+      .hfo-top-actions button {
+        width: 108px !important;
+        height: 62px !important;
+        min-height: 62px !important;
+        font-size: .95rem !important;
+        border-radius: 16px !important;
+      }
+    }
+  </style>
+</head>
+
+<body class="hfo-body">
+
+  
+    <div class="hfo-top-actions">
+      <button type="button" onclick="history.back()" class="btn secondary">← Back</button>
+      <a href="/jarvis" class="btn primary">Dashboard</a>
+      <a href="/logout" class="btn danger">Logout</a>
+    </div>
+  
+
+  <main class="shell">
+    
 
 <style>
   body.hfo-body .shell {
@@ -347,35 +432,35 @@
     </div>
 
     <div class="hfo-hero-motto">
-      Work Hard. <span>Play Harder.</span>
+      {{ design.dashboard.motto_first }} <span>{{ design.dashboard.motto_second }}</span>
     </div>
 
     <div class="hfo-hero-sub">
-      Built by hand. Run like a machine. No lost notes. No mystery jobs.
+      {{ design.dashboard.hero_subline }}
     </div>
   </section>
 
   <section class="hfo-search-panel">
-    <h2>What needs handled?</h2>
-    <p>Search it, say it, or hit the button.</p>
+    <h2>{{ design.dashboard.search_title }}</h2>
+    <p>{{ design.dashboard.search_subtitle }}</p>
 
     <form class="hfo-search-form" action="/jarvis/search" method="get">
       <input
         type="text"
         name="q"
-        placeholder="Find a client, job, property, photo, log, map, weather..."
+        placeholder="{{ design.dashboard.search_placeholder }}"
         autocomplete="off"
       >
-      <button class="hfo-handle-btn" type="submit">Handle It</button>
+<button class="hfo-handle-btn" type="submit">{{ design.dashboard.handle_button }}</button>
     </form>
   </section>
 
-  {% if is_admin or is_client %}
+  
     <section class="hfo-board-section">
       <div class="hfo-board-heading">Run Today</div>
 
       <div class="hfo-command-grid">
-        {% if is_admin %}
+        
           <a class="command-link brass" href="/organize-my-day">
             <strong>Handle Today</strong>
             <span>Today’s work, overdue jobs, and what needs attention.</span>
@@ -395,22 +480,12 @@
             <strong>Talk to Jarvis</strong>
             <span>Dump the chaos. Let Jarvis organize the work.</span>
           </a>
-        {% elif is_client %}
-          <a class="command-link brass" href="/jobs">
-            <strong>My Jobs</strong>
-            <span>Work tied to your property.</span>
-          </a>
-
-          <a class="command-link" href="/photos">
-            <strong>Photos</strong>
-            <span>Progress and job images.</span>
-          </a>
-        {% endif %}
+        
       </div>
     </section>
-  {% endif %}
+  
 
-  {% if is_admin %}
+  
     <section class="hfo-board-section">
       <div class="hfo-board-heading">The Work</div>
 
@@ -492,7 +567,7 @@
         </a>
       </div>
     </section>
-  {% endif %}
+  
 
   <div class="hfo-signoff">
     <strong>Heinlin rule:</strong>
@@ -501,4 +576,8 @@
 
 </div>
 
-{% endblock %}
+
+  </main>
+
+</body>
+</html>
