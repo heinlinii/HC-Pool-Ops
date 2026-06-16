@@ -887,6 +887,153 @@ def dashboard(request: Request, y: int = None, m: int = None):
         return login_redirect()
     return RedirectResponse("/jarvis", status_code=303)
 
+# =========================================
+# SAFE NAVIGATION ALIASES
+# Keeps old dashboard/client/crew buttons from breaking
+# =========================================
+
+@app.get("/handle-it", response_class=HTMLResponse)
+def handle_it_alias(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    return RedirectResponse("/organize-my-day", status_code=303)
+
+
+@app.get("/today", response_class=HTMLResponse)
+def today_alias(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    return RedirectResponse("/organize-my-day", status_code=303)
+
+
+@app.get("/todays-work", response_class=HTMLResponse)
+def todays_work_alias(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    return RedirectResponse("/organize-my-day", status_code=303)
+
+
+@app.get("/today-work", response_class=HTMLResponse)
+def today_work_alias(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    return RedirectResponse("/organize-my-day", status_code=303)
+
+
+@app.get("/my-day", response_class=HTMLResponse)
+def my_day_alias(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+
+    if is_employee(u):
+        return RedirectResponse("/crew/my-day", status_code=303)
+
+    return RedirectResponse("/organize-my-day", status_code=303)
+
+
+@app.get("/crew-login", response_class=HTMLResponse)
+def crew_login_alias(request: Request):
+    return RedirectResponse("/login", status_code=303)
+
+
+@app.get("/crew-portal", response_class=HTMLResponse)
+def crew_portal_alias(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    return RedirectResponse("/employee", status_code=303)
+
+
+@app.get("/employees", response_class=HTMLResponse)
+def employees_alias(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    return RedirectResponse("/crew", status_code=303)
+
+
+@app.get("/calendar", response_class=HTMLResponse)
+def calendar_alias(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    return RedirectResponse("/schedule/year", status_code=303)
+
+
+@app.get("/daily-schedule", response_class=HTMLResponse)
+def daily_schedule_alias(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    return RedirectResponse("/schedule/day", status_code=303)
+
+
+@app.get("/monthly-schedule", response_class=HTMLResponse)
+def monthly_schedule_alias(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    return RedirectResponse("/schedule/year", status_code=303)
+
+
+@app.get("/field-log", response_class=HTMLResponse)
+def field_log_alias(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    return RedirectResponse("/field-logs", status_code=303)
+
+# =========================================
+# ADMIN LINK CHECK
+# =========================================
+
+@app.get("/admin/link-check", response_class=HTMLResponse)
+def admin_link_check(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+
+    if not is_admin(u):
+        return RedirectResponse("/jarvis", status_code=303)
+
+    links = [
+        ("Dashboard / Jarvis", "/jarvis"),
+        ("Design Studio", "/design-studio"),
+        ("Pool Monitoring", "/pool-monitoring"),
+        ("Organize My Day", "/organize-my-day"),
+        ("Handle It", "/handle-it"),
+        ("Crew Login", "/crew-login"),
+        ("Crew Portal", "/employee"),
+        ("Crew My Day", "/crew/my-day"),
+        ("Clients", "/clients"),
+        ("Properties", "/properties"),
+        ("Jobs", "/jobs"),
+        ("Photos", "/photos"),
+        ("Crew", "/crew"),
+        ("Weather", "/weather"),
+        ("Map", "/map"),
+        ("Daily Schedule", "/schedule/day"),
+        ("Full Calendar", "/schedule/year"),
+        ("Field Logs", "/field-logs"),
+        ("Estimates", "/estimates"),
+        ("Job Costing", "/job-costing"),
+        ("QuickBooks", "/quickbooks"),
+        ("Invisible Office", "/invisible-office"),
+        ("Talk to Jarvis", "/assistant-interview-live"),
+        ("Edit Dashboard", "/dashboard/theme"),
+        ("Logout", "/logout"),
+    ]
+
+    return templates.TemplateResponse(
+        "link_check.html",
+        ctx(request, links=links)
+    )
+
 @app.get("/handle-it", response_class=HTMLResponse)
 def handle_it_alias(request: Request):
     u = require_login(request)
@@ -1718,6 +1865,47 @@ def map_page(request: Request):
     employees = rows("SELECT * FROM poolops2_employees WHERE clocked_in=?", (True if USE_POSTGRES else 1,)) if is_admin(u) else []
     return templates.TemplateResponse("map.html", ctx(request, properties=properties_for_user(u), employees=employees))
 
+@app.get("/admin/link-check", response_class=HTMLResponse)
+def admin_link_check(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+
+    if not is_admin(u):
+        return RedirectResponse("/jarvis", status_code=303)
+
+    links = [
+        ("Dashboard / Jarvis", "/jarvis"),
+        ("Design Studio", "/design-studio"),
+        ("Pool Monitoring", "/pool-monitoring"),
+        ("Organize My Day", "/organize-my-day"),
+        ("Handle It", "/handle-it"),
+        ("Crew Login", "/crew-login"),
+        ("Crew Portal", "/employee"),
+        ("Crew My Day", "/crew/my-day"),
+        ("Clients", "/clients"),
+        ("Properties", "/properties"),
+        ("Jobs", "/jobs"),
+        ("Photos", "/photos"),
+        ("Crew", "/crew"),
+        ("Weather", "/weather"),
+        ("Map", "/map"),
+        ("Daily Schedule", "/schedule/day"),
+        ("Full Calendar", "/schedule/year"),
+        ("Field Logs", "/field-logs"),
+        ("Estimates", "/estimates"),
+        ("Job Costing", "/job-costing"),
+        ("QuickBooks", "/quickbooks"),
+        ("Invisible Office", "/invisible-office"),
+        ("Talk to Jarvis", "/assistant-interview-live"),
+        ("Edit Dashboard", "/dashboard/theme"),
+        ("Logout", "/logout"),
+    ]
+
+    return templates.TemplateResponse(
+        "link_check.html",
+        ctx(request, links=links)
+    ) 
 
 @app.get("/invisible-office", response_class=HTMLResponse)
 def invisible_office(request: Request):

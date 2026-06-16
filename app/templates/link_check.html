@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+  .link-check-page {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 80px 18px 40px;
+    color: #fff;
+  }
+
+  .link-check-hero {
+    margin-bottom: 22px;
+    padding: 24px;
+    border-radius: 24px;
+    background: rgba(7, 14, 20, .94);
+    border: 1px solid rgba(214,179,106,.28);
+  }
+
+  .link-check-hero h1 {
+    margin: 0;
+    color: #d6b36a;
+    font-size: clamp(2.5rem, 5vw, 5rem);
+    line-height: .9;
+    text-transform: uppercase;
+  }
+
+  .link-check-hero p {
+    color: rgba(255,255,255,.78);
+    font-weight: 850;
+  }
+
+  .link-list {
+    display: grid;
+    gap: 10px;
+  }
+
+  .link-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 12px;
+    align-items: center;
+    padding: 16px;
+    border-radius: 16px;
+    background: rgba(7,14,20,.90);
+    border: 1px solid rgba(214,179,106,.20);
+  }
+
+  .link-row strong {
+    color: #fff;
+    font-size: 1.05rem;
+  }
+
+  .link-row span {
+    color: rgba(255,255,255,.66);
+    font-weight: 800;
+  }
+
+  .link-row a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 120px;
+    min-height: 44px;
+    border-radius: 999px;
+    text-decoration: none;
+    color: #071017;
+    background: linear-gradient(135deg, #7b5a22, #d6b36a, #5f4519);
+    font-weight: 1000;
+    text-transform: uppercase;
+  }
+
+  @media (max-width: 700px) {
+    .link-row {
+      grid-template-columns: 1fr;
+    }
+
+    .link-row a {
+      width: 100%;
+    }
+  }
+</style>
+
+<div class="link-check-page">
+
+  <section class="link-check-hero">
+    <h1>Link Check</h1>
+    <p>Open each route from here. If it says Not Found or crashes, that link needs fixed.</p>
+  </section>
+
+  <section class="link-list">
+    {% for label, url in links %}
+      <div class="link-row">
+        <div>
+          <strong>{{ label }}</strong><br>
+          <span>{{ url }}</span>
+        </div>
+
+        <a href="{{ url }}">Open</a>
+      </div>
+    {% endfor %}
+  </section>
+
+</div>
+
+{% endblock %}
