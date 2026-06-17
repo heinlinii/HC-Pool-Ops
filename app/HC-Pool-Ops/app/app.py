@@ -613,25 +613,226 @@ def dashboard(request: Request, y: int = None, m: int = None):
     u = require_login(request)
     if not u:
         return login_redirect()
-    if u.get("role") == "employee":
-        return RedirectResponse("/employee", status_code=303)
-    if u.get("role") == "client":
-        return RedirectResponse("/client-portal", status_code=303)
-    stats = {
-        "clients": one("SELECT count(*) c FROM poolops2_clients")["c"],
-        "properties": one("SELECT count(*) c FROM poolops2_properties")["c"],
-        "jobs": one("SELECT count(*) c FROM poolops2_jobs")["c"],
-        "photos": one("SELECT count(*) c FROM poolops2_photo_logs")["c"],
-    }
-    return templates.TemplateResponse("dashboard.html", ctx(request, stats=stats, days=month_grid(y, m)))
 
+    return RedirectResponse("/jarvis", status_code=303)
+
+# =========================================
+# SAFE MOBILE / LEGACY ROUTE ALIASES
+# =========================================
+
+@app.get("/handle-it", response_class=HTMLResponse)
+def handle_it_alias(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    return RedirectResponse("/organize-my-day", status_code=303)
+
+
+@app.get("/today", response_class=HTMLResponse)
+def today_alias(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    return RedirectResponse("/organize-my-day", status_code=303)
+
+
+@app.get("/todays-work", response_class=HTMLResponse)
+def todays_work_alias(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    return RedirectResponse("/organize-my-day", status_code=303)
+
+
+@app.get("/today-work", response_class=HTMLResponse)
+def today_work_alias(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    return RedirectResponse("/organize-my-day", status_code=303)
+
+
+@app.get("/my-day", response_class=HTMLResponse)
+def my_day_alias(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+
+    if is_employee(u):
+        return RedirectResponse("/crew/my-day", status_code=303)
+
+    return RedirectResponse("/organize-my-day", status_code=303)
+
+
+@app.get("/crew-login", response_class=HTMLResponse)
+def crew_login_alias(request: Request):
+    return RedirectResponse("/login", status_code=303)
+
+
+@app.get("/crew-portal", response_class=HTMLResponse)
+def crew_portal_alias(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    return RedirectResponse("/employee", status_code=303)
+
+
+@app.get("/team", response_class=HTMLResponse)
+def team_old_alias(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    return RedirectResponse("/crew", status_code=303)
+
+
+@app.get("/ai", response_class=HTMLResponse)
+def ai_old_alias(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    return RedirectResponse("/assistant-interview-live", status_code=303)
+
+
+@app.get("/talk-to-jarvis", response_class=HTMLResponse)
+def talk_to_jarvis_old_alias(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    return RedirectResponse("/assistant-interview-live", status_code=303)
+
+
+@app.get("/capture", response_class=HTMLResponse)
+def capture_old_alias(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    return RedirectResponse("/invisible-office", status_code=303)
+
+
+@app.get("/office", response_class=HTMLResponse)
+def office_old_alias(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    return RedirectResponse("/invisible-office", status_code=303)
+
+
+@app.get("/billing", response_class=HTMLResponse)
+def billing_old_alias(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    return RedirectResponse("/invoices", status_code=303)
+
+
+@app.get("/where-am-i", response_class=HTMLResponse)
+def where_am_i_old_alias(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    return RedirectResponse("/map", status_code=303)
+
+
+@app.get("/client-portal", response_class=HTMLResponse)
+def client_portal_old_alias(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    return RedirectResponse("/jarvis", status_code=303)
+
+
+@app.get("/schedule", response_class=HTMLResponse)
+def schedule_old_alias(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    return RedirectResponse("/schedule/year", status_code=303)
+
+
+@app.get("/calendar", response_class=HTMLResponse)
+def calendar_alias(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    return RedirectResponse("/schedule/year", status_code=303)
+
+
+@app.get("/daily-schedule", response_class=HTMLResponse)
+def daily_schedule_alias(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    return RedirectResponse("/schedule/day", status_code=303)
+
+
+@app.get("/monthly-schedule", response_class=HTMLResponse)
+def monthly_schedule_alias(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    return RedirectResponse("/schedule/year", status_code=303)
+
+
+@app.get("/field-log", response_class=HTMLResponse)
+def field_log_alias(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    return RedirectResponse("/field-logs", status_code=303)
+
+
+@app.get("/communication", response_class=HTMLResponse)
+def communication_old_alias(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    return RedirectResponse("/invisible-office", status_code=303)
+
+
+@app.get("/health", response_class=HTMLResponse)
+def health_old_alias(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    return RedirectResponse("/organize-my-day", status_code=303)
+
+# =========================================
+# MISSING NAV FIXES
+# =========================================
+
+@app.get("/crew-portal", response_class=HTMLResponse)
+def crew_portal_alias(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    return RedirectResponse("/employee", status_code=303)
+
+
+@app.get("/employees", response_class=HTMLResponse)
+def employees_alias(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    return RedirectResponse("/crew", status_code=303)
+
+
+@app.get("/team", response_class=HTMLResponse)
+def team_alias(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    return RedirectResponse("/crew", status_code=303)
 
 @app.get("/dashboard/theme", response_class=HTMLResponse)
 def dashboard_theme(request: Request):
     u = require_login(request)
-    if not is_admin(u):
+    if not u:
         return login_redirect()
-    return templates.TemplateResponse("dashboard_theme.html", ctx(request))
+
+    if not is_admin(u):
+        return RedirectResponse("/jarvis", status_code=303)
+
+    return RedirectResponse("/design-studio", status_code=303)
 
 
 @app.post("/dashboard/theme")
