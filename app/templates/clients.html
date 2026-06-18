@@ -1,1 +1,35 @@
-{% extends "base.html" %}{% block content %}<section class="section-head"><h1>Clients</h1><form method="post" action="/clients/new" class="inline"><input name="name" placeholder="New client name"><button class="primary">+ Client</button></form></section><form class="search"><input name="q" value="{{ q }}" placeholder="Search clients"><button>Search</button></form><section class="list-grid">{% for c in clients %}<a class="list-card" href="/clients/{{ c.id }}" {% if c.card_image %}style="background-image:linear-gradient(rgba(0,0,0,.55),rgba(0,0,0,.78)),url('{{ c.card_image }}')"{% endif %}><h2>{{ c.name }}</h2><p>{{ c.phone or c.mobile or c.email }}</p><p>{{ c.city }} {{ c.state }}</p></a>{% endfor %}</section>{% endblock %}
+{% extends "base.html" %}
+{% block content %}
+
+<section class="section-head">
+  <h1>{{ design.get('clients', {}).get('title', 'Clients') }}</h1>
+  <p>{{ design.get('clients', {}).get('subtitle', 'The people, properties, pools, and promises we are responsible for.') }}</p>
+</section>
+
+<section class="card">
+  <form method="post" action="/clients/new" class="inline-form">
+    <input name="name" placeholder="New client name">
+    <button class="btn primary" type="submit">
+      {{ design.get('clients', {}).get('button_text', 'Add Client') }}
+    </button>
+  </form>
+</section>
+
+<section class="grid">
+  {% for client in clients %}
+    <a class="card" href="/clients/{{ client.id }}">
+      <h2>{{ client.name }}</h2>
+      <p>{{ client.phone or client.mobile or client.email or "No contact info yet" }}</p>
+      {% if client.billing_address %}
+        <p>{{ client.billing_address }}</p>
+      {% endif %}
+    </a>
+  {% else %}
+    <div class="card">
+      <h2>No clients yet</h2>
+      <p>Add your first client above.</p>
+    </div>
+  {% endfor %}
+</section>
+
+{% endblock %}

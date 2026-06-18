@@ -1,7 +1,53 @@
-{% extends "base.html" %}{% block content %}
-<section class="section-head"><h1>{% if is_employee %}My Jobs{% else %}Jobs{% endif %}</h1></section>
-{% if is_admin %}
-<section class="panel"><h2>New Job</h2><form method="post" action="/jobs/new" class="form-grid"><input name="client" placeholder="Client"><input name="property" placeholder="Property"><input name="address" placeholder="Address"><input name="job_type" placeholder="Job type"><input name="date" type="date"><button class="primary">Create Job</button></form></section>
-{% endif %}
-<section class="list-grid">{% for j in jobs %}<a class="list-card" href="/jobs/{{ j.id }}"><h2>{{ j.client or 'Job' }}</h2><p>{{ j.property }} {{ j.address }}</p><p><span class="pill">{{ j.status }}</span> {{ j.job_type }} · {{ j.date }}</p></a>{% endfor %}</section>
+{% extends "base.html" %}
+{% block content %}
+
+<section class="section-head">
+  <h1>{{ design.get('jobs', {}).get('title', 'Jobs') }}</h1>
+  <p>{{ design.get('jobs', {}).get('subtitle', 'Scheduled work, service calls, repairs, and field notes.') }}</p>
+</section>
+
+<section class="card">
+  <form method="post" action="/jobs/new" class="inline-form">
+    <input name="client" placeholder="Client name">
+    <input name="property" placeholder="Property / pool">
+    <input name="address" placeholder="Address">
+    <input name="job_type" placeholder="Job type" value="Service">
+    <input name="date" type="date">
+    <button class="btn primary" type="submit">
+      {{ design.get('jobs', {}).get('button_text', 'Add Job') }}
+    </button>
+  </form>
+</section>
+
+<section class="grid">
+  {% for job in jobs %}
+    <a class="card" href="/jobs/{{ job.id }}">
+      <h2>{{ job.job_type or "Job" }}</h2>
+
+      <p>
+        {{ job.client or "No client" }}
+        {% if job.property %} • {{ job.property }}{% endif %}
+      </p>
+
+      {% if job.address %}
+        <p>{{ job.address }}</p>
+      {% endif %}
+
+      <p>
+        Status: {{ job.status or "Pending" }}
+        {% if job.crew %} • Crew: {{ job.crew }}{% endif %}
+      </p>
+
+      {% if job.date or job.scheduled_start %}
+        <p>Date: {{ job.date or job.scheduled_start }}</p>
+      {% endif %}
+    </a>
+  {% else %}
+    <div class="card">
+      <h2>No jobs yet</h2>
+      <p>Add your first job above.</p>
+    </div>
+  {% endfor %}
+</section>
+
 {% endblock %}

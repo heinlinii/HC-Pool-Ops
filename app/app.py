@@ -383,6 +383,16 @@ def save_theme(data):
     THEME_FILE.write_text(json.dumps(data, indent=2), encoding="utf-8")
 
 DEFAULT_DESIGN = {
+    "global": {
+        "brass_color": "#d6b36a",
+        "dark_bg": "#071017",
+        "card_bg": "rgba(7, 14, 20, .94)",
+        "card_radius": "24px",
+        "page_padding": "80px 18px 40px",
+        "button_height": "104px",
+        "button_radius": "22px",
+        "mobile_page_padding": "56px 12px 28px",
+    },
     "dashboard": {
         "legacy_line": "Heinlin Field Ops • Founded 1907 • 5 Generations Strong",
         "crest_image": "/static/heinlin-wide-crest.png",
@@ -393,7 +403,6 @@ DEFAULT_DESIGN = {
         "search_subtitle": "Search it, say it, or hit the button.",
         "search_placeholder": "Find a client, job, property, photo, log, map, weather...",
         "handle_button": "Handle It",
-
         "page_top_space": "54px",
         "crest_width": "920px",
         "crest_height": "420px",
@@ -401,9 +410,74 @@ DEFAULT_DESIGN = {
         "motto_top_space": "22px",
         "section_gap": "22px",
         "button_height": "104px",
-    }
+    },
+    "login": {
+        "title": "Heinlin Field Ops",
+        "legacy_line": "Founded 1907 • 5 Generations Strong",
+        "subtitle": "Built by the hands that perfected the term work hard play harder.",
+        "button_text": "Enter Operations Center",
+        "crest_image": "/static/heinlin-wide-crest.png",
+        "background_image": "/static/heinlin-wide-crest.png",
+        "crest_width": "760px",
+        "card_width": "460px",
+    },
+    "schedule": {
+        "title": "Schedule",
+        "day_title": "Daily Schedule",
+        "week_title": "Weekly Schedule",
+        "subtitle": "Jobs, field work, service calls, and crew movement.",
+        "empty_text": "No jobs are scheduled for this view yet.",
+        "button_daily": "Daily",
+        "button_weekly": "Weekly",
+        "button_yearly": "Yearly",
+        "button_jobs": "Jobs",
+        "button_dashboard": "Dashboard",
+        "button_text": "Add Schedule Item",
+    },
+    "map": {
+        "title": "Field Map",
+        "subtitle": "Property pins, clocked-in employees, and jobsite locations.",
+        "map_height": "560px",
+        "mobile_map_height": "480px",
+        "top_padding": "115px",
+        "mobile_top_padding": "95px",
+    },
+    "clients": {
+        "title": "Clients",
+        "subtitle": "The people, properties, pools, and promises we are responsible for.",
+        "button_text": "Add Client",
+    },
+    "properties": {
+        "title": "Properties",
+        "subtitle": "Every pool, address, gate code, equipment pad, and detail in one place.",
+        "button_text": "Add Property",
+    },
+    "jobs": {
+        "title": "Jobs",
+        "subtitle": "Scheduled work, service calls, repairs, and field notes.",
+        "button_text": "Add Job",
+    },
+    "crew": {
+        "title": "Employees",
+        "subtitle": "Crew access, login credentials, roles, and field visibility.",
+        "button_text": "Add Employee",
+    },
+    "employee": {
+        "title": "Crew Portal",
+        "subtitle": "My jobs, clock in/out, photos, field notes, weather, and map.",
+        "button_text": "Clock / Field Work",
+    },
+    "photos": {
+        "title": "Photos",
+        "subtitle": "Job photos, property photos, progress shots, and field proof.",
+        "button_text": "Upload Photos",
+    },
+    "pool_monitoring": {
+        "title": "Pool Monitoring",
+        "subtitle": "Pentair access, pool alerts, service notes, and monitored systems.",
+        "button_text": "Add Pool Monitor",
+    },
 }
-
 
 def deep_update(base, updates):
     for key, value in updates.items():
@@ -1012,9 +1086,13 @@ def detailed_redirect(request: Request):
 @app.get("/dashboard/theme", response_class=HTMLResponse)
 def dashboard_theme(request: Request):
     u = require_login(request)
-    if not is_admin(u):
+    if not u:
         return login_redirect()
-    return templates.TemplateResponse("dashboard_theme.html", ctx(request))
+
+    if not is_admin(u):
+        return RedirectResponse("/jarvis", status_code=303)
+
+    return RedirectResponse("/design-studio", status_code=303)
 
 
 @app.post("/dashboard/theme")
@@ -1093,9 +1171,18 @@ def design_studio_save(
     login_subtitle: str = Form("Built by the hands that perfected the term work hard play harder."),
     login_button_text: str = Form("Enter Operations Center"),
     login_crest_image: str = Form("/static/heinlin-wide-crest.png"),
-    login_background_image: str = Form("/static/uploads/Dedicated%20to%20Steve%20Meyerholtz.jpg"),
+    login_background_image: str = Form("/static/heinlin-wide-crest.png"),
     login_crest_width: str = Form("760px"),
     login_card_width: str = Form("460px"),
+    clients_title: str = Form("Clients"),
+    clients_subtitle: str = Form("The people, properties, pools, and promises we are responsible for."),
+    clients_button_text: str = Form("Add Client"),
+    properties_title: str = Form("Properties"),
+    properties_subtitle: str = Form("Every pool, address, gate code, equipment pad, and detail in one place."),
+    properties_button_text: str = Form("Add Property"),
+    jobs_title: str = Form("Jobs"),
+    jobs_subtitle: str = Form("Scheduled work, service calls, repairs, and field notes."),
+    jobs_button_text: str = Form("Add Job"),
 
 ):
     u = require_login(request)
@@ -1153,9 +1240,27 @@ def design_studio_save(
         "subtitle": login_subtitle.strip() or "Built by the hands that perfected the term work hard play harder.",
         "button_text": login_button_text.strip() or "Enter Operations Center",
         "crest_image": login_crest_image.strip() or "/static/heinlin-wide-crest.png",
-        "background_image": login_background_image.strip() or "/static/uploads/Dedicated%20to%20Steve%20Meyerholtz.jpg",
+        "background_image": login_background_image.strip() or "/static/heinlin-wide-crest.png",
         "crest_width": login_crest_width.strip() or "760px",
         "card_width": login_card_width.strip() or "460px",
+    }
+
+    data["clients"] = {
+        "title": clients_title.strip() or "Clients",
+        "subtitle": clients_subtitle.strip() or "The people, properties, pools, and promises we are responsible for.",
+        "button_text": clients_button_text.strip() or "Add Client",
+    }
+
+    data["properties"] = {
+        "title": properties_title.strip() or "Properties",
+        "subtitle": properties_subtitle.strip() or "Every pool, address, gate code, equipment pad, and detail in one place.",
+        "button_text": properties_button_text.strip() or "Add Property",
+    }
+
+    data["jobs"] = {
+        "title": jobs_title.strip() or "Jobs",
+        "subtitle": jobs_subtitle.strip() or "Scheduled work, service calls, repairs, and field notes.",
+        "button_text": jobs_button_text.strip() or "Add Job",
     }
 
     save_design_settings(data)
