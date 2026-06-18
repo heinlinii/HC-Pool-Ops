@@ -2,17 +2,20 @@
 {% block content %}
 
 <style>
+  body.hfo-body .shell {
+    padding-top: 0 !important;
+  }
+
   .schedule-page {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 96px 18px 40px;
+    padding: 115px 18px 40px;
     color: #fff;
-    box-sizing: border-box;
   }
 
   .schedule-hero {
-    padding: 24px;
-    border-radius: 18px;
+    padding: 28px;
+    border-radius: 28px;
     background: rgba(7,14,20,.94);
     border: 1px solid rgba(214,179,106,.26);
     margin-bottom: 18px;
@@ -21,8 +24,8 @@
   .schedule-hero h1 {
     margin: 0;
     color: #fff;
-    font-size: clamp(2.2rem, 6vw, 4.5rem);
-    line-height: 1;
+    font-size: clamp(3rem, 7vw, 7rem);
+    line-height: .9;
   }
 
   .schedule-hero p {
@@ -41,7 +44,7 @@
   .schedule-actions a {
     text-decoration: none;
     padding: 13px 18px;
-    border-radius: 12px;
+    border-radius: 999px;
     font-weight: 1000;
     color: #071017;
     background: linear-gradient(135deg, #7b5a22, #d6b36a, #5f4519);
@@ -54,10 +57,9 @@
 
   .job-card {
     padding: 18px;
-    border-radius: 14px;
+    border-radius: 20px;
     background: rgba(7,14,20,.90);
     border: 1px solid rgba(214,179,106,.20);
-    color: inherit;
     text-decoration: none;
   }
 
@@ -75,35 +77,25 @@
 
   .empty-card {
     padding: 26px;
-    border-radius: 14px;
+    border-radius: 22px;
     background: rgba(7,14,20,.86);
     border: 1px dashed rgba(214,179,106,.35);
     color: rgba(255,255,255,.76);
     font-weight: 900;
   }
 
-  .empty-card p {
-    margin: 8px 0 0;
-    color: rgba(255,255,255,.64);
-    font-weight: 800;
-  }
-
   @media (max-width: 700px) {
     .schedule-page {
-      padding: 84px 12px 28px;
+      padding: 95px 12px 28px;
+    }
+
+    .schedule-hero {
+      padding: 20px;
+      border-radius: 22px;
     }
 
     .schedule-hero h1 {
-      font-size: 2.6rem;
-    }
-
-    .schedule-actions {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-    }
-
-    .schedule-actions a {
-      text-align: center;
+      font-size: 3.4rem;
     }
   }
 </style>
@@ -128,14 +120,19 @@
       {% for job in jobs %}
         <a class="job-card" href="/jobs/{{ job.id }}">
           <strong>{{ job.job_type or "Job" }}</strong>
-          <span>{{ job.client or "No client" }}{% if job.address %} • {{ job.address }}{% endif %}</span>
-          <span>Status: {{ job.status or "Pending" }}{% if job.crew %} • Crew: {{ job.crew }}{% endif %}</span>
+          <span>
+            {{ job.client or "No client" }}
+            {% if job.address %} • {{ job.address }}{% endif %}
+          </span>
+          <span>
+            Status: {{ job.status or "Pending" }}
+            {% if job.crew %} • Crew: {{ job.crew }}{% endif %}
+          </span>
         </a>
       {% endfor %}
     {% else %}
       <div class="empty-card">
         No jobs are scheduled for this view yet.
-        <p>Use Jobs to add work, or ask Jarvis to help organize the day.</p>
       </div>
     {% endif %}
   </section>
