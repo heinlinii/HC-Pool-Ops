@@ -143,7 +143,51 @@
 
     <div class="studio-grid">
 
-      <section class="studio-panel">
+<section class="studio-panel">
+  <h2>Login Page</h2>
+
+  <div class="studio-field">
+    <label>Login title</label>
+    <input name="login_title" value="{{ design.get('login', {}).get('title', 'Heinlin Field Ops') }}">
+  </div>
+
+  <div class="studio-field">
+    <label>Login legacy line</label>
+    <input name="login_legacy_line" value="{{ design.get('login', {}).get('legacy_line', 'Founded 1907 • 5 Generations Strong') }}">
+  </div>
+
+  <div class="studio-field">
+    <label>Login subtitle</label>
+    <textarea name="login_subtitle">{{ design.get('login', {}).get('subtitle', 'Built by the hands that perfected the term work hard play harder.') }}</textarea>
+  </div>
+
+  <div class="studio-field">
+    <label>Login button text</label>
+    <input name="login_button_text" value="{{ design.get('login', {}).get('button_text', 'Enter Operations Center') }}">
+  </div>
+
+  <div class="studio-field">
+    <label>Login crest image path</label>
+    <input name="login_crest_image" value="{{ design.get('login', {}).get('crest_image', '/static/heinlin-wide-crest.png') }}">
+  </div>
+
+  <div class="studio-field">
+    <label>Login background image path</label>
+    <input name="login_background_image" value="{{ design.get('login', {}).get('background_image', '/static/uploads/Dedicated%20to%20Steve%20Meyerholtz.jpg') }}">
+  </div>
+
+  <div class="studio-field">
+    <label>Login crest width</label>
+    <input name="login_crest_width" value="{{ design.get('login', {}).get('crest_width', '760px') }}">
+  </div>
+
+  <div class="studio-field">
+    <label>Login card width</label>
+    <input name="login_card_width" value="{{ design.get('login', {}).get('card_width', '460px') }}">
+  </div>
+</section>
+
+    <section class="studio-panel">
         <h2>Dashboard Words</h2>
 
         <div class="studio-field">

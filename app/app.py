@@ -1074,6 +1074,29 @@ def design_studio_save(
     motto_top_space: str = Form("22px"),
     section_gap: str = Form("22px"),
     button_height: str = Form("104px"),
+    schedule_title: str = Form("Schedule"),
+    schedule_day_title: str = Form("Daily Schedule"),
+    schedule_week_title: str = Form("Weekly Schedule"),
+    schedule_subtitle: str = Form("Jobs, field work, service calls, and crew movement."),
+    schedule_empty_text: str = Form("No jobs are scheduled for this view yet."),
+    schedule_button_daily: str = Form("Daily"),
+    schedule_button_weekly: str = Form("Weekly"),
+    schedule_button_yearly: str = Form("Yearly"),
+    map_title: str = Form("Field Map"),
+    map_subtitle: str = Form("Property pins, clocked-in employees, and jobsite locations."),
+    map_height: str = Form("560px"),
+    mobile_map_height: str = Form("480px"),
+    map_top_padding: str = Form("115px"),
+    map_mobile_top_padding: str = Form("95px"),
+    login_title: str = Form("Heinlin Field Ops"),
+    login_legacy_line: str = Form("Founded 1907 • 5 Generations Strong"),
+    login_subtitle: str = Form("Built by the hands that perfected the term work hard play harder."),
+    login_button_text: str = Form("Enter Operations Center"),
+    login_crest_image: str = Form("/static/heinlin-wide-crest.png"),
+    login_background_image: str = Form("/static/uploads/Dedicated%20to%20Steve%20Meyerholtz.jpg"),
+    login_crest_width: str = Form("760px"),
+    login_card_width: str = Form("460px"),
+
 ):
     u = require_login(request)
     if not is_admin(u):
@@ -1099,6 +1122,40 @@ def design_studio_save(
         "motto_top_space": motto_top_space.strip() or "22px",
         "section_gap": section_gap.strip() or "22px",
         "button_height": button_height.strip() or "104px",
+    }
+
+    data["schedule"] = {
+        "title": schedule_title.strip() or "Schedule",
+        "day_title": schedule_day_title.strip() or "Daily Schedule",
+        "week_title": schedule_week_title.strip() or "Weekly Schedule",
+        "subtitle": schedule_subtitle.strip() or "Jobs, field work, service calls, and crew movement.",
+        "empty_text": schedule_empty_text.strip() or "No jobs are scheduled for this view yet.",
+        "button_daily": schedule_button_daily.strip() or "Daily",
+        "button_weekly": schedule_button_weekly.strip() or "Weekly",
+        "button_yearly": schedule_button_yearly.strip() or "Yearly",
+        "button_jobs": "Jobs",
+        "button_dashboard": "Dashboard",
+        "button_text": "Add Schedule Item",
+    }
+
+    data["map"] = {
+        "title": map_title.strip() or "Field Map",
+        "subtitle": map_subtitle.strip() or "Property pins, clocked-in employees, and jobsite locations.",
+        "map_height": map_height.strip() or "560px",
+        "mobile_map_height": mobile_map_height.strip() or "480px",
+        "top_padding": map_top_padding.strip() or "115px",
+        "mobile_top_padding": map_mobile_top_padding.strip() or "95px",
+    }
+
+    data["login"] = {
+        "title": login_title.strip() or "Heinlin Field Ops",
+        "legacy_line": login_legacy_line.strip() or "Founded 1907 • 5 Generations Strong",
+        "subtitle": login_subtitle.strip() or "Built by the hands that perfected the term work hard play harder.",
+        "button_text": login_button_text.strip() or "Enter Operations Center",
+        "crest_image": login_crest_image.strip() or "/static/heinlin-wide-crest.png",
+        "background_image": login_background_image.strip() or "/static/uploads/Dedicated%20to%20Steve%20Meyerholtz.jpg",
+        "crest_width": login_crest_width.strip() or "760px",
+        "card_width": login_card_width.strip() or "460px",
     }
 
     save_design_settings(data)
