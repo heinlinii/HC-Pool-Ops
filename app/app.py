@@ -864,6 +864,16 @@ def handle_it_alias(request: Request):
         return login_redirect()
     return RedirectResponse("/organize-my-day", status_code=303)
 
+@app.get("/assistant-interview-live", response_class=HTMLResponse)
+def assistant_interview_live(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+
+    return templates.TemplateResponse(
+        "assistant_interview_live.html",
+        ctx(request)
+    )
 
 @app.get("/today", response_class=HTMLResponse)
 def today_alias(request: Request):

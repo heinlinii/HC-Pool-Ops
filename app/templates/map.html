@@ -1,6 +1,87 @@
 {% extends "base.html" %}
 {% block content %}
 
+<style>
+  body.hfo-body .shell {
+    padding-top: 0 !important;
+  }
+
+  .hfo-mobile-command {
+    padding: 82px 18px 32px !important;
+    margin: 0 auto !important;
+    width: 100% !important;
+    max-width: 1200px !important;
+    box-sizing: border-box !important;
+  }
+
+  .hfo-mobile-section {
+    margin: 0 !important;
+    padding: 22px !important;
+    border-radius: 18px !important;
+    background: rgba(7, 14, 20, .94) !important;
+    border: 1px solid rgba(214,179,106,.26) !important;
+  }
+
+  .hfo-mobile-section h2 {
+    margin: 0 0 14px !important;
+    color: #fff !important;
+    font-size: clamp(2.25rem, 6vw, 4.5rem) !important;
+    line-height: 1 !important;
+  }
+
+  .hfo-mobile-section .muted {
+    margin: 0 0 22px !important;
+    color: rgba(255,255,255,.76) !important;
+    font-weight: 850 !important;
+    font-size: 1.15rem !important;
+  }
+
+  #hfoMap {
+    width: 100% !important;
+    height: min(62vh, 620px) !important;
+    min-height: 430px !important;
+    border-radius: 14px !important;
+    overflow: hidden !important;
+    border: 1px solid rgba(214,179,106,.22) !important;
+    background: #071017 !important;
+  }
+
+  .hfo-map-pin {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 999px !important;
+    font-weight: 1000 !important;
+    color: #071017 !important;
+    background: #d6b36a !important;
+    border: 2px solid #fff !important;
+    box-shadow: 0 10px 22px rgba(0,0,0,.45) !important;
+  }
+
+  .hfo-employee-pin {
+    background: #86d9ff !important;
+  }
+
+  @media (max-width: 700px) {
+    .hfo-mobile-command {
+      padding: 78px 12px 24px !important;
+    }
+
+    .hfo-mobile-section {
+      padding: 14px !important;
+      border-radius: 16px !important;
+    }
+
+    .hfo-mobile-section h2 {
+      font-size: 2.4rem !important;
+    }
+
+    #hfoMap {
+      height: 58vh !important;
+      min-height: 360px !important;
+    }
+  }
+</style>
 <div class="hfo-mobile-command">
 
   <section class="hfo-mobile-section">
@@ -14,11 +95,22 @@
 
 </div>
 
+<!-- Embed data as JSON to avoid JS/templating parsing issues -->
+<script id="hfo-data" type="application/json">{{ {'properties': properties, 'employees': employees} | tojson | safe }}</script>
+
 <script>
-  const properties = {{ properties | tojson }};
-  const employees = {{ employees | tojson }};
+  const hfoDataEl = document.getElementById('hfo-data');
+  const hfoData = hfoDataEl ? JSON.parse(hfoDataEl.textContent || hfoDataEl.innerText || '{}') : {};
+  var properties = (typeof window !== 'undefined' && window.properties) ? window.properties : (hfoData.properties || []);
+  var employees = (typeof window !== 'undefined' && window.employees) ? window.employees : (hfoData.employees || []);
+
 
   const map = L.map("hfoMap").setView([37.9716, -87.5711], 11);
+
+  setTimeout(function () {
+    map.invalidateSize();
+  }, 250);
+
 
   L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
     maxZoom: 19,
