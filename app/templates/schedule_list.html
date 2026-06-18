@@ -103,16 +103,16 @@
 <div class="schedule-page">
 
   <section class="schedule-hero">
-    <h1>{{ title or "Schedule" }}</h1>
-    <p>Jobs, field work, service calls, and crew movement.</p>
+   <h1>{{ title or design.get("schedule", {}).get("title", "Schedule") }}</h1>
+<p>{{ design.get("schedule", {}).get("subtitle", "Jobs, field work, service calls, and crew movement.") }}</p>
   </section>
 
   <div class="schedule-actions">
-    <a href="/schedule/day">Daily</a>
-    <a href="/schedule/week">Weekly</a>
-    <a href="/schedule/year">Yearly</a>
-    <a href="/jobs">Jobs</a>
-    <a href="/jarvis">Dashboard</a>
+    <a href="/schedule/day">{{ design.get("schedule", {}).get("button_daily", "Daily") }}</a>
+<a href="/schedule/week">{{ design.get("schedule", {}).get("button_weekly", "Weekly") }}</a>
+<a href="/schedule/year">{{ design.get("schedule", {}).get("button_yearly", "Yearly") }}</a>
+<a href="/jobs">{{ design.get("schedule", {}).get("button_jobs", "Jobs") }}</a>
+<a href="/jarvis">{{ design.get("schedule", {}).get("button_dashboard", "Dashboard") }}</a>
   </div>
 
   <section class="job-list">
@@ -132,7 +132,7 @@
       {% endfor %}
     {% else %}
       <div class="empty-card">
-        No jobs are scheduled for this view yet.
+        {{ design.get("schedule", {}).get("empty_text", "No jobs are scheduled for this view yet.") }}
       </div>
     {% endif %}
   </section>

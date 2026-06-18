@@ -156,6 +156,84 @@
           <input name="motto_first" value="{{ design.dashboard.motto_first }}">
         </div>
 
+        <section class="studio-panel">
+  <h2>Schedule Page</h2>
+
+  <div class="studio-field">
+    <label>Schedule title</label>
+    <input name="schedule_title" value="{{ design.get('schedule', {}).get('title', 'Schedule') }}">
+  </div>
+
+  <div class="studio-field">
+    <label>Daily schedule title</label>
+    <input name="schedule_day_title" value="{{ design.get('schedule', {}).get('day_title', 'Daily Schedule') }}">
+  </div>
+
+  <div class="studio-field">
+    <label>Weekly schedule title</label>
+    <input name="schedule_week_title" value="{{ design.get('schedule', {}).get('week_title', 'Weekly Schedule') }}">
+  </div>
+
+  <div class="studio-field">
+    <label>Schedule subtitle</label>
+    <textarea name="schedule_subtitle">{{ design.get('schedule', {}).get('subtitle', 'Jobs, field work, service calls, and crew movement.') }}</textarea>
+  </div>
+
+  <div class="studio-field">
+    <label>Empty schedule message</label>
+    <input name="schedule_empty_text" value="{{ design.get('schedule', {}).get('empty_text', 'No jobs are scheduled for this view yet.') }}">
+  </div>
+
+  <div class="studio-field">
+    <label>Daily button text</label>
+    <input name="schedule_button_daily" value="{{ design.get('schedule', {}).get('button_daily', 'Daily') }}">
+  </div>
+
+  <div class="studio-field">
+    <label>Weekly button text</label>
+    <input name="schedule_button_weekly" value="{{ design.get('schedule', {}).get('button_weekly', 'Weekly') }}">
+  </div>
+
+  <div class="studio-field">
+    <label>Yearly button text</label>
+    <input name="schedule_button_yearly" value="{{ design.get('schedule', {}).get('button_yearly', 'Yearly') }}">
+  </div>
+</section>
+
+<section class="studio-panel">
+  <h2>Map Page</h2>
+
+  <div class="studio-field">
+    <label>Map title</label>
+    <input name="map_title" value="{{ design.get('map', {}).get('title', 'Field Map') }}">
+  </div>
+
+  <div class="studio-field">
+    <label>Map subtitle</label>
+    <textarea name="map_subtitle">{{ design.get('map', {}).get('subtitle', 'Property pins, clocked-in employees, and jobsite locations.') }}</textarea>
+  </div>
+
+  <div class="studio-field">
+    <label>Desktop map height</label>
+    <input name="map_height" value="{{ design.get('map', {}).get('map_height', '560px') }}">
+  </div>
+
+  <div class="studio-field">
+    <label>Mobile map height</label>
+    <input name="mobile_map_height" value="{{ design.get('map', {}).get('mobile_map_height', '480px') }}">
+  </div>
+
+  <div class="studio-field">
+    <label>Desktop top spacing</label>
+    <input name="map_top_padding" value="{{ design.get('map', {}).get('top_padding', '115px') }}">
+  </div>
+
+  <div class="studio-field">
+    <label>Mobile top spacing</label>
+    <input name="map_mobile_top_padding" value="{{ design.get('map', {}).get('mobile_top_padding', '95px') }}">
+  </div>
+</section>
+
         <div class="studio-field">
           <label>Motto second line</label>
           <input name="motto_second" value="{{ design.dashboard.motto_second }}">

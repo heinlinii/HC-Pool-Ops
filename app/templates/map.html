@@ -7,7 +7,7 @@
   }
 
   .hfo-mobile-command {
-    padding: 115px 18px 40px !important;
+    padding: {{ design.get("map", {}).get("top_padding", "115px") }} 18px 40px !important;
     margin: 0 auto !important;
     width: 100% !important;
     max-width: 1200px !important;
@@ -38,7 +38,7 @@
 
   #hfoMap {
     width: 100% !important;
-    height: 560px !important;
+    height: {{ design.get("map", {}).get("map_height", "560px") }} !important;
     min-height: 420px !important;
     border-radius: 22px !important;
     overflow: hidden !important;
@@ -64,7 +64,7 @@
 
   @media (max-width: 700px) {
     .hfo-mobile-command {
-      padding: 95px 12px 28px !important;
+      padding: {{ design.get("map", {}).get("mobile_top_padding", "95px") }} 12px 28px !important;
     }
 
     .hfo-mobile-section {
@@ -77,7 +77,7 @@
     }
 
     #hfoMap {
-      height: 480px !important;
+      height: {{ design.get("map", {}).get("mobile_map_height", "480px") }} !important;
       min-height: 380px !important;
     }
   }
@@ -85,9 +85,9 @@
 <div class="hfo-mobile-command">
 
   <section class="hfo-mobile-section">
-    <h2>Field Map</h2>
+    {{ design.get("map", {}).get("subtitle", "Property pins, clocked-in employees, and jobsite locations.") }}
     <p class="muted">
-      Property pins, clocked-in employees, and jobsite locations.
+      <h2>{{ design.get("map", {}).get("title", "Field Map") }}</h2>
     </p>
 
     <div id="hfoMap"></div>
