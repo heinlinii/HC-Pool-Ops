@@ -1,98 +1,83 @@
 {% extends "base.html" %}
 {% block content %}
 
-<div class="hfo-mobile-command">
+<section class="section-head">
+  <h1>{{ design.get('employee', {}).get('title', 'Crew Portal') }}</h1>
+  <p>{{ design.get('employee', {}).get('subtitle', 'My jobs, clock in/out, photos, field notes, weather, and map.') }}</p>
+</section>
 
-  <section class="hfo-mobile-section hfo-clock-card">
-    <h2>Clock In / Out</h2>
+<section class="card">
+  {% if employee %}
+    <h2>{{ employee.get('name', user.get('name', 'Employee')) }}</h2>
+    <p>{{ employee.get('role', 'Crew') }}</p>
 
-    {% if employee and employee.clocked_in %}
-      <p class="muted">
-        You are currently clocked in.
-        {% if employee.clocked_in_at %}
-          Clocked in since {{ employee.clocked_in_at }}.
-        {% endif %}
+    {% if employee.get('clocked_in') %}
+      <p><strong>Status:</strong> Clocked in</p>
+    {% else %}
+      <p><strong>Status:</strong> Clocked out</p>
+    {% endif %}
+
+    <form method="post" action="/employee/clock" class="inline-form">
+      <input type="hidden" name="lat" value="">
+      <input type="hidden" name="lng" value="">
+      <button class="btn primary" name="action" value="in" type="submit">Clock In</button>
+      <button class="btn secondary" name="action" value="out" type="submit">Clock Out</button>
+    </form>
+  {% else %}
+    <h2>{{ user.get('name', 'Crew Member') }}</h2>
+    <p>Employee profile is not linked yet.</p>
+  {% endif %}
+</section>
+
+<section class="section-head">
+  <h2>My Jobs</h2>
+</section>
+
+<section class="grid">
+  {% for job in jobs %}
+    <a class="card" href="/jobs/{{ job.id }}">
+      <h2>{{ job.job_type or "Job" }}</h2>
+      <p>
+        {{ job.client or "No client" }}
+        {% if job.property %} • {{ job.property }}{% endif %}
       </p>
-
-      <form method="post" action="/employee/clock" class="hfo-clock-form">
-        <input type="hidden" name="action" value="out">
-        <input type="hidden" name="lat">
-        <input type="hidden" name="lng">
-        <button class="btn danger" type="submit">Clock Out</button>
-      </form>
-    {% else %}
-      <p class="muted">You are currently clocked out.</p>
-
-      <form method="post" action="/employee/clock" class="hfo-clock-form">
-        <input type="hidden" name="action" value="in">
-        <input type="hidden" name="lat">
-        <input type="hidden" name="lng">
-        <button class="btn primary" type="submit">Clock In</button>
-      </form>
-    {% endif %}
-  </section>
-
-  <section class="hfo-mobile-section">
-    <h2>My Tools</h2>
-
-    <div class="hfo-mobile-buttons four">
-      <a href="/crew/my-day">Today's Jobs</a>
-      <a href="/field-logs">Add Field Log</a>
-      <a href="/photos">Upload Photos</a>
-      <a href="/map">Map</a>
-      <a href="/weather">Weather</a>
+      {% if job.address %}
+        <p>{{ job.address }}</p>
+      {% endif %}
+      <p>Status: {{ job.status or "Pending" }}</p>
+    </a>
+  {% else %}
+    <div class="card">
+      <h2>No jobs assigned</h2>
+      <p>No visible jobs for this crew member yet.</p>
     </div>
-  </section>
+  {% endfor %}
+</section>
 
-  <section class="hfo-mobile-section">
-    <h2>My Jobs</h2>
+<section class="section-head">
+  <h2>Quick Links</h2>
+</section>
 
-    {% if jobs %}
-      <div class="hfo-list">
-        {% for job in jobs %}
-          <a class="hfo-list-row" href="/jobs/{{ job.id }}">
-            <strong>{{ job.client or "No Client" }}</strong>
-            <span>{{ job.property or job.address or "No Property" }}</span>
-            <span>{{ job.job_type or "Job" }} • {{ job.status or "Pending" }}</span>
-          </a>
-        {% endfor %}
-      </div>
-    {% else %}
-      <p class="muted">No jobs assigned right now.</p>
-    {% endif %}
-  </section>
+<section class="grid">
+  <a class="card" href="/crew/my-day">
+    <h2>My Day</h2>
+    <p>Today’s assigned work.</p>
+  </a>
 
-</div>
+  <a class="card" href="/weather">
+    <h2>Weather</h2>
+    <p>Check field conditions.</p>
+  </a>
 
-<script>
-  function fillClockLocation() {
-    if (!navigator.geolocation) return;
+  <a class="card" href="/map">
+    <h2>Map</h2>
+    <p>Properties, jobs, and crew locations.</p>
+  </a>
 
-    navigator.geolocation.getCurrentPosition(
-      function(position) {
-        const lat = position.coords.latitude;
-        const lng = position.coords.longitude;
-
-        document.querySelectorAll('input[name="lat"]').forEach(function(input) {
-          input.value = lat;
-        });
-
-        document.querySelectorAll('input[name="lng"]').forEach(function(input) {
-          input.value = lng;
-        });
-      },
-      function(error) {
-        console.log("Location unavailable", error);
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 0
-      }
-    );
-  }
-
-  fillClockLocation();
-</script>
+  <a class="card" href="/photos">
+    <h2>Photos</h2>
+    <p>Upload or review job photos.</p>
+  </a>
+</section>
 
 {% endblock %}

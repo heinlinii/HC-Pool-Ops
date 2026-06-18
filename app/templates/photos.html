@@ -1,6 +1,80 @@
-{% extends "base.html" %}{% block content %}
-<section class="panel"><h1>Photos</h1>
-{% if is_admin or is_employee %}<form method="post" action="/photos/add" enctype="multipart/form-data" class="form-grid"><select name="property_id"><option value="0">Choose property</option>{% for p in properties %}<option value="{{ p.id }}">{{ p.client }} — {{ p.address }}</option>{% endfor %}</select><select name="job_id"><option value="0">Optional job</option>{% for j in jobs %}<option value="{{ j.id }}">{{ j.client }} — {{ j.job_type }}</option>{% endfor %}</select><input name="photo_type" value="Progress"><input name="title" placeholder="Photo title"><input name="date_str" type="date"><input type="file" name="photo_files" accept="image/*" multiple><textarea class="wide" name="notes" placeholder="Notes"></textarea><button class="primary wide">Upload Photos</button></form>{% endif %}
+{% extends "base.html" %}
+{% block content %}
+
+<section class="section-head">
+  <h1>{{ design.get('photos', {}).get('title', 'Photos') }}</h1>
+  <p>{{ design.get('photos', {}).get('subtitle', 'Job photos, property photos, progress shots, and field proof.') }}</p>
 </section>
-<section class="photo-grid">{% for ph in photos %}<article><img src="{{ ph.photo_url }}"><b>{{ ph.title }}</b><p>{{ ph.client }} · {{ ph.date }}</p><p>{{ ph.notes }}</p>{% if is_admin %}<form method="post" action="/photos/{{ ph.id }}/delete" onsubmit="return confirm('Delete this photo?');"><button class="danger-button">Delete Photo</button></form>{% endif %}</article>{% endfor %}</section>
+
+<section class="card">
+  <form method="post" action="/photos/add" enctype="multipart/form-data" class="inline-form">
+    <select name="job_id">
+      <option value="0">No job selected</option>
+      {% for job in jobs %}
+        <option value="{{ job.id }}">
+          {{ job.client or "No client" }} — {{ job.job_type or "Job" }}
+        </option>
+      {% endfor %}
+    </select>
+
+    <select name="property_id">
+      <option value="0">No property selected</option>
+      {% for prop in properties %}
+        <option value="{{ prop.id }}">
+          {{ prop.client or "No client" }} — {{ prop.address or prop.property_name or "Property" }}
+        </option>
+      {% endfor %}
+    </select>
+
+    <input name="title" placeholder="Photo title" value="Photo">
+    <input name="photo_type" placeholder="Photo type" value="Progress">
+    <input name="date_str" type="date">
+    <input name="photo_files" type="file" multiple>
+
+    <button class="btn primary" type="submit">
+      {{ design.get('photos', {}).get('button_text', 'Upload Photos') }}
+    </button>
+  </form>
+</section>
+
+<section class="grid">
+  {% for photo in photos %}
+    <div class="card">
+      {% if photo.photo_url %}
+        <img
+          src="{{ photo.photo_url }}"
+          alt="{{ photo.title or 'Photo' }}"
+          style="width:100%;max-height:260px;object-fit:cover;border-radius:16px;margin-bottom:12px;"
+        >
+      {% endif %}
+
+      <h2>{{ photo.title or "Photo" }}</h2>
+
+      <p>
+        {{ photo.client or "No client" }}
+        {% if photo.photo_type %} • {{ photo.photo_type }}{% endif %}
+      </p>
+
+      {% if photo.date %}
+        <p>{{ photo.date }}</p>
+      {% endif %}
+
+      {% if photo.notes %}
+        <p>{{ photo.notes }}</p>
+      {% endif %}
+
+      {% if is_admin %}
+        <form method="post" action="/photos/{{ photo.id }}/delete" onsubmit="return confirm('Delete this photo?');">
+          <button class="btn danger" type="submit">Delete</button>
+        </form>
+      {% endif %}
+    </div>
+  {% else %}
+    <div class="card">
+      <h2>No photos yet</h2>
+      <p>Upload your first job or property photo above.</p>
+    </div>
+  {% endfor %}
+</section>
+
 {% endblock %}

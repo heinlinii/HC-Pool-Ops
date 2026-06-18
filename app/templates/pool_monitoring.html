@@ -1,225 +1,88 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <title>Pool Monitoring</title>
-  <style>
-    body {
-      margin: 0;
-      min-height: 100vh;
-      background: #071017;
-      color: #f8f3e7;
-      font-family: Arial, sans-serif;
-      padding: 28px;
-    }
+{% extends "base.html" %}
+{% block content %}
 
-    .top {
-      display: flex;
-      justify-content: space-between;
-      gap: 16px;
-      align-items: center;
-      margin-bottom: 24px;
-    }
+{% set page_design = design|default({}) %}
+{% set pool_design = page_design.get('pool_monitoring', {}) %}
 
-    h1 {
-      margin: 0;
-      color: #d6b36a;
-      font-size: 42px;
-      text-transform: uppercase;
-    }
+<section class="section-head">
+  <h1>{{ pool_design.get('title', 'Pool Monitoring') }}</h1>
+  <p>{{ pool_design.get('subtitle', 'Pentair access, pool alerts, service notes, and monitored systems.') }}</p>
+</section>
 
-    p {
-      color: #d8d0bd;
-    }
+<section class="card">
+  <form method="post" action="/pool-monitoring/add" class="inline-form">
 
-    .btn, button {
-      display: inline-block;
-      background: #d6b36a;
-      color: #071017;
-      border: none;
-      border-radius: 999px;
-      padding: 12px 18px;
-      font-weight: 900;
-      text-decoration: none;
-      cursor: pointer;
-    }
+    <select name="client_id">
+      <option value="">Select client</option>
+      {% for client in clients %}
+        <option value="{{ client.id }}">{{ client.name }}</option>
+      {% endfor %}
+    </select>
 
-    .grid {
-      display: grid;
-      grid-template-columns: 380px 1fr;
-      gap: 22px;
-    }
+    <select name="property_id">
+      <option value="">Select property</option>
+      {% for prop in properties %}
+        <option value="{{ prop.id }}">
+          {{ prop.client or "No client" }} — {{ prop.address or prop.property_name or "Property" }}
+        </option>
+      {% endfor %}
+    </select>
 
-    .panel {
-      background: rgba(0,0,0,.45);
-      border: 1px solid rgba(214,179,106,.35);
-      border-radius: 18px;
-      padding: 18px;
-    }
+    <input name="system_brand" placeholder="System brand" value="Pentair">
+    <input name="system_type" placeholder="System type">
+    <input name="pentair_account_email" placeholder="Pentair account email">
+    <input name="monitoring_status" placeholder="Status" value="Not Started">
 
-    label {
-      display: block;
-      margin: 12px 0 5px;
-      color: #d8d0bd;
-      font-weight: 800;
-    }
+    <button class="btn primary" type="submit">
+      {{ pool_design.get('button_text', 'Add Pool Monitor') }}
+    </button>
+  </form>
+</section>
 
-    input, select, textarea {
-      width: 100%;
-      box-sizing: border-box;
-      border-radius: 10px;
-      border: 1px solid rgba(214,179,106,.35);
-      background: rgba(0,0,0,.45);
-      color: #fff;
-      padding: 10px;
-      font-size: 15px;
-    }
+<section class="grid">
+  {% for item in records %}
+    <div class="card">
+      <h2>{{ item.system_brand or "Pool System" }}</h2>
 
-    textarea {
-      min-height: 90px;
-    }
+      <p>
+        {{ item.client_name or item.client or "No client" }}
+        {% if item.property_name or item.address %}
+          • {{ item.property_name or item.address }}
+        {% endif %}
+      </p>
 
-    .cards {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 14px;
-    }
+      <p>Status: {{ item.monitoring_status or "Not Started" }}</p>
 
-    .card {
-      background: rgba(255,255,255,.05);
-      border: 1px solid rgba(214,179,106,.25);
-      border-radius: 16px;
-      padding: 16px;
-    }
+      {% if item.system_type %}
+        <p>System: {{ item.system_type }}</p>
+      {% endif %}
 
-    .status {
-      display: inline-block;
-      margin: 6px 0 12px;
-      padding: 6px 10px;
-      border-radius: 999px;
-      background: rgba(214,179,106,.15);
-      color: #d6b36a;
-      font-weight: 900;
-    }
+      {% if item.pentair_account_email %}
+        <p>Account: {{ item.pentair_account_email }}</p>
+      {% endif %}
 
-    @media (max-width: 900px) {
-      .grid, .cards {
-        grid-template-columns: 1fr;
-      }
-    }
-  </style>
-</head>
+      {% if item.current_alert %}
+        <p><strong>Alert:</strong> {{ item.current_alert }}</p>
+      {% endif %}
 
-<body>
+      {% if item.equipment_notes %}
+        <p>{{ item.equipment_notes }}</p>
+      {% endif %}
 
-  <div class="top">
-    <div>
-      <h1>Pool Monitoring</h1>
-      <p>Track Pentair monitoring access, alerts, equipment status, and service follow-up.</p>
-    </div>
+      {% if item.service_notes %}
+        <p>{{ item.service_notes }}</p>
+      {% endif %}
 
-    <a class="btn" href="/jarvis">Command Center</a>
-  </div>
-
-  <div class="grid">
-
-    <div class="panel">
-      <h2>Add Monitored Pool</h2>
-
-      <form method="post" action="/pool-monitoring/add">
-
-        <label>Client</label>
-        <select name="client_id">
-          <option value="">Select client</option>
-          {% for client in clients %}
-            <option value="{{ client.id }}">{{ client.name }}</option>
-          {% endfor %}
-        </select>
-
-        <label>Property</label>
-        <select name="property_id">
-          <option value="">Select property</option>
-          {% for property in properties %}
-            <option value="{{ property.id }}">
-              #{{ property.id }}
-              {% if property.address %} - {{ property.address }}{% endif %}
-            </option>
-          {% endfor %}
-        </select>
-
-        <label>Pentair System</label>
-        <select name="system_type">
-          <option value="IntelliCenter">IntelliCenter</option>
-          <option value="IntelliFlo3">IntelliFlo3</option>
-          <option value="IntelliConnect">IntelliConnect</option>
-          <option value="ScreenLogic">ScreenLogic</option>
-          <option value="Other Pentair">Other Pentair</option>
-        </select>
-
-        <label>Customer Pentair Email</label>
-        <input type="email" name="pentair_account_email" placeholder="customer@email.com">
-
-        <label>Monitoring Status</label>
-        <select name="monitoring_status">
-          <option>Not Started</option>
-          <option>Invite Sent</option>
-          <option>Active</option>
-          <option>Needs Setup</option>
-          <option>Offline</option>
-          <option>Removed</option>
-        </select>
-
-        <label>Current Alert</label>
-        <input type="text" name="current_alert" placeholder="Pump offline, heater fault, low flow, etc.">
-
-        <label>Equipment Notes</label>
-        <textarea name="equipment_notes"></textarea>
-
-        <label>Service Notes</label>
-        <textarea name="service_notes"></textarea>
-
-        <br><br>
-        <button type="submit">Add Pool Monitoring</button>
+      <form method="post" action="/pool-monitoring/{{ item.id }}/delete" onsubmit="return confirm('Delete this pool monitor?');">
+        <button class="btn danger" type="submit">Delete</button>
       </form>
     </div>
-
-    <div class="panel">
-      <h2>Monitored Pools</h2>
-
-      {% if records %}
-        <div class="cards">
-          {% for record in records %}
-            <div class="card">
-              <h3>{{ record.system_brand or "Pentair" }} {{ record.system_type or "" }}</h3>
-              <div class="status">{{ record.monitoring_status or "Not Started" }}</div>
-
-              <p><strong>Email:</strong> {{ record.pentair_account_email or "Not entered" }}</p>
-              <p><strong>Last Checked:</strong> {{ record.last_checked or "Not checked yet" }}</p>
-
-              {% if record.current_alert %}
-                <p><strong>Alert:</strong> {{ record.current_alert }}</p>
-              {% endif %}
-
-              {% if record.equipment_notes %}
-                <p><strong>Equipment:</strong> {{ record.equipment_notes }}</p>
-              {% endif %}
-
-              {% if record.service_notes %}
-                <p><strong>Service:</strong> {{ record.service_notes }}</p>
-              {% endif %}
-
-              <form method="post" action="/pool-monitoring/{{ record.id }}/delete">
-                <button type="submit">Delete</button>
-              </form>
-            </div>
-          {% endfor %}
-        </div>
-      {% else %}
-        <p>No monitored pools added yet.</p>
-      {% endif %}
+  {% else %}
+    <div class="card">
+      <h2>No monitored pools yet</h2>
+      <p>Add the first monitored pool system above.</p>
     </div>
+  {% endfor %}
+</section>
 
-  </div>
-
-</body>
-</html>
+{% endblock %}
