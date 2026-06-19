@@ -422,6 +422,82 @@
         </div>
       </section>
 
+<section class="studio-panel">
+  <h2>Crew / Employees Page</h2>
+
+  <div class="studio-field">
+    <label>Crew title</label>
+    <input name="crew_title" value="{{ design.get('crew', {}).get('title', 'Employees') }}">
+  </div>
+
+  <div class="studio-field">
+    <label>Crew subtitle</label>
+    <textarea name="crew_subtitle">{{ design.get('crew', {}).get('subtitle', 'Crew access, login credentials, roles, and field visibility.') }}</textarea>
+  </div>
+
+  <div class="studio-field">
+    <label>Crew button text</label>
+    <input name="crew_button_text" value="{{ design.get('crew', {}).get('button_text', 'Add Employee') }}">
+  </div>
+</section>
+
+<section class="studio-panel">
+  <h2>Employee Portal Page</h2>
+
+  <div class="studio-field">
+    <label>Employee portal title</label>
+    <input name="employee_title" value="{{ design.get('employee', {}).get('title', 'Crew Portal') }}">
+  </div>
+
+  <div class="studio-field">
+    <label>Employee portal subtitle</label>
+    <textarea name="employee_subtitle">{{ design.get('employee', {}).get('subtitle', 'My jobs, clock in/out, photos, field notes, weather, and map.') }}</textarea>
+  </div>
+
+  <div class="studio-field">
+    <label>Employee portal button text</label>
+    <input name="employee_button_text" value="{{ design.get('employee', {}).get('button_text', 'Clock / Field Work') }}">
+  </div>
+</section>
+
+<section class="studio-panel">
+  <h2>Photos Page</h2>
+
+  <div class="studio-field">
+    <label>Photos title</label>
+    <input name="photos_title" value="{{ design.get('photos', {}).get('title', 'Photos') }}">
+  </div>
+
+  <div class="studio-field">
+    <label>Photos subtitle</label>
+    <textarea name="photos_subtitle">{{ design.get('photos', {}).get('subtitle', 'Job photos, property photos, progress shots, and field proof.') }}</textarea>
+  </div>
+
+  <div class="studio-field">
+    <label>Photos button text</label>
+    <input name="photos_button_text" value="{{ design.get('photos', {}).get('button_text', 'Upload Photos') }}">
+  </div>
+</section>
+
+<section class="studio-panel">
+  <h2>Pool Monitoring Page</h2>
+
+  <div class="studio-field">
+    <label>Pool Monitoring title</label>
+    <input name="pool_monitoring_title" value="{{ design.get('pool_monitoring', {}).get('title', 'Pool Monitoring') }}">
+  </div>
+
+  <div class="studio-field">
+    <label>Pool Monitoring subtitle</label>
+    <textarea name="pool_monitoring_subtitle">{{ design.get('pool_monitoring', {}).get('subtitle', 'Pentair access, pool alerts, service notes, and monitored systems.') }}</textarea>
+  </div>
+
+  <div class="studio-field">
+    <label>Pool Monitoring button text</label>
+    <input name="pool_monitoring_button_text" value="{{ design.get('pool_monitoring', {}).get('button_text', 'Add Pool Monitor') }}">
+  </div>
+</section>
+
     </div>
 
     <div class="studio-actions">

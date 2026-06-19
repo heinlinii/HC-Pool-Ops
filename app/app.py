@@ -1174,6 +1174,21 @@ def design_studio_save(
     login_background_image: str = Form("/static/heinlin-wide-crest.png"),
     login_crest_width: str = Form("760px"),
     login_card_width: str = Form("460px"),
+        crew_title: str = Form("Employees"),
+    crew_subtitle: str = Form("Crew access, login credentials, roles, and field visibility."),
+    crew_button_text: str = Form("Add Employee"),
+
+    employee_title: str = Form("Crew Portal"),
+    employee_subtitle: str = Form("My jobs, clock in/out, photos, field notes, weather, and map."),
+    employee_button_text: str = Form("Clock / Field Work"),
+
+    photos_title: str = Form("Photos"),
+    photos_subtitle: str = Form("Job photos, property photos, progress shots, and field proof."),
+    photos_button_text: str = Form("Upload Photos"),
+
+    pool_monitoring_title: str = Form("Pool Monitoring"),
+    pool_monitoring_subtitle: str = Form("Pentair access, pool alerts, service notes, and monitored systems."),
+    pool_monitoring_button_text: str = Form("Add Pool Monitor"),
     clients_title: str = Form("Clients"),
     clients_subtitle: str = Form("The people, properties, pools, and promises we are responsible for."),
     clients_button_text: str = Form("Add Client"),
@@ -1244,6 +1259,30 @@ def design_studio_save(
         "crest_width": login_crest_width.strip() or "760px",
         "card_width": login_card_width.strip() or "460px",
     }
+    data["crew"] = {
+        "title": crew_title.strip() or "Employees",
+        "subtitle": crew_subtitle.strip() or "Crew access, login credentials, roles, and field visibility.",
+        "button_text": crew_button_text.strip() or "Add Employee",
+    }
+
+    data["employee"] = {
+        "title": employee_title.strip() or "Crew Portal",
+        "subtitle": employee_subtitle.strip() or "My jobs, clock in/out, photos, field notes, weather, and map.",
+        "button_text": employee_button_text.strip() or "Clock / Field Work",
+    }
+
+    data["photos"] = {
+        "title": photos_title.strip() or "Photos",
+        "subtitle": photos_subtitle.strip() or "Job photos, property photos, progress shots, and field proof.",
+        "button_text": photos_button_text.strip() or "Upload Photos",
+    }
+
+    data["pool_monitoring"] = {
+        "title": pool_monitoring_title.strip() or "Pool Monitoring",
+        "subtitle": pool_monitoring_subtitle.strip() or "Pentair access, pool alerts, service notes, and monitored systems.",
+        "button_text": pool_monitoring_button_text.strip() or "Add Pool Monitor",
+    }
+
 
     data["clients"] = {
         "title": clients_title.strip() or "Clients",
@@ -2224,3 +2263,4 @@ def invisible_office_search(request: Request, q: str = ""):
         "title": "Invisible Office"
     })
 
+ 

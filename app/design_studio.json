@@ -74,7 +74,7 @@
     "button_text": "Add Job"
   },
   "crew": {
-    "title": "Employees",
+    "title": "Team Command",
     "subtitle": "Crew access, login credentials, roles, and field visibility.",
     "button_text": "Add Employee"
   },
@@ -84,7 +84,7 @@
     "button_text": "Clock / Field Work"
   },
   "photos": {
-    "title": "Photos",
+    "title": "Field Proof",
     "subtitle": "Job photos, property photos, progress shots, and field proof.",
     "button_text": "Upload Photos"
   },
