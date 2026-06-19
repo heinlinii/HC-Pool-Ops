@@ -29,6 +29,23 @@
   {% endif %}
 </section>
 
+<section class="card">
+  <h2>GPS Tracking</h2>
+  <p id="gpsStatus">GPS tracking is off.</p>
+
+  <button class="btn primary" type="button" onclick="startGpsTracking()">
+    Start GPS Tracking
+  </button>
+
+  <button class="btn secondary" type="button" onclick="stopGpsTracking()">
+    Stop GPS Tracking
+  </button>
+
+  <p class="muted">
+    Keep this page open while working. Your phone must allow location access.
+  </p>
+</section>
+
 <section class="section-head">
   <h2>My Jobs</h2>
 </section>
@@ -80,4 +97,95 @@
   </a>
 </section>
 
+<script>
+  let gpsWatchId = null;
+  let lastGpsSend = 0;
+
+  function setGpsStatus(message) {
+    const el = document.getElementById("gpsStatus");
+    if (el) {
+      el.textContent = message;
+    }
+  }
+
+  function sendGpsPoint(position) {
+    const now = Date.now();
+
+    // Save one point per minute max.
+    if (now - lastGpsSend < 60000) {
+      return;
+    }
+
+    lastGpsSend = now;
+
+    const coords = position.coords;
+    const body = new URLSearchParams();
+
+    body.append("lat", coords.latitude);
+    body.append("lng", coords.longitude);
+    body.append("accuracy", coords.accuracy || "");
+    body.append("speed", coords.speed || "");
+    body.append("heading", coords.heading || "");
+    body.append("source", "employee_portal");
+    body.append("note", "auto_ping");
+
+    fetch("/gps/ping", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      body: body.toString()
+    })
+      .then(function (res) {
+        return res.json();
+      })
+      .then(function (data) {
+        if (data.ok) {
+          setGpsStatus("GPS tracking active. Last point saved.");
+        } else {
+          setGpsStatus("GPS tracking error: " + (data.error || "unknown"));
+        }
+      })
+      .catch(function () {
+        setGpsStatus("GPS tracking error while saving point.");
+      });
+  }
+
+  function startGpsTracking() {
+    if (!navigator.geolocation) {
+      setGpsStatus("GPS is not supported on this device/browser.");
+      return;
+    }
+
+    if (gpsWatchId !== null) {
+      setGpsStatus("GPS tracking is already running.");
+      return;
+    }
+
+    setGpsStatus("Requesting GPS permission...");
+
+    gpsWatchId = navigator.geolocation.watchPosition(
+      sendGpsPoint,
+      function (error) {
+        setGpsStatus("GPS error: " + error.message);
+      },
+      {
+        enableHighAccuracy: true,
+        maximumAge: 30000,
+        timeout: 20000
+      }
+    );
+
+    setGpsStatus("GPS tracking started. Keep this page open while working.");
+  }
+
+  function stopGpsTracking() {
+    if (gpsWatchId !== null) {
+      navigator.geolocation.clearWatch(gpsWatchId);
+      gpsWatchId = null;
+    }
+
+    setGpsStatus("GPS tracking stopped.");
+  }
+</script>
 {% endblock %}

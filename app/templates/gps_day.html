@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block content %}
+
+<section class="section-head">
+  <h1>GPS Day Log</h1>
+  <p>Recorded crew location points for {{ today }}.</p>
+</section>
+
+<section class="grid">
+  {% for p in points %}
+    <div class="card">
+      <h2>{{ p.employee_name or "Employee" }}</h2>
+      <p>{{ p.created_at }}</p>
+      <p>Lat: {{ p.latitude }} • Lng: {{ p.longitude }}</p>
+      {% if p.accuracy %}
+        <p>Accuracy: {{ p.accuracy }} meters</p>
+      {% endif %}
+      <a class="btn primary" target="_blank" href="https://www.google.com/maps?q={{ p.latitude }},{{ p.longitude }}">
+        Open Map
+      </a>
+    </div>
+  {% else %}
+    <div class="card">
+      <h2>No GPS points yet</h2>
+      <p>No employee locations have been recorded today.</p>
+    </div>
+  {% endfor %}
+</section>
+
+{% endblock %}

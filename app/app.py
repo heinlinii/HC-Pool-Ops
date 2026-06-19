@@ -219,6 +219,19 @@ def ensure_schema():
                 id SERIAL PRIMARY KEY,
                 name TEXT DEFAULT '', role TEXT DEFAULT '', phone TEXT DEFAULT '', email TEXT DEFAULT '', active BOOLEAN DEFAULT true, card_image TEXT DEFAULT '', username TEXT DEFAULT '', password TEXT DEFAULT ''
             )""")
+            c.execute("""CREATE TABLE IF NOT EXISTS employee_location_points (
+                id SERIAL PRIMARY KEY,
+                employee_id INTEGER,
+                employee_name TEXT DEFAULT '',
+                latitude REAL,
+                longitude REAL,
+                accuracy REAL,
+                speed REAL,
+                heading REAL,
+                source TEXT DEFAULT 'employee_portal',
+                note TEXT DEFAULT '',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )""")
             c.execute("""CREATE TABLE IF NOT EXISTS poolops2_photo_logs (
                 id SERIAL PRIMARY KEY,
                 job_id INTEGER, property_id INTEGER, client TEXT DEFAULT '', photo_type TEXT DEFAULT 'Progress', title TEXT DEFAULT '',
@@ -305,6 +318,19 @@ def ensure_schema():
             c.execute("""CREATE TABLE IF NOT EXISTS poolops2_employees (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT DEFAULT '', role TEXT DEFAULT '', phone TEXT DEFAULT '', email TEXT DEFAULT '', active BOOLEAN DEFAULT true, card_image TEXT DEFAULT '', username TEXT DEFAULT '', password TEXT DEFAULT ''
+            )""")
+            c.execute("""CREATE TABLE IF NOT EXISTS employee_location_points (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                employee_id INTEGER,
+                employee_name TEXT DEFAULT '',
+                latitude REAL,
+                longitude REAL,
+                accuracy REAL,
+                speed REAL,
+                heading REAL,
+                source TEXT DEFAULT 'employee_portal',
+                note TEXT DEFAULT '',
+                created_at TEXT DEFAULT ''
             )""")
             c.execute("""CREATE TABLE IF NOT EXISTS poolops2_photo_logs (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -938,6 +964,38 @@ def handle_it_alias(request: Request):
         return login_redirect()
     return RedirectResponse("/organize-my-day", status_code=303)
 
+
+@app.get("/send-it", response_class=HTMLResponse)
+def send_it_alias(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    return RedirectResponse("/assistant-interview-live", status_code=303)
+
+
+@app.get("/sendit", response_class=HTMLResponse)
+def sendit_alias(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    return RedirectResponse("/assistant-interview-live", status_code=303)
+
+
+@app.get("/schedule/today", response_class=HTMLResponse)
+def schedule_today_alias(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    return RedirectResponse("/schedule/day", status_code=303)
+
+
+@app.get("/todays-schedule", response_class=HTMLResponse)
+def todays_schedule_alias(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    return RedirectResponse("/schedule/day", status_code=303)
+
 @app.get("/assistant-interview-live", response_class=HTMLResponse)
 def assistant_interview_live(request: Request):
     u = require_login(request)
@@ -1048,6 +1106,11 @@ def admin_link_check(request: Request):
         ("Pool Monitoring", "/pool-monitoring"),
         ("Organize My Day", "/organize-my-day"),
         ("Handle It", "/handle-it"),
+        ("Send It", "/send-it"),
+        ("Schedule", "/schedule"),
+        ("Today Schedule", "/schedule/today"),
+        ("GPS Day Log", "/gps/day"),
+        ("GPS Stops", "/gps/stops"),
         ("Crew Login", "/crew-login"),
         ("Crew Portal", "/employee"),
         ("Crew My Day", "/crew/my-day"),
@@ -1174,7 +1237,7 @@ def design_studio_save(
     login_background_image: str = Form("/static/heinlin-wide-crest.png"),
     login_crest_width: str = Form("760px"),
     login_card_width: str = Form("460px"),
-        crew_title: str = Form("Employees"),
+    crew_title: str = Form("Employees"),
     crew_subtitle: str = Form("Crew access, login credentials, roles, and field visibility."),
     crew_button_text: str = Form("Add Employee"),
 
@@ -1841,6 +1904,251 @@ def crew_save(
 
     return RedirectResponse("/crew", status_code=303)
 
+
+
+@app.post("/gps/ping")
+def gps_ping(
+    request: Request,
+    lat: str = Form(""),
+    lng: str = Form(""),
+    accuracy: str = Form(""),
+    speed: str = Form(""),
+    heading: str = Form(""),
+    source: str = Form("employee_portal"),
+    note: str = Form(""),
+):
+    u = require_login(request)
+    if not u:
+        return {"ok": False, "error": "not_logged_in"}
+
+    if not (is_employee(u) or is_admin(u)):
+        return {"ok": False, "error": "not_allowed"}
+
+    try:
+        latitude = float(lat)
+        longitude = float(lng)
+    except Exception:
+        return {"ok": False, "error": "bad_location"}
+
+    def clean_float(value):
+        try:
+            return float(value) if value not in ("", None) else None
+        except Exception:
+            return None
+
+    now = datetime.now().isoformat(timespec="seconds")
+
+    exec_sql(
+        """
+        INSERT INTO employee_location_points
+        (employee_id, employee_name, latitude, longitude, accuracy, speed, heading, source, note, created_at)
+        VALUES (?,?,?,?,?,?,?,?,?,?)
+        """,
+        (
+            u.get("id"),
+            u.get("name") or u.get("username") or "",
+            latitude,
+            longitude,
+            clean_float(accuracy),
+            clean_float(speed),
+            clean_float(heading),
+            source,
+            note,
+            now,
+        )
+    )
+
+    if is_employee(u):
+        try:
+            exec_sql(
+                "UPDATE poolops2_employees SET clock_lat=?, clock_lng=?, last_seen_at=? WHERE id=?",
+                (latitude, longitude, now, u.get("id"))
+            )
+        except Exception:
+            pass
+
+    return {"ok": True}
+
+
+@app.get("/gps/day", response_class=HTMLResponse)
+def gps_day(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+
+    if not is_admin(u):
+        return RedirectResponse("/employee", status_code=303)
+
+    today = date.today().isoformat()
+
+    points = rows(
+        """
+        SELECT * FROM employee_location_points
+        WHERE created_at LIKE ?
+        ORDER BY employee_name, created_at
+        """,
+        (f"{today}%",)
+    )
+
+    return templates.TemplateResponse(
+        "gps_day.html",
+        ctx(request, points=points, today=today)
+    )
+
+def _gps_distance_feet(lat1, lng1, lat2, lng2):
+    """
+    Rough distance between two GPS points in feet.
+    Good enough for stop detection.
+    """
+    import math
+
+    try:
+        lat1 = float(lat1)
+        lng1 = float(lng1)
+        lat2 = float(lat2)
+        lng2 = float(lng2)
+    except Exception:
+        return 999999
+
+    earth_radius_feet = 20925524.9
+
+    p1 = math.radians(lat1)
+    p2 = math.radians(lat2)
+    dp = math.radians(lat2 - lat1)
+    dl = math.radians(lng2 - lng1)
+
+    a = math.sin(dp / 2) ** 2 + math.cos(p1) * math.cos(p2) * math.sin(dl / 2) ** 2
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+
+    return earth_radius_feet * c
+
+
+def _parse_gps_time(value):
+    try:
+        return datetime.fromisoformat(str(value).replace("Z", "+00:00").replace(" ", "T"))
+    except Exception:
+        try:
+            return datetime.strptime(str(value)[:19], "%Y-%m-%dT%H:%M:%S")
+        except Exception:
+            return None
+
+
+def build_gps_stops(points, radius_feet=150, min_minutes=5):
+    """
+    Turns raw GPS points into stop groups.
+
+    A stop starts when points stay within radius_feet.
+    A stop is kept only if it lasts min_minutes or longer.
+    """
+    stops = []
+
+    by_employee = {}
+
+    for p in points:
+        name = p.get("employee_name") or "Employee"
+        by_employee.setdefault(name, []).append(p)
+
+    for employee_name, employee_points in by_employee.items():
+        employee_points = sorted(employee_points, key=lambda x: str(x.get("created_at") or ""))
+
+        current = []
+
+        for point in employee_points:
+            lat = point.get("latitude")
+            lng = point.get("longitude")
+            point_time = _parse_gps_time(point.get("created_at"))
+
+            if lat is None or lng is None or not point_time:
+                continue
+
+            if not current:
+                current = [point]
+                continue
+
+            anchor = current[0]
+            dist = _gps_distance_feet(anchor.get("latitude"), anchor.get("longitude"), lat, lng)
+
+            if dist <= radius_feet:
+                current.append(point)
+            else:
+                if len(current) >= 2:
+                    start_time = _parse_gps_time(current[0].get("created_at"))
+                    end_time = _parse_gps_time(current[-1].get("created_at"))
+
+                    if start_time and end_time:
+                        minutes = round((end_time - start_time).total_seconds() / 60)
+
+                        if minutes >= min_minutes:
+                            avg_lat = sum(float(x.get("latitude")) for x in current if x.get("latitude") is not None) / len(current)
+                            avg_lng = sum(float(x.get("longitude")) for x in current if x.get("longitude") is not None) / len(current)
+
+                            stops.append({
+                                "employee_name": employee_name,
+                                "start_time": start_time,
+                                "end_time": end_time,
+                                "minutes": minutes,
+                                "latitude": avg_lat,
+                                "longitude": avg_lng,
+                                "point_count": len(current),
+                            })
+
+                current = [point]
+
+        if len(current) >= 2:
+            start_time = _parse_gps_time(current[0].get("created_at"))
+            end_time = _parse_gps_time(current[-1].get("created_at"))
+
+            if start_time and end_time:
+                minutes = round((end_time - start_time).total_seconds() / 60)
+
+                if minutes >= min_minutes:
+                    avg_lat = sum(float(x.get("latitude")) for x in current if x.get("latitude") is not None) / len(current)
+                    avg_lng = sum(float(x.get("longitude")) for x in current if x.get("longitude") is not None) / len(current)
+
+                    stops.append({
+                        "employee_name": employee_name,
+                        "start_time": start_time,
+                        "end_time": end_time,
+                        "minutes": minutes,
+                        "latitude": avg_lat,
+                        "longitude": avg_lng,
+                        "point_count": len(current),
+                    })
+
+    return stops
+
+
+@app.get("/gps/stops", response_class=HTMLResponse)
+def gps_stops(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+
+    if not is_admin(u):
+        return RedirectResponse("/employee", status_code=303)
+
+    today = date.today().isoformat()
+
+    points = rows(
+        """
+        SELECT * FROM employee_location_points
+        WHERE created_at LIKE ?
+        ORDER BY employee_name, created_at
+        """,
+        (f"{today}%",)
+    )
+
+    stops = build_gps_stops(points, radius_feet=150, min_minutes=5)
+
+    return templates.TemplateResponse(
+        "gps_stops.html",
+        ctx(
+            request,
+            today=today,
+            stops=stops,
+            points=points,
+        )
+    )
 
 @app.get("/employee", response_class=HTMLResponse)
 def employee_portal(request: Request):
