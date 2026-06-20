@@ -163,15 +163,15 @@
 
   .hfo-action-list {
     display: grid;
-    gap: 10px;
+    gap: 12px;
   }
 
   .hfo-action {
-    min-height: 64px;
-    padding: 14px 16px;
-    border-radius: 12px;
-    border: 1px solid rgba(214,179,106,.24);
-    background: rgba(7, 14, 20, .82);
+    min-height: 58px;
+    padding: 0;
+    border-radius: 0;
+    border: 0;
+    background: transparent;
     color: #fff;
     text-decoration: none;
     display: flex;
@@ -197,17 +197,48 @@
   }
 
   .hfo-action.primary {
-    background: linear-gradient(135deg, #7b5a22, #d6b36a, #5f4519);
+    background: transparent;
   }
 
   .hfo-action.primary strong,
   .hfo-action.primary span {
-    color: #071017;
+    color: #d6b36a;
   }
 
   .hfo-action.placeholder {
-    border-style: dashed;
-    background: rgba(7, 14, 20, .56);
+    opacity: .82;
+  }
+
+  .hfo-action-button {
+    width: 100%;
+    min-height: 64px;
+    padding: 0 18px;
+    border-radius: 14px;
+    border: 0;
+    background: linear-gradient(135deg, #7b5a22, #d6b36a, #5f4519);
+    color: #071017;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    box-sizing: border-box;
+  }
+
+  .hfo-action-button strong,
+  .hfo-action-button span {
+    color: #071017;
+  }
+
+  .hfo-plain-dashboard .hfo-hero {
+    padding: 0;
+    border-radius: 0;
+    border: 0;
+    background: transparent;
+  }
+
+  .hfo-plain-dashboard .hfo-section {
+    padding-top: 4px;
   }
 
   @media (max-width: 1000px) {
@@ -245,8 +276,8 @@
   }
 </style>
 
-<div class="hfo-dashboard">
-  {% if is_admin %}
+{% if is_admin %}
+  <div class="hfo-dashboard">
     <section class="hfo-hero">
       <div class="hfo-hero-kicker">{{ greeting or "Welcome" }}{% if user %}, {{ user.get("name") or user.get("username") }}{% endif %}</div>
       <h1>Admin Command Center</h1>
@@ -280,8 +311,10 @@
         </div>
       </section>
     {% endif %}
+  </div>
 
-  {% elif is_employee %}
+{% elif is_employee %}
+  <div class="hfo-dashboard hfo-plain-dashboard">
     <section class="hfo-hero">
       <div class="hfo-hero-kicker">{{ greeting or "Welcome" }}{% if user %}, {{ user.get("name") or user.get("username") }}{% endif %}</div>
       <h1>Crew Dashboard</h1>
@@ -292,18 +325,20 @@
       <section class="hfo-section">
         <div class="hfo-section-title">Crew Tools</div>
         <div class="hfo-action-list">
-          <a class="hfo-action primary" href="/crew/my-day"><strong>My Day</strong><span>Today&apos;s assigned field work.</span></a>
-          <a class="hfo-action" href="/employee"><strong>Crew Portal</strong><span>Clock in/out and GPS tracking controls.</span></a>
-          <a class="hfo-action" href="/jobs"><strong>My Jobs</strong><span>Assigned work orders and job notes.</span></a>
-          <a class="hfo-action" href="/photos"><strong>Photos</strong><span>Upload or review job photos.</span></a>
-          <a class="hfo-action" href="/schedule/day"><strong>Schedule</strong><span>Today&apos;s schedule.</span></a>
-          <a class="hfo-action" href="/map"><strong>Map</strong><span>Properties, jobs, and route context.</span></a>
-          <a class="hfo-action" href="/weather"><strong>Weather</strong><span>Check field conditions.</span></a>
+          <a class="hfo-action-button" href="/crew/my-day"><strong>My Day</strong><span>Today&apos;s work</span></a>
+          <a class="hfo-action-button" href="/employee"><strong>Crew Portal</strong><span>Clock and GPS</span></a>
+          <a class="hfo-action-button" href="/jobs"><strong>My Jobs</strong><span>Assigned work</span></a>
+          <a class="hfo-action-button" href="/photos"><strong>Photos</strong><span>Field proof</span></a>
+          <a class="hfo-action-button" href="/schedule/day"><strong>Schedule</strong><span>Today</span></a>
+          <a class="hfo-action-button" href="/map"><strong>Map</strong><span>Locations</span></a>
+          <a class="hfo-action-button" href="/weather"><strong>Weather</strong><span>Conditions</span></a>
         </div>
       </section>
     {% endif %}
+  </div>
 
-  {% elif is_client %}
+{% elif is_client %}
+  <div class="hfo-dashboard hfo-plain-dashboard">
     <section class="hfo-hero">
       <div class="hfo-hero-kicker">{{ greeting or "Welcome" }}{% if user %}, {{ user.get("name") or user.get("username") }}{% endif %}</div>
       <h1>Client Portal</h1>
@@ -314,7 +349,7 @@
       <section class="hfo-section">
         <div class="hfo-section-title">Your Account</div>
         <div class="hfo-action-list">
-          <a class="hfo-action primary" href="/client-portal"><strong>My Portal</strong><span>Properties, jobs, photos, and account notes.</span></a>
+          <a class="hfo-action-button" href="/client-portal"><strong>My Portal</strong><span>Open account</span></a>
           <div class="hfo-action placeholder"><strong>My Properties</strong><span>Available inside the client portal.</span></div>
           <div class="hfo-action placeholder"><strong>My Jobs</strong><span>Available inside the client portal.</span></div>
           <div class="hfo-action placeholder"><strong>My Photos</strong><span>Available inside the client portal.</span></div>
@@ -323,14 +358,16 @@
         </div>
       </section>
     {% endif %}
+  </div>
 
-  {% else %}
+{% else %}
+  <div class="hfo-dashboard hfo-plain-dashboard">
     <section class="hfo-hero">
       <div class="hfo-hero-kicker">Heinlin Field Ops</div>
       <h1>Dashboard</h1>
       <p>Your account role is not set. Please contact Heinlin to finish portal setup.</p>
     </section>
-  {% endif %}
-</div>
+  </div>
+{% endif %}
 
 {% endblock %}
