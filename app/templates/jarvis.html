@@ -279,9 +279,9 @@
 {% if is_admin %}
   <div class="hfo-dashboard">
     <section class="hfo-hero">
-      <div class="hfo-hero-kicker">{{ greeting or "Welcome" }}{% if user %}, {{ user.get("name") or user.get("username") }}{% endif %}</div>
-      <h1>Admin Command Center</h1>
-      <p>Run the office, the field, the schedule, and the service board from one place.</p>
+      <div class="hfo-hero-kicker">{{ design.get('dashboard', {}).get('legacy_line', greeting or 'Welcome') }}</div>
+      <h1>{{ design.get('dashboard', {}).get('motto_first', 'Admin') }} {{ design.get('dashboard', {}).get('motto_second', 'Command Center') }}</h1>
+      <p>{{ design.get('dashboard', {}).get('hero_subline', 'Run the office, the field, the schedule, and the service board from one place.') }}</p>
 
       <form class="hfo-search-form" action="/jarvis/search" method="get">
         <input type="text" name="q" placeholder="{{ design.get('dashboard', {}).get('search_placeholder', 'Search or tell Jarvis what needs handled') }}" autocomplete="off">
@@ -317,8 +317,8 @@
   <div class="hfo-dashboard hfo-plain-dashboard">
     <section class="hfo-hero">
       <div class="hfo-hero-kicker">{{ greeting or "Welcome" }}{% if user %}, {{ user.get("name") or user.get("username") }}{% endif %}</div>
-      <h1>Crew Dashboard</h1>
-      <p>Your day, assigned jobs, clock tools, photos, map, and weather without office-only controls.</p>
+      <h1>{{ design.get('employee', {}).get('title', 'Crew Dashboard') }}</h1>
+      <p>{{ design.get('employee', {}).get('subtitle', 'Your day, assigned jobs, clock tools, photos, map, and weather without office-only controls.') }}</p>
     </section>
 
     {% if is_employee %}
@@ -326,7 +326,7 @@
         <div class="hfo-section-title">Crew Tools</div>
         <div class="hfo-action-list">
           <a class="hfo-action-button" href="/crew/my-day"><strong>My Day</strong><span>Today&apos;s work</span></a>
-          <a class="hfo-action-button" href="/employee"><strong>Crew Portal</strong><span>Clock and GPS</span></a>
+          <a class="hfo-action-button" href="/employee"><strong>{{ design.get('employee', {}).get('title', 'Crew Portal') }}</strong><span>Clock and GPS</span></a>
           <a class="hfo-action-button" href="/jobs"><strong>My Jobs</strong><span>Assigned work</span></a>
           <a class="hfo-action-button" href="/photos"><strong>Photos</strong><span>Field proof</span></a>
           <a class="hfo-action-button" href="/schedule/day"><strong>Schedule</strong><span>Today</span></a>
@@ -350,11 +350,6 @@
         <div class="hfo-section-title">Your Account</div>
         <div class="hfo-action-list">
           <a class="hfo-action-button" href="/client-portal"><strong>My Portal</strong><span>Open account</span></a>
-          <div class="hfo-action placeholder"><strong>My Properties</strong><span>Available inside the client portal.</span></div>
-          <div class="hfo-action placeholder"><strong>My Jobs</strong><span>Available inside the client portal.</span></div>
-          <div class="hfo-action placeholder"><strong>My Photos</strong><span>Available inside the client portal.</span></div>
-          <div class="hfo-action placeholder"><strong>Request Service</strong><span>Placeholder for a future request form.</span></div>
-          <div class="hfo-action placeholder"><strong>Contact Heinlin</strong><span>Placeholder for direct contact options.</span></div>
         </div>
       </section>
     {% endif %}

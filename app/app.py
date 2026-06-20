@@ -1786,9 +1786,11 @@ def schedule_month(request: Request):
 def schedule_day(request: Request):
     u = require_login(request)
     if not u: return login_redirect()
-    today = date.today().isoformat()
-    visible_jobs = [j for j in jobs_for_user(u) if schedule_date(j) == today]
-    return templates.TemplateResponse("schedule_list.html", ctx(request, title="Daily Schedule", jobs=visible_jobs))
+    selected_day = request.query_params.get("date") or date.today().isoformat()
+    visible_jobs = [j for j in jobs_for_user(u) if schedule_date(j) == selected_day]
+    design = design_settings()
+    title = design.get("schedule", {}).get("day_title", "Daily Schedule")
+    return templates.TemplateResponse("schedule_list.html", ctx(request, title=title, selected_day=selected_day, jobs=visible_jobs))
 
 @app.get("/schedule/week", response_class=HTMLResponse)
 def schedule_week(request: Request):
@@ -1802,7 +1804,9 @@ def schedule_week(request: Request):
             d = date.fromisoformat(ds)
             if start <= d <= end: jobs.append(j)
         except Exception: pass
-    return templates.TemplateResponse("schedule_list.html", ctx(request, title="Weekly Schedule", jobs=jobs))
+    design = design_settings()
+    title = design.get("schedule", {}).get("week_title", "Weekly Schedule")
+    return templates.TemplateResponse("schedule_list.html", ctx(request, title=title, jobs=jobs))
 
 
 @app.get("/photos", response_class=HTMLResponse)

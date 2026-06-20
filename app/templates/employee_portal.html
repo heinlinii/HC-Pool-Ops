@@ -1,10 +1,80 @@
 {% extends "base.html" %}
 {% block content %}
 
-<section class="section-head">
-  <h1>{{ design.get('employee', {}).get('title', 'Crew Portal') }}</h1>
-  <p>{{ design.get('employee', {}).get('subtitle', 'My jobs, clock in/out, photos, field notes, weather, and map.') }}</p>
-</section>
+<div class="employee-page-top">
+
+  <div class="employee-crest-top">
+    <img src="/static/heinlin-wide-crest.png" alt="Heinlin Crest">
+  </div>
+
+  <section class="section-head">
+    <div>
+      <h1>{{ design.get('employee', {}).get('title', 'Crew Portal') }}</h1>
+      <p>{{ design.get('employee', {}).get('subtitle', 'My jobs, clock in/out, photos, field notes, weather, and map.') }}</p>
+    </div>
+    <div class="employee-header-actions">
+      <a class="btn primary" href="/jarvis">Jarvis</a>
+    </div>
+  </section>
+
+</div>
+
+<style>
+  .employee-page-top {
+    position: relative;
+    min-height: 120px;
+  }
+
+  .employee-crest-top {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 190px;
+    max-width: 32vw;
+    z-index: 5;
+  }
+
+  .employee-crest-top img {
+    display: block;
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+    filter: drop-shadow(0 14px 30px rgba(0,0,0,.55));
+  }
+
+  .employee-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-right: 210px;
+  }
+
+  .jarvis-crew-card {
+    border: 1px solid rgba(214,179,106,.34);
+    background:
+      linear-gradient(135deg, rgba(214,179,106,.10), rgba(7,14,20,.95)),
+      rgba(7,14,20,.94);
+  }
+
+  .jarvis-crew-card h2 {
+    color: #d6b36a;
+  }
+
+  @media (max-width: 700px) {
+    .employee-page-top {
+      min-height: 92px;
+    }
+
+    .employee-crest-top {
+      width: 120px;
+      opacity: .92;
+    }
+
+    .employee-header-actions {
+      padding-right: 130px;
+    }
+  }
+</style>
 
 <section class="card">
   {% if employee %}
@@ -76,6 +146,12 @@
 </section>
 
 <section class="grid">
+
+<a class="card jarvis-crew-card" href="/assistant-interview-live">
+  <h2>Talk to Jarvis</h2>
+  <p>Ask Jarvis about today’s jobs, notes, photos, problems, materials, or what needs handled next.</p>
+</a>
+  
   <a class="card" href="/crew/my-day">
     <h2>My Day</h2>
     <p>Today’s assigned work.</p>

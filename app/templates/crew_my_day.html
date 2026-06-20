@@ -4,8 +4,8 @@
 <section class="panel">
   <div class="section-head">
     <div>
-      <h1>My Day</h1>
-      <p class="muted">Today’s assigned jobs. Open a job, add photos, add notes, and complete it.</p>
+      <h1>{{ design.get('employee', {}).get('button_text', 'My Day') }}</h1>
+      <p class="muted">{{ design.get('employee', {}).get('subtitle', 'Today assigned jobs. Open a job, add photos, add notes, and complete it.') }}</p>
     </div>
     <div class="actions">
       <a class="btn" href="/dashboard">Dashboard</a>
@@ -15,7 +15,7 @@
 </section>
 
 <section class="panel">
-  <h2>Today’s Jobs</h2>
+  <h2>Today's Jobs</h2>
 
   {% if my_jobs %}
     <div class="list-grid">
@@ -28,25 +28,24 @@
         <p><strong>Status:</strong> {{ j.status or "Open" }}</p>
 
         <div class="actions">
-  <a class="btn primary" href="/jobs/{{ j.id }}">Open Job</a>
+          <a class="btn primary" href="/jobs/{{ j.id }}">Open Job</a>
 
-  <form method="post" action="/jobs/{{ j.id }}/start" style="display:inline;">
-    <button class="btn" type="submit">Start Job</button>
-  </form>
+          <form method="post" action="/jobs/{{ j.id }}/start" style="display:inline;">
+            <button class="btn" type="submit">Start Job</button>
+          </form>
 
-  <a class="btn" href="/photos">Upload Photos</a>
+          <a class="btn" href="/photos">Upload Photos</a>
+          <a class="btn" href="/field-logs">Field Log</a>
 
-  <a class="btn" href="/field-logs">Field Log</a>
-
-  <form method="post" action="/jobs/{{ j.id }}/complete" style="display:inline;">
-    <button class="btn danger" type="submit">Complete Job</button>
-  </form>
-</div>
+          <form method="post" action="/jobs/{{ j.id }}/complete" style="display:inline;">
+            <button class="btn danger" type="submit">Complete Job</button>
+          </form>
+        </div>
       </div>
       {% endfor %}
     </div>
   {% else %}
-    <p class="muted">No jobs assigned for today.</p>
+    <p class="muted">{{ design.get('schedule', {}).get('empty_text', 'No jobs assigned for today.') }}</p>
   {% endif %}
 </section>
 

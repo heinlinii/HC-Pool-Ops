@@ -1,6 +1,7 @@
 from datetime import date
 from pathlib import Path
 from typing import Optional
+import json
 
 from fastapi import APIRouter, Request, Form
 from fastapi.responses import RedirectResponse
@@ -12,6 +13,7 @@ from app.models import PoolMonitoring, Client, Property
 
 
 ROOT = Path(__file__).resolve().parent.parent.parent
+DESIGN_FILE = ROOT / "app" / "design_studio.json"
 
 router = APIRouter()
 templates = Jinja2Templates(directory=str(ROOT / "app" / "templates"))
@@ -37,12 +39,23 @@ def is_employee(user):
     return user and str(user.get("role", "")).lower() in ("employee", "crew")
 
 
+def design_settings():
+    if not DESIGN_FILE.exists():
+        return {}
+
+    try:
+        return json.loads(DESIGN_FILE.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+
+
 def ctx(request: Request, **kwargs):
     user = require_login(request)
     data = {
         "request": request,
         "user": user,
         "theme": {},
+        "design": design_settings(),
         "is_admin": is_admin(user),
         "is_client": is_client(user),
         "is_employee": is_employee(user),

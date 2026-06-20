@@ -104,7 +104,10 @@
 
   <section class="schedule-hero">
    <h1>{{ title or design.get("schedule", {}).get("title", "Schedule") }}</h1>
-<p>{{ design.get("schedule", {}).get("subtitle", "Jobs, field work, service calls, and crew movement.") }}</p>
+<p>
+  {{ design.get("schedule", {}).get("subtitle", "Jobs, field work, service calls, and crew movement.") }}
+  {% if selected_day %}<span>{{ selected_day }}</span>{% endif %}
+</p>
   </section>
 
   <div class="schedule-actions">
