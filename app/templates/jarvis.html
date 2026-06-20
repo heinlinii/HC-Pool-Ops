@@ -161,6 +161,55 @@
     line-height: 1.35;
   }
 
+  .hfo-action-list {
+    display: grid;
+    gap: 10px;
+  }
+
+  .hfo-action {
+    min-height: 64px;
+    padding: 14px 16px;
+    border-radius: 12px;
+    border: 1px solid rgba(214,179,106,.24);
+    background: rgba(7, 14, 20, .82);
+    color: #fff;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    box-sizing: border-box;
+  }
+
+  .hfo-action strong {
+    color: #d6b36a;
+    font-size: .95rem;
+    font-weight: 1000;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+  }
+
+  .hfo-action span {
+    color: rgba(255,255,255,.70);
+    font-size: .86rem;
+    font-weight: 800;
+    text-align: right;
+  }
+
+  .hfo-action.primary {
+    background: linear-gradient(135deg, #7b5a22, #d6b36a, #5f4519);
+  }
+
+  .hfo-action.primary strong,
+  .hfo-action.primary span {
+    color: #071017;
+  }
+
+  .hfo-action.placeholder {
+    border-style: dashed;
+    background: rgba(7, 14, 20, .56);
+  }
+
   @media (max-width: 1000px) {
     .hfo-card-grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -183,6 +232,15 @@
 
     .hfo-card {
       min-height: 82px;
+    }
+
+    .hfo-action {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+
+    .hfo-action span {
+      text-align: left;
     }
   }
 </style>
@@ -219,7 +277,6 @@
           <a class="hfo-card" href="/map"><strong>Map</strong><span>Properties, jobs, and crew locations.</span></a>
           <a class="hfo-card" href="/weather"><strong>Weather</strong><span>Field conditions and planning.</span></a>
           <a class="hfo-card blue" href="/admin/link-check"><strong>Link Check</strong><span>Find broken app navigation.</span></a>
-          <a class="hfo-card" href="/logout"><strong>Logout</strong><span>Leave Field Ops.</span></a>
         </div>
       </section>
     {% endif %}
@@ -234,17 +291,14 @@
     {% if is_employee %}
       <section class="hfo-section">
         <div class="hfo-section-title">Crew Tools</div>
-        <div class="hfo-card-grid">
-          <a class="hfo-card primary" href="/crew/my-day"><strong>My Day</strong><span>Today&apos;s assigned field work.</span></a>
-          <a class="hfo-card" href="/employee"><strong>Crew Portal</strong><span>Clock in/out and field tools.</span></a>
-          <a class="hfo-card blue" href="/employee"><strong>Clock In / Out</strong><span>Open the clock controls.</span></a>
-          <a class="hfo-card blue" href="/employee"><strong>GPS Tracking</strong><span>Start or stop tracking from the portal.</span></a>
-          <a class="hfo-card" href="/jobs"><strong>My Jobs</strong><span>Assigned work orders and job notes.</span></a>
-          <a class="hfo-card" href="/photos"><strong>Photos</strong><span>Upload or review job photos.</span></a>
-          <a class="hfo-card" href="/schedule/day"><strong>Schedule</strong><span>Today&apos;s schedule.</span></a>
-          <a class="hfo-card" href="/map"><strong>Map</strong><span>Properties, jobs, and route context.</span></a>
-          <a class="hfo-card" href="/weather"><strong>Weather</strong><span>Check field conditions.</span></a>
-          <a class="hfo-card" href="/logout"><strong>Logout</strong><span>Leave Field Ops.</span></a>
+        <div class="hfo-action-list">
+          <a class="hfo-action primary" href="/crew/my-day"><strong>My Day</strong><span>Today&apos;s assigned field work.</span></a>
+          <a class="hfo-action" href="/employee"><strong>Crew Portal</strong><span>Clock in/out and GPS tracking controls.</span></a>
+          <a class="hfo-action" href="/jobs"><strong>My Jobs</strong><span>Assigned work orders and job notes.</span></a>
+          <a class="hfo-action" href="/photos"><strong>Photos</strong><span>Upload or review job photos.</span></a>
+          <a class="hfo-action" href="/schedule/day"><strong>Schedule</strong><span>Today&apos;s schedule.</span></a>
+          <a class="hfo-action" href="/map"><strong>Map</strong><span>Properties, jobs, and route context.</span></a>
+          <a class="hfo-action" href="/weather"><strong>Weather</strong><span>Check field conditions.</span></a>
         </div>
       </section>
     {% endif %}
@@ -259,13 +313,13 @@
     {% if is_client %}
       <section class="hfo-section">
         <div class="hfo-section-title">Your Account</div>
-        <div class="hfo-card-grid">
-          <a class="hfo-card primary" href="/client-portal"><strong>My Properties</strong><span>See your pool and property details.</span></a>
-          <a class="hfo-card" href="/client-portal"><strong>My Jobs</strong><span>Review work connected to your account.</span></a>
-          <a class="hfo-card" href="/client-portal"><strong>My Photos</strong><span>View photos Heinlin has shared with you.</span></a>
-          <a class="hfo-card blue" href="/client-portal"><strong>Request Service</strong><span>Use your notes/request area for service needs.</span></a>
-          <a class="hfo-card" href="/client-portal"><strong>Contact Heinlin</strong><span>Use your portal contact details and notes.</span></a>
-          <a class="hfo-card" href="/logout"><strong>Logout</strong><span>Leave Field Ops.</span></a>
+        <div class="hfo-action-list">
+          <a class="hfo-action primary" href="/client-portal"><strong>My Portal</strong><span>Properties, jobs, photos, and account notes.</span></a>
+          <div class="hfo-action placeholder"><strong>My Properties</strong><span>Available inside the client portal.</span></div>
+          <div class="hfo-action placeholder"><strong>My Jobs</strong><span>Available inside the client portal.</span></div>
+          <div class="hfo-action placeholder"><strong>My Photos</strong><span>Available inside the client portal.</span></div>
+          <div class="hfo-action placeholder"><strong>Request Service</strong><span>Placeholder for a future request form.</span></div>
+          <div class="hfo-action placeholder"><strong>Contact Heinlin</strong><span>Placeholder for direct contact options.</span></div>
         </div>
       </section>
     {% endif %}
@@ -276,7 +330,6 @@
       <h1>Dashboard</h1>
       <p>Your account role is not set. Please contact Heinlin to finish portal setup.</p>
     </section>
-    <a class="hfo-quick-button" href="/logout">Logout</a>
   {% endif %}
 </div>
 
