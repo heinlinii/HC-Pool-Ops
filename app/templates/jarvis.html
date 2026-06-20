@@ -241,6 +241,34 @@
     padding-top: 4px;
   }
 
+  .hfo-crew-dashboard {
+    position: relative;
+  }
+
+  .hfo-crew-crest {
+    position: absolute;
+    top: 78px;
+    right: 18px;
+    width: min(30vw, 340px);
+    max-height: 360px;
+    display: flex;
+    justify-content: flex-end;
+    pointer-events: none;
+  }
+
+  .hfo-crew-crest img {
+    display: block;
+    max-width: 100%;
+    max-height: 360px;
+    object-fit: contain;
+    filter: drop-shadow(0 22px 44px rgba(0,0,0,.68));
+  }
+
+  .hfo-crew-dashboard .hfo-hero,
+  .hfo-crew-dashboard .hfo-section {
+    max-width: 980px;
+  }
+
   @media (max-width: 1000px) {
     .hfo-card-grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -272,6 +300,22 @@
 
     .hfo-action span {
       text-align: left;
+    }
+
+    .hfo-crew-crest {
+      top: 70px;
+      right: 12px;
+      width: 116px;
+      max-height: 160px;
+      opacity: .9;
+    }
+
+    .hfo-crew-crest img {
+      max-height: 160px;
+    }
+
+    .hfo-crew-dashboard .hfo-hero {
+      padding-top: 150px;
     }
   }
 </style>
@@ -314,7 +358,11 @@
   </div>
 
 {% elif is_employee %}
-  <div class="hfo-dashboard hfo-plain-dashboard">
+  <div class="hfo-dashboard hfo-plain-dashboard hfo-crew-dashboard">
+    <div class="hfo-crew-crest">
+      <img src="/static/heinlin-family-crest.png" alt="Heinlin Family Crest">
+    </div>
+
     <section class="hfo-hero">
       <div class="hfo-hero-kicker">{{ greeting or "Welcome" }}{% if user %}, {{ user.get("name") or user.get("username") }}{% endif %}</div>
       <h1>{{ design.get('employee', {}).get('title', 'Crew Dashboard') }}</h1>

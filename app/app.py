@@ -2314,6 +2314,11 @@ def weather(request: Request):
     if not require_login(request): return login_redirect()
     return templates.TemplateResponse("weather.html", ctx(request))
 
+@app.get("/contact-us", response_class=HTMLResponse)
+def contact_us(request: Request):
+    if not require_login(request): return login_redirect()
+    return templates.TemplateResponse("contact_us.html", ctx(request))
+
 @app.get("/map", response_class=HTMLResponse)
 def map_page(request: Request):
     u = require_login(request)
