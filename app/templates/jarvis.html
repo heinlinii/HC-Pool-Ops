@@ -1,90 +1,5 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Heinlin Field Ops</title>
-
-  <link rel="stylesheet" href="/static/hfo-theme.css">
-  <link rel="stylesheet" href="/static/login-final.css">
-  <!-- <link rel="stylesheet" href="/static/jarvis-final.css?v=23"> -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
-  <style>
-    .hfo-top-actions {
-      position: relative !important;
-      margin: 0 !important;
-      padding: 8px 24px !important;
-      min-height: auto !important;
-      display: flex !important;
-      gap: 12px !important;
-      align-items: center !important;
-    }
-
-    .hfo-top-actions .btn,
-    .hfo-top-actions a,
-    .hfo-top-actions button {
-      width: 126px !important;
-      height: 72px !important;
-      min-height: 72px !important;
-      padding: 0 !important;
-      border-radius: 18px !important;
-
-      display: inline-flex !important;
-      align-items: center !important;
-      justify-content: center !important;
-
-      background: rgba(15, 18, 20, .92) !important;
-      color: #fff !important;
-      border: 1px solid rgba(255,255,255,.13) !important;
-      box-shadow: 0 14px 34px rgba(0,0,0,.38) !important;
-
-      font-size: 1.05rem !important;
-      font-weight: 1000 !important;
-      text-decoration: none !important;
-      line-height: 1 !important;
-      cursor: pointer !important;
-    }
-
-    .hfo-top-actions .btn:hover,
-    .hfo-top-actions a:hover,
-    .hfo-top-actions button:hover {
-      transform: translateY(-1px);
-      border-color: rgba(214,179,106,.35) !important;
-    }
-
-    @media (max-width: 640px) {
-      .hfo-top-actions {
-        padding: 8px 10px !important;
-        gap: 8px !important;
-      }
-
-      .hfo-top-actions .btn,
-      .hfo-top-actions a,
-      .hfo-top-actions button {
-        width: 108px !important;
-        height: 62px !important;
-        min-height: 62px !important;
-        font-size: .95rem !important;
-        border-radius: 16px !important;
-      }
-    }
-  </style>
-</head>
-
-<body class="hfo-body">
-
-  
-    <div class="hfo-top-actions">
-      <button type="button" onclick="history.back()" class="btn secondary">← Back</button>
-      <a href="/jarvis" class="btn primary">Dashboard</a>
-      <a href="/logout" class="btn danger">Logout</a>
-    </div>
-  
-
-  <main class="shell">
-    
+{% extends "base.html" %}
+{% block content %}
 
 <style>
   body.hfo-body .shell {
@@ -103,522 +18,266 @@
       linear-gradient(135deg, #03070a, #071017 48%, #111713) !important;
   }
 
-  .hfo-top-actions {
-    position: fixed !important;
-    top: 14px !important;
-    right: 18px !important;
-    left: auto !important;
-    z-index: 99999 !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    min-height: 0 !important;
-    display: flex !important;
-    gap: 8px !important;
-    align-items: center !important;
-    background: transparent !important;
+  .hfo-dashboard {
+    width: 100%;
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 96px 18px 42px;
+    box-sizing: border-box;
+    display: grid;
+    gap: 22px;
+    color: #fff;
   }
 
-  .hfo-top-actions .btn,
-  .hfo-top-actions a,
-  .hfo-top-actions button {
-    width: auto !important;
-    height: auto !important;
-    min-height: 0 !important;
-    padding: 8px 13px !important;
-    border-radius: 999px !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    background: linear-gradient(135deg, #5f4519, #d6b36a, #7b5a22) !important;
-    color: #071017 !important;
-    border: 1px solid rgba(214,179,106,.72) !important;
-    box-shadow: 0 8px 24px rgba(0,0,0,.38) !important;
-    font-size: .78rem !important;
-    font-weight: 1000 !important;
-    letter-spacing: .04em !important;
-    text-transform: uppercase !important;
-    text-decoration: none !important;
-    line-height: 1 !important;
-    cursor: pointer !important;
+  .hfo-hero {
+    padding: 24px;
+    border-radius: 18px;
+    background: rgba(7, 14, 20, .94);
+    border: 1px solid rgba(214,179,106,.26);
   }
 
-  .hfo-command-page {
-  width: 100%;
-  max-width: 1480px;
-  margin: 0 auto;
-  padding: 6px 18px 42px;
-  box-sizing: border-box;
-  display: grid;
-  gap: 22px;
-  color: #fff;
-}
-
-  .hfo-hero-clean {
-  width: min(100%, 1320px);
-  margin: 0 auto;
-  padding: 4px 18px 26px;
-  text-align: center;
-  border-bottom: 1px solid rgba(214,179,106,.22);
-}
-
-  .hfo-hero-line {
+  .hfo-hero-kicker,
+  .hfo-section-title {
     color: #d6b36a;
-    font-size: clamp(1rem, 1.45vw, 1.45rem);
+    font-size: .9rem;
     font-weight: 1000;
     letter-spacing: .16em;
     text-transform: uppercase;
-    margin-bottom: 22px;
   }
 
-  .hfo-hero-crest {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
-
-  .hfo-hero-crest img {
-  width: min(96vw, 1180px);
-  max-height: 610px;
-  object-fit: contain;
-  filter: drop-shadow(0 24px 58px rgba(0,0,0,.70));
-}
-
-  .hfo-hero-motto {
-    margin-top: 22px;
+  .hfo-hero h1 {
+    margin: 10px 0 8px;
     color: #fff;
-    font-size: clamp(3rem, 7vw, 7.8rem);
-    line-height: .85;
-    font-weight: 1000;
-    letter-spacing: -.04em;
-    text-transform: uppercase;
+    font-size: clamp(2.4rem, 7vw, 5.5rem);
+    line-height: 1;
   }
 
-  .hfo-hero-motto span {
-    color: #d6b36a;
-  }
-
-  .hfo-hero-sub {
-    margin: 12px auto 0;
-    max-width: 800px;
-    color: rgba(255,255,255,.82);
-    font-size: clamp(1rem, 1.45vw, 1.25rem);
-    line-height: 1.25;
+  .hfo-hero p {
+    max-width: 760px;
+    margin: 0;
+    color: rgba(255,255,255,.76);
     font-weight: 850;
-  }
-
-  .hfo-search-panel {
-    width: min(100%, 1180px);
-    margin: 0 auto;
-    padding: 22px 0 8px;
-    border-bottom: 1px solid rgba(214,179,106,.15);
-  }
-
-  .hfo-search-panel h2 {
-    margin: 0 0 10px;
-    color: #fff;
-    font-size: clamp(2.4rem, 5vw, 5.4rem);
-    line-height: .86;
-    letter-spacing: -.05em;
-    text-align: center;
-    text-transform: uppercase;
-  }
-
-  .hfo-search-panel p {
-    margin: 0 0 16px;
-    color: rgba(255,255,255,.74);
-    font-weight: 850;
-    text-align: center;
+    line-height: 1.35;
   }
 
   .hfo-search-form {
     display: grid;
-    grid-template-columns: 1fr 220px;
+    grid-template-columns: 1fr 190px;
     gap: 12px;
+    margin-top: 18px;
   }
 
   .hfo-search-form input {
     width: 100%;
-    min-height: 62px;
+    min-height: 58px;
     box-sizing: border-box;
-    padding: 0 20px;
-    border-radius: 16px;
+    padding: 0 18px;
+    border-radius: 14px;
     border: 1px solid rgba(214,179,106,.32);
-    background: rgba(0,0,0,.42);
-    color: #fff;
-    font-size: 1.05rem;
-    outline: none;
-  }
-
-  .hfo-search-form input:focus {
-    border-color: rgba(214,179,106,.70);
-    box-shadow: 0 0 0 4px rgba(214,179,106,.10);
-  }
-
-  .hfo-handle-btn {
-    border: none;
-    border-radius: 16px;
-    background: linear-gradient(135deg, #42a5ff, #2563eb);
+    background: rgba(0,0,0,.38);
     color: #fff;
     font-size: 1rem;
+  }
+
+  .hfo-search-form button,
+  .hfo-quick-button {
+    min-height: 58px;
+    border: 0;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #7b5a22, #d6b36a, #5f4519);
+    color: #071017;
     font-weight: 1000;
-    letter-spacing: .08em;
-    text-transform: uppercase;
+    text-decoration: none;
     cursor: pointer;
-    box-shadow: 0 14px 32px rgba(0,0,0,.40);
   }
 
-  .hfo-board-section {
-    width: min(100%, 1180px);
-    margin: 0 auto;
+  .hfo-section {
     display: grid;
-    gap: 14px;
+    gap: 12px;
   }
 
-  .hfo-board-heading {
-    color: #d6b36a;
-    font-size: .95rem;
-    font-weight: 1000;
-    letter-spacing: .22em;
-    text-transform: uppercase;
-  }
-
-  .hfo-command-grid {
+  .hfo-card-grid {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 12px;
   }
 
-  .command-link {
+  .hfo-card {
     min-height: 104px;
+    padding: 16px;
+    border-radius: 14px;
+    border: 1px solid rgba(214,179,106,.24);
+    background: linear-gradient(135deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+    color: #fff;
+    text-decoration: none;
     display: flex;
     flex-direction: column;
     justify-content: center;
     gap: 6px;
-    padding: 16px;
-    border-radius: 18px;
-    border: 1px solid rgba(214,179,106,.24);
-    background:
-      linear-gradient(135deg, rgba(255,255,255,.050), rgba(255,255,255,.020));
-    color: #fff;
-    text-decoration: none;
-    transition: .15s ease;
   }
 
-  .command-link strong {
+  .hfo-card strong {
     color: #d6b36a;
     font-size: .95rem;
     font-weight: 1000;
-    letter-spacing: .07em;
+    letter-spacing: .06em;
     text-transform: uppercase;
   }
 
-  .command-link span {
+  .hfo-card span {
     color: rgba(255,255,255,.72);
-    font-size: .84rem;
+    font-size: .86rem;
     font-weight: 800;
-    line-height: 1.25;
+    line-height: 1.3;
   }
 
-  .command-link:hover {
-    transform: translateY(-2px);
-    border-color: rgba(214,179,106,.58);
-    background:
-      linear-gradient(135deg, rgba(214,179,106,.12), rgba(255,255,255,.04));
-  }
-
-  .command-link.brass {
+  .hfo-card.primary {
     background: linear-gradient(135deg, #7b5a22, #d6b36a, #5f4519);
     border-color: rgba(214,179,106,.74);
   }
 
-  .command-link.brass strong,
-  .command-link.brass span {
+  .hfo-card.primary strong,
+  .hfo-card.primary span {
     color: #071017;
   }
 
-  .command-link.blue {
+  .hfo-card.blue {
     background: linear-gradient(135deg, #42a5ff, #2563eb);
     border-color: rgba(100,160,255,.62);
   }
 
-  .command-link.blue strong,
-  .command-link.blue span {
+  .hfo-card.blue strong,
+  .hfo-card.blue span {
     color: #fff;
   }
 
-  .hfo-signoff {
-    width: min(100%, 1180px);
-    margin: 8px auto 0;
-    padding-top: 18px;
-    border-top: 1px solid rgba(214,179,106,.18);
-    color: rgba(255,255,255,.78);
+  .hfo-note {
+    padding: 18px;
+    border-radius: 14px;
+    background: rgba(7, 14, 20, .80);
+    border: 1px solid rgba(214,179,106,.18);
+    color: rgba(255,255,255,.76);
     font-weight: 850;
-    line-height: 1.3;
+    line-height: 1.35;
   }
 
-  .hfo-signoff strong {
-    color: #d6b36a;
-    text-transform: uppercase;
-    letter-spacing: .08em;
+  @media (max-width: 1000px) {
+    .hfo-card-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
   }
 
-  @media (max-width: 900px) {
-    .hfo-command-page {
-      padding: 54px 14px 32px;
+  @media (max-width: 640px) {
+    .hfo-dashboard {
+      padding: 84px 12px 30px;
     }
 
-    .hfo-top-actions {
-      top: 8px !important;
-      right: 8px !important;
-      gap: 6px !important;
+    .hfo-hero {
+      padding: 18px;
     }
 
-    .hfo-top-actions .btn,
-    .hfo-top-actions a,
-    .hfo-top-actions button {
-      padding: 7px 9px !important;
-      font-size: .68rem !important;
-    }
-
-   .hfo-hero-clean {
-  padding: 42px 8px 20px;
-}
-
-   .hfo-hero-line {
-  color: #d6b36a;
-  font-size: clamp(1rem, 1.45vw, 1.45rem);
-  font-weight: 1000;
-  letter-spacing: .16em;
-  text-transform: uppercase;
-  margin-bottom: 8px;
-}
-
-    .hfo-hero-crest img {
-      width: 100%;
-      max-height: none;
-    }
-
-    .hfo-hero-motto {
-      font-size: clamp(2.7rem, 15vw, 5rem);
-    }
-
-    .hfo-search-form {
+    .hfo-search-form,
+    .hfo-card-grid {
       grid-template-columns: 1fr;
     }
 
-    .hfo-handle-btn {
-      min-height: 60px;
-    }
-
-    .hfo-command-grid {
-      grid-template-columns: 1fr;
-    }
-
-    .command-link {
-      min-height: 72px;
+    .hfo-card {
+      min-height: 82px;
     }
   }
 </style>
 
-<div class="hfo-command-page">
+<div class="hfo-dashboard">
+  {% if is_admin %}
+    <section class="hfo-hero">
+      <div class="hfo-hero-kicker">{{ greeting or "Welcome" }}{% if user %}, {{ user.get("name") or user.get("username") }}{% endif %}</div>
+      <h1>Admin Command Center</h1>
+      <p>Run the office, the field, the schedule, and the service board from one place.</p>
 
-  <section class="hfo-hero-clean">
-    <div class="hfo-hero-line">
-      Heinlin Field Ops • Founded 1907 • 5 Generations Strong
-    </div>
-
-    <div class="hfo-hero-crest">
-      <img src="/static/heinlin-wide-crest.png" alt="Heinlin Crest">
-    </div>
-
-    <div class="hfo-hero-motto">
-      {{ design.dashboard.motto_first }} <span>{{ design.dashboard.motto_second }}</span>
-    </div>
-
-    <div class="hfo-hero-sub">
-      {{ design.dashboard.hero_subline }}
-    </div>
-  </section>
-
-  <section class="hfo-search-panel">
-    <h2>{{ design.dashboard.search_title }}</h2>
-    <p>{{ design.dashboard.search_subtitle }}</p>
-
-    <form class="hfo-search-form" action="/jarvis/search" method="get">
-      <input
-        type="text"
-        name="q"
-        placeholder="{{ design.dashboard.search_placeholder }}"
-        autocomplete="off"
-      >
-<button class="hfo-handle-btn" type="submit">{{ design.dashboard.handle_button }}</button>
-    </form>
-  </section>
-
-  
-    <section class="hfo-board-section">
-      <div class="hfo-board-heading">Run Today</div>
-
-      <div class="hfo-command-grid">
-        
-          <a class="command-link brass" href="/organize-my-day">
-            <strong>Handle Today</strong>
-            <span>Today’s work, overdue jobs, and what needs attention.</span>
-          </a>
-
-          <a class="command-link blue" href="/pool-monitoring">
-            <strong>Pool Monitoring</strong>
-            <span>Pentair access, pool alerts, and service follow-up.</span>
-          </a>
-
-          <a class="command-link" href="/employee">
-  <strong>Crew Portal</strong>
-  <span>Employee jobs, clock in/out, photos, and field work.</span>
-</a>
-
-<a class="command-link" href="/crew">
-  <strong>Employees</strong>
-  <span>Manage crew members, usernames, passwords, and access.</span>
-</a>
-
-<a class="command-link blue" href="/design-studio">
-  <strong>Edit Dashboard</strong>
-  <span>Change wording, crest size, spacing, buttons, and layout controls.</span>
-</a>
-
-          <a class="command-link" href="/employee">
-            <strong>Crew & Clock</strong>
-            <span>Clock in, My Day, crew portal, and field access.</span>
-          </a>
-
-          <a class="command-link" href="/assistant-interview-live">
-            <strong>Talk to Jarvis</strong>
-            <span>Dump the chaos. Let Jarvis organize the work.</span>
-          </a>
-        
-      </div>
-    </section>
-  
-
-  
-    <section class="hfo-board-section">
-      <div class="hfo-board-heading">The Work</div>
-
-      <div class="hfo-command-grid">
-        <a class="command-link" href="/clients">
-          <strong>Clients</strong>
-          <span>Names, phones, portals, and history.</span>
-        </a>
-
-        <a class="command-link" href="/properties">
-          <strong>Properties</strong>
-          <span>Every pool, every address, every setup.</span>
-        </a>
-
-        <a class="command-link" href="/jobs">
-          <strong>Jobs</strong>
-          <span>Work orders, status, crew, and notes.</span>
-        </a>
-
-        <a class="command-link" href="/photos">
-          <strong>Photos</strong>
-          <span>Proof from the field.</span>
-        </a>
-
-        <a class="command-link" href="/schedule/day">
-          <strong>Schedule</strong>
-          <span>Today, tomorrow, and the whole field plan.</span>
-        </a>
-
-        <a class="command-link" href="/map">
-          <strong>Map</strong>
-          <span>Properties, routes, and crew locations.</span>
-        </a>
-
-        <a class="command-link" href="/weather">
-          <strong>Weather</strong>
-          <span>Plan pours, openings, service, and travel.</span>
-        </a>
-
-        <a class="command-link" href="/field-logs">
-          <strong>Field Logs</strong>
-          <span>The story of what actually happened.</span>
-        </a>
-      </div>
+      <form class="hfo-search-form" action="/jarvis/search" method="get">
+        <input type="text" name="q" placeholder="{{ design.get('dashboard', {}).get('search_placeholder', 'Search or tell Jarvis what needs handled') }}" autocomplete="off">
+        <button type="submit">{{ design.get('dashboard', {}).get('handle_button', 'Handle It') }}</button>
+      </form>
     </section>
 
-    <section class="hfo-board-section">
-      <div class="hfo-board-heading">Office & Money</div>
+    {% if is_admin %}
+      <section class="hfo-section">
+        <div class="hfo-section-title">Admin Tools</div>
+        <div class="hfo-card-grid">
+          <a class="hfo-card primary" href="/design-studio"><strong>Design Studio</strong><span>Dashboard wording, layout, and visual controls.</span></a>
+          <a class="hfo-card" href="/clients"><strong>Clients</strong><span>Client records, portals, and contact history.</span></a>
+          <a class="hfo-card" href="/properties"><strong>Properties</strong><span>Pools, addresses, equipment, and details.</span></a>
+          <a class="hfo-card" href="/jobs"><strong>Jobs</strong><span>Work orders, status, crew, and notes.</span></a>
+          <a class="hfo-card" href="/schedule/day"><strong>Daily Schedule</strong><span>Today&apos;s field work and service calls.</span></a>
+          <a class="hfo-card" href="/schedule/year"><strong>Year Schedule</strong><span>Full calendar and long-range planning.</span></a>
+          <a class="hfo-card" href="/photos"><strong>Photos</strong><span>Progress shots, property images, and field proof.</span></a>
+          <a class="hfo-card" href="/crew"><strong>Crew / Employees</strong><span>Employee records and field access.</span></a>
+          <a class="hfo-card" href="/employee"><strong>Employee Portal</strong><span>Clock, jobs, photos, and field tools.</span></a>
+          <a class="hfo-card" href="/gps/day"><strong>GPS Day Log</strong><span>Daily location history and field movement.</span></a>
+          <a class="hfo-card" href="/gps/stops"><strong>GPS Stops</strong><span>Detected stops and time on site.</span></a>
+          <a class="hfo-card" href="/pool-monitoring"><strong>Pool Monitoring</strong><span>Monitored pools, alerts, and follow-up.</span></a>
+          <a class="hfo-card" href="/map"><strong>Map</strong><span>Properties, jobs, and crew locations.</span></a>
+          <a class="hfo-card" href="/weather"><strong>Weather</strong><span>Field conditions and planning.</span></a>
+          <a class="hfo-card blue" href="/admin/link-check"><strong>Link Check</strong><span>Find broken app navigation.</span></a>
+          <a class="hfo-card" href="/logout"><strong>Logout</strong><span>Leave Field Ops.</span></a>
+        </div>
+      </section>
+    {% endif %}
 
-      <div class="hfo-command-grid">
-        <a class="command-link" href="/estimates">
-          <strong>Estimates</strong>
-          <span>Proposals and upcoming work.</span>
-        </a>
-
-<a class="command-link" href="/employee">
-  <strong>Crew Portal</strong>
-  <span>Employee jobs, clock in/out, photos, and field work.</span>
-</a>
-
-<a class="command-link" href="/gps/stops">
-  <strong>GPS Stops</strong>
-  <span>Detected stops, arrival times, and time spent on site.</span>
-</a>
-
-<a class="command-link" href="/crew">
-  <strong>Employees</strong>
-  <span>Manage crew members, usernames, passwords, and access.</span>
-</a>
-
-<a class="command-link blue" href="/design-studio">
-  <strong>Edit Dashboard</strong>
-  <span>Change wording, crest size, spacing, buttons, and layout controls.</span>
-</a>
-
-        <a class="command-link" href="/job-costing">
-          <strong>Job Costing</strong>
-          <span>Labor, material, fuel, and profit.</span>
-        </a>
-
-        <a class="command-link" href="/quickbooks">
-          <strong>QuickBooks</strong>
-          <span>Billing and export prep.</span>
-        </a>
-
-        <a class="command-link" href="/invisible-office">
-          <strong>Invisible Office</strong>
-          <span>Internal notes and command memory.</span>
-        </a>
-
-        <a class="command-link" href="/schedule/year">
-          <strong>Full Calendar</strong>
-          <span>Yearly board and schedule view.</span>
-        </a>
-
-        <a class="command-link blue" href="/design-studio">
-  <strong>Edit Dashboard</strong>
-  <span>Change wording, crest size, spacing, buttons, and layout controls.</span>
-</a>
-
-<a class="command-link brass" href="/design-studio">
-  <strong>Design Studio</strong>
-  <span>Friendly dashboard control panel for layout and text changes.</span>
-</a>
-
-      </div>
+  {% elif is_employee %}
+    <section class="hfo-hero">
+      <div class="hfo-hero-kicker">{{ greeting or "Welcome" }}{% if user %}, {{ user.get("name") or user.get("username") }}{% endif %}</div>
+      <h1>Crew Dashboard</h1>
+      <p>Your day, assigned jobs, clock tools, photos, map, and weather without office-only controls.</p>
     </section>
-  
 
-  <div class="hfo-signoff">
-    <strong>Heinlin rule:</strong>
-    If it happened in the field, it belongs in Field Ops.
-  </div>
+    {% if is_employee %}
+      <section class="hfo-section">
+        <div class="hfo-section-title">Crew Tools</div>
+        <div class="hfo-card-grid">
+          <a class="hfo-card primary" href="/crew/my-day"><strong>My Day</strong><span>Today&apos;s assigned field work.</span></a>
+          <a class="hfo-card" href="/employee"><strong>Crew Portal</strong><span>Clock in/out and field tools.</span></a>
+          <a class="hfo-card blue" href="/employee"><strong>Clock In / Out</strong><span>Open the clock controls.</span></a>
+          <a class="hfo-card blue" href="/employee"><strong>GPS Tracking</strong><span>Start or stop tracking from the portal.</span></a>
+          <a class="hfo-card" href="/jobs"><strong>My Jobs</strong><span>Assigned work orders and job notes.</span></a>
+          <a class="hfo-card" href="/photos"><strong>Photos</strong><span>Upload or review job photos.</span></a>
+          <a class="hfo-card" href="/schedule/day"><strong>Schedule</strong><span>Today&apos;s schedule.</span></a>
+          <a class="hfo-card" href="/map"><strong>Map</strong><span>Properties, jobs, and route context.</span></a>
+          <a class="hfo-card" href="/weather"><strong>Weather</strong><span>Check field conditions.</span></a>
+          <a class="hfo-card" href="/logout"><strong>Logout</strong><span>Leave Field Ops.</span></a>
+        </div>
+      </section>
+    {% endif %}
 
+  {% elif is_client %}
+    <section class="hfo-hero">
+      <div class="hfo-hero-kicker">{{ greeting or "Welcome" }}{% if user %}, {{ user.get("name") or user.get("username") }}{% endif %}</div>
+      <h1>Client Portal</h1>
+      <p>Review your properties, jobs, photos, and service notes without internal office controls.</p>
+    </section>
+
+    {% if is_client %}
+      <section class="hfo-section">
+        <div class="hfo-section-title">Your Account</div>
+        <div class="hfo-card-grid">
+          <a class="hfo-card primary" href="/client-portal"><strong>My Properties</strong><span>See your pool and property details.</span></a>
+          <a class="hfo-card" href="/client-portal"><strong>My Jobs</strong><span>Review work connected to your account.</span></a>
+          <a class="hfo-card" href="/client-portal"><strong>My Photos</strong><span>View photos Heinlin has shared with you.</span></a>
+          <a class="hfo-card blue" href="/client-portal"><strong>Request Service</strong><span>Use your notes/request area for service needs.</span></a>
+          <a class="hfo-card" href="/client-portal"><strong>Contact Heinlin</strong><span>Use your portal contact details and notes.</span></a>
+          <a class="hfo-card" href="/logout"><strong>Logout</strong><span>Leave Field Ops.</span></a>
+        </div>
+      </section>
+    {% endif %}
+
+  {% else %}
+    <section class="hfo-hero">
+      <div class="hfo-hero-kicker">Heinlin Field Ops</div>
+      <h1>Dashboard</h1>
+      <p>Your account role is not set. Please contact Heinlin to finish portal setup.</p>
+    </section>
+    <a class="hfo-quick-button" href="/logout">Logout</a>
+  {% endif %}
 </div>
 
-
-  </main>
-
-</body>
-</html>
+{% endblock %}
