@@ -493,6 +493,31 @@ DEFAULT_DESIGN = {
         "subtitle": "My jobs, clock in/out, photos, field notes, weather, and map.",
         "button_text": "Clock / Field Work",
     },
+    "crew_dashboard": {
+        "greeting_prefix": "Good morning",
+        "title": "Crew Portal",
+        "subtitle": "My jobs, clock in/out, photos, field notes, weather, and map.",
+        "section_title": "Crew Tools",
+        "crest_image": "/static/heinlin-wide-crest.png",
+        "crest_width": "340px",
+        "crest_top": "210px",
+        "crest_right": "70px",
+        "crest_opacity": "0.92",
+        "hero_padding_top": "150px",
+        "dashboard_padding_top": "120px",
+        "tools": [
+            {"label": "My Day", "description": "Today's work", "href": "/crew/my-day", "enabled": True},
+            {"label": "Crew Portal", "description": "Clock and GPS", "href": "/employee", "enabled": True},
+            {"label": "My Jobs", "description": "Assigned work", "href": "/jobs", "enabled": True},
+            {"label": "Photos", "description": "Field proof", "href": "/photos", "enabled": True},
+            {"label": "Schedule", "description": "Today", "href": "/schedule/day", "enabled": True},
+            {"label": "Map", "description": "Locations", "href": "/map", "enabled": True},
+            {"label": "Weather", "description": "Conditions", "href": "/weather", "enabled": True},
+            {"label": "GPS Day Log", "description": "Raw GPS points", "href": "/gps/day", "enabled": True},
+            {"label": "GPS Stops", "description": "Stops and time on site", "href": "/gps/stops", "enabled": True},
+            {"label": "Send It", "description": "Talk to Jarvis", "href": "/assistant-interview-live", "enabled": True},
+        ],
+    },
     "photos": {
         "title": "Photos",
         "subtitle": "Job photos, property photos, progress shots, and field proof.",
@@ -1091,6 +1116,22 @@ def monthly_schedule_alias(request: Request):
 # ADMIN LINK CHECK
 # =========================================
 
+@app.get("/gps-day-log", response_class=HTMLResponse)
+def gps_day_log_alias(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    return RedirectResponse("/gps/day", status_code=303)
+
+
+@app.get("/gps-stops", response_class=HTMLResponse)
+def gps_stops_alias(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    return RedirectResponse("/gps/stops", status_code=303)
+
+
 @app.get("/admin/link-check", response_class=HTMLResponse)
 def admin_link_check(request: Request):
     u = require_login(request)
@@ -1244,6 +1285,17 @@ def design_studio_save(
     employee_title: str = Form("Crew Portal"),
     employee_subtitle: str = Form("My jobs, clock in/out, photos, field notes, weather, and map."),
     employee_button_text: str = Form("Clock / Field Work"),
+    crew_dashboard_title: str = Form("Crew Portal"),
+    crew_dashboard_subtitle: str = Form("My jobs, clock in/out, photos, field notes, weather, and map."),
+    crew_dashboard_section_title: str = Form("Crew Tools"),
+    crew_dashboard_crest_image: str = Form("/static/heinlin-wide-crest.png"),
+    crew_dashboard_crest_width: str = Form("340px"),
+    crew_dashboard_crest_top: str = Form("210px"),
+    crew_dashboard_crest_right: str = Form("70px"),
+    crew_dashboard_crest_opacity: str = Form("0.92"),
+    crew_dashboard_hero_padding_top: str = Form("150px"),
+    crew_dashboard_dashboard_padding_top: str = Form("120px"),
+    crew_dashboard_tools_json: str = Form(""),
 
     photos_title: str = Form("Photos"),
     photos_subtitle: str = Form("Job photos, property photos, progress shots, and field proof."),
@@ -1332,6 +1384,30 @@ def design_studio_save(
         "title": employee_title.strip() or "Crew Portal",
         "subtitle": employee_subtitle.strip() or "My jobs, clock in/out, photos, field notes, weather, and map.",
         "button_text": employee_button_text.strip() or "Clock / Field Work",
+    }
+
+    previous_crew_dashboard = data.get("crew_dashboard", DEFAULT_DESIGN["crew_dashboard"])
+    crew_dashboard_tools = previous_crew_dashboard.get("tools", DEFAULT_DESIGN["crew_dashboard"]["tools"])
+    try:
+        parsed_tools = json.loads(crew_dashboard_tools_json or "[]")
+        if isinstance(parsed_tools, list):
+            crew_dashboard_tools = parsed_tools
+    except Exception:
+        pass
+
+    data["crew_dashboard"] = {
+        "greeting_prefix": previous_crew_dashboard.get("greeting_prefix", "Good morning"),
+        "title": crew_dashboard_title.strip() or "Crew Portal",
+        "subtitle": crew_dashboard_subtitle.strip() or "My jobs, clock in/out, photos, field notes, weather, and map.",
+        "section_title": crew_dashboard_section_title.strip() or "Crew Tools",
+        "crest_image": crew_dashboard_crest_image.strip() or "/static/heinlin-wide-crest.png",
+        "crest_width": crew_dashboard_crest_width.strip() or "340px",
+        "crest_top": crew_dashboard_crest_top.strip() or "210px",
+        "crest_right": crew_dashboard_crest_right.strip() or "70px",
+        "crest_opacity": crew_dashboard_crest_opacity.strip() or "0.92",
+        "hero_padding_top": crew_dashboard_hero_padding_top.strip() or "150px",
+        "dashboard_padding_top": crew_dashboard_dashboard_padding_top.strip() or "120px",
+        "tools": crew_dashboard_tools,
     }
 
     data["photos"] = {
@@ -1441,6 +1517,46 @@ def client_detail(request: Request, client_id: int):
     jobs = rows("SELECT * FROM poolops2_jobs WHERE client=? ORDER BY id DESC", (client["name"],))
     photos = rows("SELECT * FROM poolops2_photo_logs WHERE client=? ORDER BY id DESC", (client["name"],))
     return templates.TemplateResponse("client_detail.html", ctx(request, client=client, properties=props, jobs=jobs, photos=photos))
+
+
+
+
+@app.post("/clients/{client_id}/photo")
+async def client_photo_upload(
+    request: Request,
+    client_id: int,
+    title: str = Form("Client Photo"),
+    notes: str = Form(""),
+    photo: UploadFile = File(None),
+):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+
+    client = one("SELECT * FROM poolops2_clients WHERE id=?", (client_id,))
+    if not client or not client_can_access(u, client_id, client.get("name", "")):
+        return admin_redirect(u)
+
+    url = await save_upload(photo)
+
+    if url:
+        exec_sql(
+            """
+            INSERT INTO poolops2_photo_logs
+            (client, photo_type, title, photo_url, date, notes)
+            VALUES (?,?,?,?,?,?)
+            """,
+            (
+                client.get("name", ""),
+                "Client",
+                title.strip() or "Client Photo",
+                url,
+                date.today().isoformat(),
+                notes,
+            )
+        )
+
+    return RedirectResponse(f"/clients/{client_id}", status_code=303)
 
 
 @app.post("/clients/{client_id}/save")

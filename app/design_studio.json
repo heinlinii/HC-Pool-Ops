@@ -10,16 +10,16 @@
     "mobile_page_padding": "56px 12px 28px"
   },
   "dashboard": {
-    "legacy_line": "Heinlin Field Ops \u2022 Founded 1907 \u2022 5 Generations Strong",
+    "legacy_line": "The Heinlin name has had a hand in shaping this community for more than half of its existence",
     "crest_image": "/static/heinlin-wide-crest.png",
-    "motto_first": "Work Hard.",
-    "motto_second": "Play Harder.",
-    "hero_subline": "Built by hand. Run like a machine.",
-    "search_title": "What's the challenge that we have today?",
-    "search_subtitle": "Search it, say it, or hit the button.",
+    "motto_first": "Work Hard",
+    "motto_second": "Live Harder",
+    "hero_subline": "Built by hands that took pride in what they did and always had a damn good time doing it",
+    "search_title": "What do we have to un fuck today?",
+    "search_subtitle": "Search it, say it, or hit the damn button.",
     "search_placeholder": "Find a client, job, property, photo, log, map, weather...",
     "handle_button": "Send It",
-    "page_top_space": "54px",
+    "page_top_space": "10px",
     "crest_width": "920px",
     "crest_height": "420px",
     "motto_size": "clamp(3rem, 7vw, 7.8rem)",
@@ -28,12 +28,12 @@
     "button_height": "104px"
   },
   "login": {
-    "title": "Heinlin Field Ops",
+    "title": "Heinlin Family Business",
     "legacy_line": "Founded 1907 \u2022 5 Generations Strong",
-    "subtitle": "Built by the hands that perfected the term work hard play harder.",
-    "button_text": "Enter Operations Center",
+    "subtitle": "My family has 120 years of construction knowledge in this community. My goal is to save as much of that knowledge and history as possible. If you have anything to add to this memory bank, especially old stories, please do so.",
+    "button_text": "Enter the Heinlin Family Legacy",
     "crest_image": "/static/heinlin-wide-crest.png",
-    "background_image": "/static/heinlin-wide-crest.png",
+    "background_image": "shiloh-company-mascot.jpg",
     "crest_width": "760px",
     "card_width": "460px"
   },
@@ -82,6 +82,81 @@
     "title": "Crew Portal",
     "subtitle": "My jobs, clock in/out, photos, field notes, weather, and map.",
     "button_text": "Clock / Field Work"
+  },
+  "crew_dashboard": {
+    "greeting_prefix": "Good morning",
+    "title": "Field Crew",
+    "subtitle": "My jobs, clock in/out, photos, field notes, weather, and map.",
+    "section_title": "Crew Tools",
+    "crest_image": "/static/heinlin-wide-crest.png",
+    "crest_width": "340px",
+    "crest_top": "210px",
+    "crest_right": "70px",
+    "crest_opacity": "0.92",
+    "hero_padding_top": "150px",
+    "dashboard_padding_top": "120px",
+    "tools": [
+      {
+        "description": "Today's work",
+        "enabled": true,
+        "href": "/crew/my-day",
+        "label": "My Day"
+      },
+      {
+        "description": "Clock and GPS",
+        "enabled": true,
+        "href": "/employee",
+        "label": "Crew Portal"
+      },
+      {
+        "description": "Assigned work",
+        "enabled": true,
+        "href": "/jobs",
+        "label": "My Jobs"
+      },
+      {
+        "description": "Field proof",
+        "enabled": true,
+        "href": "/photos",
+        "label": "Photos"
+      },
+      {
+        "description": "Today",
+        "enabled": true,
+        "href": "/schedule/day",
+        "label": "Schedule"
+      },
+      {
+        "description": "Locations",
+        "enabled": true,
+        "href": "/map",
+        "label": "Map"
+      },
+      {
+        "description": "Conditions",
+        "enabled": true,
+        "href": "/weather",
+        "label": "Weather"
+      },
+      {
+        "description": "Raw GPS points",
+        "enabled": true,
+        "href": "/gps/day",
+        "label": "GPS Day Log"
+      },
+      {
+        "description": "Stops and time on site",
+        "enabled": true,
+        "href": "/gps/stops",
+        "label": "GPS Stops"
+      },
+      {
+        "description": "Talk to Jarvis",
+        "enabled": true,
+        "href": "/assistant-interview-live",
+        "label": "Send It"
+      }
+    ]
   },
   "photos": {
     "title": "Field Proof",

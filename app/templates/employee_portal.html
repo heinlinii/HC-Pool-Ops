@@ -1,6 +1,128 @@
 {% extends "base.html" %}
 {% block content %}
 
+<style>
+.employee-page-top {
+  position: relative;
+  min-height: 420px;
+  padding-right: 520px;
+  margin-bottom: 20px;
+}
+
+.employee-crest-top {
+  position: absolute;
+  top: 155px;
+  right: 55px;
+  width: 500px;
+  max-width: 34vw;
+  z-index: 1;
+  pointer-events: none;
+  opacity: .96;
+}
+
+.employee-crest-top img {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 18px 36px rgba(0,0,0,.65));
+}
+
+.employee-page-top .section-head {
+  position: relative;
+  z-index: 4;
+  padding-top: 225px;
+}
+
+.employee-page-top .section-head h1 {
+  font-size: clamp(4.5rem, 8vw, 8.5rem);
+  line-height: .82;
+  margin-bottom: 18px;
+}
+
+.employee-page-top .section-head p {
+  font-size: 1.25rem;
+  max-width: 720px;
+}
+
+.employee-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+section.card,
+section.grid,
+.section-head {
+  position: relative;
+  z-index: 3;
+}
+
+.jarvis-crew-card {
+  border: 1px solid rgba(214,179,106,.34);
+  background:
+    linear-gradient(135deg, rgba(214,179,106,.10), rgba(7,14,20,.95)),
+    rgba(7,14,20,.94);
+}
+
+.jarvis-crew-card h2 {
+  color: #d6b36a;
+}
+
+@media (max-width: 900px) {
+  .employee-page-top {
+    min-height: 360px;
+    padding-right: 260px;
+  }
+
+  .employee-crest-top {
+    top: 145px;
+    right: 24px;
+    width: 240px;
+    max-width: 35vw;
+  }
+
+  .employee-page-top .section-head {
+    padding-top: 205px;
+  }
+
+  .employee-page-top .section-head h1 {
+    font-size: clamp(3.4rem, 12vw, 5.4rem);
+  }
+}
+
+@media (max-width: 700px) {
+  .employee-page-top {
+    min-height: 340px;
+    padding-right: 0;
+  }
+
+  .employee-page-top .section-head {
+    padding-top: 120px;
+  }
+
+  .employee-crest-top {
+    top: 12px;
+    right: 12px;
+    width: 145px;
+    max-width: 40vw;
+    opacity: .92;
+  }
+
+  .employee-header-actions {
+    margin-top: 12px;
+  }
+  .employee-jarvis-btn {
+  min-width: 160px;
+  min-height: 68px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+}
+</style>
+
 <div class="employee-page-top">
 
   <div class="employee-crest-top">
@@ -12,69 +134,13 @@
       <h1>{{ design.get('employee', {}).get('title', 'Crew Portal') }}</h1>
       <p>{{ design.get('employee', {}).get('subtitle', 'My jobs, clock in/out, photos, field notes, weather, and map.') }}</p>
     </div>
+
     <div class="employee-header-actions">
-      <a class="btn primary" href="/jarvis">Jarvis</a>
+      <a class="btn primary employee-jarvis-btn" href="/assistant-interview-live">Talk to Jarvis</a>
     </div>
   </section>
 
 </div>
-
-<style>
-  .employee-page-top {
-    position: relative;
-    min-height: 120px;
-  }
-
-  .employee-crest-top {
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: 190px;
-    max-width: 32vw;
-    z-index: 5;
-  }
-
-  .employee-crest-top img {
-    display: block;
-    width: 100%;
-    height: auto;
-    object-fit: contain;
-    filter: drop-shadow(0 14px 30px rgba(0,0,0,.55));
-  }
-
-  .employee-header-actions {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding-right: 210px;
-  }
-
-  .jarvis-crew-card {
-    border: 1px solid rgba(214,179,106,.34);
-    background:
-      linear-gradient(135deg, rgba(214,179,106,.10), rgba(7,14,20,.95)),
-      rgba(7,14,20,.94);
-  }
-
-  .jarvis-crew-card h2 {
-    color: #d6b36a;
-  }
-
-  @media (max-width: 700px) {
-    .employee-page-top {
-      min-height: 92px;
-    }
-
-    .employee-crest-top {
-      width: 120px;
-      opacity: .92;
-    }
-
-    .employee-header-actions {
-      padding-right: 130px;
-    }
-  }
-</style>
 
 <section class="card">
   {% if employee %}
@@ -147,11 +213,11 @@
 
 <section class="grid">
 
-<a class="card jarvis-crew-card" href="/assistant-interview-live">
-  <h2>Talk to Jarvis</h2>
-  <p>Ask Jarvis about today’s jobs, notes, photos, problems, materials, or what needs handled next.</p>
-</a>
-  
+  <a class="card jarvis-crew-card" href="/assistant-interview-live">
+    <h2>Talk to Jarvis</h2>
+    <p>Ask Jarvis about today’s jobs, notes, photos, problems, materials, or what needs handled next.</p>
+  </a>
+
   <a class="card" href="/crew/my-day">
     <h2>My Day</h2>
     <p>Today’s assigned work.</p>
@@ -171,6 +237,17 @@
     <h2>Photos</h2>
     <p>Upload or review job photos.</p>
   </a>
+
+  <a class="card" href="/gps/day">
+    <h2>GPS Day Log</h2>
+    <p>Raw GPS points recorded during the day.</p>
+  </a>
+
+  <a class="card" href="/gps/stops">
+    <h2>GPS Stops</h2>
+    <p>Detected stops, arrival times, and time spent on site.</p>
+  </a>
+
 </section>
 
 <script>
@@ -187,7 +264,6 @@
   function sendGpsPoint(position) {
     const now = Date.now();
 
-    // Save one point per minute max.
     if (now - lastGpsSend < 60000) {
       return;
     }

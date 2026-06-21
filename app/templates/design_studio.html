@@ -461,6 +461,66 @@
 </section>
 
 <section class="studio-panel">
+  <h2>Crew Dashboard Builder</h2>
+
+  <div class="studio-field">
+    <label>Crew dashboard title</label>
+    <input name="crew_dashboard_title" value="{{ design.get('crew_dashboard', {}).get('title', 'Crew Portal') }}">
+  </div>
+
+  <div class="studio-field">
+    <label>Crew dashboard subtitle</label>
+    <textarea name="crew_dashboard_subtitle">{{ design.get('crew_dashboard', {}).get('subtitle', 'My jobs, clock in/out, photos, field notes, weather, and map.') }}</textarea>
+  </div>
+
+  <div class="studio-field">
+    <label>Crew dashboard section title</label>
+    <input name="crew_dashboard_section_title" value="{{ design.get('crew_dashboard', {}).get('section_title', 'Crew Tools') }}">
+  </div>
+
+  <div class="studio-field">
+    <label>Crew dashboard crest image</label>
+    <input name="crew_dashboard_crest_image" value="{{ design.get('crew_dashboard', {}).get('crest_image', '/static/heinlin-wide-crest.png') }}">
+  </div>
+
+  <div class="studio-field">
+    <label>Crew dashboard crest width</label>
+    <input name="crew_dashboard_crest_width" value="{{ design.get('crew_dashboard', {}).get('crest_width', '340px') }}">
+  </div>
+
+  <div class="studio-field">
+    <label>Crew dashboard crest top</label>
+    <input name="crew_dashboard_crest_top" value="{{ design.get('crew_dashboard', {}).get('crest_top', '210px') }}">
+  </div>
+
+  <div class="studio-field">
+    <label>Crew dashboard crest right</label>
+    <input name="crew_dashboard_crest_right" value="{{ design.get('crew_dashboard', {}).get('crest_right', '70px') }}">
+  </div>
+
+  <div class="studio-field">
+    <label>Crew dashboard crest opacity</label>
+    <input name="crew_dashboard_crest_opacity" value="{{ design.get('crew_dashboard', {}).get('crest_opacity', '0.92') }}">
+  </div>
+
+  <div class="studio-field">
+    <label>Crew dashboard hero padding top</label>
+    <input name="crew_dashboard_hero_padding_top" value="{{ design.get('crew_dashboard', {}).get('hero_padding_top', '150px') }}">
+  </div>
+
+  <div class="studio-field">
+    <label>Crew dashboard page padding top</label>
+    <input name="crew_dashboard_dashboard_padding_top" value="{{ design.get('crew_dashboard', {}).get('dashboard_padding_top', '120px') }}">
+  </div>
+
+  <div class="studio-field">
+    <label>Buttons / Tools JSON</label>
+    <textarea name="crew_dashboard_tools_json">{{ design.get('crew_dashboard', {}).get('tools', []) | tojson }}</textarea>
+    <p class="muted">Each button needs label, description, href, and enabled.</p>
+  </div>
+</section>
+
+<section class="studio-panel">
   <h2>Photos Page</h2>
 
   <div class="studio-field">
