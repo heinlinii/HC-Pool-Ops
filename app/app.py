@@ -1145,6 +1145,22 @@ def gps_stops_alias(request: Request):
         return login_redirect()
     return RedirectResponse("/gps/stops", status_code=303)
 
+@app.get("/invisible-office", response_class=HTMLResponse)
+def invisible_office(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+
+    notes = []
+    try:
+        notes = rows("SELECT * FROM poolops2_office_notes ORDER BY id DESC")
+    except Exception:
+        notes = []
+
+    return templates.TemplateResponse(
+        "invisible_office.html",
+        ctx(request, notes=notes)
+    )
 
 @app.get("/admin/link-check", response_class=HTMLResponse)
 def admin_link_check(request: Request):
