@@ -513,6 +513,7 @@ DEFAULT_DESIGN = {
             {"label": "Schedule", "description": "Today", "href": "/schedule/day", "enabled": True},
             {"label": "Map", "description": "Locations", "href": "/map", "enabled": True},
             {"label": "Weather", "description": "Conditions", "href": "/weather", "enabled": True},
+            {"label": "Freeze Watch", "description": "Freeze risk dashboard", "href": "/freeze-watch", "enabled": True},
             {"label": "GPS Day Log", "description": "Raw GPS points", "href": "/gps/day", "enabled": True},
             {"label": "GPS Stops", "description": "Stops and time on site", "href": "/gps/stops", "enabled": True},
             {"label": "Send It", "description": "Talk to Jarvis", "href": "/assistant-interview-live", "enabled": True},
@@ -1159,6 +1160,7 @@ def admin_link_check(request: Request):
         ("Dashboard / Jarvis", "/jarvis"),
         ("Design Studio", "/design-studio"),
         ("Pool Monitoring", "/pool-monitoring"),
+        ("Freeze Watch", "/freeze-watch"),
         ("Organize My Day", "/organize-my-day"),
         ("Handle It", "/handle-it"),
         ("Send It", "/send-it"),
@@ -2443,6 +2445,78 @@ def quickbooks(request: Request):
 def weather(request: Request):
     if not require_login(request): return login_redirect()
     return templates.TemplateResponse("weather.html", ctx(request))
+
+def freeze_risk_level(temp_f):
+    if temp_f is None:
+        return "Weather Pending"
+    if temp_f > 36:
+        return "No Risk"
+    if temp_f >= 33:
+        return "Watch"
+    if temp_f >= 29:
+        return "Medium"
+    if temp_f >= 20:
+        return "High"
+    return "Critical"
+
+
+def freeze_recommended_actions(risk_level):
+    actions = {
+        "No Risk": [
+            "Continue normal service monitoring.",
+            "Verify open service tickets that mention heaters, covers, or pumps.",
+        ],
+        "Watch": [
+            "Remind crew to check exposed equipment pads.",
+            "Confirm pumps, timers, and automation schedules are ready for overnight flow.",
+        ],
+        "Medium": [
+            "Prioritize pools with exposed plumbing or known equipment issues.",
+            "Check covers, pump operation, and freeze protection settings before evening.",
+        ],
+        "High": [
+            "Dispatch freeze checks for vulnerable properties.",
+            "Verify continuous circulation and document any equipment that cannot run.",
+        ],
+        "Critical": [
+            "Treat as urgent freeze response conditions.",
+            "Escalate high-risk properties and document completed protection steps.",
+        ],
+    }
+    return actions.get(risk_level, [
+        "Weather data is not available yet.",
+        "Open Weather and refresh NWS data before making field decisions.",
+    ])
+
+
+@app.get("/freeze-watch", response_class=HTMLResponse)
+def freeze_watch(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    if is_client(u):
+        return RedirectResponse("/jarvis", status_code=303)
+
+    try:
+        forecast_low = float(request.query_params.get("low", "34"))
+    except Exception:
+        forecast_low = 34.0
+
+    risk_level = freeze_risk_level(forecast_low)
+    nws_alerts = []
+
+    return templates.TemplateResponse(
+        "freeze_watch.html",
+        ctx(
+            request,
+            risk_level=risk_level,
+            forecast_low=forecast_low,
+            nws_alerts=nws_alerts,
+            recommended_actions=freeze_recommended_actions(risk_level),
+            properties=properties_for_user(u),
+            placeholder_weather=True,
+        )
+    )
 
 @app.get("/contact-us", response_class=HTMLResponse)
 def contact_us(request: Request):
