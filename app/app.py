@@ -723,11 +723,25 @@ async def save_upload(file: UploadFile | None):
 
 
 def schedule_date(job):
-    val = (job.get("scheduled_start") or job.get("date") or "").strip()
+    val = job.get("scheduled_start") or job.get("date") or ""
+
     if not val:
         return ""
-    return val[:10]
 
+    # Render/Postgres may return real date/datetime objects.
+    if isinstance(val, datetime):
+        return val.date().isoformat()
+
+    if isinstance(val, date):
+        return val.isoformat()
+
+    # SQLite/local usually returns text.
+    val = str(val).strip()
+
+    if not val:
+        return ""
+
+    return val[:10]
 
 def month_grid(year=None, month=None, job_rows=None):
     today = date.today()
