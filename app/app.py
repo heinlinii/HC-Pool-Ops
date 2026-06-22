@@ -2477,12 +2477,44 @@ def invisible_office(request: Request):
     u = require_login(request)
     if not u:
         return login_redirect()
+
+    notes = rows("SELECT * FROM poolops2_office_notes ORDER BY id DESC")
+
+    return templates.TemplateResponse(
+        "invisible_office.html",
+        ctx(request, notes=notes)
+    )
+@app.post("/invisible-office/add")
+def invisible_office_add(
+    request: Request,
+    note: str = Form(""),
+):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+
+    text = note.strip()
+    if text:
+        exec_sql(
+            "INSERT INTO poolops2_office_notes (note, created_at) VALUES (?, ?)",
+            (text, datetime.now().isoformat(timespec="seconds"))
+        )
+
+    return RedirectResponse("/invisible-office", status_code=303)
+
+
+@app.post("/invisible-office/{note_id}/delete")
+def invisible_office_delete(request: Request, note_id: int):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+
     if not is_admin(u):
-        return admin_redirect(u)
-    notes = rows("SELECT * FROM poolops2_office_notes ORDER BY id DESC LIMIT 25")
-    return templates.TemplateResponse("invisible_office.html", {"request": request, "user": u, "theme": theme(), "notes": notes})
+        return RedirectResponse("/invisible-office", status_code=303)
 
+    exec_sql("DELETE FROM poolops2_office_notes WHERE id=?", (note_id,))
 
+    return RedirectResponse("/invisible-office", status_code=303)
 @app.post("/invisible-office/note")
 def invisible_office_note(request: Request, note: str = Form("")):
     u = require_login(request)

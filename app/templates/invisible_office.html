@@ -7,17 +7,29 @@
 </section>
 
 <section class="card">
-  <h2>Office Memory</h2>
-  <p>This page is online. Next we can add quick notes, reminders, client follow-ups, and Jarvis memory cards here.</p>
+  <h2>Add Office Note</h2>
+
+  <form method="post" action="/invisible-office/add" class="inline-form">
+    <input name="note" placeholder="Type a note, reminder, follow-up, material, problem, or task...">
+    <button class="btn primary" type="submit">Save Note</button>
+  </form>
 </section>
 
 <section class="grid">
   {% for note in notes %}
     <div class="card">
-      <h2>Note</h2>
+      <h2>Office Note</h2>
+
       <p>{{ note.note }}</p>
+
       {% if note.created_at %}
-        <p>{{ note.created_at }}</p>
+        <p class="muted">{{ note.created_at }}</p>
+      {% endif %}
+
+      {% if is_admin %}
+        <form method="post" action="/invisible-office/{{ note.id }}/delete" onsubmit="return confirm('Delete this note?');">
+          <button class="btn danger" type="submit">Delete</button>
+        </form>
       {% endif %}
     </div>
   {% else %}

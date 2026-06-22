@@ -29,11 +29,6 @@
     color: #fff;
   }
 
-  .hfo-crew-dashboard {
-  position: relative;
-  padding-top: 132px;
-}
-
   .hfo-hero {
     padding: 24px;
     border-radius: 18px;
@@ -171,49 +166,6 @@
     gap: 12px;
   }
 
-  .hfo-action {
-    min-height: 58px;
-    padding: 0;
-    border-radius: 0;
-    border: 0;
-    background: transparent;
-    color: #fff;
-    text-decoration: none;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 14px;
-    box-sizing: border-box;
-  }
-
-  .hfo-action strong {
-    color: #d6b36a;
-    font-size: .95rem;
-    font-weight: 1000;
-    letter-spacing: .06em;
-    text-transform: uppercase;
-  }
-
-  .hfo-action span {
-    color: rgba(255,255,255,.70);
-    font-size: .86rem;
-    font-weight: 800;
-    text-align: right;
-  }
-
-  .hfo-action.primary {
-    background: transparent;
-  }
-
-  .hfo-action.primary strong,
-  .hfo-action.primary span {
-    color: #d6b36a;
-  }
-
-  .hfo-action.placeholder {
-    opacity: .82;
-  }
-
   .hfo-action-button {
     width: 100%;
     min-height: 64px;
@@ -253,15 +205,15 @@
   }
 
   .hfo-crew-crest {
-  position: absolute;
-  top: 50px;
-  right: 70px;
-  width: 600px;
-  max-width: 38vw;
-  z-index: 1;
-  pointer-events: none;
-  opacity: .94;
-}
+    position: absolute;
+    top: var(--crew-crest-top, 145px);
+    right: var(--crew-crest-right, 70px);
+    width: var(--crew-crest-width, 470px);
+    max-width: 38vw;
+    z-index: 1;
+    pointer-events: none;
+    opacity: var(--crew-crest-opacity, .94);
+  }
 
   .hfo-crew-crest img {
     display: block;
@@ -271,16 +223,16 @@
     filter: drop-shadow(0 18px 36px rgba(0,0,0,.65));
   }
 
-  .hfo-crew-dashboard .hfo-hero h1 {
-    font-size: clamp(4.6rem, 7vw, 7.4rem);
-    line-height: .86;
-  }
-
   .hfo-crew-dashboard .hfo-hero {
     position: relative;
     z-index: 4;
     padding-top: var(--crew-hero-padding-top, 150px);
     max-width: 980px;
+  }
+
+  .hfo-crew-dashboard .hfo-hero h1 {
+    font-size: clamp(4.6rem, 7vw, 7.4rem);
+    line-height: .86;
   }
 
   .hfo-crew-dashboard .hfo-section {
@@ -297,6 +249,10 @@
   }
 
   @media (max-width: 640px) {
+    .hfo-dashboard {
+      padding: 84px 12px 30px;
+    }
+
     .hfo-search-form,
     .hfo-card-grid {
       grid-template-columns: 1fr;
@@ -304,15 +260,6 @@
 
     .hfo-card {
       min-height: 82px;
-    }
-
-    .hfo-action {
-      align-items: flex-start;
-      flex-direction: column;
-    }
-
-    .hfo-action span {
-      text-align: left;
     }
 
     .hfo-crew-dashboard {
@@ -332,8 +279,11 @@
       padding-top: 132px;
       max-width: 100%;
     }
-  }
 
+    .hfo-crew-dashboard .hfo-hero h1 {
+      font-size: clamp(3.1rem, 13vw, 4.9rem);
+    }
+  }
 </style>
 
 {% if is_admin %}
@@ -349,47 +299,36 @@
       </form>
     </section>
 
-<a class="hfo-card primary" href="/invisible-office">
-  <strong>Invisible Office</strong>
-  <span>Notes, reminders, office memory, and things Jarvis needs to keep track of.</span>
-</a>
-
-<a class="hfo-action-button" href="/invisible-office">
-  <strong>Invisible Office</strong>
-  <span>Notes, reminders, and field memory</span>
-</a>
-
-    {% if is_admin %}
-      <section class="hfo-section">
-        <div class="hfo-section-title">Admin Tools</div>
-        <div class="hfo-card-grid">
-          <a class="hfo-card primary" href="/design-studio"><strong>Design Studio</strong><span>Dashboard wording, layout, and visual controls.</span></a>
-          <a class="hfo-card" href="/clients"><strong>Clients</strong><span>Client records, portals, and contact history.</span></a>
-          <a class="hfo-card" href="/properties"><strong>Properties</strong><span>Pools, addresses, equipment, and details.</span></a>
-          <a class="hfo-card" href="/jobs"><strong>Jobs</strong><span>Work orders, status, crew, and notes.</span></a>
-          <a class="hfo-card" href="/schedule/day"><strong>Daily Schedule</strong><span>Today&apos;s field work and service calls.</span></a>
-          <a class="hfo-card" href="/schedule/year"><strong>Year Schedule</strong><span>Full calendar and long-range planning.</span></a>
-          <a class="hfo-card" href="/photos"><strong>Photos</strong><span>Progress shots, property images, and field proof.</span></a>
-          <a class="hfo-card" href="/crew"><strong>Crew / Employees</strong><span>Employee records and field access.</span></a>
-          <a class="hfo-card" href="/employee"><strong>Employee Portal</strong><span>Clock, jobs, photos, and field tools.</span></a>
-          <a class="hfo-card" href="/gps/day"><strong>GPS Day Log</strong><span>Daily location history and field movement.</span></a>
-          <a class="hfo-card" href="/gps/stops"><strong>GPS Stops</strong><span>Detected stops and time on site.</span></a>
-          <a class="hfo-card" href="/pool-monitoring"><strong>Pool Monitoring</strong><span>Monitored pools, alerts, and follow-up.</span></a>
-          <a class="hfo-card" href="/map"><strong>Map</strong><span>Properties, jobs, and crew locations.</span></a>
-          <a class="hfo-card" href="/weather"><strong>Weather</strong><span>Field conditions and planning.</span></a>
-          <a class="hfo-card" href="/freeze-watch"><strong>Freeze Watch</strong><span>Freeze risk for pools and equipment pads.</span></a>
-          <a class="hfo-card" href="/admin/link-check"><strong>Link Check</strong><span>Find broken app navigation.</span></a>
-          <a class="hfo-card" href="/send-it"><strong>Send It</strong><span>Send a message to Jarvis.</span></a>
-       </div>
-      </section>
-    {% endif %}
+    <section class="hfo-section">
+      <div class="hfo-section-title">Admin Tools</div>
+      <div class="hfo-card-grid">
+        <a class="hfo-card primary" href="/design-studio"><strong>Design Studio</strong><span>Dashboard wording, layout, and visual controls.</span></a>
+        <a class="hfo-card primary" href="/invisible-office"><strong>Invisible Office</strong><span>Notes, reminders, office memory, and things Jarvis needs to keep track of.</span></a>
+        <a class="hfo-card" href="/clients"><strong>Clients</strong><span>Client records, portals, and contact history.</span></a>
+        <a class="hfo-card" href="/properties"><strong>Properties</strong><span>Pools, addresses, equipment, and details.</span></a>
+        <a class="hfo-card" href="/jobs"><strong>Jobs</strong><span>Work orders, status, crew, and notes.</span></a>
+        <a class="hfo-card" href="/schedule/day"><strong>Daily Schedule</strong><span>Today&apos;s field work and service calls.</span></a>
+        <a class="hfo-card" href="/schedule/year"><strong>Year Schedule</strong><span>Full calendar and long-range planning.</span></a>
+        <a class="hfo-card" href="/photos"><strong>Photos</strong><span>Progress shots, property images, and field proof.</span></a>
+        <a class="hfo-card" href="/crew"><strong>Crew / Employees</strong><span>Employee records and field access.</span></a>
+        <a class="hfo-card" href="/employee"><strong>Employee Portal</strong><span>Clock, jobs, photos, and field tools.</span></a>
+        <a class="hfo-card" href="/gps/day"><strong>GPS Day Log</strong><span>Raw GPS points.</span></a>
+        <a class="hfo-card" href="/gps/stops"><strong>GPS Stops</strong><span>Detected stops and time on site.</span></a>
+        <a class="hfo-card" href="/pool-monitoring"><strong>Pool Monitoring</strong><span>Monitored pools, alerts, and follow-up.</span></a>
+        <a class="hfo-card" href="/map"><strong>Map</strong><span>Properties, jobs, and crew locations.</span></a>
+        <a class="hfo-card" href="/weather"><strong>Weather</strong><span>Field conditions and planning.</span></a>
+        <a class="hfo-card" href="/freeze-watch"><strong>Freeze Watch</strong><span>Freeze risk for pools and equipment pads.</span></a>
+        <a class="hfo-card" href="/admin/link-check"><strong>Link Check</strong><span>Find broken app navigation.</span></a>
+        <a class="hfo-card" href="/assistant-interview-live"><strong>Send It</strong><span>Talk to Jarvis.</span></a>
+      </div>
+    </section>
   </div>
 
 {% elif is_employee %}
   {% set crew_dashboard = design.get('crew_dashboard', {}) %}
   <div
     class="hfo-dashboard hfo-plain-dashboard hfo-crew-dashboard"
-    style="--crew-dashboard-padding-top: {{ crew_dashboard.get('dashboard_padding_top', '120px') }}; --crew-hero-padding-top: {{ crew_dashboard.get('hero_padding_top', '150px') }}; --crew-crest-width: {{ crew_dashboard.get('crest_width', '340px') }}; --crew-crest-top: {{ crew_dashboard.get('crest_top', '210px') }}; --crew-crest-right: {{ crew_dashboard.get('crest_right', '70px') }}; --crew-crest-opacity: {{ crew_dashboard.get('crest_opacity', '0.92') }};"
+    style="--crew-dashboard-padding-top: {{ crew_dashboard.get('dashboard_padding_top', '120px') }}; --crew-hero-padding-top: {{ crew_dashboard.get('hero_padding_top', '150px') }}; --crew-crest-width: {{ crew_dashboard.get('crest_width', '470px') }}; --crew-crest-top: {{ crew_dashboard.get('crest_top', '145px') }}; --crew-crest-right: {{ crew_dashboard.get('crest_right', '70px') }}; --crew-crest-opacity: {{ crew_dashboard.get('crest_opacity', '0.94') }};"
   >
     <div class="hfo-crew-crest">
       <img src="{{ crew_dashboard.get('crest_image', '/static/heinlin-wide-crest.png') }}" alt="Heinlin Crest">
@@ -401,18 +340,36 @@
       <p>{{ crew_dashboard.get('subtitle', 'My jobs, clock in/out, photos, field notes, weather, and map.') }}</p>
     </section>
 
-    {% if is_employee %}
-      <section class="hfo-section">
-        <div class="hfo-section-title">{{ crew_dashboard.get('section_title', 'Crew Tools') }}</div>
-        <div class="hfo-action-list">
-          {% for tool in crew_dashboard.get('tools', []) %}
-            {% if tool.get('enabled') and tool.get('href', '').startswith('/') %}
-              <a class="hfo-action-button" href="{{ tool.get('href') }}"><strong>{{ tool.get('label', 'Tool') }}</strong><span>{{ tool.get('description', '') }}</span></a>
+    <section class="hfo-section">
+      <div class="hfo-section-title">{{ crew_dashboard.get('section_title', 'Crew Tools') }}</div>
+      <div class="hfo-action-list">
+        {% for tool in crew_dashboard.get('tools', []) %}
+          {% if tool.get('enabled') %}
+            {% set raw_href = tool.get('href', '') %}
+            {% if raw_href in ['/gps-day-log', 'gps-day-log'] %}
+              {% set safe_href = '/gps/day' %}
+            {% elif raw_href in ['/gps-stops', 'gps-stops'] %}
+              {% set safe_href = '/gps/stops' %}
+            {% elif raw_href in ['/send-it', '/sendit', 'send-it', 'sendit'] %}
+              {% set safe_href = '/assistant-interview-live' %}
+            {% elif raw_href in ['/daily-schedule', '/todays-schedule', 'daily-schedule', 'todays-schedule', 'schedule/day'] %}
+              {% set safe_href = '/schedule/day' %}
+            {% elif raw_href and raw_href.startswith('/') %}
+              {% set safe_href = raw_href %}
+            {% else %}
+              {% set safe_href = '' %}
             {% endif %}
-          {% endfor %}
-        </div>
-      </section>
-    {% endif %}
+
+            {% if safe_href %}
+              <a class="hfo-action-button" href="{{ safe_href }}">
+                <strong>{{ tool.get('label', 'Tool') }}</strong>
+                <span>{{ tool.get('description', '') }}</span>
+              </a>
+            {% endif %}
+          {% endif %}
+        {% endfor %}
+      </div>
+    </section>
   </div>
 
 {% elif is_client %}
@@ -423,14 +380,12 @@
       <p>Review your properties, jobs, photos, and service notes without internal office controls.</p>
     </section>
 
-    {% if is_client %}
-      <section class="hfo-section">
-        <div class="hfo-section-title">Your Account</div>
-        <div class="hfo-action-list">
-          <a class="hfo-action-button" href="/client-portal"><strong>My Portal</strong><span>Open account</span></a>
-        </div>
-      </section>
-    {% endif %}
+    <section class="hfo-section">
+      <div class="hfo-section-title">Your Account</div>
+      <div class="hfo-action-list">
+        <a class="hfo-action-button" href="/client-portal"><strong>My Portal</strong><span>Open account</span></a>
+      </div>
+    </section>
   </div>
 
 {% else %}
