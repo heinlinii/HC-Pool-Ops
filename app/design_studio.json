@@ -139,6 +139,12 @@
         "label": "Weather"
       },
       {
+        "description": "Freeze risk dashboard",
+        "enabled": true,
+        "href": "/freeze-watch",
+        "label": "Freeze Watch"
+      },
+      {
         "description": "Raw GPS points",
         "enabled": true,
         "href": "/gps/day",

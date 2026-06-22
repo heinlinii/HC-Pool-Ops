@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+  .freeze-page {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 96px 18px 40px;
+    color: #fff;
+  }
+
+  .freeze-hero {
+    padding: 24px;
+    border-radius: 18px;
+    background: rgba(7, 14, 20, .94);
+    border: 1px solid rgba(214,179,106,.26);
+    margin-bottom: 18px;
+  }
+
+  .freeze-hero h1 {
+    margin: 0 0 10px;
+    color: #fff;
+    font-size: clamp(2.4rem, 7vw, 5.5rem);
+    line-height: 1;
+  }
+
+  .freeze-hero p,
+  .freeze-muted {
+    margin: 0;
+    color: rgba(255,255,255,.74);
+    font-weight: 850;
+    line-height: 1.35;
+  }
+
+  .freeze-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+  }
+
+  .freeze-card {
+    padding: 18px;
+    border-radius: 14px;
+    background: rgba(7,14,20,.90);
+    border: 1px solid rgba(214,179,106,.22);
+  }
+
+  .freeze-card h2 {
+    margin: 0 0 10px;
+    color: #d6b36a;
+    font-size: .95rem;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+  }
+
+  .freeze-value {
+    color: #fff;
+    font-size: clamp(2rem, 5vw, 4rem);
+    font-weight: 1000;
+    line-height: 1;
+  }
+
+  .freeze-risk-critical,
+  .freeze-risk-high {
+    border-color: rgba(255,91,91,.55);
+  }
+
+  .freeze-risk-medium,
+  .freeze-risk-watch {
+    border-color: rgba(214,179,106,.62);
+  }
+
+  .freeze-card ul {
+    margin: 0;
+    padding-left: 20px;
+    color: rgba(255,255,255,.82);
+    font-weight: 850;
+  }
+
+  .freeze-card li {
+    margin: 8px 0;
+  }
+
+  .freeze-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 14px;
+  }
+
+  .freeze-actions a {
+    min-height: 46px;
+    padding: 0 16px;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    color: #071017;
+    background: linear-gradient(135deg, #7b5a22, #d6b36a, #5f4519);
+    font-weight: 1000;
+    text-decoration: none;
+  }
+
+  @media (max-width: 760px) {
+    .freeze-page {
+      padding: 84px 12px 30px;
+    }
+
+    .freeze-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+{% set risk_class = 'freeze-risk-' ~ (risk_level or 'pending')|lower|replace(' ', '-') %}
+
+<div class="freeze-page">
+  <section class="freeze-hero">
+    <h1>Freeze Watch</h1>
+    <p>Forecast-driven freeze risk for pools and equipment pads.</p>
+    {% if placeholder_weather %}
+      <p class="freeze-muted">Using safe placeholder weather until server-side forecast data is connected.</p>
+    {% endif %}
+    <div class="freeze-actions">
+      <a href="/weather">Open Weather</a>
+      <a href="/map">Open Map</a>
+      <a href="/jarvis">Dashboard</a>
+    </div>
+  </section>
+
+  <section class="freeze-grid">
+    <article class="freeze-card {{ risk_class }}">
+      <h2>Current Risk Level</h2>
+      <div class="freeze-value">{{ risk_level }}</div>
+    </article>
+
+    <article class="freeze-card">
+      <h2>Tonight's Forecast Low</h2>
+      <div class="freeze-value">
+        {% if forecast_low is not none %}{{ forecast_low|round|int }}&deg;F{% else %}Unavailable{% endif %}
+      </div>
+    </article>
+
+    <article class="freeze-card">
+      <h2>NWS Active Alerts</h2>
+      {% if nws_alerts %}
+        <ul>
+          {% for alert in nws_alerts %}
+            <li>{{ alert }}</li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="freeze-muted">No active NWS alerts available in Freeze Watch yet. Open Weather for live NWS alerts.</p>
+      {% endif %}
+    </article>
+
+    <article class="freeze-card">
+      <h2>Recommended Actions</h2>
+      <ul>
+        {% for action in recommended_actions %}
+          <li>{{ action }}</li>
+        {% endfor %}
+      </ul>
+    </article>
+
+    <article class="freeze-card">
+      <h2>Property Checklist Placeholder</h2>
+      <ul>
+        <li>Confirm equipment pads with exposed plumbing.</li>
+        <li>Verify pumps and automation are set for overnight flow.</li>
+        <li>Mark vulnerable properties for crew follow-up.</li>
+        <li>Future pass: connect this checklist to property records.</li>
+      </ul>
+    </article>
+
+    <article class="freeze-card">
+      <h2>Visible Properties</h2>
+      <p class="freeze-muted">{{ properties|length }} properties available to this user for future freeze checklist wiring.</p>
+    </article>
+  </section>
+</div>
+
+{% endblock %}
