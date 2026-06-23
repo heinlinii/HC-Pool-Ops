@@ -267,23 +267,7 @@ def ensure_schema():
                 note TEXT DEFAULT '',
                 created_at TEXT DEFAULT ''
             )""")
-            c.execute("""CREATE TABLE IF NOT EXISTS invisible_office_items (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                source TEXT DEFAULT 'manual',
-                category TEXT DEFAULT 'General Note',
-                title TEXT DEFAULT '',
-                body TEXT DEFAULT '',
-                client TEXT DEFAULT '',
-                property TEXT DEFAULT '',
-                job_id INTEGER,
-                assigned_to TEXT DEFAULT '',
-                due_date TEXT DEFAULT '',
-                priority TEXT DEFAULT 'Normal',
-                status TEXT DEFAULT 'Open',
-                created_by TEXT DEFAULT '',
-                created_at TEXT DEFAULT '',
-                completed_at TEXT DEFAULT ''
-            )""")
+          
             c.execute("""CREATE TABLE IF NOT EXISTS invisible_office_items (
                 id SERIAL PRIMARY KEY,
                 source TEXT DEFAULT 'manual',
