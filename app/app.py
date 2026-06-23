@@ -267,6 +267,40 @@ def ensure_schema():
                 note TEXT DEFAULT '',
                 created_at TEXT DEFAULT ''
             )""")
+            c.execute("""CREATE TABLE IF NOT EXISTS invisible_office_items (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                source TEXT DEFAULT 'manual',
+                category TEXT DEFAULT 'General Note',
+                title TEXT DEFAULT '',
+                body TEXT DEFAULT '',
+                client TEXT DEFAULT '',
+                property TEXT DEFAULT '',
+                job_id INTEGER,
+                assigned_to TEXT DEFAULT '',
+                due_date TEXT DEFAULT '',
+                priority TEXT DEFAULT 'Normal',
+                status TEXT DEFAULT 'Open',
+                created_by TEXT DEFAULT '',
+                created_at TEXT DEFAULT '',
+                completed_at TEXT DEFAULT ''
+            )""")
+            c.execute("""CREATE TABLE IF NOT EXISTS invisible_office_items (
+                id SERIAL PRIMARY KEY,
+                source TEXT DEFAULT 'manual',
+                category TEXT DEFAULT 'General Note',
+                title TEXT DEFAULT '',
+                body TEXT DEFAULT '',
+                client TEXT DEFAULT '',
+                property TEXT DEFAULT '',
+                job_id INTEGER,
+                assigned_to TEXT DEFAULT '',
+                due_date TEXT DEFAULT '',
+                priority TEXT DEFAULT 'Normal',
+                status TEXT DEFAULT 'Open',
+                created_by TEXT DEFAULT '',
+                created_at TEXT DEFAULT '',
+                completed_at TEXT DEFAULT ''
+            )""")
             c.execute("""CREATE TABLE IF NOT EXISTS poolops2_invoices (
                 id SERIAL PRIMARY KEY,
                 job_id INTEGER, client TEXT DEFAULT '', description TEXT DEFAULT '', amount REAL DEFAULT 0, status TEXT DEFAULT 'Draft', date TEXT DEFAULT '', notes TEXT DEFAULT ''
@@ -1035,6 +1069,94 @@ def todays_schedule_alias(request: Request):
         return login_redirect()
     return RedirectResponse("/schedule/day", status_code=303)
 
+def classify_invisible_office_item(text: str):
+    """
+    First-pass Jarvis filing logic.
+    This sorts Assistant Live messages into useful Invisible Office buckets.
+    """
+    raw = (text or "").strip()
+    lower = raw.lower()
+
+    category = "General Note"
+    priority = "Normal"
+
+    if any(w in lower for w in ["call", "text", "email", "follow up", "follow-up", "reach out", "check with"]):
+        category = "Client Follow-Up"
+
+    if any(w in lower for w in ["material", "materials", "need", "buy", "pickup", "pick up", "order", "salt", "check valve", "pipe", "fitting"]):
+        category = "Material Needed"
+
+    if any(w in lower for w in ["bill", "billing", "invoice", "paid", "payment", "charge", "estimate", "quote"]):
+        category = "Billing Note"
+
+    if any(w in lower for w in ["schedule", "tomorrow", "next week", "monday", "tuesday", "wednesday", "thursday", "friday"]):
+        category = "Schedule Task"
+
+    if any(w in lower for w in ["problem", "issue", "broken", "leak", "leaking", "error", "failed", "bad", "cracked", "not working"]):
+        category = "Problem Found"
+
+    if any(w in lower for w in ["heater", "pump", "filter", "automation", "salt cell", "intellicenter", "pentair", "hayward", "valve", "actuator"]):
+        category = "Equipment Note"
+
+    if any(w in lower for w in ["urgent", "asap", "emergency", "today", "right now", "critical"]):
+        priority = "High"
+
+    title = raw[:70].strip()
+    if len(raw) > 70:
+        title += "..."
+
+    return {
+        "category": category,
+        "priority": priority,
+        "title": title or "Jarvis Note",
+        "body": raw,
+    }
+
+
+def save_invisible_office_item(
+    request: Request,
+    body: str,
+    source: str = "manual",
+    category: str = "",
+    title: str = "",
+    client: str = "",
+    property: str = "",
+    job_id: int | None = None,
+    assigned_to: str = "",
+    due_date: str = "",
+    priority: str = "",
+):
+    u = current_user(request) or {}
+
+    classified = classify_invisible_office_item(body)
+
+    final_category = category.strip() or classified["category"]
+    final_title = title.strip() or classified["title"]
+    final_priority = priority.strip() or classified["priority"]
+
+    exec_sql(
+        """
+        INSERT INTO invisible_office_items
+        (source, category, title, body, client, property, job_id, assigned_to, due_date, priority, status, created_by, created_at)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)
+        """,
+        (
+            source,
+            final_category,
+            final_title,
+            body.strip(),
+            client.strip(),
+            property.strip(),
+            job_id,
+            assigned_to.strip(),
+            due_date.strip(),
+            final_priority,
+            "Open",
+            u.get("name") or u.get("username") or "",
+            datetime.now().isoformat(timespec="seconds"),
+        )
+    )
+
 @app.get("/assistant-interview-live", response_class=HTMLResponse)
 def assistant_interview_live(request: Request):
     u = require_login(request)
@@ -1045,6 +1167,34 @@ def assistant_interview_live(request: Request):
         "assistant_interview_live.html",
         ctx(request)
     )
+
+@app.post("/assistant-live/send")
+def assistant_live_send(
+    request: Request,
+    message: str = Form(""),
+    client: str = Form(""),
+    property: str = Form(""),
+    due_date: str = Form(""),
+    priority: str = Form(""),
+):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+
+    text = message.strip()
+
+    if text:
+        save_invisible_office_item(
+            request=request,
+            body=text,
+            source="Assistant Live",
+            client=client,
+            property=property,
+            due_date=due_date,
+            priority=priority,
+        )
+
+    return RedirectResponse("/invisible-office", status_code=303)
 
 @app.get("/today", response_class=HTMLResponse)
 def today_alias(request: Request):
@@ -1191,6 +1341,7 @@ def admin_link_check(request: Request):
         ("Photos", "/photos"),
         ("Crew", "/crew"),
         ("Weather", "/weather"),
+        ("Weather Watch", "/weather"),
         ("Map", "/map"),
         ("Daily Schedule", "/schedule/day"),
         ("Full Calendar", "/schedule/year"),
@@ -2444,6 +2595,21 @@ def field_logs_add(request: Request, employee_name: str = Form(""), client: str 
     emp_name = employee_name if is_admin(u) else u.get("name", "")
     exec_sql("INSERT INTO field_logs (employee_name,client,property,address,date,total_hours,tools_used,materials_used,equipment_used,work_completed,issues,next_steps,weather,latitude,longitude,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", (emp_name, client, property, address, date_str or date.today().isoformat(), total_hours, tools_used, materials_used, equipment_used, work_completed, issues, next_steps, weather, float(latitude) if latitude else None, float(longitude) if longitude else None, datetime.now().isoformat()))
     return RedirectResponse("/field-logs", status_code=303)
+
+@app.get("/freeze-watch", response_class=HTMLResponse)
+def freeze_watch_alias(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    return RedirectResponse("/weather", status_code=303)
+
+
+@app.get("/weather-watch", response_class=HTMLResponse)
+def weather_watch_alias(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    return RedirectResponse("/weather", status_code=303)
 
 @app.get("/quickbooks", response_class=HTMLResponse)
 def quickbooks(request: Request):

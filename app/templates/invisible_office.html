@@ -3,39 +3,62 @@
 
 <section class="section-head">
   <h1>Invisible Office</h1>
-  <p>Notes, reminders, memory, follow-ups, and things that should not get lost.</p>
+  <p>Everything Jarvis files: notes, follow-ups, materials, problems, billing, schedule tasks, and reminders.</p>
 </section>
 
 <section class="card">
-  <h2>Add Office Note</h2>
+  <h2>Add Office Item</h2>
 
-  <form method="post" action="/invisible-office/add" class="inline-form">
-    <input name="note" placeholder="Type a note, reminder, follow-up, material, problem, or task...">
+  <form method="post" action="/invisible-office/add" class="stack">
+    <textarea name="note" placeholder="Type a note, reminder, follow-up, material, problem, or task..." style="min-height:110px;width:100%;"></textarea>
     <button class="btn primary" type="submit">Save Note</button>
   </form>
 </section>
 
 <section class="grid">
-  {% for note in notes %}
+  {% for item in items %}
     <div class="card">
-      <h2>Office Note</h2>
+      <h2>{{ item.title or item.category or "Office Item" }}</h2>
 
-      <p>{{ note.note }}</p>
+      <p>
+        <strong>{{ item.category or "General Note" }}</strong>
+        {% if item.priority %}
+          • Priority: {{ item.priority }}
+        {% endif %}
+      </p>
 
-      {% if note.created_at %}
-        <p class="muted">{{ note.created_at }}</p>
+      <p>{{ item.body or item.note }}</p>
+
+      {% if item.client %}
+        <p><strong>Client:</strong> {{ item.client }}</p>
+      {% endif %}
+
+      {% if item.property %}
+        <p><strong>Property:</strong> {{ item.property }}</p>
+      {% endif %}
+
+      {% if item.due_date %}
+        <p><strong>Due:</strong> {{ item.due_date }}</p>
+      {% endif %}
+
+      {% if item.source %}
+        <p class="muted">Source: {{ item.source }}</p>
+      {% endif %}
+
+      {% if item.created_at %}
+        <p class="muted">{{ item.created_at }}</p>
       {% endif %}
 
       {% if is_admin %}
-        <form method="post" action="/invisible-office/{{ note.id }}/delete" onsubmit="return confirm('Delete this note?');">
+        <form method="post" action="/invisible-office/{{ item.id }}/delete" onsubmit="return confirm('Delete this item?');">
           <button class="btn danger" type="submit">Delete</button>
         </form>
       {% endif %}
     </div>
   {% else %}
     <div class="card">
-      <h2>No notes yet</h2>
-      <p>The Invisible Office is ready for its first note.</p>
+      <h2>No Invisible Office items yet</h2>
+      <p>Tell Jarvis something from Assistant Live, and it will show up here.</p>
     </div>
   {% endfor %}
 </section>

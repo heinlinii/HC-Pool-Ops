@@ -69,24 +69,50 @@
 
       if (alertsData.features && alertsData.features.length > 0) {
         alertsBox.innerHTML = `
-          <h3>Active Alerts</h3>
-          ${alertsData.features.map(function(alert) {
-            const p = alert.properties;
-            return `
-              <div class="hfo-weather-alert">
-                <strong>${p.event || "Weather Alert"}</strong>
-                <p>${p.headline || ""}</p>
-              </div>
-            `;
-          }).join("")}
-        `;
-      } else {
-        alertsBox.innerHTML = `
-          <div class="hfo-weather-clear">
-            No active NWS alerts for this area.
-          </div>
-        `;
-      }
+  <h3>Weather Watch</h3>
+  <p class="muted">
+    Severe weather alerts, jobsite risk, radar checks, and field action warnings.
+  </p>
+
+  <h3>Active Severe Weather Alerts</h3>
+
+  ${alertsData.features.map(function(alert) {
+    const p = alert.properties;
+    return `
+      <div class="hfo-weather-alert">
+        <strong>${p.event || "Weather Alert"}</strong>
+        <p>${p.headline || ""}</p>
+        <p>${p.description || ""}</p>
+      </div>
+    `;
+  }).join("")}
+
+  <div class="hfo-weather-alert">
+    <strong>Jobsite Weather Actions</strong>
+    <p><strong>Tornado / Severe Thunderstorm:</strong> Stop field work and get crews under cover.</p>
+    <p><strong>Lightning:</strong> No pool work, metal tools, equipment pads, or open excavation work.</p>
+    <p><strong>Heavy Rain / Flooding:</strong> Check excavations, drainage, pool water levels, and equipment pads.</p>
+    <p><strong>High Wind:</strong> Secure covers, forms, tools, materials, and loose jobsite items.</p>
+    <p><strong>Power Outage Risk:</strong> Check pool pumps, automation, heaters, and weather protection systems.</p>
+  </div>
+`;
+     } else {
+  alertsBox.innerHTML = `
+    <h3>Weather Watch</h3>
+    <p class="muted">
+      No active severe weather alerts are currently listed for the Evansville area.
+    </p>
+
+    <div class="hfo-weather-alert">
+      <strong>Jobsite Weather Actions</strong>
+      <p><strong>Tornado / Severe Thunderstorm:</strong> Stop field work and get crews under cover.</p>
+      <p><strong>Lightning:</strong> No pool work, metal tools, equipment pads, or open excavation work.</p>
+      <p><strong>Heavy Rain / Flooding:</strong> Check excavations, drainage, pool water levels, and equipment pads.</p>
+      <p><strong>High Wind:</strong> Secure covers, forms, tools, materials, and loose jobsite items.</p>
+      <p><strong>Power Outage Risk:</strong> Check pool pumps, automation, heaters, and weather protection systems.</p>
+    </div>
+  `;
+}
 
       const periods = forecastData.properties.periods || [];
 

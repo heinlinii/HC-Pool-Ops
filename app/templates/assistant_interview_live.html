@@ -1,76 +1,48 @@
 {% extends "base.html" %}
 {% block content %}
 
-<style>
-  .assistant-page {
-    max-width: 1100px;
-    margin: 0 auto;
-    padding: 160px 18px 40px;
-    color: #fff;
-  }
+<section class="section-head">
+  <h1>Assistant Live</h1>
+  <p>Tell Jarvis what needs handled. Jarvis will file it into Invisible Office automatically.</p>
+</section>
 
-  .assistant-card {
-    border-radius: 28px;
-    padding: 34px;
-    background: rgba(7, 14, 20, .94);
-    border: 1px solid rgba(214,179,106,.28);
-  }
+<section class="card">
+  <h2>Send It to Jarvis</h2>
 
-  .assistant-card h1 {
-    margin: 0 0 14px;
-    color: #fff;
-    font-size: clamp(3rem, 7vw, 7rem);
-    line-height: .9;
-  }
+  <form method="post" action="/assistant-live/send" class="stack">
+    <textarea
+      name="message"
+      placeholder="Tell Jarvis what needs handled..."
+      style="min-height:160px;width:100%;"
+      autofocus
+    ></textarea>
 
-  .assistant-card p {
-    color: rgba(255,255,255,.78);
-    font-weight: 850;
-    font-size: 1.15rem;
-  }
-
-  .assistant-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-    margin-top: 24px;
-  }
-
-  .assistant-actions a {
-    text-decoration: none;
-    border-radius: 999px;
-    padding: 14px 20px;
-    font-weight: 1000;
-    background: linear-gradient(135deg, #7b5a22, #d6b36a, #5f4519);
-    color: #071017;
-  }
-
-  .assistant-box {
-    margin-top: 22px;
-    padding: 20px;
-    border-radius: 20px;
-    background: rgba(0,0,0,.28);
-    border: 1px solid rgba(214,179,106,.18);
-    color: rgba(255,255,255,.82);
-    font-weight: 800;
-  }
-</style>
-
-<div class="assistant-page">
-  <section class="assistant-card">
-    <h1>Talk to Jarvis</h1>
-    <p>Live assistant page placeholder.</p>
-
-    <div class="assistant-actions">
-      <a href="/jarvis">Dashboard</a>
-      <a href="/organize-my-day">Handle Today</a>
-      <a href="/admin/link-check">Link Check</a>
+    <div class="inline-form">
+      <input name="client" placeholder="Client, if known">
+      <input name="property" placeholder="Property / job, if known">
+      <input name="due_date" type="date">
+      <select name="priority">
+        <option value="">Priority</option>
+        <option value="Normal">Normal</option>
+        <option value="High">High</option>
+        <option value="Urgent">Urgent</option>
+      </select>
     </div>
 
-    <div class="assistant-box">
-      Next step will be wiring this page to your real assistant/interview workflow.
-    </div>
-  </section>
-</div>
+    <button class="btn primary" type="submit">Send It</button>
+  </form>
+</section>
+
+<section class="grid">
+  <a class="card" href="/invisible-office">
+    <h2>Invisible Office</h2>
+    <p>View the notes, tasks, follow-ups, and reminders Jarvis has filed.</p>
+  </a>
+
+  <a class="card" href="/jarvis">
+    <h2>Dashboard</h2>
+    <p>Return to Heinlin Field Ops.</p>
+  </a>
+</section>
 
 {% endblock %}
