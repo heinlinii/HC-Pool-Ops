@@ -3,7 +3,7 @@
 
 <section class="section-head">
   <h1>Invisible Office</h1>
-  <p>Everything Jarvis files: notes, follow-ups, materials, problems, billing, schedule tasks, and reminders.</p>
+  <p>Saved notes, follow-ups, reminders, materials, problems, billing notes, and Jarvis-filed work.</p>
 </section>
 
 <section class="card">
@@ -23,7 +23,7 @@
       <p>
         <strong>{{ item.category or "General Note" }}</strong>
         {% if item.priority %}
-          • Priority: {{ item.priority }}
+          - Priority: {{ item.priority }}
         {% endif %}
       </p>
 
@@ -39,6 +39,10 @@
 
       {% if item.due_date %}
         <p><strong>Due:</strong> {{ item.due_date }}</p>
+      {% endif %}
+
+      {% if item.status %}
+        <p><strong>Status:</strong> {{ item.status }}</p>
       {% endif %}
 
       {% if item.source %}
@@ -58,7 +62,7 @@
   {% else %}
     <div class="card">
       <h2>No Invisible Office items yet</h2>
-      <p>Tell Jarvis something from Assistant Live, and it will show up here.</p>
+      <p>Tell Jarvis something from Talk to Jarvis, and it will show up here.</p>
     </div>
   {% endfor %}
 </section>

@@ -385,6 +385,23 @@ def ensure_schema():
                 note TEXT DEFAULT '',
                 created_at TEXT DEFAULT ''
             )""")
+            c.execute("""CREATE TABLE IF NOT EXISTS invisible_office_items (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                source TEXT DEFAULT 'manual',
+                category TEXT DEFAULT 'General Note',
+                title TEXT DEFAULT '',
+                body TEXT DEFAULT '',
+                client TEXT DEFAULT '',
+                property TEXT DEFAULT '',
+                job_id INTEGER,
+                assigned_to TEXT DEFAULT '',
+                due_date TEXT DEFAULT '',
+                priority TEXT DEFAULT 'Normal',
+                status TEXT DEFAULT 'Open',
+                created_by TEXT DEFAULT '',
+                created_at TEXT DEFAULT '',
+                completed_at TEXT DEFAULT ''
+            )""")
             c.execute("""CREATE TABLE IF NOT EXISTS poolops2_invoices (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 job_id INTEGER, client TEXT DEFAULT '', description TEXT DEFAULT '', amount REAL DEFAULT 0, status TEXT DEFAULT 'Draft', date TEXT DEFAULT '', notes TEXT DEFAULT ''
@@ -533,7 +550,9 @@ DEFAULT_DESIGN = {
             {"label": "Weather", "description": "Conditions", "href": "/weather", "enabled": True},
             {"label": "GPS Day Log", "description": "Raw GPS points", "href": "/gps/day", "enabled": True},
             {"label": "GPS Stops", "description": "Stops and time on site", "href": "/gps/stops", "enabled": True},
-            {"label": "Send It", "description": "Talk to Jarvis", "href": "/assistant-interview-live", "enabled": True},
+            {"label": "AI Systems", "description": "Jarvis tools and office memory", "href": "/ai-systems", "enabled": True},
+            {"label": "Talk to Jarvis", "description": "Tell Jarvis what needs handled, filed, remembered, or followed up.", "href": "/assistant-interview-live", "enabled": True},
+            {"label": "Invisible Office", "description": "Saved notes, follow-ups, reminders, materials, problems, billing notes, and Jarvis-filed work.", "href": "/invisible-office", "enabled": True},
         ],
     },
     "photos": {
@@ -1038,6 +1057,38 @@ def sendit_alias(request: Request):
     return RedirectResponse("/assistant-interview-live", status_code=303)
 
 
+@app.get("/talk-to-jarvis", response_class=HTMLResponse)
+def talk_to_jarvis_alias(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    return RedirectResponse("/assistant-interview-live", status_code=303)
+
+
+@app.get("/talk-to-jarvis-live", response_class=HTMLResponse)
+def talk_to_jarvis_live_alias(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    return RedirectResponse("/assistant-interview-live", status_code=303)
+
+
+@app.get("/ai", response_class=HTMLResponse)
+def ai_alias(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    return RedirectResponse("/assistant-interview-live", status_code=303)
+
+
+@app.get("/assistant-live", response_class=HTMLResponse)
+def assistant_live_alias(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    return RedirectResponse("/assistant-interview-live", status_code=303)
+
+
 @app.get("/schedule/today", response_class=HTMLResponse)
 def schedule_today_alias(request: Request):
     u = require_login(request)
@@ -1151,6 +1202,19 @@ def assistant_interview_live(request: Request):
         "assistant_interview_live.html",
         ctx(request)
     )
+
+
+@app.get("/ai-systems", response_class=HTMLResponse)
+def ai_systems(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+
+    return templates.TemplateResponse(
+        "ai_systems.html",
+        ctx(request)
+    )
+
 
 @app.post("/assistant-live/send")
 def assistant_live_send(
@@ -1285,15 +1349,15 @@ def invisible_office(request: Request):
     if not u:
         return login_redirect()
 
-    notes = []
+    items = []
     try:
-        notes = rows("SELECT * FROM poolops2_office_notes ORDER BY id DESC")
+        items = rows("SELECT * FROM invisible_office_items ORDER BY id DESC")
     except Exception:
-        notes = []
+        items = []
 
     return templates.TemplateResponse(
         "invisible_office.html",
-        ctx(request, notes=notes)
+        ctx(request, items=items)
     )
 
 @app.get("/admin/link-check", response_class=HTMLResponse)
@@ -1311,7 +1375,6 @@ def admin_link_check(request: Request):
         ("Pool Monitoring", "/pool-monitoring"),
         ("Organize My Day", "/organize-my-day"),
         ("Handle It", "/handle-it"),
-        ("Send It", "/send-it"),
         ("Schedule", "/schedule"),
         ("Today Schedule", "/schedule/today"),
         ("GPS Day Log", "/gps/day"),
@@ -1333,6 +1396,7 @@ def admin_link_check(request: Request):
         ("Estimates", "/estimates"),
         ("Job Costing", "/job-costing"),
         ("QuickBooks", "/quickbooks"),
+        ("AI Systems", "/ai-systems"),
         ("Invisible Office", "/invisible-office"),
         ("Talk to Jarvis", "/assistant-interview-live"),
         ("Edit Dashboard", "/dashboard/theme"),
@@ -2628,12 +2692,14 @@ def invisible_office(request: Request):
     if not u:
         return login_redirect()
 
-    notes = rows("SELECT * FROM poolops2_office_notes ORDER BY id DESC")
+    items = rows("SELECT * FROM invisible_office_items ORDER BY id DESC")
 
     return templates.TemplateResponse(
         "invisible_office.html",
-        ctx(request, notes=notes)
+        ctx(request, items=items)
     )
+
+
 @app.post("/invisible-office/add")
 def invisible_office_add(
     request: Request,
@@ -2645,16 +2711,17 @@ def invisible_office_add(
 
     text = note.strip()
     if text:
-        exec_sql(
-            "INSERT INTO poolops2_office_notes (note, created_at) VALUES (?, ?)",
-            (text, datetime.now().isoformat(timespec="seconds"))
+        save_invisible_office_item(
+            request=request,
+            body=text,
+            source="manual",
         )
 
     return RedirectResponse("/invisible-office", status_code=303)
 
 
-@app.post("/invisible-office/{note_id}/delete")
-def invisible_office_delete(request: Request, note_id: int):
+@app.post("/invisible-office/{item_id}/delete")
+def invisible_office_delete(request: Request, item_id: int):
     u = require_login(request)
     if not u:
         return login_redirect()
@@ -2662,9 +2729,11 @@ def invisible_office_delete(request: Request, note_id: int):
     if not is_admin(u):
         return RedirectResponse("/invisible-office", status_code=303)
 
-    exec_sql("DELETE FROM poolops2_office_notes WHERE id=?", (note_id,))
+    exec_sql("DELETE FROM invisible_office_items WHERE id=?", (item_id,))
 
     return RedirectResponse("/invisible-office", status_code=303)
+
+
 @app.post("/invisible-office/note")
 def invisible_office_note(request: Request, note: str = Form("")):
     u = require_login(request)
@@ -2673,7 +2742,11 @@ def invisible_office_note(request: Request, note: str = Form("")):
     if not is_admin(u):
         return admin_redirect(u)
     if note.strip():
-        exec_sql("INSERT INTO poolops2_office_notes (note, created_at) VALUES (?,?)", (note.strip(), datetime.now().strftime("%Y-%m-%d %I:%M %p")))
+        save_invisible_office_item(
+            request=request,
+            body=note.strip(),
+            source="manual",
+        )
     return RedirectResponse("/invisible-office", status_code=303)
 
 @app.get("/invisible-office/search", response_class=HTMLResponse)

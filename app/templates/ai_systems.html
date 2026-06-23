@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block content %}
+
+<section class="section-head">
+  <h1>AI Systems</h1>
+  <p>All Jarvis tools, office memory, and AI workflows in one place.</p>
+</section>
+
+<section class="grid">
+  <a class="card" href="/assistant-interview-live">
+    <h2>Talk to Jarvis</h2>
+    <p>Tell Jarvis what needs handled, filed, remembered, or followed up.</p>
+  </a>
+
+  <a class="card" href="/invisible-office">
+    <h2>Invisible Office</h2>
+    <p>Saved notes, follow-ups, reminders, materials, problems, billing notes, and Jarvis-filed work.</p>
+  </a>
+
+  <a class="card" href="/organize-my-day">
+    <h2>Organize My Day</h2>
+    <p>Turn work, notes, and priorities into a useful day plan.</p>
+  </a>
+
+  {% if is_admin %}
+    <a class="card" href="/design-studio">
+      <h2>Design Studio</h2>
+      <p>Edit dashboard wording, buttons, and visual settings.</p>
+    </a>
+
+    <a class="card" href="/admin/link-check">
+      <h2>Link Check</h2>
+      <p>Check app navigation and find broken internal links.</p>
+    </a>
+  {% endif %}
+
+  {% if is_employee %}
+    <a class="card" href="/employee">
+      <h2>Crew Portal</h2>
+      <p>Clock, GPS, jobs, photos, and field tools.</p>
+    </a>
+  {% endif %}
+</section>
+
+{% endblock %}

@@ -144,11 +144,23 @@
         "href": "/freeze-watch",
         "label": "Freeze Watch"
       },
-           {
-        "description": "Talk to Jarvis",
+      {
+        "description": "Jarvis tools and office memory",
+        "enabled": true,
+        "href": "/ai-systems",
+        "label": "AI Systems"
+      },
+      {
+        "description": "Tell Jarvis what needs handled, filed, remembered, or followed up.",
         "enabled": true,
         "href": "/assistant-interview-live",
-        "label": "Send It"
+        "label": "Talk to Jarvis"
+      },
+      {
+        "description": "Saved notes, follow-ups, reminders, materials, problems, billing notes, and Jarvis-filed work.",
+        "enabled": true,
+        "href": "/invisible-office",
+        "label": "Invisible Office"
       }
     ]
   },
