@@ -144,19 +144,7 @@
         "href": "/freeze-watch",
         "label": "Freeze Watch"
       },
-      {
-        "description": "Raw GPS points",
-        "enabled": true,
-        "href": "/gps/day",
-        "label": "GPS Day Log"
-      },
-      {
-        "description": "Stops and time on site",
-        "enabled": true,
-        "href": "/gps/stops",
-        "label": "GPS Stops"
-      },
-      {
+           {
         "description": "Talk to Jarvis",
         "enabled": true,
         "href": "/assistant-interview-live",

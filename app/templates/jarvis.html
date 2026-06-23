@@ -187,6 +187,50 @@
     color: #071017;
   }
 
+  .hfo-map-tool-card {
+    min-height: 104px;
+    background: linear-gradient(135deg, #7b5a22, #d6b36a, #5f4519);
+    border-color: rgba(214,179,106,.74);
+    color: #071017;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 12px;
+    cursor: default;
+  }
+
+  .hfo-map-tool-card strong,
+  .hfo-map-tool-card span {
+    color: #071017;
+  }
+
+  .hfo-map-subtools {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    justify-content: flex-end;
+  }
+
+  .hfo-map-subtools a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 38px;
+    padding: 0 12px;
+    border-radius: 999px;
+    background: rgba(7, 14, 20, .92);
+    border: 1px solid rgba(0,0,0,.25);
+    color: #d6b36a;
+    text-decoration: none;
+    font-weight: 1000;
+    font-size: .82rem;
+  }
+
+  .hfo-map-subtools a:hover {
+    background: rgba(7, 14, 20, 1);
+  }
+
   .hfo-plain-dashboard .hfo-hero {
     padding: 0;
     border-radius: 0;
@@ -262,6 +306,18 @@
       min-height: 82px;
     }
 
+    .hfo-map-tool-card {
+      grid-template-columns: 1fr;
+    }
+
+    .hfo-map-subtools {
+      justify-content: flex-start;
+    }
+
+    .hfo-map-subtools a {
+      width: 100%;
+    }
+
     .hfo-crew-dashboard {
       padding-top: 96px;
       min-height: 520px;
@@ -312,10 +368,21 @@
         <a class="hfo-card" href="/photos"><strong>Photos</strong><span>Progress shots, property images, and field proof.</span></a>
         <a class="hfo-card" href="/crew"><strong>Crew / Employees</strong><span>Employee records and field access.</span></a>
         <a class="hfo-card" href="/employee"><strong>Employee Portal</strong><span>Clock, jobs, photos, and field tools.</span></a>
-        <a class="hfo-card" href="/gps/day"><strong>GPS Day Log</strong><span>Raw GPS points.</span></a>
-        <a class="hfo-card" href="/gps/stops"><strong>GPS Stops</strong><span>Detected stops and time on site.</span></a>
         <a class="hfo-card" href="/pool-monitoring"><strong>Pool Monitoring</strong><span>Monitored pools, alerts, and follow-up.</span></a>
-        <a class="hfo-card" href="/map"><strong>Map</strong><span>Properties, jobs, and crew locations.</span></a>
+
+        <div class="hfo-card hfo-map-tool-card">
+          <div>
+            <strong>Map</strong>
+            <span>Locations, GPS logs, and stops.</span>
+          </div>
+
+          <div class="hfo-map-subtools">
+            <a href="/map">Field Map</a>
+            <a href="/gps/day">GPS Day Log</a>
+            <a href="/gps/stops">GPS Stops</a>
+          </div>
+        </div>
+
         <a class="hfo-card" href="/weather"><strong>Weather</strong><span>Field conditions and planning.</span></a>
         <a class="hfo-card" href="/freeze-watch"><strong>Freeze Watch</strong><span>Freeze risk for pools and equipment pads.</span></a>
         <a class="hfo-card" href="/admin/link-check"><strong>Link Check</strong><span>Find broken app navigation.</span></a>
@@ -346,21 +413,35 @@
         {% for tool in crew_dashboard.get('tools', []) %}
           {% if tool.get('enabled') %}
             {% set raw_href = tool.get('href', '') %}
-            {% if raw_href in ['/gps-day-log', 'gps-day-log'] %}
-              {% set safe_href = '/gps/day' %}
-            {% elif raw_href in ['/gps-stops', 'gps-stops'] %}
-              {% set safe_href = '/gps/stops' %}
-            {% elif raw_href in ['/send-it', '/sendit', 'send-it', 'sendit'] %}
+
+            {% if raw_href in ['/send-it', '/sendit', 'send-it', 'sendit'] %}
               {% set safe_href = '/assistant-interview-live' %}
             {% elif raw_href in ['/daily-schedule', '/todays-schedule', 'daily-schedule', 'todays-schedule', 'schedule/day'] %}
               {% set safe_href = '/schedule/day' %}
+            {% elif raw_href in ['/gps-day-log', 'gps-day-log'] %}
+              {% set safe_href = '/gps/day' %}
+            {% elif raw_href in ['/gps-stops', 'gps-stops'] %}
+              {% set safe_href = '/gps/stops' %}
             {% elif raw_href and raw_href.startswith('/') %}
               {% set safe_href = raw_href %}
             {% else %}
               {% set safe_href = '' %}
             {% endif %}
 
-            {% if safe_href %}
+            {% if tool.get('label') == 'Map' %}
+              <div class="hfo-action-button hfo-map-tool-card">
+                <div>
+                  <strong>Map</strong>
+                  <span>Locations, GPS logs, and stops</span>
+                </div>
+
+                <div class="hfo-map-subtools">
+                  <a href="/map">Field Map</a>
+                  <a href="/gps/day">GPS Day Log</a>
+                  <a href="/gps/stops">GPS Stops</a>
+                </div>
+              </div>
+            {% elif safe_href and safe_href not in ['/gps/day', '/gps/stops'] %}
               <a class="hfo-action-button" href="{{ safe_href }}">
                 <strong>{{ tool.get('label', 'Tool') }}</strong>
                 <span>{{ tool.get('description', '') }}</span>
