@@ -13,6 +13,8 @@ import shutil
 import sqlite3
 import uuid
 import boto3
+import csv
+import io
 try:
     import psycopg
     from psycopg.rows import dict_row
@@ -553,6 +555,18 @@ DEFAULT_DESIGN = {
             {"label": "AI Systems", "description": "Jarvis tools and office memory", "href": "/ai-systems", "enabled": True},
             {"label": "Talk to Jarvis", "description": "Tell Jarvis what needs handled, filed, remembered, or followed up.", "href": "/assistant-interview-live", "enabled": True},
             {"label": "Invisible Office", "description": "Saved notes, follow-ups, reminders, materials, problems, billing notes, and Jarvis-filed work.", "href": "/invisible-office", "enabled": True},
+        ],
+    },
+    "ai_systems": {
+        "title": "AI Systems",
+        "subtitle": "All Jarvis tools, office memory, and AI workflows in one place.",
+        "cards": [
+            {"label": "Talk to Jarvis", "description": "Tell Jarvis what needs handled, filed, remembered, or followed up.", "href": "/assistant-interview-live", "image": "", "enabled": True},
+            {"label": "Invisible Office", "description": "Saved notes, follow-ups, reminders, materials, problems, billing notes, and Jarvis-filed work.", "href": "/invisible-office", "image": "", "enabled": True},
+            {"label": "Organize My Day", "description": "Turn work, notes, and priorities into a useful day plan.", "href": "/organize-my-day", "image": "", "enabled": True},
+            {"label": "Design Studio", "description": "Edit dashboard wording, buttons, and visual settings.", "href": "/design-studio", "image": "", "enabled": True, "roles": ["admin"]},
+            {"label": "Link Check", "description": "Check app navigation and find broken internal links.", "href": "/admin/link-check", "image": "", "enabled": True, "roles": ["admin"]},
+            {"label": "Crew Portal", "description": "Clock, GPS, jobs, photos, and field tools.", "href": "/employee", "image": "", "enabled": True, "roles": ["employee"]},
         ],
     },
     "photos": {
@@ -1525,6 +1539,7 @@ def design_studio_save(
     crew_dashboard_hero_padding_top: str = Form("150px"),
     crew_dashboard_dashboard_padding_top: str = Form("120px"),
     crew_dashboard_tools_json: str = Form(""),
+    ai_systems_cards_json: str = Form(""),
 
     photos_title: str = Form("Photos"),
     photos_subtitle: str = Form("Job photos, property photos, progress shots, and field proof."),
@@ -1637,6 +1652,21 @@ def design_studio_save(
         "hero_padding_top": crew_dashboard_hero_padding_top.strip() or "150px",
         "dashboard_padding_top": crew_dashboard_dashboard_padding_top.strip() or "120px",
         "tools": crew_dashboard_tools,
+    }
+
+    previous_ai_systems = data.get("ai_systems", DEFAULT_DESIGN["ai_systems"])
+    ai_systems_cards = previous_ai_systems.get("cards", DEFAULT_DESIGN["ai_systems"]["cards"])
+    try:
+        parsed_ai_cards = json.loads(ai_systems_cards_json or "[]")
+        if isinstance(parsed_ai_cards, list):
+            ai_systems_cards = parsed_ai_cards
+    except Exception:
+        pass
+
+    data["ai_systems"] = {
+        "title": previous_ai_systems.get("title", "AI Systems"),
+        "subtitle": previous_ai_systems.get("subtitle", "All Jarvis tools, office memory, and AI workflows in one place."),
+        "cards": ai_systems_cards,
     }
 
     data["photos"] = {
@@ -2668,6 +2698,141 @@ def quickbooks(request: Request):
         return admin_redirect(u)
 
     return templates.TemplateResponse("quickbooks.html", ctx(request))
+
+@app.get("/quickbooks/invoices/import", response_class=HTMLResponse)
+def quickbooks_invoice_import_page(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+
+    if not is_admin(u):
+        return RedirectResponse("/jarvis", status_code=303)
+
+    return templates.TemplateResponse(
+        "quickbooks_invoice_import.html",
+        ctx(request, imported=None, skipped=None, errors=None)
+    )
+
+
+@app.post("/quickbooks/invoices/import", response_class=HTMLResponse)
+async def quickbooks_invoice_import(
+    request: Request,
+    csv_file: UploadFile = File(None),
+):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+
+    if not is_admin(u):
+        return RedirectResponse("/jarvis", status_code=303)
+
+    imported = []
+    skipped = []
+    errors = []
+
+    if not csv_file or not csv_file.filename:
+        return templates.TemplateResponse(
+            "quickbooks_invoice_import.html",
+            ctx(request, imported=[], skipped=[], errors=["No CSV file uploaded."])
+        )
+
+    try:
+        raw = await csv_file.read()
+        text = raw.decode("utf-8-sig")
+        reader = csv.DictReader(io.StringIO(text))
+
+        today_text = date.today().isoformat()
+
+        for index, row in enumerate(reader, start=2):
+            try:
+                client = (row.get("Customer") or "").strip()
+                invoice_date = (row.get("Invoice Date") or "").strip()
+                due_date = (row.get("Due Date") or "").strip()
+                product_service = (row.get("Product/Service") or "").strip()
+                description = (row.get("Description") or "").strip()
+                qty = (row.get("Qty") or "").strip()
+                rate = (row.get("Rate") or "").strip()
+                amount_raw = (row.get("Amount") or "").strip()
+                memo = (row.get("Memo") or "").strip()
+
+                if not client and not description and not amount_raw:
+                    skipped.append(f"Row {index}: blank row skipped.")
+                    continue
+
+                if invoice_date.lower() == "today":
+                    invoice_date = today_text
+
+                if not invoice_date:
+                    invoice_date = today_text
+
+                try:
+                    amount = float(str(amount_raw).replace("$", "").replace(",", ""))
+                except Exception:
+                    amount = 0
+
+                invoice_description = description or product_service or "QuickBooks Invoice"
+
+                notes_parts = []
+                notes_parts.append("Imported from QuickBooks CSV")
+
+                if product_service:
+                    notes_parts.append(f"Product/Service: {product_service}")
+                if qty:
+                    notes_parts.append(f"Qty: {qty}")
+                if rate:
+                    notes_parts.append(f"Rate: {rate}")
+                if due_date:
+                    notes_parts.append(f"Due Date: {due_date}")
+                if memo:
+                    notes_parts.append(f"Memo: {memo}")
+
+                notes = " | ".join(notes_parts)
+
+                # Avoid obvious duplicate imports.
+                existing = one(
+                    """
+                    SELECT id FROM poolops2_invoices
+                    WHERE client=?
+                      AND description=?
+                      AND amount=?
+                      AND date=?
+                    """,
+                    (client, invoice_description, amount, invoice_date)
+                )
+
+                if existing:
+                    skipped.append(f"Row {index}: duplicate skipped for {client} — {invoice_description}.")
+                    continue
+
+                exec_sql(
+                    """
+                    INSERT INTO poolops2_invoices
+                    (job_id, client, description, amount, status, date, notes)
+                    VALUES (?,?,?,?,?,?,?)
+                    """,
+                    (
+                        None,
+                        client,
+                        invoice_description,
+                        amount,
+                        "Open",
+                        invoice_date,
+                        notes,
+                    )
+                )
+
+                imported.append(f"Row {index}: imported {client} — ${amount:,.2f}")
+
+            except Exception as row_error:
+                errors.append(f"Row {index}: {row_error}")
+
+    except Exception as e:
+        errors.append(str(e))
+
+    return templates.TemplateResponse(
+        "quickbooks_invoice_import.html",
+        ctx(request, imported=imported, skipped=skipped, errors=errors)
+    )
 
 @app.get("/weather", response_class=HTMLResponse)
 def weather(request: Request):

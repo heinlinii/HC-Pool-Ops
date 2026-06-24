@@ -164,6 +164,57 @@
       }
     ]
   },
+  "ai_systems": {
+    "title": "AI Systems",
+    "subtitle": "All Jarvis tools, office memory, and AI workflows in one place.",
+    "cards": [
+      {
+        "label": "Talk to Jarvis",
+        "description": "Tell Jarvis what needs handled, filed, remembered, or followed up.",
+        "href": "/assistant-interview-live",
+        "image": "",
+        "enabled": true
+      },
+      {
+        "label": "Invisible Office",
+        "description": "Saved notes, follow-ups, reminders, materials, problems, billing notes, and Jarvis-filed work.",
+        "href": "/invisible-office",
+        "image": "",
+        "enabled": true
+      },
+      {
+        "label": "Organize My Day",
+        "description": "Turn work, notes, and priorities into a useful day plan.",
+        "href": "/organize-my-day",
+        "image": "",
+        "enabled": true
+      },
+      {
+        "label": "Design Studio",
+        "description": "Edit dashboard wording, buttons, and visual settings.",
+        "href": "/design-studio",
+        "image": "",
+        "enabled": true,
+        "roles": ["admin"]
+      },
+      {
+        "label": "Link Check",
+        "description": "Check app navigation and find broken internal links.",
+        "href": "/admin/link-check",
+        "image": "",
+        "enabled": true,
+        "roles": ["admin"]
+      },
+      {
+        "label": "Crew Portal",
+        "description": "Clock, GPS, jobs, photos, and field tools.",
+        "href": "/employee",
+        "image": "",
+        "enabled": true,
+        "roles": ["employee"]
+      }
+    ]
+  },
   "photos": {
     "title": "Field Proof",
     "subtitle": "Job photos, property photos, progress shots, and field proof.",

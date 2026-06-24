@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block content %}
+
+<section class="section-head">
+  <h1>QuickBooks Invoice Import</h1>
+  <p>Upload a QuickBooks invoice CSV and import invoices into Heinlin Field Ops.</p>
+</section>
+
+<section class="card">
+  <h2>Upload QuickBooks CSV</h2>
+
+  <form method="post" action="/quickbooks/invoices/import" enctype="multipart/form-data" class="stack">
+    <input type="file" name="csv_file" accept=".csv">
+    <button class="btn primary" type="submit">Import Invoices</button>
+  </form>
+</section>
+
+{% if imported is not none %}
+  <section class="card">
+    <h2>Import Results</h2>
+
+    {% if imported %}
+      <h3>Imported</h3>
+      {% for item in imported %}
+        <p>{{ item }}</p>
+      {% endfor %}
+    {% endif %}
+
+    {% if skipped %}
+      <h3>Skipped</h3>
+      {% for item in skipped %}
+        <p>{{ item }}</p>
+      {% endfor %}
+    {% endif %}
+
+    {% if errors %}
+      <h3>Errors</h3>
+      {% for item in errors %}
+        <p>{{ item }}</p>
+      {% endfor %}
+    {% endif %}
+
+    {% if not imported and not skipped and not errors %}
+      <p>No rows were imported.</p>
+    {% endif %}
+  </section>
+{% endif %}
+
+<section class="grid">
+  <a class="card" href="/billing">
+    <h2>Billing</h2>
+    <p>View billing dashboard.</p>
+  </a>
+
+  <a class="card" href="/quickbooks">
+    <h2>QuickBooks</h2>
+    <p>Back to QuickBooks tools.</p>
+  </a>
+
+  <a class="card" href="/jarvis">
+    <h2>Dashboard</h2>
+    <p>Return to Heinlin Field Ops.</p>
+  </a>
+</section>
+
+{% endblock %}

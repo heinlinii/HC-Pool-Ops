@@ -521,6 +521,16 @@
 </section>
 
 <section class="studio-panel">
+  <h2>AI Systems Cards</h2>
+
+  <div class="studio-field">
+    <label>Cards JSON</label>
+    <textarea name="ai_systems_cards_json">{{ design.get('ai_systems', {}).get('cards', []) | tojson }}</textarea>
+    <p class="muted">Each card can use label, description, href, image, enabled, and optional roles. Use image paths like /static/heinlin-wide-crest.png.</p>
+  </div>
+</section>
+
+<section class="studio-panel">
   <h2>Photos Page</h2>
 
   <div class="studio-field">
