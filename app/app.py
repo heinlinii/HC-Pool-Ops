@@ -632,7 +632,7 @@ def is_employee(user):
 
 def admin_redirect(user):
     if is_client(user):
-        return RedirectResponse("jarvis", status_code=303)
+        return RedirectResponse("/jarvis", status_code=303)
     if is_employee(user):
         return RedirectResponse("/employee", status_code=303)
     return login_redirect()
@@ -1357,23 +1357,6 @@ def gps_stops_alias(request: Request):
         return login_redirect()
     return RedirectResponse("/gps/stops", status_code=303)
 
-@app.get("/invisible-office", response_class=HTMLResponse)
-def invisible_office(request: Request):
-    u = require_login(request)
-    if not u:
-        return login_redirect()
-
-    items = []
-    try:
-        items = rows("SELECT * FROM invisible_office_items ORDER BY id DESC")
-    except Exception:
-        items = []
-
-    return templates.TemplateResponse(
-        "invisible_office.html",
-        ctx(request, items=items)
-    )
-
 @app.get("/admin/link-check", response_class=HTMLResponse)
 def admin_link_check(request: Request):
     u = require_login(request)
@@ -1834,7 +1817,7 @@ async def client_save(request: Request, client_id: int, name: str = Form(""), co
             exec_sql("UPDATE poolops2_clients SET name=?, contact_name=?, phone=?, mobile=?, email=?, billing_address=?, city=?, state=?, zip_code=?, notes=?, portal_username=?, portal_password=? WHERE id=?", (name, contact_name, phone, mobile, email, billing_address, city, state, zip_code, notes, portal_username, portal_password, client_id))
     else:
         exec_sql("UPDATE poolops2_clients SET name=?, contact_name=?, phone=?, mobile=?, email=?, billing_address=?, city=?, state=?, zip_code=?, notes=? WHERE id=?", (name, contact_name, phone, mobile, email, billing_address, city, state, zip_code, notes, client_id))
-    return RedirectResponse("jarvis" if is_client(u) else f"/clients/{client_id}", status_code=303)
+    return RedirectResponse("/jarvis" if is_client(u) else f"/clients/{client_id}", status_code=303)
 
 
 @app.post("/clients/new")
@@ -1890,7 +1873,7 @@ def client_delete(request: Request, client_id: int):
 def properties(request: Request, q: str = ""):
     u = require_login(request)
     if not u: return login_redirect()
-    if is_client(u): return RedirectResponse("jarvis", status_code=303)
+    if is_client(u): return RedirectResponse("/jarvis", status_code=303)
     qlike = f"%{q.strip()}%"
     if is_admin(u):
         data = rows("SELECT * FROM poolops2_properties WHERE client LIKE ? OR address LIKE ? OR property_name LIKE ? ORDER BY client,address", (qlike, qlike, qlike)) if q else rows("SELECT * FROM poolops2_properties ORDER BY client,address")
@@ -1937,7 +1920,7 @@ async def property_save(request: Request, property_id: int, client: str = Form("
 async def property_photo(request: Request, property_id: int, title: str = Form("Property Photo"), notes: str = Form(""), photo: UploadFile = File(None)):
     u = require_login(request)
     if not u: return login_redirect()
-    if is_client(u): return RedirectResponse("jarvis", status_code=303)
+    if is_client(u): return RedirectResponse("/jarvis", status_code=303)
     prop = one("SELECT * FROM poolops2_properties WHERE id=?", (property_id,))
     url = await save_upload(photo)
     if url and prop:
@@ -1990,7 +1973,7 @@ def property_delete(request: Request, property_id: int):
 def jobs(request: Request):
     u = require_login(request)
     if not u: return login_redirect()
-    if is_client(u): return RedirectResponse("jarvis", status_code=303)
+    if is_client(u): return RedirectResponse("/jarvis", status_code=303)
     return templates.TemplateResponse("jobs.html", ctx(request, jobs=jobs_for_user(u), properties=properties_for_user(u)))
 
 
@@ -1998,7 +1981,7 @@ def jobs(request: Request):
 def job_detail(request: Request, job_id: int):
     u = require_login(request)
     if not u: return login_redirect()
-    if is_client(u): return RedirectResponse("jarvis", status_code=303)
+    if is_client(u): return RedirectResponse("/jarvis", status_code=303)
     job = one("SELECT * FROM poolops2_jobs WHERE id=?", (job_id,))
     if not job or not employee_can_access_job(u, job): return RedirectResponse("/jobs", status_code=303)
     costs = rows("SELECT * FROM poolops2_job_costs WHERE job_id=?", (job_id,))
@@ -2194,7 +2177,7 @@ def photos(request: Request):
 async def photos_add(request: Request, job_id: int = Form(0), property_id: int = Form(0), photo_type: str = Form("Progress"), title: str = Form("Photo"), date_str: str = Form(""), notes: str = Form(""), photo_files: list[UploadFile] = File(None)):
     u = require_login(request)
     if not u: return login_redirect()
-    if is_client(u): return RedirectResponse("jarvis", status_code=303)
+    if is_client(u): return RedirectResponse("/jarvis", status_code=303)
     prop = one("SELECT * FROM poolops2_properties WHERE id=?", (property_id,)) if property_id else None
     job = one("SELECT * FROM poolops2_jobs WHERE id=?", (job_id,)) if job_id else None
     client = (prop or job or {}).get("client", "")
@@ -2661,7 +2644,7 @@ def job_costing_add(request: Request, job_id: int = Form(0), client: str = Form(
 def field_logs(request: Request):
     u = require_login(request)
     if not u: return login_redirect()
-    if is_client(u): return RedirectResponse("jarvis", status_code=303)
+    if is_client(u): return RedirectResponse("/jarvis", status_code=303)
     logs = rows("SELECT * FROM field_logs ORDER BY id DESC") if is_admin(u) else rows("SELECT * FROM field_logs WHERE employee_name=? ORDER BY id DESC", (u.get("name", ""),))
     return templates.TemplateResponse("field_logs.html", ctx(request, logs=logs, jobs=jobs_for_user(u)))
 
@@ -2669,7 +2652,7 @@ def field_logs(request: Request):
 def field_logs_add(request: Request, employee_name: str = Form(""), client: str = Form(""), property: str = Form(""), address: str = Form(""), date_str: str = Form(""), total_hours: float = Form(0), tools_used: str = Form(""), materials_used: str = Form(""), equipment_used: str = Form(""), work_completed: str = Form(""), issues: str = Form(""), next_steps: str = Form(""), weather: str = Form(""), latitude: str = Form(""), longitude: str = Form("")):
     u = require_login(request)
     if not u: return login_redirect()
-    if is_client(u): return RedirectResponse("jarvis", status_code=303)
+    if is_client(u): return RedirectResponse("/jarvis", status_code=303)
     emp_name = employee_name if is_admin(u) else u.get("name", "")
     exec_sql("INSERT INTO field_logs (employee_name,client,property,address,date,total_hours,tools_used,materials_used,equipment_used,work_completed,issues,next_steps,weather,latitude,longitude,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", (emp_name, client, property, address, date_str or date.today().isoformat(), total_hours, tools_used, materials_used, equipment_used, work_completed, issues, next_steps, weather, float(latitude) if latitude else None, float(longitude) if longitude else None, datetime.now().isoformat()))
     return RedirectResponse("/field-logs", status_code=303)
