@@ -2726,12 +2726,33 @@ async def quickbooks_invoice_import(
         raw = await csv_file.read()
         text = raw.decode("utf-8-sig")
         raw_rows = list(csv.reader(io.StringIO(text)))
-        expected_headers = ["Date", "Transaction type", "Num", "Name", "Memo", "Due date", "Amount", "Open balance"]
+        header_aliases = {
+            "Date": ["date"],
+            "Transaction type": ["transaction type", "transaction", "transactio"],
+            "Num": ["num", "number", "invoice number"],
+            "Name": ["name", "customer", "client"],
+            "Memo": ["memo"],
+            "Due date": ["due date", "duedate"],
+            "Amount": ["amount"],
+            "Open balance": ["open balance", "openbalance", "balance"],
+        }
         header_index = None
 
+        def clean_header(value):
+            return " ".join(str(value or "").strip().lower().split())
+
+        def canonical_header(value):
+            cleaned_value = clean_header(value)
+            compact_value = cleaned_value.replace(" ", "")
+            for canonical, aliases in header_aliases.items():
+                for alias in aliases:
+                    if cleaned_value == alias or compact_value == alias.replace(" ", ""):
+                        return canonical
+            return str(value or "").strip()
+
         for idx, raw_row in enumerate(raw_rows):
-            cleaned = [str(cell or "").strip() for cell in raw_row]
-            if all(header in cleaned for header in expected_headers):
+            canonical_cells = {canonical_header(cell) for cell in raw_row}
+            if all(header in canonical_cells for header in header_aliases):
                 header_index = idx
                 break
 
@@ -2759,7 +2780,7 @@ async def quickbooks_invoice_import(
 
         for index, row in enumerate(raw_rows[header_index + 1:], start=header_index + 2):
             try:
-                row = {str(raw_rows[header_index][i] or "").strip(): (row[i] if i < len(row) else "") for i in range(len(raw_rows[header_index]))}
+                row = {canonical_header(raw_rows[header_index][i]): (row[i] if i < len(row) else "") for i in range(len(raw_rows[header_index]))}
                 invoice_date = csv_value(row, "Date")
                 transaction_type = csv_value(row, "Transaction type")
                 invoice_number = csv_value(row, "Num")
