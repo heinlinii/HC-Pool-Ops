@@ -289,7 +289,8 @@ def ensure_schema():
             )""")
             c.execute("""CREATE TABLE IF NOT EXISTS poolops2_invoices (
                 id SERIAL PRIMARY KEY,
-                job_id INTEGER, client TEXT DEFAULT '', description TEXT DEFAULT '', amount REAL DEFAULT 0, status TEXT DEFAULT 'Draft', date TEXT DEFAULT '', notes TEXT DEFAULT ''
+                job_id INTEGER, client TEXT DEFAULT '', description TEXT DEFAULT '', amount REAL DEFAULT 0, status TEXT DEFAULT 'Draft', date TEXT DEFAULT '', notes TEXT DEFAULT '',
+                qb_invoice_number TEXT DEFAULT '', due_date TEXT DEFAULT '', open_balance REAL DEFAULT 0, source TEXT DEFAULT ''
             )""")
         else:
             c.execute("""CREATE TABLE IF NOT EXISTS poolops2_users (
@@ -406,7 +407,8 @@ def ensure_schema():
             )""")
             c.execute("""CREATE TABLE IF NOT EXISTS poolops2_invoices (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                job_id INTEGER, client TEXT DEFAULT '', description TEXT DEFAULT '', amount REAL DEFAULT 0, status TEXT DEFAULT 'Draft', date TEXT DEFAULT '', notes TEXT DEFAULT ''
+                job_id INTEGER, client TEXT DEFAULT '', description TEXT DEFAULT '', amount REAL DEFAULT 0, status TEXT DEFAULT 'Draft', date TEXT DEFAULT '', notes TEXT DEFAULT '',
+                qb_invoice_number TEXT DEFAULT '', due_date TEXT DEFAULT '', open_balance REAL DEFAULT 0, source TEXT DEFAULT ''
             )""")
         con.commit()
     finally:
@@ -419,6 +421,7 @@ def ensure_schema():
         "poolops2_employees": [("username", "TEXT DEFAULT ''"), ("password", "TEXT DEFAULT ''"), ("card_image", "TEXT DEFAULT ''"), ("clocked_in", "BOOLEAN DEFAULT false" if USE_POSTGRES else "INTEGER DEFAULT 0"), ("clock_lat", "REAL"), ("clock_lng", "REAL"), ("clocked_in_at", "TEXT DEFAULT ''"), ("last_seen_at", "TEXT DEFAULT ''")],
         "poolops2_photo_logs": [("property_id", "INTEGER"), ("latitude", "REAL"), ("longitude", "REAL")],
         "field_logs": [("latitude", "REAL"), ("longitude", "REAL")],
+        "poolops2_invoices": [("qb_invoice_number", "TEXT DEFAULT ''"), ("due_date", "TEXT DEFAULT ''"), ("open_balance", "REAL DEFAULT 0"), ("source", "TEXT DEFAULT ''")],
     }.items():
         for col, spec in cols:
             add_col(table, col, spec)
@@ -2722,48 +2725,73 @@ async def quickbooks_invoice_import(
     try:
         raw = await csv_file.read()
         text = raw.decode("utf-8-sig")
-        reader = csv.DictReader(io.StringIO(text))
+        raw_rows = list(csv.reader(io.StringIO(text)))
+        expected_headers = ["Date", "Transaction type", "Num", "Name", "Memo", "Due date", "Amount", "Open balance"]
+        header_index = None
 
-        today_text = date.today().isoformat()
+        for idx, raw_row in enumerate(raw_rows):
+            cleaned = [str(cell or "").strip() for cell in raw_row]
+            if all(header in cleaned for header in expected_headers):
+                header_index = idx
+                break
 
-        for index, row in enumerate(reader, start=2):
+        if header_index is None:
+            errors.append("Could not find the QuickBooks invoice header row. Expected: Date, Transaction type, Num, Name, Memo, Due date, Amount, Open balance.")
+            return templates.TemplateResponse(
+                "quickbooks_invoice_import.html",
+                ctx(request, imported=imported, skipped=skipped, errors=errors)
+            )
+
+        def csv_value(row, name):
+            return (row.get(name) or "").strip()
+
+        def money_value(value):
+            cleaned = str(value or "").strip()
+            if not cleaned:
+                return 0.0
+            negative = cleaned.startswith("(") and cleaned.endswith(")")
+            cleaned = cleaned.replace("$", "").replace(",", "").replace("(", "").replace(")", "")
             try:
-                client = (row.get("Customer") or "").strip()
-                invoice_date = (row.get("Invoice Date") or "").strip()
-                due_date = (row.get("Due Date") or "").strip()
-                product_service = (row.get("Product/Service") or "").strip()
-                description = (row.get("Description") or "").strip()
-                qty = (row.get("Qty") or "").strip()
-                rate = (row.get("Rate") or "").strip()
-                amount_raw = (row.get("Amount") or "").strip()
-                memo = (row.get("Memo") or "").strip()
+                amount = float(cleaned)
+            except Exception:
+                amount = 0.0
+            return -amount if negative else amount
 
-                if not client and not description and not amount_raw:
-                    skipped.append(f"Row {index}: blank row skipped.")
+        for index, row in enumerate(raw_rows[header_index + 1:], start=header_index + 2):
+            try:
+                row = {str(raw_rows[header_index][i] or "").strip(): (row[i] if i < len(row) else "") for i in range(len(raw_rows[header_index]))}
+                invoice_date = csv_value(row, "Date")
+                transaction_type = csv_value(row, "Transaction type")
+                invoice_number = csv_value(row, "Num")
+                client = csv_value(row, "Name")
+                memo = csv_value(row, "Memo")
+                due_date = csv_value(row, "Due date")
+                amount_raw = csv_value(row, "Amount")
+                open_balance_raw = csv_value(row, "Open balance")
+
+                row_text = " ".join(str(v or "").strip() for v in row.values()).strip()
+                if not row_text:
                     continue
 
-                if invoice_date.lower() == "today":
-                    invoice_date = today_text
+                if any(str(v or "").strip().upper() == "TOTAL" for v in row.values()):
+                    skipped.append(f"Row {index}: TOTAL row skipped.")
+                    continue
 
-                if not invoice_date:
-                    invoice_date = today_text
+                if transaction_type.lower() != "invoice":
+                    skipped.append(f"Row {index}: skipped {transaction_type or 'non-invoice'} row.")
+                    continue
 
-                try:
-                    amount = float(str(amount_raw).replace("$", "").replace(",", ""))
-                except Exception:
-                    amount = 0
+                amount = money_value(amount_raw)
+                open_balance = money_value(open_balance_raw)
+                status = "Paid" if open_balance == 0 else "Open"
 
-                invoice_description = description or product_service or "QuickBooks Invoice"
+                invoice_description = memo or f"QuickBooks Invoice {invoice_number}".strip()
 
                 notes_parts = []
-                notes_parts.append("Imported from QuickBooks CSV")
+                notes_parts.append("Imported from QuickBooks Invoice List CSV")
 
-                if product_service:
-                    notes_parts.append(f"Product/Service: {product_service}")
-                if qty:
-                    notes_parts.append(f"Qty: {qty}")
-                if rate:
-                    notes_parts.append(f"Rate: {rate}")
+                if invoice_number:
+                    notes_parts.append(f"Invoice #: {invoice_number}")
                 if due_date:
                     notes_parts.append(f"Due Date: {due_date}")
                 if memo:
@@ -2771,36 +2799,68 @@ async def quickbooks_invoice_import(
 
                 notes = " | ".join(notes_parts)
 
-                # Avoid obvious duplicate imports.
-                existing = one(
-                    """
-                    SELECT id FROM poolops2_invoices
-                    WHERE client=?
-                      AND description=?
-                      AND amount=?
-                      AND date=?
-                    """,
-                    (client, invoice_description, amount, invoice_date)
-                )
+                existing = None
+                if invoice_number:
+                    existing = one(
+                        "SELECT id FROM poolops2_invoices WHERE qb_invoice_number=? AND source=?",
+                        (invoice_number, "QuickBooks Invoice List CSV")
+                    )
+                if not existing:
+                    existing = one(
+                        """
+                        SELECT id FROM poolops2_invoices
+                        WHERE client=?
+                          AND description=?
+                          AND amount=?
+                          AND date=?
+                          AND source=?
+                        """,
+                        (client, invoice_description, amount, invoice_date, "QuickBooks Invoice List CSV")
+                    )
 
                 if existing:
-                    skipped.append(f"Row {index}: duplicate skipped for {client} — {invoice_description}.")
+                    exec_sql(
+                        """
+                        UPDATE poolops2_invoices
+                        SET client=?, description=?, amount=?, status=?, date=?, notes=?,
+                            qb_invoice_number=?, due_date=?, open_balance=?, source=?
+                        WHERE id=?
+                        """,
+                        (
+                            client,
+                            invoice_description,
+                            amount,
+                            status,
+                            invoice_date,
+                            notes,
+                            invoice_number,
+                            due_date,
+                            open_balance,
+                            "QuickBooks Invoice List CSV",
+                            existing["id"],
+                        )
+                    )
+                    imported.append(f"Row {index}: updated {client} invoice {invoice_number or existing['id']} - {status}.")
                     continue
 
                 exec_sql(
                     """
                     INSERT INTO poolops2_invoices
-                    (job_id, client, description, amount, status, date, notes)
-                    VALUES (?,?,?,?,?,?,?)
+                    (job_id, client, description, amount, status, date, notes, qb_invoice_number, due_date, open_balance, source)
+                    VALUES (?,?,?,?,?,?,?,?,?,?,?)
                     """,
                     (
                         None,
                         client,
                         invoice_description,
                         amount,
-                        "Open",
+                        status,
                         invoice_date,
                         notes,
+                        invoice_number,
+                        due_date,
+                        open_balance,
+                        "QuickBooks Invoice List CSV",
                     )
                 )
 
