@@ -40,13 +40,6 @@
       {% endfor %}
     {% endif %}
 
-    {% if debug %}
-      <h3>Importer Check</h3>
-      {% for item in debug %}
-        <p>{{ item }}</p>
-      {% endfor %}
-    {% endif %}
-
     {% if not imported and not skipped and not errors %}
       <p>No rows were imported.</p>
     {% endif %}
