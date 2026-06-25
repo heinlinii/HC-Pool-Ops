@@ -1741,14 +1741,30 @@ def _delete_photo_records(photo_rows):
 
 
 @app.get("/clients", response_class=HTMLResponse)
-def clients(request: Request, q: str = ""):
+def clients(request: Request):
     u = require_login(request)
-    if not u: return login_redirect()
-    if not is_admin(u): return admin_redirect(u)
-    qlike = f"%{q.strip()}%"
-    data = rows("SELECT * FROM poolops2_clients WHERE name LIKE ? OR phone LIKE ? OR email LIKE ? ORDER BY name", (qlike, qlike, qlike)) if q else rows("SELECT * FROM poolops2_clients ORDER BY name")
-    return templates.TemplateResponse("clients.html", ctx(request, clients=data, q=q))
+    if not u:
+        return login_redirect()
 
+    client_rows = rows(
+        """
+        SELECT *
+        FROM poolops2_clients
+        ORDER BY name ASC
+        """
+    )
+
+    return templates.TemplateResponse(
+        "clients.html",
+        ctx(
+            request,
+            clients=client_rows,
+            records=client_rows,
+            items=client_rows,
+            client_list=client_rows,
+            q="",
+        )
+    )
 
 @app.get("/clients/{client_id}", response_class=HTMLResponse)
 def client_detail(request: Request, client_id: int):
@@ -1873,18 +1889,29 @@ def client_delete(request: Request, client_id: int):
 
 
 @app.get("/properties", response_class=HTMLResponse)
-def properties(request: Request, q: str = ""):
+def properties(request: Request):
     u = require_login(request)
-    if not u: return login_redirect()
-    if is_client(u): return RedirectResponse("/jarvis", status_code=303)
-    qlike = f"%{q.strip()}%"
-    if is_admin(u):
-        data = rows("SELECT * FROM poolops2_properties WHERE client LIKE ? OR address LIKE ? OR property_name LIKE ? ORDER BY client,address", (qlike, qlike, qlike)) if q else rows("SELECT * FROM poolops2_properties ORDER BY client,address")
-    else:
-        data = properties_for_user(u)
-    return templates.TemplateResponse("properties.html", ctx(request, properties=data, q=q))
+    if not u:
+        return login_redirect()
 
+    property_rows = rows(
+        """
+        SELECT *
+        FROM poolops2_properties
+        ORDER BY id DESC
+        """
+    )
 
+    return templates.TemplateResponse(
+        "properties.html",
+        ctx(
+            request,
+            properties=property_rows,
+            records=property_rows,
+            items=property_rows,
+            property_list=property_rows,
+        )
+    )
 @app.get("/properties/{property_id}", response_class=HTMLResponse)
 def property_detail(request: Request, property_id: int):
     u = require_login(request)
@@ -1975,9 +2002,28 @@ def property_delete(request: Request, property_id: int):
 @app.get("/jobs", response_class=HTMLResponse)
 def jobs(request: Request):
     u = require_login(request)
-    if not u: return login_redirect()
-    if is_client(u): return RedirectResponse("/jarvis", status_code=303)
-    return templates.TemplateResponse("jobs.html", ctx(request, jobs=jobs_for_user(u), properties=properties_for_user(u)))
+    if not u:
+        return login_redirect()
+
+    job_rows = rows(
+        """
+        SELECT *
+        FROM poolops2_jobs
+        ORDER BY id DESC
+        """
+    )
+
+    return templates.TemplateResponse(
+        "jobs.html",
+        ctx(
+            request,
+            jobs=job_rows,
+            records=job_rows,
+            items=job_rows,
+            job_list=job_rows,
+            q="",
+        )
+    )
 
 
 @app.get("/jobs/{job_id}", response_class=HTMLResponse)
@@ -2903,7 +2949,7 @@ def billing_page(request: Request):
     if not u:
         return login_redirect()
 
-    invoices = rows(
+    invoice_rows = rows(
         """
         SELECT *
         FROM poolops2_invoices
@@ -2915,11 +2961,10 @@ def billing_page(request: Request):
     summary = one(
         """
         SELECT
-            COUNT(*) AS invoice_count,
-            COALESCE(SUM(amount), 0) AS total_amount,
-            COALESCE(SUM(open_balance), 0) AS total_open_balance,
-            COALESCE(SUM(CASE WHEN status='Open' THEN 1 ELSE 0 END), 0) AS open_count,
-            COALESCE(SUM(CASE WHEN status='Paid' THEN 1 ELSE 0 END), 0) AS paid_count
+            COALESCE(SUM(amount), 0) AS total_billed,
+            COALESCE(SUM(CASE WHEN status='Paid' THEN amount ELSE 0 END), 0) AS paid_total,
+            COALESCE(SUM(open_balance), 0) AS open_total,
+            COUNT(*) AS invoice_count
         FROM poolops2_invoices
         """
     )
@@ -2928,11 +2973,13 @@ def billing_page(request: Request):
         "billing.html",
         ctx(
             request,
-            invoices=invoices,
-            billing_jobs=jobs,
-            total_billed=summary.get("total_billed", 0) if summary else 0,
-            paid_total=summary.get("paid_total", 0) if summary else 0,
-            open_total=summary.get("open_total", 0) if summary else 0,
+            invoices=invoice_rows,
+            records=invoice_rows,
+            items=invoice_rows,
+            total_billed=(summary.get("total_billed", 0) if summary else 0),
+            paid_total=(summary.get("paid_total", 0) if summary else 0),
+            open_total=(summary.get("open_total", 0) if summary else 0),
+            invoice_count=(summary.get("invoice_count", 0) if summary else 0),
         )
     )
 

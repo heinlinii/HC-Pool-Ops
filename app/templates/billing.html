@@ -1,467 +1,89 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PoolOps2 Billing</title>
-    <link rel="stylesheet" href="/static/style.css?v=6">
-</head>
-
-<body>
-{% include "_mobile_nav.html" %}
-    {% include "bottom_routes.html" %}
-<div class="topbar-back">
-  <button onclick="history.back()" class="back-btn">
-    ← Back
-  </button>
-</div>
-    <div class="app-layout">
-
-        <aside class="sidebar">
-
-            <div class="sidebar-top">
-
-                <img
-                    src="/static/logo.png"
-                    alt="Heinlin Concrete Logo"
-                    class="sidebar-logo"
-                >
-
-                <h1>POOLOPS2</h1>
-
-                <p>Heinlin Concrete LLC</p>
-
-            </div>
-
-            <nav class="sidebar-nav">
-
-                <a href="/jarvis">
-                    Dashboard
-                </a>
-
-                <a href="/jobs">
-                    Jobs
-                </a>
-
-                <a href="/schedule">
-                    Schedule
-                </a>
-
-                <a href="/clients">
-                    Clients
-                </a>
-
-                <a href="/properties">
-                    Properties
-                </a>
-
-                <a href="/employees">
-                    Employees
-                </a>
-
-                <a href="/billing" class="active">
-                    Billing
-                </a>
-
-                <a href="/job-costing">
-                    Job Costing
-                </a>
-
-                <a href="/crew">
-                    Crew View
-                </a>
-
-                <a href="/health">
-                    Health
-                </a>
-
-            </nav>
-
-            <div class="sidebar-bottom">
-
-                <p>{{ user.name }}</p>
-
-                <span>{{ user.role }}</span>
-
-                <a href="/logout" class="logout-button">
-                    Logout
-                </a>
-
-            </div>
-
-        </aside>
-
-        <main class="main-content">
-
-            <div class="topbar">
-
-                <div>
-                    <h2>Billing</h2>
-                    <p>Create invoices and track payments.</p>
-                </div>
-
-                <div>
-
-                    <a
-                        href="/billing/export"
-                        class="primary-button"
-                        style="text-decoration:none;"
-                    >
-                        Export CSV
-                    </a>
-
-                </div>
-
-            </div>
-
-            <section class="stats-grid">
-
-                <div class="stat-card money-card">
-
-                    <h3>Total Billed</h3>
-
-                    <div class="stat-number">
-                        ${{ "%.2f"|format(total_billed|default(0)) }}
-                    </div>
-
-                </div>
-
-                <div class="stat-card money-card">
-
-                    <h3>Paid</h3>
-
-                    <div class="stat-number">
-                       ${{ "%.2f"|format(paid_total|default(0)) }}
-                    </div>
-
-                </div>
-
-                <div class="stat-card money-card">
-
-                    <h3>Open Balance</h3>
-
-                    <div class="stat-number">
-                      ${{ "%.2f"|format(open_total|default(0)) }}
-                    </div>
-
-                </div>
-
-            </section>
-
-            <section class="content-card">
-
-                <div class="card-header">
-                    <h3>Create Invoice</h3>
-                </div>
-
-                <form method="post" action="/billing/add" class="job-form">
-
-                    <div class="form-grid">
-
-                      <div class="form-group">
-    <label>Job</label>
-    <input type="hidden" name="job_id" value="">
-    <input type="text" value="No job selected" disabled>
-</div>
-                              
-                        </div>
-
-                        <div class="form-group">
-
-                            <label>Description</label>
-
-                            <input
-                                type="text"
-                                name="description"
-                                placeholder="Invoice description"
-                                required
-                            >
-
-                        </div>
-
-                        <div class="form-group">
-
-                            <label>Amount</label>
-
-                            <input
-                                type="number"
-                                step="0.01"
-                                name="amount"
-                                placeholder="0.00"
-                                required
-                            >
-
-                        </div>
-
-                        <div class="form-group">
-
-                            <label>Status</label>
-
-                            <select name="status">
-
-                                <option>Draft</option>
-                                <option>Sent</option>
-                                <option>Paid</option>
-                                <option>Overdue</option>
-
-                            </select>
-
-                        </div>
-
-                        <div class="form-group">
-
-                            <label>Date</label>
-
-                            <input
-                                type="text"
-                                name="date"
-                                placeholder="Today"
-                            >
-
-                        </div>
-
-                        <div class="form-group form-full">
-
-                            <label>Notes</label>
-
-                            <textarea
-                                name="notes"
-                                rows="4"
-                                placeholder="Invoice notes..."
-                            ></textarea>
-
-                        </div>
-
-                    </div>
-
-                    <button type="submit" class="primary-button">
-                        Create Invoice
-                    </button>
-
-                </form>
-
-            </section>
-
-            <section class="content-card">
-
-                <div class="card-header">
-                    <h3>Invoices</h3>
-                </div>
-
-                <div class="jobs-grid">
-
-                    {% for invoice in invoices %}
-
-                    <div class="job-card">
-
-                        <div class="job-top">
-
-                            <div>
-
-                                <h3>
-                                    {{ invoice.client }}
-                                </h3>
-
-                                <p>
-                                    Invoice #{{ invoice.id }}
-                                </p>
-
-                            </div>
-
-                            <span class="status-pill">
-                                {{ invoice.status }}
-                            </span>
-
-                        </div>
-
-                        <div class="job-details">
-
-                            <div class="detail-row">
-
-                                <strong>Description:</strong>
-
-                                <span>
-                                    {{ invoice.description }}
-                                </span>
-
-                            </div>
-
-                            <div class="detail-row">
-
-                                <strong>Amount:</strong>
-
-                                <span>
-                                    ${{ "%.2f"|format(invoice.amount) }}
-                                </span>
-
-                            </div>
-
-                            <div class="detail-row">
-
-                                <strong>Date:</strong>
-
-                                <span>
-                                    {{ invoice.date }}
-                                </span>
-
-                            </div>
-
-                            <div class="detail-row">
-
-                                <strong>Job ID:</strong>
-
-                                <span>
-                                    #{{ invoice.job_id }}
-                                </span>
-
-                            </div>
-
-                        </div>
-
-                        <div class="job-notes">
-                            {{ invoice.notes }}
-                        </div>
-
-                        <details class="edit-panel">
-
-                            <summary>
-                                Edit Invoice
-                            </summary>
-
-                            <form
-                                method="post"
-                                action="/billing/update/{{ invoice.id }}"
-                                class="edit-form"
-                            >
-
-                                <div class="form-group">
-
-                                    <label>Description</label>
-
-                                    <input
-                                        type="text"
-                                        name="description"
-                                        value="{{ invoice.description }}"
-                                        required
-                                    >
-
-                                </div>
-
-                                <div class="form-group">
-
-                                    <label>Amount</label>
-
-                                    <input
-                                        type="number"
-                                        step="0.01"
-                                        name="amount"
-                                        value="{{ invoice.amount }}"
-                                        required
-                                    >
-
-                                </div>
-
-                                <div class="form-group">
-
-                                    <label>Status</label>
-
-                                    <select name="status">
-
-                                        <option
-                                            {% if invoice.status == "Draft" %}
-                                            selected
-                                            {% endif %}
-                                        >
-                                            Draft
-                                        </option>
-
-                                        <option
-                                            {% if invoice.status == "Sent" %}
-                                            selected
-                                            {% endif %}
-                                        >
-                                            Sent
-                                        </option>
-
-                                        <option
-                                            {% if invoice.status == "Paid" %}
-                                            selected
-                                            {% endif %}
-                                        >
-                                            Paid
-                                        </option>
-
-                                        <option
-                                            {% if invoice.status == "Overdue" %}
-                                            selected
-                                            {% endif %}
-                                        >
-                                            Overdue
-                                        </option>
-
-                                    </select>
-
-                                </div>
-
-                                <div class="form-group">
-
-                                    <label>Date</label>
-
-                                    <input
-                                        type="text"
-                                        name="date"
-                                        value="{{ invoice.date }}"
-                                    >
-
-                                </div>
-
-                                <div class="form-group">
-
-                                    <label>Notes</label>
-
-                                    <textarea
-                                        name="notes"
-                                        rows="4"
-                                    >{{ invoice.notes }}</textarea>
-
-                                </div>
-
-                                <button
-                                    type="submit"
-                                    class="primary-button"
-                                >
-                                    Save Changes
-                                </button>
-
-                            </form>
-
-                            <form
-                                method="post"
-                                action="/billing/delete/{{ invoice.id }}"
-                            >
-
-                                <button
-                                    type="submit"
-                                    class="danger-button"
-                                >
-                                    Delete Invoice
-                                </button>
-
-                            </form>
-
-                        </details>
-
-                    </div>
-
-                    {% endfor %}
-
-                </div>
-
-            </section>
-
-        </main>
-
-    </div>
-
-</body>
-</html>
+{% extends "base.html" %}
+{% block content %}
+
+<section class="section-head">
+  <h1>Billing</h1>
+  <p>QuickBooks invoices imported into Heinlin Field Ops.</p>
+</section>
+
+<section class="grid">
+  <div class="card">
+    <h2>Total Billed</h2>
+    <p>${{ "{:,.2f}".format(total_billed|default(0)) }}</p>
+  </div>
+
+  <div class="card">
+    <h2>Paid</h2>
+    <p>${{ "{:,.2f}".format(paid_total|default(0)) }}</p>
+  </div>
+
+  <div class="card">
+    <h2>Open Balance</h2>
+    <p>${{ "{:,.2f}".format(open_total|default(0)) }}</p>
+  </div>
+
+  <div class="card">
+    <h2>Invoices</h2>
+    <p>{{ invoice_count|default(invoices|length) }}</p>
+  </div>
+</section>
+
+<section class="grid">
+  <a class="card" href="/quickbooks/invoices/import">
+    <h2>Import QB Invoices</h2>
+    <p>Upload another QuickBooks invoice CSV file.</p>
+  </a>
+
+  <a class="card" href="/jarvis">
+    <h2>Dashboard</h2>
+    <p>Back to Heinlin Field Ops.</p>
+  </a>
+</section>
+
+<section class="card">
+  <h2>Invoices</h2>
+
+  <div style="overflow-x:auto;">
+    <table style="width:100%; border-collapse:collapse;">
+      <thead>
+        <tr>
+          <th style="text-align:left; padding:8px;">Date</th>
+          <th style="text-align:left; padding:8px;">Client</th>
+          <th style="text-align:left; padding:8px;">Invoice</th>
+          <th style="text-align:right; padding:8px;">Amount</th>
+          <th style="text-align:right; padding:8px;">Open Balance</th>
+          <th style="text-align:left; padding:8px;">Status</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        {% for invoice in invoices|default([]) %}
+          <tr>
+            <td style="padding:8px;">{{ invoice.date or "" }}</td>
+            <td style="padding:8px;">{{ invoice.client or "" }}</td>
+            <td style="padding:8px;">
+              {% if invoice.qb_invoice_number %}
+                QB #{{ invoice.qb_invoice_number }}
+              {% else %}
+                {{ invoice.description or "Invoice" }}
+              {% endif %}
+            </td>
+            <td style="text-align:right; padding:8px;">
+              ${{ "{:,.2f}".format(invoice.amount or 0) }}
+            </td>
+            <td style="text-align:right; padding:8px;">
+              ${{ "{:,.2f}".format(invoice.open_balance or 0) }}
+            </td>
+            <td style="padding:8px;">{{ invoice.status or "" }}</td>
+          </tr>
+        {% else %}
+          <tr>
+            <td colspan="6" style="padding:8px;">No invoices found.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+{% endblock %}
