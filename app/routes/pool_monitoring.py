@@ -4,12 +4,11 @@ from typing import Optional
 import json
 
 from fastapi import APIRouter, Request, Form
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, HTMLResponse
 from fastapi.templating import Jinja2Templates
-from sqlalchemy.orm import Session
+from sqlalchemy import text
 
 from app.database import SessionLocal
-from app.models import PoolMonitoring, Client, Property
 
 
 ROOT = Path(__file__).resolve().parent.parent.parent
@@ -64,22 +63,57 @@ def ctx(request: Request, **kwargs):
     return data
 
 
-@router.get("/pool-monitoring")
+def db_rows(db, sql, params=None):
+    result = db.execute(text(sql), params or {})
+    return [dict(row._mapping) for row in result]
+
+
+def db_one(db, sql, params=None):
+    result = db.execute(text(sql), params or {})
+    row = result.first()
+    return dict(row._mapping) if row else None
+
+
+@router.get("/pool-monitoring", response_class=HTMLResponse)
 def pool_monitoring_page(request: Request):
     user = require_login(request)
     if not user:
         return login_redirect()
 
-    db: Session = SessionLocal()
+    db = SessionLocal()
     try:
-        records = (
-            db.query(PoolMonitoring)
-            .order_by(PoolMonitoring.updated_at.desc())
-            .all()
+        clients = db_rows(
+            db,
+            """
+            SELECT *
+            FROM poolops2_clients
+            ORDER BY name ASC
+            """
         )
 
-        clients = db.query(Client).order_by(Client.name.asc()).all()
-        properties = db.query(Property).order_by(Property.id.desc()).all()
+        properties = db_rows(
+            db,
+            """
+            SELECT *
+            FROM poolops2_properties
+            ORDER BY id DESC
+            """
+        )
+
+        records = db_rows(
+            db,
+            """
+            SELECT
+                pm.*,
+                c.name AS client_name,
+                p.property_name AS property_name,
+                p.address AS address
+            FROM pool_monitoring pm
+            LEFT JOIN poolops2_clients c ON c.id = pm.client_id
+            LEFT JOIN poolops2_properties p ON p.id = pm.property_id
+            ORDER BY pm.id DESC
+            """
+        )
 
         return templates.TemplateResponse(
             "pool_monitoring.html",
@@ -90,6 +124,7 @@ def pool_monitoring_page(request: Request):
                 properties=properties,
             ),
         )
+
     finally:
         db.close()
 
@@ -99,6 +134,7 @@ def add_pool_monitoring(
     request: Request,
     client_id: Optional[int] = Form(None),
     property_id: Optional[int] = Form(None),
+    system_brand: str = Form("Pentair"),
     system_type: str = Form(""),
     pentair_account_email: str = Form(""),
     monitoring_status: str = Form("Not Started"),
@@ -110,25 +146,56 @@ def add_pool_monitoring(
     if not user:
         return login_redirect()
 
-    db: Session = SessionLocal()
+    db = SessionLocal()
     try:
-        record = PoolMonitoring(
-            client_id=client_id,
-            property_id=property_id,
-            system_brand="Pentair",
-            system_type=system_type,
-            pentair_account_email=pentair_account_email,
-            monitoring_status=monitoring_status,
-            last_checked=date.today(),
-            current_alert=current_alert,
-            equipment_notes=equipment_notes,
-            service_notes=service_notes,
+        db.execute(
+            text(
+                """
+                INSERT INTO pool_monitoring
+                (
+                    client_id,
+                    property_id,
+                    system_brand,
+                    system_type,
+                    pentair_account_email,
+                    monitoring_status,
+                    last_checked,
+                    current_alert,
+                    equipment_notes,
+                    service_notes
+                )
+                VALUES
+                (
+                    :client_id,
+                    :property_id,
+                    :system_brand,
+                    :system_type,
+                    :pentair_account_email,
+                    :monitoring_status,
+                    :last_checked,
+                    :current_alert,
+                    :equipment_notes,
+                    :service_notes
+                )
+                """
+            ),
+            {
+                "client_id": client_id,
+                "property_id": property_id,
+                "system_brand": system_brand or "Pentair",
+                "system_type": system_type,
+                "pentair_account_email": pentair_account_email,
+                "monitoring_status": monitoring_status or "Not Started",
+                "last_checked": date.today().isoformat(),
+                "current_alert": current_alert,
+                "equipment_notes": equipment_notes,
+                "service_notes": service_notes,
+            },
         )
 
-        db.add(record)
         db.commit()
-
         return RedirectResponse("/pool-monitoring", status_code=303)
+
     finally:
         db.close()
 
@@ -146,20 +213,46 @@ def update_pool_monitoring(
     if not user:
         return login_redirect()
 
-    db: Session = SessionLocal()
+    db = SessionLocal()
     try:
-        record = db.query(PoolMonitoring).filter(PoolMonitoring.id == record_id).first()
+        existing = db_one(
+            db,
+            """
+            SELECT id
+            FROM pool_monitoring
+            WHERE id = :record_id
+            """,
+            {"record_id": record_id},
+        )
 
-        if record:
-            record.monitoring_status = monitoring_status
-            record.current_alert = current_alert
-            record.equipment_notes = equipment_notes
-            record.service_notes = service_notes
-            record.last_checked = date.today()
+        if existing:
+            db.execute(
+                text(
+                    """
+                    UPDATE pool_monitoring
+                    SET
+                        monitoring_status = :monitoring_status,
+                        current_alert = :current_alert,
+                        equipment_notes = :equipment_notes,
+                        service_notes = :service_notes,
+                        last_checked = :last_checked
+                    WHERE id = :record_id
+                    """
+                ),
+                {
+                    "record_id": record_id,
+                    "monitoring_status": monitoring_status or "Not Started",
+                    "current_alert": current_alert,
+                    "equipment_notes": equipment_notes,
+                    "service_notes": service_notes,
+                    "last_checked": date.today().isoformat(),
+                },
+            )
 
             db.commit()
 
         return RedirectResponse("/pool-monitoring", status_code=303)
+
     finally:
         db.close()
 
@@ -170,14 +263,23 @@ def delete_pool_monitoring(request: Request, record_id: int):
     if not user:
         return login_redirect()
 
-    db: Session = SessionLocal()
-    try:
-        record = db.query(PoolMonitoring).filter(PoolMonitoring.id == record_id).first()
-
-        if record:
-            db.delete(record)
-            db.commit()
-
+    if not is_admin(user):
         return RedirectResponse("/pool-monitoring", status_code=303)
+
+    db = SessionLocal()
+    try:
+        db.execute(
+            text(
+                """
+                DELETE FROM pool_monitoring
+                WHERE id = :record_id
+                """
+            ),
+            {"record_id": record_id},
+        )
+
+        db.commit()
+        return RedirectResponse("/pool-monitoring", status_code=303)
+
     finally:
         db.close()
