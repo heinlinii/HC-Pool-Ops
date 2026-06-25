@@ -35,7 +35,7 @@
 
             <nav class="sidebar-nav">
 
-                <a href="/dashboard">
+                <a href="/jarvis">
                     Dashboard
                 </a>
 
@@ -121,7 +121,7 @@
                     <h3>Total Billed</h3>
 
                     <div class="stat-number">
-                        ${{ "%.2f"|format(total_billed) }}
+                        ${{ "%.2f"|format(total_billed|default(0)) }}
                     </div>
 
                 </div>
@@ -131,7 +131,7 @@
                     <h3>Paid</h3>
 
                     <div class="stat-number">
-                        ${{ "%.2f"|format(paid_total) }}
+                       ${{ "%.2f"|format(paid_total|default(0)) }}
                     </div>
 
                 </div>
@@ -141,7 +141,7 @@
                     <h3>Open Balance</h3>
 
                     <div class="stat-number">
-                        ${{ "%.2f"|format(open_total) }}
+                      ${{ "%.2f"|format(open_total|default(0)) }}
                     </div>
 
                 </div>
@@ -158,22 +158,12 @@
 
                     <div class="form-grid">
 
-                        <div class="form-group">
-
-                            <label>Job</label>
-
-                            <select name="job_id" required>
-
-                                {% for job in jobs %}
-
-                                <option value="{{ job.id }}">
-                                    {{ job.label }}
-                                </option>
-
-                                {% endfor %}
-
-                            </select>
-
+                      <div class="form-group">
+    <label>Job</label>
+    <input type="hidden" name="job_id" value="">
+    <input type="text" value="No job selected" disabled>
+</div>
+                              
                         </div>
 
                         <div class="form-group">

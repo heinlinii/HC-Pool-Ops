@@ -2897,6 +2897,45 @@ async def quickbooks_invoice_import(
         ctx(request, imported=imported, skipped=skipped, errors=errors)
     )
 
+@app.get("/billing", response_class=HTMLResponse)
+def billing_page(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+
+    invoices = rows(
+        """
+        SELECT *
+        FROM poolops2_invoices
+        ORDER BY date DESC, id DESC
+        LIMIT 1000
+        """
+    )
+
+    summary = one(
+        """
+        SELECT
+            COUNT(*) AS invoice_count,
+            COALESCE(SUM(amount), 0) AS total_amount,
+            COALESCE(SUM(open_balance), 0) AS total_open_balance,
+            COALESCE(SUM(CASE WHEN status='Open' THEN 1 ELSE 0 END), 0) AS open_count,
+            COALESCE(SUM(CASE WHEN status='Paid' THEN 1 ELSE 0 END), 0) AS paid_count
+        FROM poolops2_invoices
+        """
+    )
+
+    return templates.TemplateResponse(
+        "billing.html",
+        ctx(
+            request,
+            invoices=invoices,
+            billing_jobs=jobs,
+            total_billed=summary.get("total_billed", 0) if summary else 0,
+            paid_total=summary.get("paid_total", 0) if summary else 0,
+            open_total=summary.get("open_total", 0) if summary else 0,
+        )
+    )
+
 @app.get("/weather", response_class=HTMLResponse)
 def weather(request: Request):
     if not require_login(request): return login_redirect()
