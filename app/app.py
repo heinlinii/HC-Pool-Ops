@@ -2715,11 +2715,12 @@ async def quickbooks_invoice_import(
     imported = []
     skipped = []
     errors = []
+    debug = ["Importer version: qb-invoice-list-v3"]
 
     if not csv_file or not csv_file.filename:
         return templates.TemplateResponse(
             "quickbooks_invoice_import.html",
-            ctx(request, imported=[], skipped=[], errors=["No CSV file uploaded."])
+            ctx(request, imported=[], skipped=[], errors=["No CSV file uploaded."], debug=debug)
         )
 
     try:
@@ -2754,13 +2755,18 @@ async def quickbooks_invoice_import(
             canonical_cells = {canonical_header(cell) for cell in raw_row}
             if all(header in canonical_cells for header in header_aliases):
                 header_index = idx
+                debug.append(f"Detected header row: {idx + 1}")
+                debug.append("Detected headers: " + ", ".join(str(cell or "").strip() for cell in raw_row if str(cell or "").strip()))
                 break
 
         if header_index is None:
             errors.append("Could not find the QuickBooks invoice header row. Expected: Date, Transaction type, Num, Name, Memo, Due date, Amount, Open balance.")
+            debug.append(f"CSV rows read: {len(raw_rows)}")
+            for preview_index, preview_row in enumerate(raw_rows[:8], start=1):
+                debug.append(f"Preview row {preview_index}: " + " | ".join(str(cell or "").strip() for cell in preview_row))
             return templates.TemplateResponse(
                 "quickbooks_invoice_import.html",
-                ctx(request, imported=imported, skipped=skipped, errors=errors)
+                ctx(request, imported=imported, skipped=skipped, errors=errors, debug=debug)
             )
 
         def csv_value(row, name):
@@ -2799,7 +2805,8 @@ async def quickbooks_invoice_import(
                     continue
 
                 if transaction_type.lower() != "invoice":
-                    skipped.append(f"Row {index}: skipped {transaction_type or 'non-invoice'} row.")
+                    if len(skipped) < 25:
+                        skipped.append(f"Row {index}: skipped {transaction_type or 'non-invoice'} row.")
                     continue
 
                 amount = money_value(amount_raw)
@@ -2895,7 +2902,7 @@ async def quickbooks_invoice_import(
 
     return templates.TemplateResponse(
         "quickbooks_invoice_import.html",
-        ctx(request, imported=imported, skipped=skipped, errors=errors)
+        ctx(request, imported=imported, skipped=skipped, errors=errors, debug=debug)
     )
 
 @app.get("/weather", response_class=HTMLResponse)
