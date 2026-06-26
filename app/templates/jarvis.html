@@ -1,545 +1,283 @@
 {% extends "base.html" %}
 {% block content %}
 
+{% set dash = design.get("dashboard_cards", {}) if design else {} %}
+
 <style>
-  body.hfo-body .shell {
-    width: 100% !important;
-    max-width: none !important;
-    margin: 0 !important;
-    padding: 0 !important;
-  }
-
-  body.hfo-body {
-    margin: 0 !important;
-    padding: 0 !important;
-    overflow-x: hidden;
-    background:
-      radial-gradient(circle at top right, rgba(214,179,106,.08), transparent 34%),
-      linear-gradient(135deg, #03070a, #071017 48%, #111713) !important;
-  }
-
-  .hfo-dashboard {
-    width: 100%;
-    max-width: 1280px;
+  .hfo-command-wrap {
+    width: min(1180px, calc(100vw - 32px));
     margin: 0 auto;
-    padding: 96px 18px 42px;
-    box-sizing: border-box;
-    display: grid;
-    gap: 22px;
-    color: #fff;
+    padding: 28px 0 60px;
   }
 
   .hfo-hero {
-    padding: 24px;
-    border-radius: 18px;
-    background: rgba(7, 14, 20, .94);
-    border: 1px solid rgba(214,179,106,.26);
+    margin-bottom: 26px;
   }
 
-  .hfo-hero-kicker,
-  .hfo-section-title {
-    color: #d6b36a;
-    font-size: .9rem;
-    font-weight: 1000;
-    letter-spacing: .16em;
+  .hfo-hero-eyebrow {
+    color: rgba(255,255,255,.72);
     text-transform: uppercase;
+    letter-spacing: .22em;
+    font-size: 12px;
+    font-weight: 800;
+    margin-bottom: 8px;
   }
 
   .hfo-hero h1 {
-    margin: 10px 0 8px;
-    color: #fff;
-    font-size: clamp(2.4rem, 7vw, 5.5rem);
-    line-height: 1;
+    margin: 0;
+    font-size: clamp(42px, 7vw, 86px);
+    line-height: .95;
+    letter-spacing: -0.055em;
   }
 
   .hfo-hero p {
     max-width: 760px;
+    color: rgba(255,255,255,.78);
+    font-size: 18px;
+    line-height: 1.5;
+    margin-top: 14px;
+  }
+
+  .hfo-command-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+  }
+
+  .hfo-command-card {
+    --card-bg: none;
+    position: relative;
+    display: block;
+    min-height: 205px;
+    padding: 24px;
+    border-radius: 28px;
+    text-decoration: none;
+    color: #fff;
+    background:
+      radial-gradient(circle at top left, rgba(255,255,255,.16), transparent 34%),
+      linear-gradient(135deg, rgba(32,38,42,.92), rgba(7,11,14,.96));
+    border: 1px solid rgba(255,255,255,.12);
+    box-shadow: 0 18px 50px rgba(0,0,0,.35);
+    overflow: hidden;
+    isolation: isolate;
+    transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease;
+  }
+
+  .hfo-command-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: var(--card-bg);
+    background-size: cover;
+    background-position: center;
+    opacity: .28;
+    z-index: -2;
+  }
+
+  .hfo-command-card::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(135deg, rgba(0,0,0,.72), rgba(0,0,0,.38)),
+      radial-gradient(circle at top left, rgba(59,130,246,.20), transparent 42%);
+    z-index: -1;
+  }
+
+  .hfo-command-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(59,130,246,.7);
+    box-shadow: 0 22px 65px rgba(0,0,0,.48);
+  }
+
+  .hfo-command-card h2 {
     margin: 0;
-    color: rgba(255,255,255,.76);
-    font-weight: 850;
-    line-height: 1.35;
+    font-size: clamp(34px, 5vw, 56px);
+    line-height: 1;
+    letter-spacing: -0.045em;
   }
 
-  .hfo-search-form {
-    display: grid;
-    grid-template-columns: 1fr 190px;
-    gap: 12px;
-    margin-top: 18px;
+  .hfo-command-card p {
+    color: rgba(255,255,255,.82);
+    font-size: 17px;
+    line-height: 1.42;
+    max-width: 520px;
+    margin: 12px 0 0;
   }
 
-  .hfo-search-form input {
-    width: 100%;
-    min-height: 58px;
-    box-sizing: border-box;
-    padding: 0 18px;
-    border-radius: 14px;
-    border: 1px solid rgba(214,179,106,.32);
-    background: rgba(0,0,0,.38);
-    color: #fff;
-    font-size: 1rem;
-  }
-
-  .hfo-search-form button,
-  .hfo-quick-button {
-    min-height: 58px;
-    border: 0;
-    border-radius: 14px;
-    background: linear-gradient(135deg, #7b5a22, #d6b36a, #5f4519);
-    color: #071017;
-    font-weight: 1000;
-    text-decoration: none;
-    cursor: pointer;
-  }
-
-  .hfo-section {
-    display: grid;
-    gap: 12px;
-  }
-
-  .hfo-card-grid {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 12px;
-  }
-
-  .hfo-card {
-    min-height: 104px;
-    padding: 16px;
-    border-radius: 14px;
-    border: 1px solid rgba(214,179,106,.24);
-    background: linear-gradient(135deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
-    color: #fff;
-    text-decoration: none;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    gap: 6px;
-  }
-
-  .hfo-card strong {
-    color: #d6b36a;
-    font-size: .95rem;
-    font-weight: 1000;
-    letter-spacing: .06em;
-    text-transform: uppercase;
-  }
-
-  .hfo-card span {
-    color: rgba(255,255,255,.72);
-    font-size: .86rem;
-    font-weight: 800;
-    line-height: 1.3;
-  }
-
-  .hfo-card.primary {
-    background: linear-gradient(135deg, #7b5a22, #d6b36a, #5f4519);
-    border-color: rgba(214,179,106,.74);
-  }
-
-  .hfo-card.primary strong,
-  .hfo-card.primary span {
-    color: #071017;
-  }
-
-  .hfo-card.blue {
-    background: linear-gradient(135deg, #42a5ff, #2563eb);
-    border-color: rgba(100,160,255,.62);
-  }
-
-  .hfo-card.blue strong,
-  .hfo-card.blue span {
-    color: #fff;
-  }
-
-  .hfo-note {
-    padding: 18px;
-    border-radius: 14px;
-    background: rgba(7, 14, 20, .80);
-    border: 1px solid rgba(214,179,106,.18);
-    color: rgba(255,255,255,.76);
-    font-weight: 850;
-    line-height: 1.35;
-  }
-
-  .hfo-action-list {
-    display: grid;
-    gap: 12px;
-  }
-
-  .hfo-action-button {
-    width: 100%;
-    min-height: 64px;
-    padding: 0 18px;
-    border-radius: 14px;
-    border: 0;
-    background: linear-gradient(135deg, #7b5a22, #d6b36a, #5f4519);
-    color: #071017;
-    text-decoration: none;
-    display: flex;
+  .hfo-command-pill {
+    display: inline-flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 14px;
-    box-sizing: border-box;
+    gap: 8px;
+    margin-top: 22px;
+    padding: 11px 15px;
+    border-radius: 999px;
+    background: rgba(59,130,246,.24);
+    border: 1px solid rgba(59,130,246,.48);
+    color: rgba(255,255,255,.94);
+    font-weight: 900;
   }
 
-  .hfo-action-button strong,
-  .hfo-action-button span {
-    color: #071017;
+  .hfo-quick-actions {
+    margin-top: 22px;
+    padding: 20px;
+    border-radius: 26px;
+    background: rgba(255,255,255,.055);
+    border: 1px solid rgba(255,255,255,.11);
   }
 
-  .hfo-map-tool-card {
-    min-height: 104px;
-    background: linear-gradient(135deg, #7b5a22, #d6b36a, #5f4519);
-    border-color: rgba(214,179,106,.74);
-    color: #071017;
-    display: grid;
-    grid-template-columns: 1fr auto;
-    align-items: center;
-    gap: 12px;
-    cursor: default;
+  .hfo-quick-actions h2 {
+    margin: 0 0 14px;
+    font-size: 28px;
   }
 
-  .hfo-map-tool-card strong,
-  .hfo-map-tool-card span {
-    color: #071017;
-  }
-
-  .hfo-map-subtools {
+  .hfo-quick-row {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
-    align-items: center;
-    justify-content: flex-end;
+    gap: 10px;
   }
 
-  .hfo-map-subtools a {
+  .hfo-quick-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-height: 38px;
-    padding: 0 12px;
+    min-height: 44px;
+    padding: 10px 15px;
     border-radius: 999px;
-    background: rgba(7, 14, 20, .92);
-    border: 1px solid rgba(0,0,0,.25);
-    color: #d6b36a;
+    color: #fff;
     text-decoration: none;
-    font-weight: 1000;
-    font-size: .82rem;
+    font-weight: 900;
+    background: rgba(255,255,255,.09);
+    border: 1px solid rgba(255,255,255,.14);
   }
 
-  .hfo-map-subtools a:hover {
-    background: rgba(7, 14, 20, 1);
+  .hfo-quick-btn.primary {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    border-color: rgba(255,255,255,.18);
   }
 
-  .hfo-plain-dashboard .hfo-hero {
-    padding: 0;
-    border-radius: 0;
-    border: 0;
-    background: transparent;
+  .hfo-note {
+    margin-top: 14px;
+    color: rgba(255,255,255,.58);
+    font-size: 13px;
   }
 
-  .hfo-plain-dashboard .hfo-section {
-    padding-top: 4px;
-  }
-
-  .hfo-crew-dashboard {
-    position: relative;
-    padding-top: var(--crew-dashboard-padding-top, 120px);
-    min-height: 760px;
-  }
-
-  .hfo-crew-crest {
-    position: absolute;
-    top: var(--crew-crest-top, 145px);
-    right: var(--crew-crest-right, 70px);
-    width: var(--crew-crest-width, 470px);
-    max-width: 38vw;
-    z-index: 1;
-    pointer-events: none;
-    opacity: var(--crew-crest-opacity, .94);
-  }
-
-  .hfo-crew-crest img {
-    display: block;
-    width: 100%;
-    height: auto;
-    object-fit: contain;
-    filter: drop-shadow(0 18px 36px rgba(0,0,0,.65));
-  }
-
-  .hfo-crew-dashboard .hfo-hero {
-    position: relative;
-    z-index: 4;
-    padding-top: var(--crew-hero-padding-top, 150px);
-    max-width: 980px;
-  }
-
-  .hfo-crew-dashboard .hfo-hero h1 {
-    font-size: clamp(4.6rem, 7vw, 7.4rem);
-    line-height: .86;
-  }
-
-  .hfo-crew-dashboard .hfo-section {
-    position: relative;
-    z-index: 5;
-    max-width: none;
-    margin-top: 4px;
-  }
-
-  @media (max-width: 1000px) {
-    .hfo-card-grid {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-  }
-
-  @media (max-width: 640px) {
-    .hfo-dashboard {
-      padding: 84px 12px 30px;
-    }
-
-    .hfo-search-form,
-    .hfo-card-grid {
+  @media (max-width: 820px) {
+    .hfo-command-grid {
       grid-template-columns: 1fr;
     }
 
-    .hfo-card {
-      min-height: 82px;
+    .hfo-command-card {
+      min-height: 170px;
+      padding: 22px;
     }
 
-    .hfo-map-tool-card {
-      grid-template-columns: 1fr;
-    }
-
-    .hfo-map-subtools {
-      justify-content: flex-start;
-    }
-
-    .hfo-map-subtools a {
-      width: 100%;
-    }
-
-    .hfo-crew-dashboard {
-      padding-top: 96px;
-      min-height: 520px;
-    }
-
-    .hfo-crew-crest {
-      top: 92px;
-      right: 12px;
-      width: 120px;
-      max-width: 38vw;
-      opacity: .9;
-    }
-
-    .hfo-crew-dashboard .hfo-hero {
-      padding-top: 132px;
-      max-width: 100%;
-    }
-
-    .hfo-crew-dashboard .hfo-hero h1 {
-      font-size: clamp(3.1rem, 13vw, 4.9rem);
+    .hfo-hero h1 {
+      font-size: clamp(44px, 14vw, 72px);
     }
   }
 </style>
 
-{% if is_admin %}
-  <div class="hfo-dashboard">
-    <section class="hfo-hero">
-      <div class="hfo-hero-kicker">{{ design.get('dashboard', {}).get('legacy_line', greeting or 'Welcome') }}</div>
-      <h1>{{ design.get('dashboard', {}).get('motto_first', 'Admin') }} {{ design.get('dashboard', {}).get('motto_second', 'Command Center') }}</h1>
-      <p>{{ design.get('dashboard', {}).get('hero_subline', 'Run the office, the field, the schedule, and the service board from one place.') }}</p>
+<div class="hfo-command-wrap">
 
-      <form class="hfo-search-form" action="/jarvis/search" method="get">
-        <input type="text" name="q" placeholder="{{ design.get('dashboard', {}).get('search_placeholder', 'Search or tell Jarvis what needs handled') }}" autocomplete="off">
-        <button type="submit">{{ design.get('dashboard', {}).get('handle_button', 'Handle It') }}</button>
-      </form>
-    </section>
+  <section class="hfo-hero">
+    <div class="hfo-hero-eyebrow">{{ greeting or "Welcome back" }}</div>
+    <h1>Heinlin Field Ops</h1>
+    <p>
+      Built by the hands that perfected the term work hard play harder.
+      Pick a department and get where you need to go without hunting through a pile of buttons.
+    </p>
+  </section>
 
-    <section class="hfo-section">
-      <div class="hfo-section-title">Admin Tools</div>
-      <div class="hfo-card-grid">
-        <a class="hfo-card primary" href="/assistant-interview-live">
-          <strong>Talk to Jarvis</strong>
-          <span>Tell Jarvis what needs handled, filed, remembered, or followed up.</span>
-        </a>
+  <section class="hfo-command-grid">
 
-        <a class="hfo-card primary" href="/invisible-office">
-          <strong>Invisible Office</strong>
-          <span>Saved notes, follow-ups, reminders, materials, problems, billing notes, and Jarvis-filed work.</span>
-        </a>
+    <a
+      class="hfo-command-card"
+      href="/accounts"
+      {% if dash.get('accounts') %}style="--card-bg: url('{{ dash.get('accounts') }}');"{% endif %}
+    >
+      <h2>Accounts</h2>
+      <p>Clients, properties, jobs, billing, photos, estimates, and invoices.</p>
+      <span class="hfo-command-pill">Open Accounts →</span>
+    </a>
 
-        <a class="hfo-card primary" href="/design-studio">
-          <strong>Design Studio</strong>
-          <span>Dashboard wording, layout, and visual controls.</span>
-        </a>
+    <a
+      class="hfo-command-card"
+      href="/today-dashboard"
+      {% if dash.get('today') %}style="--card-bg: url('{{ dash.get('today') }}');"{% endif %}
+    >
+      <h2>Today</h2>
+      <p>Today’s work, schedule, map, weather, My Day, and crew activity.</p>
+      <span class="hfo-command-pill">Open Today →</span>
+    </a>
 
-        <a class="hfo-card" href="/clients">
-          <strong>Clients</strong>
-          <span>309 client records, portals, and contact history.</span>
-        </a>
+    <a
+      class="hfo-command-card"
+      href="/pool-systems"
+      {% if dash.get('pool_systems') %}style="--card-bg: url('{{ dash.get('pool_systems') }}');"{% endif %}
+    >
+      <h2>Pool Systems</h2>
+      <p>Pool monitoring, Pentair Pro links, freeze watch, weather watch, and equipment notes.</p>
+      <span class="hfo-command-pill">Open Pool Systems →</span>
+    </a>
 
-        <a class="hfo-card" href="/properties">
-          <strong>Properties</strong>
-          <span>285 property records, pools, addresses, equipment, and details.</span>
-        </a>
+    <a
+      class="hfo-command-card"
+      href="/field-operations"
+      {% if dash.get('field_operations') %}style="--card-bg: url('{{ dash.get('field_operations') }}');"{% endif %}
+    >
+      <h2>Field Operations</h2>
+      <p>Employee dashboard, crew portal, field logs, GPS day log, stops, and photos.</p>
+      <span class="hfo-command-pill">Open Field Ops →</span>
+    </a>
 
-        <a class="hfo-card" href="/jobs">
-          <strong>Jobs</strong>
-          <span>Work orders, status, crew, and notes.</span>
-        </a>
+    <a
+      class="hfo-command-card"
+      href="/business"
+      {% if dash.get('business') %}style="--card-bg: url('{{ dash.get('business') }}');"{% endif %}
+    >
+      <h2>Business</h2>
+      <p>Employees, QuickBooks, invoice import, design studio, and office tools.</p>
+      <span class="hfo-command-pill">Open Business →</span>
+    </a>
 
-        <a class="hfo-card" href="/schedule/day">
-          <strong>Daily Schedule</strong>
-          <span>Today's field work and service calls.</span>
-        </a>
+    <a
+      class="hfo-command-card"
+      href="/jarvis-tools"
+      {% if dash.get('jarvis') %}style="--card-bg: url('{{ dash.get('jarvis') }}');"{% endif %}
+    >
+      <h2>Jarvis</h2>
+      <p>Talk to Jarvis, live assistant interview, organize my day, AI systems, and Send It.</p>
+      <span class="hfo-command-pill">Open Jarvis →</span>
+    </a>
 
-        <a class="hfo-card" href="/schedule/year">
-          <strong>Year Schedule</strong>
-          <span>Full calendar and long-range planning.</span>
-        </a>
+  </section>
 
-        <a class="hfo-card" href="/billing">
-          <strong>Billing</strong>
-          <span>QuickBooks invoices, paid totals, open balances, and billing records.</span>
-        </a>
+  <section class="hfo-quick-actions">
+    <h2>Quick Actions</h2>
 
-        <a class="hfo-card" href="/quickbooks/invoices/import">
-          <strong>Import QB Invoices</strong>
-          <span>Upload QuickBooks invoice CSV files into billing.</span>
-        </a>
-
-        <a class="hfo-card" href="/photos">
-          <strong>Photos</strong>
-          <span>Progress shots, property images, and field proof.</span>
-        </a>
-
-        <a class="hfo-card" href="/crew">
-          <strong>Crew / Employees</strong>
-          <span>Employee records and field access.</span>
-        </a>
-
-        <a class="hfo-card" href="/employee">
-          <strong>Employee Portal</strong>
-          <span>Clock, jobs, photos, and field tools.</span>
-        </a>
-
-        <a class="hfo-card" href="/pool-monitoring">
-          <strong>Pool Monitoring</strong>
-          <span>Pentair accounts, monitored pools, equipment alerts, and service notes.</span>
-        </a>
-
-        <div class="hfo-card hfo-map-tool-card">
-          <div>
-            <strong>Map</strong>
-            <span>Locations, GPS logs, and stops.</span>
-          </div>
-
-          <div class="hfo-map-subtools">
-            <a href="/map">Field Map</a>
-            <a href="/gps/day">GPS Day Log</a>
-            <a href="/gps/stops">GPS Stops</a>
-          </div>
-        </div>
-
-        <a class="hfo-card" href="/weather">
-          <strong>Weather Watch</strong>
-          <span>Severe weather alerts, radar, field conditions, and jobsite action warnings.</span>
-        </a>
-
-        <a class="hfo-card" href="/admin/link-check">
-          <strong>Link Check</strong>
-          <span>Find broken app navigation.</span>
-        </a>
-      </div>
-    </section>
-  </div>
-
-{% elif is_employee %}
-  {% set crew_dashboard = design.get('crew_dashboard', {}) %}
-  <div
-    class="hfo-dashboard hfo-plain-dashboard hfo-crew-dashboard"
-    style="--crew-dashboard-padding-top: {{ crew_dashboard.get('dashboard_padding_top', '120px') }}; --crew-hero-padding-top: {{ crew_dashboard.get('hero_padding_top', '150px') }}; --crew-crest-width: {{ crew_dashboard.get('crest_width', '470px') }}; --crew-crest-top: {{ crew_dashboard.get('crest_top', '145px') }}; --crew-crest-right: {{ crew_dashboard.get('crest_right', '70px') }}; --crew-crest-opacity: {{ crew_dashboard.get('crest_opacity', '0.94') }};"
-  >
-    <div class="hfo-crew-crest">
-      <img src="{{ crew_dashboard.get('crest_image', '/static/heinlin-wide-crest.png') }}" alt="Heinlin Crest">
+    <div class="hfo-quick-row">
+      <a class="hfo-quick-btn primary" href="/clients">Clients</a>
+      <a class="hfo-quick-btn primary" href="/properties">Properties</a>
+      <a class="hfo-quick-btn primary" href="/jobs">Jobs</a>
+      <a class="hfo-quick-btn" href="/billing">Billing</a>
+      <a class="hfo-quick-btn" href="/photos">Photos</a>
+      <a class="hfo-quick-btn" href="/schedule">Schedule</a>
+      <a class="hfo-quick-btn" href="/weather">Weather</a>
+      <a class="hfo-quick-btn" href="/map">Map</a>
+      <a class="hfo-quick-btn" href="/employee">Clock In / Out</a>
+      <a class="hfo-quick-btn" href="/pool-monitoring">Pool Monitoring</a>
+      <a class="hfo-quick-btn" href="/talk-to-jarvis">Talk to Jarvis</a>
+      <a class="hfo-quick-btn" href="/assistant-interview-live">Live Interview</a>
+      <a class="hfo-quick-btn" href="/design-studio">Design Studio</a>
     </div>
 
-    <section class="hfo-hero">
-      <div class="hfo-hero-kicker">{{ crew_dashboard.get('greeting_prefix', greeting or 'Good morning') }}{% if user %}, {{ user.get("name") or user.get("username") }}{% endif %}</div>
-      <h1>{{ crew_dashboard.get('title', 'Crew Portal') }}</h1>
-      <p>{{ crew_dashboard.get('subtitle', 'My jobs, clock in/out, photos, field notes, weather, and map.') }}</p>
-    </section>
+    <div class="hfo-note">
+      Dashboard card images will read from Design Studio values named:
+      accounts, today, pool_systems, field_operations, business, and jarvis.
+    </div>
+  </section>
 
-    <section class="hfo-section">
-      <div class="hfo-section-title">{{ crew_dashboard.get('section_title', 'Crew Tools') }}</div>
-      <div class="hfo-action-list">
-        {% for tool in crew_dashboard.get('tools', []) %}
-          {% if tool.get('enabled') %}
-            {% set raw_href = tool.get('href', '') %}
-
-            {% if raw_href in ['/send-it', '/sendit', 'send-it', 'sendit'] %}
-              {% set safe_href = '/assistant-interview-live' %}
-            {% elif raw_href in ['/daily-schedule', '/todays-schedule', 'daily-schedule', 'todays-schedule', 'schedule/day'] %}
-              {% set safe_href = '/schedule/day' %}
-            {% elif raw_href in ['/gps-day-log', 'gps-day-log'] %}
-              {% set safe_href = '/gps/day' %}
-            {% elif raw_href in ['/gps-stops', 'gps-stops'] %}
-              {% set safe_href = '/gps/stops' %}
-            {% elif raw_href and raw_href.startswith('/') %}
-              {% set safe_href = raw_href %}
-            {% else %}
-              {% set safe_href = '' %}
-            {% endif %}
-
-            {% if tool.get('label') == 'Map' %}
-              <div class="hfo-action-button hfo-map-tool-card">
-                <div>
-                  <strong>Map</strong>
-                  <span>Locations, GPS logs, and stops</span>
-                </div>
-
-                <div class="hfo-map-subtools">
-                  <a href="/map">Field Map</a>
-                  <a href="/gps/day">GPS Day Log</a>
-                  <a href="/gps/stops">GPS Stops</a>
-                </div>
-              </div>
-            {% elif safe_href and safe_href not in ['/gps/day', '/gps/stops'] %}
-              <a class="hfo-action-button" href="{{ safe_href }}">
-                <strong>{{ tool.get('label', 'Tool') }}</strong>
-                <span>{{ tool.get('description', '') }}</span>
-              </a>
-            {% endif %}
-          {% endif %}
-        {% endfor %}
-      </div>
-    </section>
-  </div>
-
-{% elif is_client %}
-  <div class="hfo-dashboard hfo-plain-dashboard">
-    <section class="hfo-hero">
-      <div class="hfo-hero-kicker">{{ greeting or "Welcome" }}{% if user %}, {{ user.get("name") or user.get("username") }}{% endif %}</div>
-      <h1>Client Portal</h1>
-      <p>Review your properties, jobs, photos, and service notes without internal office controls.</p>
-    </section>
-
-    <section class="hfo-section">
-      <div class="hfo-section-title">Your Account</div>
-      <div class="hfo-action-list">
-        <a class="hfo-action-button" href="/client-portal"><strong>My Portal</strong><span>Open account</span></a>
-      </div>
-    </section>
-  </div>
-
-{% else %}
-  <div class="hfo-dashboard hfo-plain-dashboard">
-    <section class="hfo-hero">
-      <div class="hfo-hero-kicker">Heinlin Field Ops</div>
-      <h1>Dashboard</h1>
-      <p>Your account role is not set. Please contact Heinlin to finish portal setup.</p>
-    </section>
-  </div>
-{% endif %}
+</div>
 
 {% endblock %}
