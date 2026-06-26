@@ -3,6 +3,27 @@
 
 {% set dash = design.get("dashboard_cards", {}) if design else {} %}
 
+{% macro card_style(key) -%}
+  {% set card = dash.get(key, {}) %}
+  {% if card is mapping %}
+    {% if card.get('image') %}
+      --card-bg: url('{{ card.get('image') }}');
+    {% endif %}
+    --card-size: {{ card.get('size', 'cover') }};
+    --card-position: {{ card.get('position', 'center') }};
+    --card-opacity: {{ card.get('brightness', '0.28') }};
+  {% elif card %}
+    --card-bg: url('{{ card }}');
+  {% endif %}
+{%- endmacro %}
+
+{% macro card_style_attr(key) -%}
+  {% set style = card_style(key) %}
+  {% if style %}
+    style="{{ style|safe }}"
+  {% endif %}
+{%- endmacro %}
+
 <style>
   .hfo-command-wrap {
     width: min(1180px, calc(100vw - 32px));
@@ -46,6 +67,10 @@
 
   .hfo-command-card {
     --card-bg: none;
+    --card-size: cover;
+    --card-position: center;
+    --card-opacity: .28;
+
     position: relative;
     display: block;
     min-height: 205px;
@@ -68,9 +93,10 @@
     position: absolute;
     inset: 0;
     background-image: var(--card-bg);
-    background-size: cover;
-    background-position: center;
-    opacity: .28;
+    background-size: var(--card-size);
+    background-position: var(--card-position);
+    background-repeat: no-repeat;
+    opacity: var(--card-opacity);
     z-index: -2;
   }
 
@@ -191,63 +217,39 @@
 
   <section class="hfo-command-grid">
 
-    <a
-      class="hfo-command-card"
-      href="/accounts"
-      {% if dash.get('accounts') %}style="--card-bg: url('{{ dash.get('accounts') }}');"{% endif %}
-    >
+    <a class="hfo-command-card" href="/accounts" data-card="accounts" {{ card_style_attr('accounts') }}>
       <h2>Accounts</h2>
       <p>Clients, properties, jobs, billing, photos, estimates, and invoices.</p>
       <span class="hfo-command-pill">Open Accounts →</span>
     </a>
 
-    <a
-      class="hfo-command-card"
-      href="/today-dashboard"
-      {% if dash.get('today') %}style="--card-bg: url('{{ dash.get('today') }}');"{% endif %}
-    >
+    <a class="hfo-command-card" href="/today-dashboard" data-card="today" {{ card_style_attr('today') }}>
       <h2>Today</h2>
       <p>Today’s work, schedule, map, weather, My Day, and crew activity.</p>
       <span class="hfo-command-pill">Open Today →</span>
     </a>
 
-    <a
-      class="hfo-command-card"
-      href="/pool-systems"
-      {% if dash.get('pool_systems') %}style="--card-bg: url('{{ dash.get('pool_systems') }}');"{% endif %}
-    >
+    <a class="hfo-command-card" href="/pool-systems" data-card="pool_systems" {{ card_style_attr('pool_systems') }}>
       <h2>Pool Systems</h2>
-      <p>Pool monitoring, Pentair Pro links, freeze watch, weather watch, and equipment notes.</p>
+      <p>Pool monitoring, Pentair Pro links, weather protection, and equipment notes.</p>
       <span class="hfo-command-pill">Open Pool Systems →</span>
     </a>
 
-    <a
-      class="hfo-command-card"
-      href="/field-operations"
-      {% if dash.get('field_operations') %}style="--card-bg: url('{{ dash.get('field_operations') }}');"{% endif %}
-    >
+    <a class="hfo-command-card" href="/field-operations" data-card="field_operations" {{ card_style_attr('field_operations') }}>
       <h2>Field Operations</h2>
-      <p>Employee dashboard, crew portal, field logs, GPS day log, stops, and photos.</p>
+      <p>Employee dashboard, crew list, field logs, GPS day log, and photos.</p>
       <span class="hfo-command-pill">Open Field Ops →</span>
     </a>
 
-    <a
-      class="hfo-command-card"
-      href="/business"
-      {% if dash.get('business') %}style="--card-bg: url('{{ dash.get('business') }}');"{% endif %}
-    >
+    <a class="hfo-command-card" href="/business" data-card="business" {{ card_style_attr('business') }}>
       <h2>Business</h2>
       <p>Employees, QuickBooks, invoice import, design studio, and office tools.</p>
       <span class="hfo-command-pill">Open Business →</span>
     </a>
 
-    <a
-      class="hfo-command-card"
-      href="/jarvis-tools"
-      {% if dash.get('jarvis') %}style="--card-bg: url('{{ dash.get('jarvis') }}');"{% endif %}
-    >
+    <a class="hfo-command-card" href="/jarvis-tools" data-card="jarvis" {{ card_style_attr('jarvis') }}>
       <h2>Jarvis</h2>
-      <p>Talk to Jarvis, live assistant interview, organize my day, AI systems, and Send It.</p>
+      <p>AI Systems and assistant tools.</p>
       <span class="hfo-command-pill">Open Jarvis →</span>
     </a>
 
@@ -270,12 +272,11 @@
       <a class="hfo-quick-btn" href="/talk-to-jarvis">Talk to Jarvis</a>
       <a class="hfo-quick-btn" href="/assistant-interview-live">Live Interview</a>
       <a class="hfo-quick-btn" href="/design-studio">Design Studio</a>
-      <a class="hfo-quick-btn" href="/dashboard-card-images">Card Images</a> 
+      <a class="hfo-quick-btn" href="/dashboard-card-images">Card Images</a>
     </div>
 
     <div class="hfo-note">
-      Dashboard card images will read from Design Studio values named:
-      accounts, today, pool_systems, field_operations, business, and jarvis.
+      Use Card Images to adjust each dashboard card image, size, position, and brightness.
     </div>
   </section>
 

@@ -1978,6 +1978,47 @@ def design_studio_save(
 # DASHBOARD CARD IMAGE SETTINGS
 # ============================================================
 
+DASHBOARD_CARD_KEYS = [
+    "accounts",
+    "today",
+    "pool_systems",
+    "field_operations",
+    "business",
+    "jarvis",
+]
+
+
+def dashboard_card_defaults():
+    return {
+        key: {
+            "image": "",
+            "size": "cover",
+            "position": "center",
+            "brightness": "0.28",
+        }
+        for key in DASHBOARD_CARD_KEYS
+    }
+
+
+def normalize_dashboard_cards(design):
+    defaults = dashboard_card_defaults()
+    existing = design.get("dashboard_cards", {})
+
+    for key in DASHBOARD_CARD_KEYS:
+        existing_value = existing.get(key, "")
+
+        if isinstance(existing_value, str):
+            defaults[key]["image"] = existing_value.strip()
+
+        elif isinstance(existing_value, dict):
+            defaults[key]["image"] = str(existing_value.get("image", "")).strip()
+            defaults[key]["size"] = str(existing_value.get("size", "cover")).strip() or "cover"
+            defaults[key]["position"] = str(existing_value.get("position", "center")).strip() or "center"
+            defaults[key]["brightness"] = str(existing_value.get("brightness", "0.28")).strip() or "0.28"
+
+    return defaults
+
+
 @app.get("/dashboard-card-images", response_class=HTMLResponse)
 def dashboard_card_images_page(request: Request):
     u = require_login(request)
@@ -1985,7 +2026,7 @@ def dashboard_card_images_page(request: Request):
         return login_redirect()
 
     design = design_settings()
-    dashboard_cards = design.get("dashboard_cards", {})
+    dashboard_cards = normalize_dashboard_cards(design)
 
     return templates.TemplateResponse(
         "dashboard_card_images.html",
@@ -2005,10 +2046,140 @@ async def save_dashboard_card_images(request: Request):
     form = await request.form()
 
     design = design_settings()
+    dashboard_cards = {}
 
-    design["dashboard_cards"] = {
-        "accounts": str(form.get("accounts", "")).strip(),
-        "today": str(form.get("today", "")).strip(),
+    for key in DASHBOARD_CARD_KEYS:
+        raw_brightness = str(form.get(f"{key}_brightness", "0.28")).strip()
+
+        try:
+            brightness = float(raw_brightness)
+        except Exception:
+            brightness = 0.28
+
+        if brightness < 0:
+            brightness = 0
+
+        if brightness > 1:
+            brightness = 1
+
+        dashboard_cards[key] = {
+            "image": str(form.get(f"{key}_image", "")).strip(),
+            "size": str(form.get(f"{key}_size", "cover")).strip() or "cover",
+            "position": str(form.get(f"{key}_position", "center")).strip() or "center",
+            "brightness": str(brightness),
+        }
+
+    design["dashboard_cards"] = dashboard_cards
+
+    DESIGN_FILE.write_text(
+        json.dumps(design, indent=2),
+        encoding="utf-8",
+    )
+
+    return RedirectResponse("/dashboard-card-images", status_code=303)
+
+
+# ============================================================
+# DASHBOARD CARD IMAGE SETTINGS
+# ============================================================
+
+DASHBOARD_CARD_KEYS = [
+    "accounts",
+    "today",
+    "pool_systems",
+    "field_operations",
+    "business",
+    "jarvis",
+]
+
+
+def dashboard_card_defaults():
+    return {
+        key: {
+            "image": "",
+            "size": "cover",
+            "position": "center",
+            "brightness": "0.28",
+        }
+        for key in DASHBOARD_CARD_KEYS
+    }
+
+
+def normalize_dashboard_cards(design):
+    defaults = dashboard_card_defaults()
+    existing = design.get("dashboard_cards", {})
+
+    for key in DASHBOARD_CARD_KEYS:
+        old_value = existing.get(key, "")
+
+        if isinstance(old_value, str):
+            defaults[key]["image"] = old_value
+        elif isinstance(old_value, dict):
+            defaults[key]["image"] = str(old_value.get("image", "")).strip()
+            defaults[key]["size"] = str(old_value.get("size", "cover")).strip() or "cover"
+            defaults[key]["position"] = str(old_value.get("position", "center")).strip() or "center"
+            defaults[key]["brightness"] = str(old_value.get("brightness", "0.28")).strip() or "0.28"
+
+    design["dashboard_cards"] = defaults
+    return defaults
+
+
+@app.get("/dashboard-card-images", response_class=HTMLResponse)
+def dashboard_card_images_page(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+
+    design = design_settings()
+    dashboard_cards = normalize_dashboard_cards(design)
+
+    return templates.TemplateResponse(
+        "dashboard_card_images.html",
+        ctx(
+            request,
+            dashboard_cards=dashboard_cards,
+        ),
+    )
+
+
+@app.post("/dashboard-card-images")
+async def save_dashboard_card_images(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+
+    form = await request.form()
+    design = design_settings()
+
+    dashboard_cards = {}
+
+    for key in DASHBOARD_CARD_KEYS:
+        brightness_raw = str(form.get(f"{key}_brightness", "0.28")).strip()
+
+        try:
+            brightness_value = float(brightness_raw)
+        except Exception:
+            brightness_value = 0.28
+
+        if brightness_value < 0:
+            brightness_value = 0
+        if brightness_value > 1:
+            brightness_value = 1
+
+        dashboard_cards[key] = {
+            "image": str(form.get(f"{key}_image", "")).strip(),
+            "size": str(form.get(f"{key}_size", "cover")).strip() or "cover",
+            "position": str(form.get(f"{key}_position", "center")).strip() or "center",
+            "brightness": str(brightness_value),
+        }
+
+    design["dashboard_cards"] = dashboard_cards
+
+    DESIGN_FILE.write_text(json.dumps(design, indent=2), encoding="utf-8")
+
+    return RedirectResponse("/dashboard-card-images", status_code=303)
+
+    dashboard_theme = {
         "pool_systems": str(form.get("pool_systems", "")).strip(),
         "field_operations": str(form.get("field_operations", "")).strip(),
         "business": str(form.get("business", "")).strip(),

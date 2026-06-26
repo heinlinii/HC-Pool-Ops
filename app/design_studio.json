@@ -195,7 +195,9 @@
         "href": "/design-studio",
         "image": "",
         "enabled": true,
-        "roles": ["admin"]
+        "roles": [
+          "admin"
+        ]
       },
       {
         "label": "Link Check",
@@ -203,7 +205,9 @@
         "href": "/admin/link-check",
         "image": "",
         "enabled": true,
-        "roles": ["admin"]
+        "roles": [
+          "admin"
+        ]
       },
       {
         "label": "Crew Portal",
@@ -211,7 +215,9 @@
         "href": "/employee",
         "image": "",
         "enabled": true,
-        "roles": ["employee"]
+        "roles": [
+          "employee"
+        ]
       }
     ]
   },
@@ -224,5 +230,43 @@
     "title": "Pool Monitoring",
     "subtitle": "Pentair access, pool alerts, service notes, and monitored systems.",
     "button_text": "Add Pool Monitor"
+  },
+  "dashboard_cards": {
+    "accounts": {
+      "image": "",
+      "size": "cover",
+      "position": "center",
+      "brightness": "0.3"
+    },
+    "today": {
+      "image": "",
+      "size": "cover",
+      "position": "center",
+      "brightness": "0.3"
+    },
+    "pool_systems": {
+      "image": "",
+      "size": "cover",
+      "position": "center",
+      "brightness": "0.3"
+    },
+    "field_operations": {
+      "image": "",
+      "size": "cover",
+      "position": "center",
+      "brightness": "0.3"
+    },
+    "business": {
+      "image": "",
+      "size": "cover",
+      "position": "center",
+      "brightness": "0.3"
+    },
+    "jarvis": {
+      "image": "/static/uploads/20260614_111449_87a15917.jpg",
+      "size": "contain",
+      "position": "center",
+      "brightness": "0.75"
+    }
   }
 }

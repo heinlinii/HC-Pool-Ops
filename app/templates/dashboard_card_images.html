@@ -3,7 +3,7 @@
 
 <style>
   .hfo-design-wrap {
-    width: min(980px, calc(100vw - 32px));
+    width: min(1100px, calc(100vw - 32px));
     margin: 0 auto;
     padding: 28px 0 60px;
   }
@@ -28,14 +28,27 @@
   }
 
   .hfo-image-form {
+    display: grid;
+    gap: 18px;
+  }
+
+  .hfo-card-editor {
     padding: 22px;
     border-radius: 26px;
     background: rgba(255,255,255,.06);
     border: 1px solid rgba(255,255,255,.12);
   }
 
-  .hfo-field {
-    margin-bottom: 18px;
+  .hfo-card-editor h2 {
+    margin: 0 0 14px;
+    font-size: 34px;
+  }
+
+  .hfo-editor-grid {
+    display: grid;
+    grid-template-columns: 1.3fr .7fr .8fr .7fr;
+    gap: 12px;
+    align-items: end;
   }
 
   .hfo-field label {
@@ -44,7 +57,8 @@
     margin-bottom: 8px;
   }
 
-  .hfo-field input {
+  .hfo-field input,
+  .hfo-field select {
     width: 100%;
     min-height: 48px;
     border-radius: 14px;
@@ -84,58 +98,99 @@
   .hfo-btn.primary {
     background: linear-gradient(135deg, #3b82f6, #2563eb);
   }
+
+  @media (max-width: 900px) {
+    .hfo-editor-grid {
+      grid-template-columns: 1fr;
+    }
+  }
 </style>
+
+{% set labels = {
+  "accounts": "Accounts",
+  "today": "Today",
+  "pool_systems": "Pool Systems",
+  "field_operations": "Field Operations",
+  "business": "Business",
+  "jarvis": "Jarvis"
+} %}
 
 <div class="hfo-design-wrap">
 
   <section class="hfo-design-head">
     <h1>Dashboard Card Images</h1>
     <p>
-      Paste image paths for the six main dashboard cards.
-      Use images already inside <strong>app/static</strong>, then enter them as <strong>/static/image-name.jpg</strong>.
+      Set each dashboard card image, image size, image position, and brightness.
+      Use paths like <strong>/static/accounts-card.jpg</strong>.
     </p>
   </section>
 
   <form method="post" action="/dashboard-card-images" class="hfo-image-form">
 
-    <div class="hfo-field">
-      <label>Accounts Card Image</label>
-      <input name="accounts" value="{{ dashboard_cards.get('accounts', '') }}" placeholder="/static/accounts-card.jpg">
-      <div class="hfo-help">Clients, properties, jobs, billing, photos.</div>
-    </div>
+    {% for key, label in labels.items() %}
+      {% set card = dashboard_cards.get(key, {}) %}
 
-    <div class="hfo-field">
-      <label>Today Card Image</label>
-      <input name="today" value="{{ dashboard_cards.get('today', '') }}" placeholder="/static/today-card.jpg">
-      <div class="hfo-help">Daily work, schedule, weather, map.</div>
-    </div>
+      <section class="hfo-card-editor">
+        <h2>{{ label }}</h2>
 
-    <div class="hfo-field">
-      <label>Pool Systems Card Image</label>
-      <input name="pool_systems" value="{{ dashboard_cards.get('pool_systems', '') }}" placeholder="/static/pool-systems-card.jpg">
-      <div class="hfo-help">Pentair, equipment, pool monitoring, weather protection.</div>
-    </div>
+        <div class="hfo-editor-grid">
 
-    <div class="hfo-field">
-      <label>Field Operations Card Image</label>
-      <input name="field_operations" value="{{ dashboard_cards.get('field_operations', '') }}" placeholder="/static/field-ops-card.jpg">
-      <div class="hfo-help">Crew, field logs, GPS, jobsite photos.</div>
-    </div>
+          <div class="hfo-field">
+            <label>Image Path</label>
+            <input
+              name="{{ key }}_image"
+              value="{{ card.get('image', '') }}"
+              placeholder="/static/{{ key }}-card.jpg"
+            >
+            <div class="hfo-help">Example: /static/{{ key }}-card.jpg</div>
+          </div>
 
-    <div class="hfo-field">
-      <label>Business Card Image</label>
-      <input name="business" value="{{ dashboard_cards.get('business', '') }}" placeholder="/static/business-card.jpg">
-      <div class="hfo-help">Employees, QuickBooks, import, office tools.</div>
-    </div>
+          <div class="hfo-field">
+            <label>Image Size</label>
+            <select name="{{ key }}_size">
+              {% set current_size = card.get('size', 'cover') %}
+              <option value="cover" {% if current_size == "cover" %}selected{% endif %}>Cover</option>
+              <option value="contain" {% if current_size == "contain" %}selected{% endif %}>Contain</option>
+              <option value="100%" {% if current_size == "100%" %}selected{% endif %}>100%</option>
+              <option value="125%" {% if current_size == "125%" %}selected{% endif %}>125%</option>
+              <option value="150%" {% if current_size == "150%" %}selected{% endif %}>150%</option>
+              <option value="200%" {% if current_size == "200%" %}selected{% endif %}>200%</option>
+            </select>
+          </div>
 
-    <div class="hfo-field">
-      <label>Jarvis Card Image</label>
-      <input name="jarvis" value="{{ dashboard_cards.get('jarvis', '') }}" placeholder="/static/jarvis-card.jpg">
-      <div class="hfo-help">AI systems and assistant tools.</div>
-    </div>
+          <div class="hfo-field">
+            <label>Image Position</label>
+            <select name="{{ key }}_position">
+              {% set current_position = card.get('position', 'center') %}
+              <option value="center" {% if current_position == "center" %}selected{% endif %}>Center</option>
+              <option value="top" {% if current_position == "top" %}selected{% endif %}>Top</option>
+              <option value="bottom" {% if current_position == "bottom" %}selected{% endif %}>Bottom</option>
+              <option value="left" {% if current_position == "left" %}selected{% endif %}>Left</option>
+              <option value="right" {% if current_position == "right" %}selected{% endif %}>Right</option>
+              <option value="center top" {% if current_position == "center top" %}selected{% endif %}>Center Top</option>
+              <option value="center bottom" {% if current_position == "center bottom" %}selected{% endif %}>Center Bottom</option>
+            </select>
+          </div>
+
+          <div class="hfo-field">
+            <label>Brightness</label>
+            <input
+              type="number"
+              step="0.05"
+              min="0"
+              max="1"
+              name="{{ key }}_brightness"
+              value="{{ card.get('brightness', '0.28') }}"
+            >
+            <div class="hfo-help">0 = hidden, 1 = full bright. Try 0.25–0.45.</div>
+          </div>
+
+        </div>
+      </section>
+    {% endfor %}
 
     <div class="hfo-actions">
-      <button class="hfo-btn primary" type="submit">Save Card Images</button>
+      <button class="hfo-btn primary" type="submit">Save Card Settings</button>
       <a class="hfo-btn" href="/jarvis">Back to Dashboard</a>
       <a class="hfo-btn" href="/design-studio">Design Studio</a>
     </div>
