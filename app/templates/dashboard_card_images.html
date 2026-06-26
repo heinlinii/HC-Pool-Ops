@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+  .hfo-design-wrap {
+    width: min(980px, calc(100vw - 32px));
+    margin: 0 auto;
+    padding: 28px 0 60px;
+  }
+
+  .hfo-design-head {
+    margin-bottom: 22px;
+  }
+
+  .hfo-design-head h1 {
+    margin: 0;
+    font-size: clamp(44px, 8vw, 88px);
+    line-height: .95;
+    letter-spacing: -0.06em;
+  }
+
+  .hfo-design-head p {
+    max-width: 760px;
+    color: rgba(255,255,255,.78);
+    font-size: 18px;
+    line-height: 1.5;
+    margin-top: 14px;
+  }
+
+  .hfo-image-form {
+    padding: 22px;
+    border-radius: 26px;
+    background: rgba(255,255,255,.06);
+    border: 1px solid rgba(255,255,255,.12);
+  }
+
+  .hfo-field {
+    margin-bottom: 18px;
+  }
+
+  .hfo-field label {
+    display: block;
+    font-weight: 900;
+    margin-bottom: 8px;
+  }
+
+  .hfo-field input {
+    width: 100%;
+    min-height: 48px;
+    border-radius: 14px;
+    border: 1px solid rgba(255,255,255,.16);
+    padding: 10px 14px;
+    font-size: 16px;
+  }
+
+  .hfo-help {
+    color: rgba(255,255,255,.58);
+    font-size: 13px;
+    margin-top: 6px;
+  }
+
+  .hfo-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 22px;
+  }
+
+  .hfo-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 48px;
+    padding: 12px 18px;
+    border-radius: 999px;
+    color: #fff;
+    text-decoration: none;
+    font-weight: 900;
+    background: rgba(255,255,255,.09);
+    border: 1px solid rgba(255,255,255,.14);
+    cursor: pointer;
+  }
+
+  .hfo-btn.primary {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+  }
+</style>
+
+<div class="hfo-design-wrap">
+
+  <section class="hfo-design-head">
+    <h1>Dashboard Card Images</h1>
+    <p>
+      Paste image paths for the six main dashboard cards.
+      Use images already inside <strong>app/static</strong>, then enter them as <strong>/static/image-name.jpg</strong>.
+    </p>
+  </section>
+
+  <form method="post" action="/dashboard-card-images" class="hfo-image-form">
+
+    <div class="hfo-field">
+      <label>Accounts Card Image</label>
+      <input name="accounts" value="{{ dashboard_cards.get('accounts', '') }}" placeholder="/static/accounts-card.jpg">
+      <div class="hfo-help">Clients, properties, jobs, billing, photos.</div>
+    </div>
+
+    <div class="hfo-field">
+      <label>Today Card Image</label>
+      <input name="today" value="{{ dashboard_cards.get('today', '') }}" placeholder="/static/today-card.jpg">
+      <div class="hfo-help">Daily work, schedule, weather, map.</div>
+    </div>
+
+    <div class="hfo-field">
+      <label>Pool Systems Card Image</label>
+      <input name="pool_systems" value="{{ dashboard_cards.get('pool_systems', '') }}" placeholder="/static/pool-systems-card.jpg">
+      <div class="hfo-help">Pentair, equipment, pool monitoring, weather protection.</div>
+    </div>
+
+    <div class="hfo-field">
+      <label>Field Operations Card Image</label>
+      <input name="field_operations" value="{{ dashboard_cards.get('field_operations', '') }}" placeholder="/static/field-ops-card.jpg">
+      <div class="hfo-help">Crew, field logs, GPS, jobsite photos.</div>
+    </div>
+
+    <div class="hfo-field">
+      <label>Business Card Image</label>
+      <input name="business" value="{{ dashboard_cards.get('business', '') }}" placeholder="/static/business-card.jpg">
+      <div class="hfo-help">Employees, QuickBooks, import, office tools.</div>
+    </div>
+
+    <div class="hfo-field">
+      <label>Jarvis Card Image</label>
+      <input name="jarvis" value="{{ dashboard_cards.get('jarvis', '') }}" placeholder="/static/jarvis-card.jpg">
+      <div class="hfo-help">AI systems and assistant tools.</div>
+    </div>
+
+    <div class="hfo-actions">
+      <button class="hfo-btn primary" type="submit">Save Card Images</button>
+      <a class="hfo-btn" href="/jarvis">Back to Dashboard</a>
+      <a class="hfo-btn" href="/design-studio">Design Studio</a>
+    </div>
+
+  </form>
+
+</div>
+
+{% endblock %}

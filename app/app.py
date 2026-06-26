@@ -1795,6 +1795,12 @@ def design_studio_save(
     crew_dashboard_dashboard_padding_top: str = Form("120px"),
     crew_dashboard_tools_json: str = Form(""),
     ai_systems_cards_json: str = Form(""),
+    dashboard_card_accounts: str = Form(""),
+    dashboard_card_today: str = Form(""),
+    dashboard_card_pool_systems: str = Form(""),
+    dashboard_card_field_operations: str = Form(""),
+    dashboard_card_business: str = Form(""),
+    dashboard_card_jarvis: str = Form(""),
 
     photos_title: str = Form("Photos"),
     photos_subtitle: str = Form("Job photos, property photos, progress shots, and field proof."),
@@ -1955,9 +1961,63 @@ def design_studio_save(
         "button_text": jobs_button_text.strip() or "Add Job",
     }
 
+    data["dashboard_cards"] = {
+        "accounts": dashboard_card_accounts.strip(),
+        "today": dashboard_card_today.strip(),
+        "pool_systems": dashboard_card_pool_systems.strip(),
+        "field_operations": dashboard_card_field_operations.strip(),
+        "business": dashboard_card_business.strip(),
+        "jarvis": dashboard_card_jarvis.strip(),
+    }
+
     save_design_settings(data)
 
     return RedirectResponse("/design-studio", status_code=303)
+
+# ============================================================
+# DASHBOARD CARD IMAGE SETTINGS
+# ============================================================
+
+@app.get("/dashboard-card-images", response_class=HTMLResponse)
+def dashboard_card_images_page(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+
+    design = design_settings()
+    dashboard_cards = design.get("dashboard_cards", {})
+
+    return templates.TemplateResponse(
+        "dashboard_card_images.html",
+        ctx(
+            request,
+            dashboard_cards=dashboard_cards,
+        ),
+    )
+
+
+@app.post("/dashboard-card-images")
+async def save_dashboard_card_images(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+
+    form = await request.form()
+
+    design = design_settings()
+
+    design["dashboard_cards"] = {
+        "accounts": str(form.get("accounts", "")).strip(),
+        "today": str(form.get("today", "")).strip(),
+        "pool_systems": str(form.get("pool_systems", "")).strip(),
+        "field_operations": str(form.get("field_operations", "")).strip(),
+        "business": str(form.get("business", "")).strip(),
+        "jarvis": str(form.get("jarvis", "")).strip(),
+    }
+
+    DESIGN_FILE.write_text(json.dumps(design, indent=2), encoding="utf-8")
+
+    return RedirectResponse("/dashboard-card-images", status_code=303)
 
 @app.post("/calendar/day-image")
 async def calendar_day_image(request: Request, day_date: str = Form(...), notes: str = Form(""), image: UploadFile = File(None)):
