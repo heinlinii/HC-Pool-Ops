@@ -1145,7 +1145,7 @@ DASHBOARD_SECTIONS = {
             {
                 "title": "GPS Day Log",
                 "subtitle": "GPS activity, stops, and day movement records.",
-                "url": "/gps/day",
+                "url": "/gps-day-log",
                 "button": "Open GPS Day",
             },
             {
