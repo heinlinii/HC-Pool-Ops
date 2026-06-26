@@ -1038,6 +1038,275 @@ def jarvis_landing(request: Request):
         )
     )
 
+# ============================================================
+# HEINLIN FIELD OPS - ORGANIZED DASHBOARD SECTIONS
+# ============================================================
+
+DASHBOARD_SECTIONS = {
+    "accounts": {
+        "title": "Accounts",
+        "subtitle": "Clients, properties, jobs, billing, photos, estimates, and invoices.",
+        "description": "Everything tied to a customer account, property, job, invoice, estimate, or photo record.",
+        "items": [
+            {
+                "title": "Clients",
+                "subtitle": "Customer list, contact info, notes, and account history.",
+                "url": "/clients",
+                "button": "Open Clients",
+            },
+            {
+                "title": "Properties",
+                "subtitle": "Addresses, pool details, equipment, photos, and property notes.",
+                "url": "/properties",
+                "button": "Open Properties",
+            },
+            {
+                "title": "Jobs",
+                "subtitle": "Active jobs, service work, repairs, installs, and project records.",
+                "url": "/jobs",
+                "button": "Open Jobs",
+            },
+            {
+                "title": "Billing",
+                "subtitle": "Invoices, QuickBooks imports, balances, and money tracking.",
+                "url": "/billing",
+                "button": "Open Billing",
+            },
+            {
+                "title": "Photos",
+                "subtitle": "Job photos, property photos, equipment photos, and uploads.",
+                "url": "/photos",
+                "button": "Open Photos",
+            },
+            {
+                "title": "Estimates",
+                "subtitle": "Estimate work, pricing, proposals, and customer quote records.",
+                "url": "/estimates",
+                "button": "Open Estimates",
+            },
+        ],
+    },
+
+    "today": {
+        "title": "Today",
+        "subtitle": "Daily work, schedule, weather, map, and crew planning.",
+        "description": "The first place to go every morning before the day starts.",
+        "items": [
+            {
+                "title": "My Day",
+                "subtitle": "Daily work view, today's work, notes, and field workflow.",
+                "url": "/my-day",
+                "button": "Open My Day",
+            },
+            {
+                "title": "Schedule",
+                "subtitle": "Schedule and calendar views for jobs, crew, and planning.",
+                "url": "/schedule",
+                "button": "Open Schedule",
+            },
+            {
+                "title": "Weather",
+                "subtitle": "Weather, freeze watch, weather watch, alerts, forecast, and radar.",
+                "url": "/weather",
+                "button": "Open Weather",
+            },
+            {
+                "title": "Map",
+                "subtitle": "Customer locations, jobsite map, and route planning.",
+                "url": "/map",
+                "button": "Open Map",
+            },
+        ],
+    },
+
+    "field-operations": {
+        "title": "Field Operations",
+        "subtitle": "Crew tools, employee dashboard, field logs, GPS, and photos.",
+        "description": "The working side of the app for the people actually doing the work.",
+        "items": [
+            {
+                "title": "Employee Dashboard",
+                "subtitle": "Crew portal, daily tools, profile, and clock in/out.",
+                "url": "/employee",
+                "button": "Open Employee Dashboard",
+            },
+            {
+                "title": "Crew List",
+                "subtitle": "Crew records, employees, and field users.",
+                "url": "/crew",
+                "button": "Open Crew",
+            },
+            {
+                "title": "Field Logs",
+                "subtitle": "Job notes, labor, materials, problems, and jobsite updates.",
+                "url": "/field-logs",
+                "button": "Open Field Logs",
+            },
+            {
+                "title": "GPS Day Log",
+                "subtitle": "GPS activity, stops, and day movement records.",
+                "url": "/gps/day",
+                "button": "Open GPS Day",
+            },
+            {
+                "title": "Photos",
+                "subtitle": "Upload and review jobsite photos.",
+                "url": "/photos",
+                "button": "Open Photos",
+            },
+        ],
+    },
+
+    "pool-systems": {
+        "title": "Pool Systems",
+        "subtitle": "Pool monitoring, Pentair access, weather protection, and equipment notes.",
+        "description": "Everything related to monitored pools, pool equipment, heaters, pumps, filters, freeze risk, and service history.",
+        "items": [
+            {
+                "title": "Pool Monitoring",
+                "subtitle": "Open Pentair Pro links, track alerts, notes, and next actions.",
+                "url": "/pool-monitoring",
+                "button": "Open Pool Monitoring",
+            },
+            {
+                "title": "Weather Protection",
+                "subtitle": "Freeze watch, weather watch, forecast, radar, and pool protection planning.",
+                "url": "/weather",
+                "button": "Open Weather Protection",
+            },
+            {
+                "title": "Photos",
+                "subtitle": "Pool equipment photos, pad photos, repairs, and job documentation.",
+                "url": "/photos",
+                "button": "Open Photos",
+            },
+        ],
+    },
+
+    "business": {
+        "title": "Business",
+        "subtitle": "Employees, QuickBooks, invoice import, design studio, and office tools.",
+        "description": "Company-side tools for running the business instead of working the jobsite.",
+        "items": [
+            {
+                "title": "Employees",
+                "subtitle": "Employee list, roles, crew access, and staff records.",
+                "url": "/employees",
+                "button": "Open Employees",
+            },
+            {
+                "title": "QuickBooks",
+                "subtitle": "QuickBooks invoice area and imported invoice records.",
+                "url": "/quickbooks",
+                "button": "Open QuickBooks",
+            },
+            {
+                "title": "Invoice Import",
+                "subtitle": "Import QuickBooks invoice CSV records.",
+                "url": "/quickbooks/invoices/import",
+                "button": "Open Import",
+            },
+            {
+                "title": "Design Studio",
+                "subtitle": "Change the app look, dashboard cards, images, and layout.",
+                "url": "/design-studio",
+                "button": "Open Design Studio",
+            },
+            {
+                "title": "Invisible Office",
+                "subtitle": "Internal notes, admin search, and office tools.",
+                "url": "/invisible-office",
+                "button": "Open Invisible Office",
+            },
+        ],
+    },
+
+    "jarvis-tools": {
+        "title": "Jarvis",
+        "subtitle": "AI system tools.",
+        "description": "The Jarvis section is now cleaned up to show only the AI Systems card.",
+        "items": [
+            {
+                "title": "AI Systems",
+                "subtitle": "Assistant and AI system tools.",
+                "url": "/ai-systems",
+                "button": "Open AI Systems",
+            },
+        ],
+    },
+}
+
+@app.get("/accounts", response_class=HTMLResponse)
+def accounts_dashboard(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+
+    return templates.TemplateResponse(
+        "dashboard_section.html",
+        ctx(request, section=DASHBOARD_SECTIONS["accounts"]),
+    )
+
+
+@app.get("/today-dashboard", response_class=HTMLResponse)
+def today_dashboard(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+
+    return templates.TemplateResponse(
+        "dashboard_section.html",
+        ctx(request, section=DASHBOARD_SECTIONS["today"]),
+    )
+
+
+@app.get("/field-operations", response_class=HTMLResponse)
+def field_operations_dashboard(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+
+    return templates.TemplateResponse(
+        "dashboard_section.html",
+        ctx(request, section=DASHBOARD_SECTIONS["field-operations"]),
+    )
+
+
+@app.get("/pool-systems", response_class=HTMLResponse)
+def pool_systems_dashboard(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+
+    return templates.TemplateResponse(
+        "dashboard_section.html",
+        ctx(request, section=DASHBOARD_SECTIONS["pool-systems"]),
+    )
+
+
+@app.get("/business", response_class=HTMLResponse)
+def business_dashboard(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+
+    return templates.TemplateResponse(
+        "dashboard_section.html",
+        ctx(request, section=DASHBOARD_SECTIONS["business"]),
+    )
+
+
+@app.get("/jarvis-tools", response_class=HTMLResponse)
+def jarvis_tools_dashboard(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+
+    return templates.TemplateResponse(
+        "dashboard_section.html",
+        ctx(request, section=DASHBOARD_SECTIONS["jarvis-tools"]),
+    )
+
 @app.get("/dashboard", response_class=HTMLResponse)
 def dashboard(request: Request, y: int = None, m: int = None):
     u = require_login(request)
