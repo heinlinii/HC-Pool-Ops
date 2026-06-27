@@ -2080,6 +2080,423 @@ async def save_dashboard_card_images(request: Request):
     return RedirectResponse("/dashboard-card-images", status_code=303)
 
 # ============================================================
+# UNIVERSAL TIME CLOCK + ADMIN GPS TRACKING
+# ============================================================
+
+def current_user_identity(request: Request):
+    user = require_login(request)
+
+    if not user:
+        return {
+            "id": "",
+            "name": "Unknown",
+            "role": "",
+            "email": "",
+        }
+
+    user_id = (
+        user.get("id")
+        or user.get("user_id")
+        or user.get("employee_id")
+        or user.get("email")
+        or user.get("username")
+        or "unknown"
+    )
+
+    user_name = (
+        user.get("name")
+        or user.get("full_name")
+        or user.get("username")
+        or user.get("email")
+        or "Unknown User"
+    )
+
+    user_role = str(user.get("role", "")).lower()
+    user_email = user.get("email", "")
+
+    return {
+        "id": str(user_id),
+        "name": str(user_name),
+        "role": str(user_role),
+        "email": str(user_email),
+    }
+
+
+def ensure_time_clock_schema():
+    try:
+        exec_sql(
+            """
+            CREATE TABLE IF NOT EXISTS hfo_time_clock_sessions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id TEXT,
+                user_name TEXT,
+                user_role TEXT,
+                user_email TEXT,
+                clock_in_at TEXT,
+                clock_out_at TEXT,
+                clock_in_lat TEXT,
+                clock_in_lng TEXT,
+                clock_out_lat TEXT,
+                clock_out_lng TEXT,
+                status TEXT DEFAULT 'clocked_in',
+                notes TEXT DEFAULT ''
+            )
+            """
+        )
+    except Exception:
+        exec_sql(
+            """
+            CREATE TABLE IF NOT EXISTS hfo_time_clock_sessions (
+                id SERIAL PRIMARY KEY,
+                user_id TEXT,
+                user_name TEXT,
+                user_role TEXT,
+                user_email TEXT,
+                clock_in_at TEXT,
+                clock_out_at TEXT,
+                clock_in_lat TEXT,
+                clock_in_lng TEXT,
+                clock_out_lat TEXT,
+                clock_out_lng TEXT,
+                status TEXT DEFAULT 'clocked_in',
+                notes TEXT DEFAULT ''
+            )
+            """
+        )
+
+    try:
+        exec_sql(
+            """
+            CREATE TABLE IF NOT EXISTS hfo_location_points (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                session_id INTEGER,
+                user_id TEXT,
+                user_name TEXT,
+                user_role TEXT,
+                lat TEXT,
+                lng TEXT,
+                accuracy TEXT,
+                captured_at TEXT
+            )
+            """
+        )
+    except Exception:
+        exec_sql(
+            """
+            CREATE TABLE IF NOT EXISTS hfo_location_points (
+                id SERIAL PRIMARY KEY,
+                session_id INTEGER,
+                user_id TEXT,
+                user_name TEXT,
+                user_role TEXT,
+                lat TEXT,
+                lng TEXT,
+                accuracy TEXT,
+                captured_at TEXT
+            )
+            """
+        )
+
+
+def open_clock_session_for_user(user_id):
+    ensure_time_clock_schema()
+
+    result = rows(
+        """
+        SELECT *
+        FROM hfo_time_clock_sessions
+        WHERE user_id = :user_id
+          AND status = 'clocked_in'
+        ORDER BY id DESC
+        LIMIT 1
+        """,
+        {"user_id": str(user_id)},
+    )
+
+    return result[0] if result else None
+
+
+@app.get("/time-clock", response_class=HTMLResponse)
+def time_clock_page(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+
+    ensure_time_clock_schema()
+
+    identity = current_user_identity(request)
+    open_session = open_clock_session_for_user(identity["id"])
+
+    recent_sessions = rows(
+        """
+        SELECT *
+        FROM hfo_time_clock_sessions
+        WHERE user_id = :user_id
+        ORDER BY id DESC
+        LIMIT 20
+        """,
+        {"user_id": identity["id"]},
+    )
+
+    recent_points = []
+
+    if open_session:
+        recent_points = rows(
+            """
+            SELECT *
+            FROM hfo_location_points
+            WHERE session_id = :session_id
+            ORDER BY id DESC
+            LIMIT 10
+            """,
+            {"session_id": open_session["id"]},
+        )
+
+    return templates.TemplateResponse(
+        "time_clock.html",
+        ctx(
+            request,
+            identity=identity,
+            open_session=open_session,
+            recent_sessions=recent_sessions,
+            recent_points=recent_points,
+        ),
+    )
+
+
+@app.post("/time-clock/in")
+async def time_clock_in(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+
+    ensure_time_clock_schema()
+
+    form = await request.form()
+    identity = current_user_identity(request)
+
+    existing = open_clock_session_for_user(identity["id"])
+    if existing:
+        return RedirectResponse("/time-clock", status_code=303)
+
+    now = datetime.now().isoformat(timespec="seconds")
+
+    exec_sql(
+        """
+        INSERT INTO hfo_time_clock_sessions
+        (
+            user_id,
+            user_name,
+            user_role,
+            user_email,
+            clock_in_at,
+            clock_in_lat,
+            clock_in_lng,
+            status,
+            notes
+        )
+        VALUES
+        (
+            :user_id,
+            :user_name,
+            :user_role,
+            :user_email,
+            :clock_in_at,
+            :clock_in_lat,
+            :clock_in_lng,
+            'clocked_in',
+            :notes
+        )
+        """,
+        {
+            "user_id": identity["id"],
+            "user_name": identity["name"],
+            "user_role": identity["role"],
+            "user_email": identity["email"],
+            "clock_in_at": now,
+            "clock_in_lat": str(form.get("lat", "")),
+            "clock_in_lng": str(form.get("lng", "")),
+            "notes": str(form.get("notes", "")),
+        },
+    )
+
+    open_session = open_clock_session_for_user(identity["id"])
+
+    if open_session:
+        exec_sql(
+            """
+            INSERT INTO hfo_location_points
+            (
+                session_id,
+                user_id,
+                user_name,
+                user_role,
+                lat,
+                lng,
+                accuracy,
+                captured_at
+            )
+            VALUES
+            (
+                :session_id,
+                :user_id,
+                :user_name,
+                :user_role,
+                :lat,
+                :lng,
+                :accuracy,
+                :captured_at
+            )
+            """,
+            {
+                "session_id": open_session["id"],
+                "user_id": identity["id"],
+                "user_name": identity["name"],
+                "user_role": identity["role"],
+                "lat": str(form.get("lat", "")),
+                "lng": str(form.get("lng", "")),
+                "accuracy": str(form.get("accuracy", "")),
+                "captured_at": now,
+            },
+        )
+
+    return RedirectResponse("/time-clock", status_code=303)
+
+
+@app.post("/time-clock/out")
+async def time_clock_out(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+
+    ensure_time_clock_schema()
+
+    form = await request.form()
+    identity = current_user_identity(request)
+
+    open_session = open_clock_session_for_user(identity["id"])
+
+    if not open_session:
+        return RedirectResponse("/time-clock", status_code=303)
+
+    now = datetime.now().isoformat(timespec="seconds")
+
+    exec_sql(
+        """
+        UPDATE hfo_time_clock_sessions
+        SET
+            clock_out_at = :clock_out_at,
+            clock_out_lat = :clock_out_lat,
+            clock_out_lng = :clock_out_lng,
+            status = 'clocked_out'
+        WHERE id = :session_id
+        """,
+        {
+            "session_id": open_session["id"],
+            "clock_out_at": now,
+            "clock_out_lat": str(form.get("lat", "")),
+            "clock_out_lng": str(form.get("lng", "")),
+        },
+    )
+
+    exec_sql(
+        """
+        INSERT INTO hfo_location_points
+        (
+            session_id,
+            user_id,
+            user_name,
+            user_role,
+            lat,
+            lng,
+            accuracy,
+            captured_at
+        )
+        VALUES
+        (
+            :session_id,
+            :user_id,
+            :user_name,
+            :user_role,
+            :lat,
+            :lng,
+            :accuracy,
+            :captured_at
+        )
+        """,
+        {
+            "session_id": open_session["id"],
+            "user_id": identity["id"],
+            "user_name": identity["name"],
+            "user_role": identity["role"],
+            "lat": str(form.get("lat", "")),
+            "lng": str(form.get("lng", "")),
+            "accuracy": str(form.get("accuracy", "")),
+            "captured_at": now,
+        },
+    )
+
+    return RedirectResponse("/time-clock", status_code=303)
+
+
+@app.post("/time-clock/location")
+async def time_clock_location(request: Request):
+    u = require_login(request)
+    if not u:
+        return {"ok": False, "error": "not_logged_in"}
+
+    ensure_time_clock_schema()
+
+    form = await request.form()
+    identity = current_user_identity(request)
+
+    open_session = open_clock_session_for_user(identity["id"])
+
+    if not open_session:
+        return {"ok": False, "error": "not_clocked_in"}
+
+    now = datetime.now().isoformat(timespec="seconds")
+
+    exec_sql(
+        """
+        INSERT INTO hfo_location_points
+        (
+            session_id,
+            user_id,
+            user_name,
+            user_role,
+            lat,
+            lng,
+            accuracy,
+            captured_at
+        )
+        VALUES
+        (
+            :session_id,
+            :user_id,
+            :user_name,
+            :user_role,
+            :lat,
+            :lng,
+            :accuracy,
+            :captured_at
+        )
+        """,
+        {
+            "session_id": open_session["id"],
+            "user_id": identity["id"],
+            "user_name": identity["name"],
+            "user_role": identity["role"],
+            "lat": str(form.get("lat", "")),
+            "lng": str(form.get("lng", "")),
+            "accuracy": str(form.get("accuracy", "")),
+            "captured_at": now,
+        },
+    )
+
+    return {"ok": True, "captured_at": now}
+
+# ============================================================
 # UNIVERSAL PAGE DESIGNER + DESIGN IMAGE UPLOADS
 # ============================================================
 
