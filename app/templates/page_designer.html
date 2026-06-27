@@ -1,0 +1,235 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+  .hfo-page-design-wrap {
+    width: min(1180px, calc(100vw - 32px));
+    margin: 0 auto;
+    padding: 32px 0 70px;
+  }
+
+  .hfo-page-design-head h1 {
+    margin: 0;
+    font-size: clamp(44px, 8vw, 88px);
+    line-height: .95;
+    letter-spacing: -0.06em;
+  }
+
+  .hfo-page-design-head p {
+    color: rgba(255,255,255,.78);
+    font-size: 18px;
+    line-height: 1.5;
+    max-width: 780px;
+  }
+
+  .hfo-page-design-form {
+    display: grid;
+    gap: 18px;
+    margin-top: 22px;
+  }
+
+  .hfo-page-card {
+    padding: 22px;
+    border-radius: 26px;
+    background: rgba(255,255,255,.07);
+    border: 1px solid rgba(255,255,255,.13);
+  }
+
+  .hfo-page-card h2 {
+    margin: 0 0 16px;
+    font-size: 34px;
+  }
+
+  .hfo-grid {
+    display: grid;
+    grid-template-columns: 1.4fr .7fr .8fr .7fr;
+    gap: 12px;
+  }
+
+  .hfo-grid.small {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    margin-top: 12px;
+  }
+
+  .hfo-field label {
+    display: block;
+    font-weight: 900;
+    margin-bottom: 8px;
+  }
+
+  .hfo-field input,
+  .hfo-field select {
+    width: 100%;
+    min-height: 48px;
+    border-radius: 14px;
+    border: 1px solid rgba(255,255,255,.16);
+    padding: 10px 14px;
+    font-size: 16px;
+  }
+
+  .hfo-help {
+    color: rgba(255,255,255,.55);
+    font-size: 13px;
+    margin-top: 6px;
+  }
+
+  .hfo-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 18px;
+    border-radius: 24px;
+    background: rgba(255,255,255,.06);
+    border: 1px solid rgba(255,255,255,.12);
+  }
+
+  .hfo-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 48px;
+    padding: 12px 18px;
+    border-radius: 999px;
+    color: #fff;
+    text-decoration: none;
+    font-weight: 900;
+    background: rgba(255,255,255,.10);
+    border: 1px solid rgba(255,255,255,.15);
+    cursor: pointer;
+  }
+
+  .hfo-btn.primary {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+  }
+
+  @media (max-width: 900px) {
+    .hfo-grid,
+    .hfo-grid.small {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<div class="hfo-page-design-wrap">
+
+  <section class="hfo-page-design-head">
+    <h1>Page Designer</h1>
+    <p>
+      Customize the background image, brightness, spacing, cards, and buttons for each main page.
+      Upload images first, then paste the image path here.
+    </p>
+  </section>
+
+  <form method="post" action="/page-designer" class="hfo-page-design-form">
+
+    {% for page_key in page_keys %}
+      {% set page = pages.get(page_key, {}) %}
+      {% set label = page_labels.get(page_key, page_key) %}
+
+      <section class="hfo-page-card">
+        <h2>{{ label }}</h2>
+
+        <div class="hfo-grid">
+
+          <div class="hfo-field">
+            <label>Background Image</label>
+            <input
+              name="{{ page_key }}_background_image"
+              value="{{ page.get('background_image', '') }}"
+              placeholder="/static/design_uploads/example.jpg"
+            >
+            <div class="hfo-help">Use an uploaded image path from Design Image Uploads.</div>
+          </div>
+
+          <div class="hfo-field">
+            <label>Background Size</label>
+            {% set bg_size = page.get('background_size', 'cover') %}
+            <select name="{{ page_key }}_background_size">
+              <option value="cover" {% if bg_size == "cover" %}selected{% endif %}>Cover</option>
+              <option value="contain" {% if bg_size == "contain" %}selected{% endif %}>Contain</option>
+              <option value="100%" {% if bg_size == "100%" %}selected{% endif %}>100%</option>
+              <option value="125%" {% if bg_size == "125%" %}selected{% endif %}>125%</option>
+              <option value="150%" {% if bg_size == "150%" %}selected{% endif %}>150%</option>
+              <option value="200%" {% if bg_size == "200%" %}selected{% endif %}>200%</option>
+            </select>
+          </div>
+
+          <div class="hfo-field">
+            <label>Background Position</label>
+            {% set bg_position = page.get('background_position', 'center') %}
+            <select name="{{ page_key }}_background_position">
+              <option value="center" {% if bg_position == "center" %}selected{% endif %}>Center</option>
+              <option value="top" {% if bg_position == "top" %}selected{% endif %}>Top</option>
+              <option value="bottom" {% if bg_position == "bottom" %}selected{% endif %}>Bottom</option>
+              <option value="left" {% if bg_position == "left" %}selected{% endif %}>Left</option>
+              <option value="right" {% if bg_position == "right" %}selected{% endif %}>Right</option>
+              <option value="center top" {% if bg_position == "center top" %}selected{% endif %}>Center Top</option>
+              <option value="center bottom" {% if bg_position == "center bottom" %}selected{% endif %}>Center Bottom</option>
+            </select>
+          </div>
+
+          <div class="hfo-field">
+            <label>Image Brightness</label>
+            <input
+              name="{{ page_key }}_background_brightness"
+              value="{{ page.get('background_brightness', '0.28') }}"
+              placeholder="0.28"
+            >
+            <div class="hfo-help">0 hidden, 1 full bright.</div>
+          </div>
+
+        </div>
+
+        <div class="hfo-grid small">
+
+          <div class="hfo-field">
+            <label>Page Overlay</label>
+            <input name="{{ page_key }}_page_overlay" value="{{ page.get('page_overlay', '0.55') }}">
+          </div>
+
+          <div class="hfo-field">
+            <label>Card Opacity</label>
+            <input name="{{ page_key }}_card_opacity" value="{{ page.get('card_opacity', '0.08') }}">
+          </div>
+
+          <div class="hfo-field">
+            <label>Card Radius</label>
+            <input name="{{ page_key }}_card_radius" value="{{ page.get('card_radius', '26px') }}">
+          </div>
+
+          <div class="hfo-field">
+            <label>Top Space</label>
+            <input name="{{ page_key }}_top_space" value="{{ page.get('top_space', '28px') }}">
+          </div>
+
+        </div>
+
+        <div class="hfo-grid small">
+
+          <div class="hfo-field">
+            <label>Title Size</label>
+            <input name="{{ page_key }}_title_size" value="{{ page.get('title_size', 'clamp(44px, 8vw, 88px)') }}">
+          </div>
+
+          <div class="hfo-field">
+            <label>Button Height</label>
+            <input name="{{ page_key }}_button_height" value="{{ page.get('button_height', '48px') }}">
+          </div>
+
+        </div>
+
+      </section>
+    {% endfor %}
+
+    <div class="hfo-actions">
+      <button class="hfo-btn primary" type="submit">Save Page Design</button>
+      <a class="hfo-btn" href="/design-upload">Upload Images</a>
+      <a class="hfo-btn" href="/dashboard-card-images">Card Images</a>
+      <a class="hfo-btn" href="/jarvis">Dashboard</a>
+    </div>
+
+  </form>
+
+</div>
+
+{% endblock %}

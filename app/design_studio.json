@@ -233,10 +233,10 @@
   },
   "dashboard_cards": {
     "accounts": {
-      "image": "",
+      "image": "/static/heinlin-login-bg-truck.jpg",
       "size": "cover",
       "position": "center",
-      "brightness": "0.3"
+      "brightness": "0.9"
     },
     "today": {
       "image": "",
@@ -257,16 +257,234 @@
       "brightness": "0.3"
     },
     "business": {
-      "image": "",
-      "size": "cover",
+      "image": "/static/design_uploads/20260626_225655_20260115_131840000_iOS.jpg",
+      "size": "contain",
       "position": "center",
-      "brightness": "0.3"
+      "brightness": "0.75"
     },
     "jarvis": {
       "image": "/static/uploads/20260614_111449_87a15917.jpg",
       "size": "contain",
       "position": "center",
       "brightness": "0.75"
+    }
+  },
+  "pages": {
+    "dashboard": {
+      "background_image": "/static/heinlin-wide-crest2.png",
+      "background_size": "contain",
+      "background_position": "top",
+      "background_brightness": "0.90",
+      "page_overlay": "0.55",
+      "card_opacity": "0.08",
+      "card_radius": "26px",
+      "title_size": "clamp(44px, 8vw, 88px)",
+      "top_space": "28px",
+      "button_height": "48px"
+    },
+    "accounts": {
+      "background_image": "",
+      "background_size": "cover",
+      "background_position": "center",
+      "background_brightness": "0.28",
+      "page_overlay": "0.55",
+      "card_opacity": "0.08",
+      "card_radius": "26px",
+      "title_size": "clamp(44px, 8vw, 88px)",
+      "top_space": "28px",
+      "button_height": "48px"
+    },
+    "today": {
+      "background_image": "",
+      "background_size": "cover",
+      "background_position": "center",
+      "background_brightness": "0.28",
+      "page_overlay": "0.55",
+      "card_opacity": "0.08",
+      "card_radius": "26px",
+      "title_size": "clamp(44px, 8vw, 88px)",
+      "top_space": "28px",
+      "button_height": "48px"
+    },
+    "field_operations": {
+      "background_image": "",
+      "background_size": "cover",
+      "background_position": "center",
+      "background_brightness": "0.28",
+      "page_overlay": "0.55",
+      "card_opacity": "0.08",
+      "card_radius": "26px",
+      "title_size": "clamp(44px, 8vw, 88px)",
+      "top_space": "28px",
+      "button_height": "48px"
+    },
+    "pool_systems": {
+      "background_image": "",
+      "background_size": "cover",
+      "background_position": "center",
+      "background_brightness": "0.28",
+      "page_overlay": "0.55",
+      "card_opacity": "0.08",
+      "card_radius": "26px",
+      "title_size": "clamp(44px, 8vw, 88px)",
+      "top_space": "28px",
+      "button_height": "48px"
+    },
+    "business": {
+      "background_image": "",
+      "background_size": "cover",
+      "background_position": "center",
+      "background_brightness": "0.28",
+      "page_overlay": "0.55",
+      "card_opacity": "0.08",
+      "card_radius": "26px",
+      "title_size": "clamp(44px, 8vw, 88px)",
+      "top_space": "28px",
+      "button_height": "48px"
+    },
+    "jarvis_tools": {
+      "background_image": "",
+      "background_size": "cover",
+      "background_position": "center",
+      "background_brightness": "0.28",
+      "page_overlay": "0.55",
+      "card_opacity": "0.08",
+      "card_radius": "26px",
+      "title_size": "clamp(44px, 8vw, 88px)",
+      "top_space": "28px",
+      "button_height": "48px"
+    },
+    "clients": {
+      "background_image": "",
+      "background_size": "cover",
+      "background_position": "center",
+      "background_brightness": "0.28",
+      "page_overlay": "0.55",
+      "card_opacity": "0.08",
+      "card_radius": "26px",
+      "title_size": "clamp(44px, 8vw, 88px)",
+      "top_space": "28px",
+      "button_height": "48px"
+    },
+    "properties": {
+      "background_image": "",
+      "background_size": "cover",
+      "background_position": "center",
+      "background_brightness": "0.28",
+      "page_overlay": "0.55",
+      "card_opacity": "0.08",
+      "card_radius": "26px",
+      "title_size": "clamp(44px, 8vw, 88px)",
+      "top_space": "28px",
+      "button_height": "48px"
+    },
+    "jobs": {
+      "background_image": "",
+      "background_size": "cover",
+      "background_position": "center",
+      "background_brightness": "0.28",
+      "page_overlay": "0.55",
+      "card_opacity": "0.08",
+      "card_radius": "26px",
+      "title_size": "clamp(44px, 8vw, 88px)",
+      "top_space": "28px",
+      "button_height": "48px"
+    },
+    "billing": {
+      "background_image": "",
+      "background_size": "cover",
+      "background_position": "center",
+      "background_brightness": "0.28",
+      "page_overlay": "0.55",
+      "card_opacity": "0.08",
+      "card_radius": "26px",
+      "title_size": "clamp(44px, 8vw, 88px)",
+      "top_space": "28px",
+      "button_height": "48px"
+    },
+    "photos": {
+      "background_image": "",
+      "background_size": "cover",
+      "background_position": "center",
+      "background_brightness": "0.28",
+      "page_overlay": "0.55",
+      "card_opacity": "0.08",
+      "card_radius": "26px",
+      "title_size": "clamp(44px, 8vw, 88px)",
+      "top_space": "28px",
+      "button_height": "48px"
+    },
+    "schedule": {
+      "background_image": "",
+      "background_size": "cover",
+      "background_position": "center",
+      "background_brightness": "0.28",
+      "page_overlay": "0.55",
+      "card_opacity": "0.08",
+      "card_radius": "26px",
+      "title_size": "clamp(44px, 8vw, 88px)",
+      "top_space": "28px",
+      "button_height": "48px"
+    },
+    "weather": {
+      "background_image": "",
+      "background_size": "cover",
+      "background_position": "center",
+      "background_brightness": "0.28",
+      "page_overlay": "0.55",
+      "card_opacity": "0.08",
+      "card_radius": "26px",
+      "title_size": "clamp(44px, 8vw, 88px)",
+      "top_space": "28px",
+      "button_height": "48px"
+    },
+    "map": {
+      "background_image": "",
+      "background_size": "cover",
+      "background_position": "center",
+      "background_brightness": "0.28",
+      "page_overlay": "0.55",
+      "card_opacity": "0.08",
+      "card_radius": "26px",
+      "title_size": "clamp(44px, 8vw, 88px)",
+      "top_space": "28px",
+      "button_height": "48px"
+    },
+    "employee": {
+      "background_image": "",
+      "background_size": "cover",
+      "background_position": "center",
+      "background_brightness": "0.28",
+      "page_overlay": "0.55",
+      "card_opacity": "0.08",
+      "card_radius": "26px",
+      "title_size": "clamp(44px, 8vw, 88px)",
+      "top_space": "28px",
+      "button_height": "48px"
+    },
+    "pool_monitoring": {
+      "background_image": "",
+      "background_size": "cover",
+      "background_position": "center",
+      "background_brightness": "0.28",
+      "page_overlay": "0.55",
+      "card_opacity": "0.08",
+      "card_radius": "26px",
+      "title_size": "clamp(44px, 8vw, 88px)",
+      "top_space": "28px",
+      "button_height": "48px"
+    },
+    "design_studio": {
+      "background_image": "",
+      "background_size": "cover",
+      "background_position": "center",
+      "background_brightness": "0.28",
+      "page_overlay": "0.55",
+      "card_opacity": "0.08",
+      "card_radius": "26px",
+      "title_size": "clamp(44px, 8vw, 88px)",
+      "top_space": "28px",
+      "button_height": "48px"
     }
   }
 }

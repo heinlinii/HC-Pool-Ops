@@ -15,6 +15,7 @@ import uuid
 import boto3
 import csv
 import io
+import re 
 try:
     import psycopg
     from psycopg.rows import dict_row
@@ -2078,6 +2079,205 @@ async def save_dashboard_card_images(request: Request):
 
     return RedirectResponse("/dashboard-card-images", status_code=303)
 
+# ============================================================
+# UNIVERSAL PAGE DESIGNER + DESIGN IMAGE UPLOADS
+# ============================================================
+
+DESIGN_UPLOAD_DIR = ROOT / "app" / "static" / "design_uploads"
+DESIGN_UPLOAD_URL_PREFIX = "/static/design_uploads"
+
+PAGE_DESIGN_KEYS = [
+    "dashboard",
+    "accounts",
+    "today",
+    "field_operations",
+    "pool_systems",
+    "business",
+    "jarvis_tools",
+    "clients",
+    "properties",
+    "jobs",
+    "billing",
+    "photos",
+    "schedule",
+    "weather",
+    "map",
+    "employee",
+    "pool_monitoring",
+    "design_studio",
+]
+
+
+PAGE_DESIGN_LABELS = {
+    "dashboard": "Dashboard",
+    "accounts": "Accounts",
+    "today": "Today",
+    "field_operations": "Field Operations",
+    "pool_systems": "Pool Systems",
+    "business": "Business",
+    "jarvis_tools": "Jarvis Tools",
+    "clients": "Clients",
+    "properties": "Properties",
+    "jobs": "Jobs",
+    "billing": "Billing",
+    "photos": "Photos",
+    "schedule": "Schedule",
+    "weather": "Weather",
+    "map": "Map",
+    "employee": "Employee / Clock",
+    "pool_monitoring": "Pool Monitoring",
+    "design_studio": "Design Studio",
+}
+
+
+def page_design_defaults():
+    return {
+        "background_image": "",
+        "background_size": "cover",
+        "background_position": "center",
+        "background_brightness": "0.28",
+        "page_overlay": "0.55",
+        "card_opacity": "0.08",
+        "card_radius": "26px",
+        "title_size": "clamp(44px, 8vw, 88px)",
+        "top_space": "28px",
+        "button_height": "48px",
+    }
+
+
+def normalize_page_design(design):
+    if not isinstance(design, dict):
+        design = {}
+
+    pages = design.get("pages", {})
+    if not isinstance(pages, dict):
+        pages = {}
+
+    defaults = {}
+
+    for key in PAGE_DESIGN_KEYS:
+        existing = pages.get(key, {})
+        if not isinstance(existing, dict):
+            existing = {}
+
+        page = page_design_defaults()
+
+        for setting_key, default_value in page.items():
+            page[setting_key] = str(existing.get(setting_key, default_value)).strip() or default_value
+
+        defaults[key] = page
+
+    design["pages"] = defaults
+    return defaults
+
+
+def clean_uploaded_filename(filename):
+    name = Path(filename or "upload").name
+    name = re.sub(r"[^A-Za-z0-9._-]+", "-", name).strip("-")
+
+    if not name:
+        name = "upload.jpg"
+
+    stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    return f"{stamp}_{name}"
+
+
+@app.get("/design-upload", response_class=HTMLResponse)
+def design_upload_page(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+
+    DESIGN_UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+
+    uploaded_files = []
+
+    for path in sorted(DESIGN_UPLOAD_DIR.glob("*"), reverse=True):
+        if path.is_file():
+            uploaded_files.append(
+                {
+                    "name": path.name,
+                    "url": f"{DESIGN_UPLOAD_URL_PREFIX}/{path.name}",
+                }
+            )
+
+    return templates.TemplateResponse(
+        "design_upload.html",
+        ctx(
+            request,
+            uploaded_files=uploaded_files,
+        ),
+    )
+
+
+@app.post("/design-upload")
+async def save_design_upload(request: Request, image: UploadFile = File(...)):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+
+    DESIGN_UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+
+    filename = clean_uploaded_filename(image.filename)
+    destination = DESIGN_UPLOAD_DIR / filename
+
+    with destination.open("wb") as out_file:
+        shutil.copyfileobj(image.file, out_file)
+
+    return RedirectResponse("/design-upload", status_code=303)
+
+
+@app.get("/page-designer", response_class=HTMLResponse)
+def page_designer_page(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+
+    design = design_settings()
+    pages = normalize_page_design(design)
+
+    return templates.TemplateResponse(
+        "page_designer.html",
+        ctx(
+            request,
+            pages=pages,
+            page_labels=PAGE_DESIGN_LABELS,
+            page_keys=PAGE_DESIGN_KEYS,
+        ),
+    )
+
+
+@app.post("/page-designer")
+async def save_page_designer(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+
+    form = await request.form()
+
+    design = design_settings()
+    if not isinstance(design, dict):
+        design = {}
+
+    pages = normalize_page_design(design)
+
+    for page_key in PAGE_DESIGN_KEYS:
+        page = pages.get(page_key, page_design_defaults())
+
+        for setting_key, default_value in page_design_defaults().items():
+            form_key = f"{page_key}_{setting_key}"
+            page[setting_key] = str(form.get(form_key, page.get(setting_key, default_value))).strip() or default_value
+
+        pages[page_key] = page
+
+    design["pages"] = pages
+
+    DESIGN_FILE.write_text(
+        json.dumps(design, indent=2),
+        encoding="utf-8",
+    )
+
+    return RedirectResponse("/page-designer", status_code=303)
 
 # ============================================================
 # DASHBOARD CARD IMAGE SETTINGS

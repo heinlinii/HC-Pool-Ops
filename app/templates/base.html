@@ -11,6 +11,109 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
+{% set page_designs = design.get("pages", {}) if design else {} %}
+
+{% set path = request.url.path %}
+
+{% if path == "/jarvis" %}
+  {% set page_key = "dashboard" %}
+{% elif path.startswith("/accounts") %}
+  {% set page_key = "accounts" %}
+{% elif path.startswith("/today-dashboard") or path.startswith("/my-day") or path.startswith("/todays-work") %}
+  {% set page_key = "today" %}
+{% elif path.startswith("/field-operations") or path.startswith("/employee") or path.startswith("/crew") or path.startswith("/field-logs") or path.startswith("/gps") %}
+  {% set page_key = "field_operations" %}
+{% elif path.startswith("/pool-systems") or path.startswith("/pool-monitoring") %}
+  {% set page_key = "pool_systems" %}
+{% elif path.startswith("/business") or path.startswith("/employees") or path.startswith("/quickbooks") or path.startswith("/invisible-office") %}
+  {% set page_key = "business" %}
+{% elif path.startswith("/jarvis-tools") or path.startswith("/ai-systems") or path.startswith("/talk-to-jarvis") %}
+  {% set page_key = "jarvis_tools" %}
+{% elif path.startswith("/clients") %}
+  {% set page_key = "clients" %}
+{% elif path.startswith("/properties") %}
+  {% set page_key = "properties" %}
+{% elif path.startswith("/jobs") %}
+  {% set page_key = "jobs" %}
+{% elif path.startswith("/billing") %}
+  {% set page_key = "billing" %}
+{% elif path.startswith("/photos") %}
+  {% set page_key = "photos" %}
+{% elif path.startswith("/schedule") or path.startswith("/calendar") %}
+  {% set page_key = "schedule" %}
+{% elif path.startswith("/weather") %}
+  {% set page_key = "weather" %}
+{% elif path.startswith("/map") %}
+  {% set page_key = "map" %}
+{% elif path.startswith("/design-studio") or path.startswith("/page-designer") or path.startswith("/dashboard-card-images") or path.startswith("/design-upload") %}
+  {% set page_key = "design_studio" %}
+{% else %}
+  {% set page_key = "dashboard" %}
+{% endif %}
+
+{% set pg = page_designs.get(page_key, {}) %}
+
+<style>
+  :root {
+    --hfo-page-bg: {% if pg.get('background_image') %}url('{{ pg.get("background_image") }}'){% else %}none{% endif %};
+    --hfo-page-bg-size: {{ pg.get('background_size', 'cover') }};
+    --hfo-page-bg-position: {{ pg.get('background_position', 'center') }};
+    --hfo-page-bg-opacity: {{ pg.get('background_brightness', '0') }};
+    --hfo-page-overlay: {{ pg.get('page_overlay', '0.55') }};
+    --hfo-card-opacity: {{ pg.get('card_opacity', '0.08') }};
+    --hfo-card-radius: {{ pg.get('card_radius', '26px') }};
+    --hfo-title-size: {{ pg.get('title_size', 'clamp(44px, 8vw, 88px)') }};
+    --hfo-top-space: {{ pg.get('top_space', '28px') }};
+    --hfo-button-height: {{ pg.get('button_height', '48px') }};
+  }
+
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background-image: var(--hfo-page-bg);
+    background-size: var(--hfo-page-bg-size);
+    background-position: var(--hfo-page-bg-position);
+    background-repeat: no-repeat;
+    opacity: var(--hfo-page-bg-opacity);
+    pointer-events: none;
+    z-index: -3;
+  }
+
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,var(--hfo-page-overlay));
+    pointer-events: none;
+    z-index: -2;
+  }
+
+  .card,
+  .hfo-tool-card,
+  .hfo-command-card,
+  .hfo-page-card,
+  .hfo-card-editor,
+  .hfo-upload-card,
+  .hfo-file-card {
+    border-radius: var(--hfo-card-radius) !important;
+  }
+
+  .section-head h1,
+  .hfo-section-top h1,
+  .hfo-page-design-head h1,
+  .hfo-upload-head h1 {
+    font-size: var(--hfo-title-size) !important;
+  }
+
+  .btn,
+  .hfo-btn,
+  .hfo-quick-btn,
+  .hfo-tool-card a {
+    min-height: var(--hfo-button-height) !important;
+  }
+</style>
+
   <style>
     .hfo-top-actions {
       position: relative !important;

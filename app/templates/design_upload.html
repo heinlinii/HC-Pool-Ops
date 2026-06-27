@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+  .hfo-upload-wrap {
+    width: min(1000px, calc(100vw - 32px));
+    margin: 0 auto;
+    padding: 32px 0 70px;
+  }
+
+  .hfo-upload-head h1 {
+    margin: 0;
+    font-size: clamp(44px, 8vw, 88px);
+    line-height: .95;
+    letter-spacing: -0.06em;
+  }
+
+  .hfo-upload-head p {
+    color: rgba(255,255,255,.78);
+    font-size: 18px;
+    line-height: 1.5;
+    max-width: 760px;
+  }
+
+  .hfo-upload-card {
+    margin-top: 22px;
+    padding: 22px;
+    border-radius: 26px;
+    background: rgba(255,255,255,.07);
+    border: 1px solid rgba(255,255,255,.13);
+  }
+
+  .hfo-upload-card input {
+    width: 100%;
+    min-height: 52px;
+    padding: 12px;
+    border-radius: 14px;
+    background: rgba(255,255,255,.95);
+  }
+
+  .hfo-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 48px;
+    padding: 12px 18px;
+    border-radius: 999px;
+    color: #fff;
+    text-decoration: none;
+    font-weight: 900;
+    background: rgba(255,255,255,.10);
+    border: 1px solid rgba(255,255,255,.15);
+    cursor: pointer;
+    margin-top: 12px;
+  }
+
+  .hfo-btn.primary {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+  }
+
+  .hfo-upload-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    margin-top: 22px;
+  }
+
+  .hfo-file-card {
+    padding: 16px;
+    border-radius: 22px;
+    background: rgba(0,0,0,.25);
+    border: 1px solid rgba(255,255,255,.12);
+  }
+
+  .hfo-file-card img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    border-radius: 16px;
+    display: block;
+    margin-bottom: 12px;
+  }
+
+  .hfo-file-url {
+    font-family: monospace;
+    font-size: 13px;
+    color: rgba(255,255,255,.8);
+    word-break: break-all;
+  }
+
+  @media (max-width: 800px) {
+    .hfo-upload-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<div class="hfo-upload-wrap">
+
+  <section class="hfo-upload-head">
+    <h1>Design Image Uploads</h1>
+    <p>
+      Upload images from your phone or computer. Copy the image path and use it in Page Designer or Card Images.
+    </p>
+  </section>
+
+  <section class="hfo-upload-card">
+    <form method="post" action="/design-upload" enctype="multipart/form-data">
+      <input type="file" name="image" accept="image/*" required>
+      <button class="hfo-btn primary" type="submit">Upload Image</button>
+      <a class="hfo-btn" href="/page-designer">Page Designer</a>
+      <a class="hfo-btn" href="/dashboard-card-images">Card Images</a>
+      <a class="hfo-btn" href="/jarvis">Dashboard</a>
+    </form>
+  </section>
+
+  <section class="hfo-upload-grid">
+    {% for file in uploaded_files %}
+      <div class="hfo-file-card">
+        <img src="{{ file.url }}" alt="{{ file.name }}">
+        <div class="hfo-file-url">{{ file.url }}</div>
+      </div>
+    {% else %}
+      <div class="hfo-file-card">
+        <h2>No uploads yet</h2>
+        <p>Upload a photo above, then copy its path.</p>
+      </div>
+    {% endfor %}
+  </section>
+
+</div>
+
+{% endblock %}
