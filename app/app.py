@@ -53,6 +53,7 @@ app.add_middleware(SessionMiddleware, secret_key="heinlin-field-ops-local-secret
 app.mount("/static", StaticFiles(directory=str(ROOT / "app" / "static")), name="static")
 templates = Jinja2Templates(directory=str(ROOT / "app" / "templates"))
 app.include_router(pool_monitoring.router)
+
 DEFAULT_THEME = {
     "title": "HEINLIN FIELD OPS",
     "subtitle": "Got pool related troubles? Ready to enter your work performed, materials used, problems found, reminders, and operational memory? Click on the fountain and tell Jarvis! He'll take care of the rest!",
@@ -2221,12 +2222,12 @@ def open_clock_session_for_user(user_id):
         """
         SELECT *
         FROM hfo_time_clock_sessions
-        WHERE user_id = :user_id
+        WHERE user_id = ?
           AND status = 'clocked_in'
         ORDER BY id DESC
         LIMIT 1
         """,
-        {"user_id": str(user_id)},
+        (str(user_id),),
     )
 
     return result[0] if result else None
@@ -2247,37 +2248,141 @@ def time_clock_page(request: Request):
         """
         SELECT *
         FROM hfo_time_clock_sessions
-        WHERE user_id = :user_id
+        WHERE user_id = ?
         ORDER BY id DESC
         LIMIT 20
         """,
-        {"user_id": identity["id"]},
+        (identity["id"],),
     )
 
     recent_points = []
-
     if open_session:
         recent_points = rows(
             """
             SELECT *
             FROM hfo_location_points
-            WHERE session_id = :session_id
+            WHERE session_id = ?
             ORDER BY id DESC
             LIMIT 10
             """,
-            {"session_id": open_session["id"]},
+            (open_session["id"],),
         )
 
-    return templates.TemplateResponse(
-        "time_clock.html",
-        ctx(
-            request,
-            identity=identity,
-            open_session=open_session,
-            recent_sessions=recent_sessions,
-            recent_points=recent_points,
-        ),
-    )
+    def esc(value):
+        return html.escape(str(value or ""))
+
+    status_text = "Clocked In" if open_session else "Clocked Out"
+    status_class = "in" if open_session else "out"
+
+    sessions_html = "".join(
+        f"""
+        <tr>
+          <td>{esc(s.get('clock_in_at'))}</td>
+          <td>{esc(s.get('clock_out_at'))}</td>
+          <td>{esc(s.get('status'))}</td>
+          <td>{esc(s.get('notes'))}</td>
+        </tr>
+        """
+        for s in recent_sessions
+    ) or '<tr><td colspan="4">No time clock sessions yet.</td></tr>'
+
+    points_html = "".join(
+        f"""
+        <tr>
+          <td>{esc(p.get('captured_at'))}</td>
+          <td>{esc(p.get('lat'))}</td>
+          <td>{esc(p.get('lng'))}</td>
+          <td>{esc(p.get('accuracy'))}</td>
+        </tr>
+        """
+        for p in recent_points
+    ) or '<tr><td colspan="4">No GPS points for the current session yet.</td></tr>'
+
+    html_body = f"""
+    <!doctype html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <title>Heinlin Time Clock</title>
+      <style>
+        body {{ margin:0; font-family:Arial, sans-serif; background:#05090d; color:#f7eedf; }}
+        .wrap {{ max-width:1100px; margin:0 auto; padding:32px 18px 70px; }}
+        .top {{ display:flex; justify-content:space-between; gap:12px; align-items:center; flex-wrap:wrap; }}
+        h1 {{ margin:0; color:#d6b36a; font-size:clamp(38px, 7vw, 78px); text-transform:uppercase; letter-spacing:.04em; }}
+        .btn, button {{ display:inline-block; border:1px solid rgba(214,179,106,.55); border-radius:12px; padding:12px 18px; background:rgba(0,0,0,.45); color:#d6b36a; text-decoration:none; font-weight:800; cursor:pointer; }}
+        button.primary {{ background:#d6b36a; color:#05090d; }}
+        .card {{ border:1px solid rgba(214,179,106,.38); border-radius:18px; padding:18px; background:rgba(255,255,255,.045); margin:18px 0; box-shadow:0 18px 38px rgba(0,0,0,.35); }}
+        .status {{ font-size:28px; font-weight:900; }}
+        .status.in {{ color:#72ff9d; }}
+        .status.out {{ color:#ffcf72; }}
+        input, textarea {{ width:100%; box-sizing:border-box; border:1px solid rgba(214,179,106,.35); border-radius:12px; background:#0b1117; color:#fff; padding:12px; margin:8px 0 12px; }}
+        table {{ width:100%; border-collapse:collapse; margin-top:10px; }}
+        th, td {{ border-bottom:1px solid rgba(255,255,255,.1); padding:10px; text-align:left; vertical-align:top; }}
+        th {{ color:#d6b36a; }}
+        .grid {{ display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:16px; }}
+        .muted {{ color:#bfb6a8; }}
+      </style>
+    </head>
+    <body>
+      <div class="wrap">
+        <div class="top">
+          <div>
+            <h1>Time Clock</h1>
+            <div class="muted">{esc(identity.get('name'))} • {esc(identity.get('role'))}</div>
+          </div>
+          <div>
+            <a class="btn" href="/jarvis">Dashboard</a>
+            <a class="btn" href="/employee">Crew Portal</a>
+            <a class="btn" href="/map">Map</a>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="status {status_class}">{status_text}</div>
+          <div class="muted">This page uses your browser GPS when available.</div>
+        </div>
+
+        <div class="grid">
+          <form class="card" method="post" action="/time-clock/in" id="clockInForm">
+            <h2>Clock In</h2>
+            <textarea name="notes" placeholder="Notes, job, property, or reason"></textarea>
+            <input type="hidden" name="lat"><input type="hidden" name="lng"><input type="hidden" name="accuracy">
+            <button class="primary" type="submit">Clock In</button>
+          </form>
+
+          <form class="card" method="post" action="/time-clock/out" id="clockOutForm">
+            <h2>Clock Out</h2>
+            <input type="hidden" name="lat"><input type="hidden" name="lng"><input type="hidden" name="accuracy">
+            <button type="submit">Clock Out</button>
+          </form>
+        </div>
+
+        <div class="card">
+          <h2>Recent Time Clock Sessions</h2>
+          <table><thead><tr><th>Clock In</th><th>Clock Out</th><th>Status</th><th>Notes</th></tr></thead><tbody>{sessions_html}</tbody></table>
+        </div>
+
+        <div class="card">
+          <h2>Current Session GPS Points</h2>
+          <table><thead><tr><th>Captured</th><th>Lat</th><th>Lng</th><th>Accuracy</th></tr></thead><tbody>{points_html}</tbody></table>
+        </div>
+      </div>
+      <script>
+        function fillGeo(form) {{
+          if (!navigator.geolocation) return;
+          navigator.geolocation.getCurrentPosition(function(pos) {{
+            form.querySelector('[name="lat"]').value = pos.coords.latitude || '';
+            form.querySelector('[name="lng"]').value = pos.coords.longitude || '';
+            form.querySelector('[name="accuracy"]').value = pos.coords.accuracy || '';
+          }});
+        }}
+        document.querySelectorAll('form').forEach(fillGeo);
+      </script>
+    </body>
+    </html>
+    """
+    return HTMLResponse(html_body)
 
 
 @app.post("/time-clock/in")
@@ -2300,40 +2405,19 @@ async def time_clock_in(request: Request):
     exec_sql(
         """
         INSERT INTO hfo_time_clock_sessions
-        (
-            user_id,
-            user_name,
-            user_role,
-            user_email,
-            clock_in_at,
-            clock_in_lat,
-            clock_in_lng,
-            status,
-            notes
-        )
-        VALUES
-        (
-            :user_id,
-            :user_name,
-            :user_role,
-            :user_email,
-            :clock_in_at,
-            :clock_in_lat,
-            :clock_in_lng,
-            'clocked_in',
-            :notes
-        )
+        (user_id, user_name, user_role, user_email, clock_in_at, clock_in_lat, clock_in_lng, status, notes)
+        VALUES (?, ?, ?, ?, ?, ?, ?, 'clocked_in', ?)
         """,
-        {
-            "user_id": identity["id"],
-            "user_name": identity["name"],
-            "user_role": identity["role"],
-            "user_email": identity["email"],
-            "clock_in_at": now,
-            "clock_in_lat": str(form.get("lat", "")),
-            "clock_in_lng": str(form.get("lng", "")),
-            "notes": str(form.get("notes", "")),
-        },
+        (
+            identity["id"],
+            identity["name"],
+            identity["role"],
+            identity["email"],
+            now,
+            str(form.get("lat", "")),
+            str(form.get("lng", "")),
+            str(form.get("notes", "")),
+        ),
     )
 
     open_session = open_clock_session_for_user(identity["id"])
@@ -2342,38 +2426,19 @@ async def time_clock_in(request: Request):
         exec_sql(
             """
             INSERT INTO hfo_location_points
-            (
-                session_id,
-                user_id,
-                user_name,
-                user_role,
-                lat,
-                lng,
-                accuracy,
-                captured_at
-            )
-            VALUES
-            (
-                :session_id,
-                :user_id,
-                :user_name,
-                :user_role,
-                :lat,
-                :lng,
-                :accuracy,
-                :captured_at
-            )
+            (session_id, user_id, user_name, user_role, lat, lng, accuracy, captured_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             """,
-            {
-                "session_id": open_session["id"],
-                "user_id": identity["id"],
-                "user_name": identity["name"],
-                "user_role": identity["role"],
-                "lat": str(form.get("lat", "")),
-                "lng": str(form.get("lng", "")),
-                "accuracy": str(form.get("accuracy", "")),
-                "captured_at": now,
-            },
+            (
+                open_session["id"],
+                identity["id"],
+                identity["name"],
+                identity["role"],
+                str(form.get("lat", "")),
+                str(form.get("lng", "")),
+                str(form.get("accuracy", "")),
+                now,
+            ),
         )
 
     return RedirectResponse("/time-clock", status_code=303)
@@ -2400,19 +2465,15 @@ async def time_clock_out(request: Request):
     exec_sql(
         """
         UPDATE hfo_time_clock_sessions
-        SET
-            clock_out_at = :clock_out_at,
-            clock_out_lat = :clock_out_lat,
-            clock_out_lng = :clock_out_lng,
-            status = 'clocked_out'
-        WHERE id = :session_id
+        SET clock_out_at = ?, clock_out_lat = ?, clock_out_lng = ?, status = 'clocked_out'
+        WHERE id = ?
         """,
-        {
-            "session_id": open_session["id"],
-            "clock_out_at": now,
-            "clock_out_lat": str(form.get("lat", "")),
-            "clock_out_lng": str(form.get("lng", "")),
-        },
+        (
+            now,
+            str(form.get("lat", "")),
+            str(form.get("lng", "")),
+            open_session["id"],
+        ),
     )
 
     exec_sql(
@@ -3542,180 +3603,14 @@ def gps_day(request: Request):
     u = require_login(request)
     if not u:
         return login_redirect()
-
-    if not is_admin(u):
-        return RedirectResponse("/employee", status_code=303)
-
-    today = date.today().isoformat()
-
-    points = rows(
-        """
-        SELECT * FROM employee_location_points
-        WHERE created_at LIKE ?
-        ORDER BY employee_name, created_at
-        """,
-        (f"{today}%",)
-    )
-
-    return templates.TemplateResponse(
-        "gps_day.html",
-        ctx(request, points=points, today=today)
-    )
-
-def _gps_distance_feet(lat1, lng1, lat2, lng2):
-    """
-    Rough distance between two GPS points in feet.
-    Good enough for stop detection.
-    """
-    import math
-
-    try:
-        lat1 = float(lat1)
-        lng1 = float(lng1)
-        lat2 = float(lat2)
-        lng2 = float(lng2)
-    except Exception:
-        return 999999
-
-    earth_radius_feet = 20925524.9
-
-    p1 = math.radians(lat1)
-    p2 = math.radians(lat2)
-    dp = math.radians(lat2 - lat1)
-    dl = math.radians(lng2 - lng1)
-
-    a = math.sin(dp / 2) ** 2 + math.cos(p1) * math.cos(p2) * math.sin(dl / 2) ** 2
-    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
-
-    return earth_radius_feet * c
-
-
-def _parse_gps_time(value):
-    try:
-        return datetime.fromisoformat(str(value).replace("Z", "+00:00").replace(" ", "T"))
-    except Exception:
-        try:
-            return datetime.strptime(str(value)[:19], "%Y-%m-%dT%H:%M:%S")
-        except Exception:
-            return None
-
-
-def build_gps_stops(points, radius_feet=150, min_minutes=5):
-    """
-    Turns raw GPS points into stop groups.
-
-    A stop starts when points stay within radius_feet.
-    A stop is kept only if it lasts min_minutes or longer.
-    """
-    stops = []
-
-    by_employee = {}
-
-    for p in points:
-        name = p.get("employee_name") or "Employee"
-        by_employee.setdefault(name, []).append(p)
-
-    for employee_name, employee_points in by_employee.items():
-        employee_points = sorted(employee_points, key=lambda x: str(x.get("created_at") or ""))
-
-        current = []
-
-        for point in employee_points:
-            lat = point.get("latitude")
-            lng = point.get("longitude")
-            point_time = _parse_gps_time(point.get("created_at"))
-
-            if lat is None or lng is None or not point_time:
-                continue
-
-            if not current:
-                current = [point]
-                continue
-
-            anchor = current[0]
-            dist = _gps_distance_feet(anchor.get("latitude"), anchor.get("longitude"), lat, lng)
-
-            if dist <= radius_feet:
-                current.append(point)
-            else:
-                if len(current) >= 2:
-                    start_time = _parse_gps_time(current[0].get("created_at"))
-                    end_time = _parse_gps_time(current[-1].get("created_at"))
-
-                    if start_time and end_time:
-                        minutes = round((end_time - start_time).total_seconds() / 60)
-
-                        if minutes >= min_minutes:
-                            avg_lat = sum(float(x.get("latitude")) for x in current if x.get("latitude") is not None) / len(current)
-                            avg_lng = sum(float(x.get("longitude")) for x in current if x.get("longitude") is not None) / len(current)
-
-                            stops.append({
-                                "employee_name": employee_name,
-                                "start_time": start_time,
-                                "end_time": end_time,
-                                "minutes": minutes,
-                                "latitude": avg_lat,
-                                "longitude": avg_lng,
-                                "point_count": len(current),
-                            })
-
-                current = [point]
-
-        if len(current) >= 2:
-            start_time = _parse_gps_time(current[0].get("created_at"))
-            end_time = _parse_gps_time(current[-1].get("created_at"))
-
-            if start_time and end_time:
-                minutes = round((end_time - start_time).total_seconds() / 60)
-
-                if minutes >= min_minutes:
-                    avg_lat = sum(float(x.get("latitude")) for x in current if x.get("latitude") is not None) / len(current)
-                    avg_lng = sum(float(x.get("longitude")) for x in current if x.get("longitude") is not None) / len(current)
-
-                    stops.append({
-                        "employee_name": employee_name,
-                        "start_time": start_time,
-                        "end_time": end_time,
-                        "minutes": minutes,
-                        "latitude": avg_lat,
-                        "longitude": avg_lng,
-                        "point_count": len(current),
-                    })
-
-    return stops
-
+    return RedirectResponse("/time-clock", status_code=303)
 
 @app.get("/gps/stops", response_class=HTMLResponse)
 def gps_stops(request: Request):
     u = require_login(request)
     if not u:
         return login_redirect()
-
-    if not is_admin(u):
-        return RedirectResponse("/employee", status_code=303)
-
-    today = date.today().isoformat()
-
-    points = rows(
-        """
-        SELECT * FROM employee_location_points
-        WHERE created_at LIKE ?
-        ORDER BY employee_name, created_at
-        """,
-        (f"{today}%",)
-    )
-
-    stops = build_gps_stops(points, radius_feet=150, min_minutes=5)
-
-    return templates.TemplateResponse(
-        "gps_stops.html",
-        ctx(
-            request,
-            today=today,
-            stops=stops,
-            points=points,
-        )
-    )
+    return RedirectResponse("/time-clock", status_code=303)
 
 @app.get("/employee", response_class=HTMLResponse)
 def employee_portal(request: Request):
@@ -4250,23 +4145,8 @@ def property_brain(request: Request, property_id: int):
         """,
         (prop.get("address", ""), prop.get("property_name", ""), cname),
     )
-
-    photos = rows(
-        "SELECT * FROM poolops2_photo_logs WHERE property_id=? OR client=? ORDER BY id DESC LIMIT 100",
-        (property_id, cname),
-    )
-
+    photos = rows("SELECT * FROM poolops2_photo_logs WHERE property_id=? OR client=? ORDER BY id DESC LIMIT 80", (property_id, cname))
     equipment = rows("SELECT * FROM poolops2_equipment WHERE property_id=? ORDER BY id DESC", (property_id,))
-
-    field_log_rows = rows(
-        """
-        SELECT * FROM field_logs
-        WHERE property=? OR address=? OR client=?
-        ORDER BY id DESC
-        LIMIT 80
-        """,
-        (prop.get("property_name", ""), prop.get("address", ""), cname),
-    )
 
     ensure_legacy_schema()
     lessons = rows(
@@ -4274,72 +4154,10 @@ def property_brain(request: Request, property_id: int):
         SELECT * FROM hfo_legacy_lessons
         WHERE address=? OR property=? OR client=?
         ORDER BY id DESC
-        LIMIT 80
+        LIMIT 60
         """,
         (prop.get("address", ""), prop.get("property_name", ""), cname),
     )
-
-    problem_words = ("leak", "leaking", "broken", "fail", "failed", "bad", "crack", "corrosion", "trip", "error", "problem", "issue", "damage")
-    known_problems = []
-
-    for j in jobs:
-        text = " ".join(str(j.get(k) or "") for k in ["job_type", "status", "notes", "priority"]).lower()
-        if any(w in text for w in problem_words):
-            known_problems.append({
-                "source": "Job",
-                "title": j.get("job_type") or "Job issue",
-                "date": j.get("date") or j.get("scheduled_start") or "",
-                "body": j.get("notes") or "",
-                "href": f"/jobs/{j.get('id')}",
-            })
-
-    for fl in field_log_rows:
-        text = " ".join(str(fl.get(k) or "") for k in ["issues", "next_steps", "work_completed"]).lower()
-        if any(w in text for w in problem_words):
-            known_problems.append({
-                "source": "Field Log",
-                "title": fl.get("issues") or fl.get("work_completed") or "Field issue",
-                "date": fl.get("date") or fl.get("created_at") or "",
-                "body": fl.get("next_steps") or fl.get("work_completed") or "",
-                "href": "/field-logs",
-            })
-
-    for lesson in lessons:
-        if lesson.get("problem"):
-            known_problems.append({
-                "source": "Legacy",
-                "title": lesson.get("problem") or "Legacy problem",
-                "date": lesson.get("created_at") or "",
-                "body": lesson.get("fix") or lesson.get("lesson") or "",
-                "href": "/legacy",
-            })
-
-    known_problems = known_problems[:12]
-
-    hidden_details = []
-    for label, value in [
-        ("Gate Code / Access", prop.get("gate_code")),
-        ("Service Plan", prop.get("service_plan")),
-        ("Pool Notes", prop.get("pool_notes")),
-        ("Equipment Notes", prop.get("equipment_notes")),
-        ("Property Notes / Hidden Valves", prop.get("notes")),
-    ]:
-        if str(value or "").strip():
-            hidden_details.append({"label": label, "value": value})
-
-    pool_summary_parts = []
-    if prop.get("pool_type") or prop.get("pool_size") or prop.get("pool_depth"):
-        pool_summary_parts.append(f"Pool: {prop.get('pool_type') or 'type unknown'} {prop.get('pool_size') or ''} {prop.get('pool_depth') or ''}".strip())
-    if prop.get("pump_model") or prop.get("filter_model") or prop.get("heater_model"):
-        pool_summary_parts.append(f"Equipment: Pump {prop.get('pump_model') or 'unknown'}, Filter {prop.get('filter_model') or 'unknown'}, Heater {prop.get('heater_model') or 'unknown'}")
-    if prop.get("automation_system") or prop.get("sanitizer"):
-        pool_summary_parts.append(f"Systems: {prop.get('automation_system') or 'automation unknown'} / {prop.get('sanitizer') or 'sanitizer unknown'}")
-    if known_problems:
-        pool_summary_parts.append(f"Known attention items: {len(known_problems)}")
-    if lessons:
-        pool_summary_parts.append(f"Legacy lessons recorded: {len(lessons)}")
-
-    pool_summary = " • ".join(pool_summary_parts) or "Not enough information recorded yet. Add pool specs, equipment notes, photos, jobs, and lessons to build this property brain."
 
     return templates.TemplateResponse(
         "property_brain.html",
@@ -4350,53 +4168,9 @@ def property_brain(request: Request, property_id: int):
             jobs=jobs,
             photos=photos,
             equipment=equipment,
-            field_logs=field_log_rows,
             lessons=lessons,
-            known_problems=known_problems,
-            hidden_details=hidden_details,
-            pool_summary=pool_summary,
-            brain_summary={
-                "known_pool": bool(prop.get("pool_type") or prop.get("pool_size") or prop.get("pool_depth")),
-                "known_equipment": bool(prop.get("pump_model") or prop.get("filter_model") or prop.get("heater_model") or equipment),
-                "known_access": bool(prop.get("gate_code") or prop.get("service_plan") or prop.get("notes")),
-                "job_count": len(jobs),
-                "photo_count": len(photos),
-                "lesson_count": len(lessons),
-                "problem_count": len(known_problems),
-                "field_log_count": len(field_log_rows),
-            },
         )
     )
-
-
-@app.post("/properties/{property_id}/brain/save")
-def property_brain_save(
-    request: Request,
-    property_id: int,
-    gate_code: str = Form(""),
-    service_plan: str = Form(""),
-    pool_notes: str = Form(""),
-    equipment_notes: str = Form(""),
-    notes: str = Form(""),
-):
-    u = require_login(request)
-    if not u:
-        return login_redirect()
-
-    prop = one("SELECT * FROM poolops2_properties WHERE id=?", (property_id,))
-    if not prop or not property_can_access(u, prop):
-        return admin_redirect(u)
-
-    exec_sql(
-        """
-        UPDATE poolops2_properties
-        SET gate_code=?, service_plan=?, pool_notes=?, equipment_notes=?, notes=?
-        WHERE id=?
-        """,
-        (gate_code.strip(), service_plan.strip(), pool_notes.strip(), equipment_notes.strip(), notes.strip(), property_id),
-    )
-
-    return RedirectResponse(f"/property-brain/{property_id}", status_code=303)
 
 
 @app.get("/legacy-dashboard", response_class=HTMLResponse)
@@ -4930,28 +4704,6 @@ def invisible_office_search(request: Request, q: str = ""):
         if "invoice" in t or "quickbook" in t:
             return "/quickbooks"
         return "/invisible-office"
-
-@app.get("/admin/users", response_class=HTMLResponse)
-def admin_users_page(request: Request):
-    u = require_login(request)
-    if not u:
-        return login_redirect()
-    if not is_admin(u):
-        return admin_redirect(u)
-
-    admin_users = rows("SELECT * FROM poolops2_users ORDER BY id")
-    employees = rows("SELECT * FROM poolops2_employees ORDER BY id")
-    clients = rows("SELECT * FROM poolops2_clients ORDER BY name")
-
-    return templates.TemplateResponse(
-        "admin_users.html",
-        ctx(
-            request,
-            admin_users=admin_users,
-            employees=employees,
-            clients=clients,
-        )
-    )
 
     def add_result(kind, title, detail, url, badge=""):
         results.append({"kind": kind, "title": title, "detail": detail, "url": url, "badge": badge})
