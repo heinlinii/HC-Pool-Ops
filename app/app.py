@@ -4026,7 +4026,31 @@ def command_center_attention(user):
         "open_invoices": 0,
         "legacy_lessons": 0,
         "recent_lessons": [],
+        "clients": 0,
+        "properties": 0,
+        "jobs": 0,
+        "employees": 0,
     }
+
+    try:
+        attention["clients"] = len(rows("SELECT id FROM poolops2_clients"))
+    except Exception:
+        attention["clients"] = 0
+
+    try:
+        attention["properties"] = len(rows("SELECT id FROM poolops2_properties"))
+    except Exception:
+        attention["properties"] = 0
+
+    try:
+        attention["jobs"] = len(rows("SELECT id FROM poolops2_jobs"))
+    except Exception:
+        attention["jobs"] = 0
+
+    try:
+        attention["employees"] = len(rows("SELECT id FROM poolops2_employees WHERE coalesce(active, 1)=1"))
+    except Exception:
+        attention["employees"] = 0
 
     try:
         attention["today_jobs"] = len([j for j in jobs_for_user(user) if schedule_date(j) == today])
