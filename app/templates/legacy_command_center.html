@@ -115,9 +115,48 @@ body.hfo-body .shell {
 @media(max-width:1300px) { .card-grid { grid-template-columns:repeat(3,1fr); } }
 @media(max-width:1000px) { .legacy-wrap { grid-template-columns:1fr; } .legacy-sidebar { display:none; } .topbar { display:block; } .award-box,.weather-box { text-align:left; width:auto; } .attention-row { grid-template-columns:repeat(2,1fr); } }
 @media(max-width:650px) { .legacy-main { padding:22px 14px; } .card-grid { grid-template-columns:1fr; } }
+
+.sidebar-toggle {
+  position:fixed;
+  left:18px;
+  top:18px;
+  z-index:9999;
+  width:48px;
+  height:48px;
+  border-radius:14px;
+  border:1px solid rgba(214,179,106,.55);
+  background:rgba(0,0,0,.78);
+  color:#d6b36a;
+  font-size:24px;
+  cursor:pointer;
+}
+
+.legacy-wrap {
+  background:
+    linear-gradient(90deg,rgba(0,0,0,.92),rgba(0,0,0,.74),rgba(0,0,0,.94)),
+    #05090d !important;
+  transition:grid-template-columns .25s ease;
+}
+
+.legacy-sidebar {
+  transition:transform .25s ease, padding .25s ease;
+}
+
+.legacy-wrap.sidebar-collapsed {
+  grid-template-columns:0 1fr;
+}
+
+.legacy-wrap.sidebar-collapsed .legacy-sidebar {
+  transform:translateX(-100%);
+  padding:0;
+  overflow:hidden;
+  border-right:0;
+}
 </style>
 
-<div class="legacy-wrap">
+<button class="sidebar-toggle" type="button" onclick="toggleLegacySidebar()">☰</button>
+
+<div class="legacy-wrap" id="legacyWrap">
   <aside class="legacy-sidebar">
     <img class="legacy-crest" src="{{ crest }}">
     <div class="user-name">{{ user_name }}</div>
@@ -200,5 +239,23 @@ body.hfo-body .shell {
     </form>
   </main>
 </div>
+
+<script>
+function toggleLegacySidebar() {
+  const wrap = document.getElementById("legacyWrap");
+  wrap.classList.toggle("sidebar-collapsed");
+  localStorage.setItem(
+    "heinlinSidebarCollapsed",
+    wrap.classList.contains("sidebar-collapsed") ? "yes" : "no"
+  );
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+  const wrap = document.getElementById("legacyWrap");
+  if (localStorage.getItem("heinlinSidebarCollapsed") === "yes") {
+    wrap.classList.add("sidebar-collapsed");
+  }
+});
+</script>
 
 {% endblock %}
