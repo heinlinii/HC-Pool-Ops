@@ -3946,32 +3946,54 @@ def job_legacy_save(
 
 
 
+
+
+# Safe aliases for old GPS buttons; both land on the working universal time clock.
+@app.get("/gps/day", response_class=HTMLResponse)
+def gps_day_redirect(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    return RedirectResponse("/time-clock", status_code=303)
+
+
+@app.get("/gps/stops", response_class=HTMLResponse)
+def gps_stops_redirect(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    return RedirectResponse("/time-clock", status_code=303)
+
 # ============================================================
 # HEINLIN LEGACY COMMAND CENTER - EDITABLE DASHBOARD + PROPERTY BRAIN
 # ============================================================
 
 COMMAND_CENTER_DEFAULT = {
     "crest_image": "/static/heinlin-wide-crest.png",
-    "background_image": "/static/uploads/20260614_111449_87a15917.jpg",
+    "background_image": "",
     "award_image": "",
     "award_title": "Indiana Historical Society",
     "award_subtitle": "CENTENNIAL BUSINESS AWARD",
     "weather_location": "Evansville, IN",
     "motto": "Built by the hands that perfected the term “work hard play harder.”",
     "cards": [
-        {"key": "accounts", "title": "ACCOUNTS", "subtitle": "Manage clients, properties, contacts, and relationships.", "href": "/accounts", "button": "View Accounts", "icon": "👥", "image": "/static/uploads/fountain.jpg", "enabled": True, "order": 10},
-        {"key": "today", "title": "TODAY", "subtitle": "Daily schedule, weather, map, and crew overview.", "href": "/today-dashboard", "button": "Open Today", "icon": "📅", "image": "/static/uploads/pate.jpg", "enabled": True, "order": 20},
-        {"key": "pool_systems", "title": "POOL SYSTEMS", "subtitle": "Pentair monitoring, equipment notes, and system status.", "href": "/pool-systems", "button": "View Systems", "icon": "⚙", "image": "/static/uploads/McCord.jpg", "enabled": True, "order": 30},
-        {"key": "field_operations", "title": "FIELD OPERATIONS", "subtitle": "Crew tools, field logs, GPS, time clock, and site records.", "href": "/field-operations", "button": "Open Field Ops", "icon": "⛑", "image": "/static/uploads/maria.jpg", "enabled": True, "order": 40},
-        {"key": "business", "title": "BUSINESS", "subtitle": "Estimates, invoices, job costing, QuickBooks, and reporting.", "href": "/business", "button": "Open Business", "icon": "↗", "image": "/static/uploads/boger.jpg", "enabled": True, "order": 50},
-        {"key": "legacy", "title": "LEGACY LIBRARY", "subtitle": "Lessons learned, repairs, standards, and company knowledge.", "href": "/legacy", "button": "Open Library", "icon": "📖", "image": "/static/uploads/fountain.jpg", "enabled": True, "order": 60},
-        {"key": "jarvis", "title": "JARVIS", "subtitle": "Ask Jarvis anything. Get answers, ideas, and solutions.", "href": "/ai-systems", "button": "Talk to Jarvis", "icon": "⛲", "image": "/static/uploads/maria.jpg", "enabled": True, "order": 70},
-        {"key": "schedule", "title": "SCHEDULE", "subtitle": "View calendar, crew schedule, and client appointments.", "href": "/schedule/year", "button": "Open Schedule", "icon": "🗓", "image": "/static/uploads/pate.jpg", "enabled": True, "order": 80},
-        {"key": "photos", "title": "PHOTOS", "subtitle": "Job photos, before/after, equipment, and uploads.", "href": "/photos", "button": "View Photos", "icon": "📷", "image": "/static/uploads/McCord.jpg", "enabled": True, "order": 90},
-        {"key": "map", "title": "MAP", "subtitle": "Job sites, client locations, routes, and directions.", "href": "/map", "button": "Open Map", "icon": "📍", "image": "/static/uploads/boger.jpg", "enabled": True, "order": 100},
+        {"key": "clients", "title": "Clients", "subtitle": "Client list and contact records.", "href": "/clients", "button": "View all", "icon": "👥", "image": "", "enabled": True, "order": 10},
+        {"key": "properties", "title": "Properties", "subtitle": "Property records and pool history.", "href": "/properties", "button": "View all", "icon": "🏠", "image": "", "enabled": True, "order": 20},
+        {"key": "jobs", "title": "Jobs", "subtitle": "Active jobs and job details.", "href": "/jobs", "button": "View all", "icon": "💼", "image": "", "enabled": True, "order": 30},
+        {"key": "schedule", "title": "Schedule", "subtitle": "Calendar and bookings.", "href": "/schedule/year", "button": "Calendar", "icon": "🗓", "image": "", "enabled": True, "order": 40},
+        {"key": "photos", "title": "Photos", "subtitle": "Jobsite photos and documentation.", "href": "/photos", "button": "Jobsite photos", "icon": "🖼", "image": "", "enabled": True, "order": 50},
+        {"key": "crew", "title": "Crew", "subtitle": "Employees and crew management.", "href": "/crew", "button": "Manage crew", "icon": "👥", "image": "", "enabled": True, "order": 60},
+        {"key": "time_clock", "title": "Time Clock", "subtitle": "Clock in/out and GPS tracking.", "href": "/time-clock", "button": "Clock / GPS", "icon": "⏱", "image": "", "enabled": True, "order": 70},
+        {"key": "field_logs", "title": "Field Logs", "subtitle": "Logs and notes from the field.", "href": "/field-logs", "button": "Logs & notes", "icon": "📋", "image": "", "enabled": True, "order": 80},
+        {"key": "estimates", "title": "Estimates", "subtitle": "Create and manage estimates.", "href": "/estimates", "button": "Create & manage", "icon": "📄", "image": "", "enabled": True, "order": 90},
+        {"key": "job_costing", "title": "Job Costing", "subtitle": "Costs and reports.", "href": "/job-costing", "button": "Costs & reports", "icon": "💲", "image": "", "enabled": True, "order": 100},
+        {"key": "quickbooks", "title": "QuickBooks", "subtitle": "Sync and manage QuickBooks.", "href": "/quickbooks", "button": "Sync & manage", "icon": "qb", "image": "", "enabled": True, "order": 110},
+        {"key": "weather", "title": "Weather", "subtitle": "Forecast and alerts.", "href": "/weather", "button": "Forecast & alerts", "icon": "☁", "image": "", "enabled": True, "order": 120},
+        {"key": "map", "title": "Map", "subtitle": "Jobs and locations.", "href": "/map", "button": "Jobs & locations", "icon": "📍", "image": "", "enabled": True, "order": 130},
+        {"key": "legacy", "title": "Legacy", "subtitle": "Lessons learned and Heinlin standards.", "href": "/legacy", "button": "Legacy Library", "icon": "📖", "image": "", "enabled": True, "order": 140},
+        {"key": "jarvis", "title": "Jarvis", "subtitle": "AI assistant and daily organization.", "href": "/ai-systems", "button": "AI Assistant", "icon": "🤖", "image": "", "enabled": True, "order": 150},
     ],
 }
-
 
 def command_center_settings(design=None):
     design = design or design_settings()
@@ -4026,31 +4048,7 @@ def command_center_attention(user):
         "open_invoices": 0,
         "legacy_lessons": 0,
         "recent_lessons": [],
-        "clients": 0,
-        "properties": 0,
-        "jobs": 0,
-        "employees": 0,
     }
-
-    try:
-        attention["clients"] = len(rows("SELECT id FROM poolops2_clients"))
-    except Exception:
-        attention["clients"] = 0
-
-    try:
-        attention["properties"] = len(rows("SELECT id FROM poolops2_properties"))
-    except Exception:
-        attention["properties"] = 0
-
-    try:
-        attention["jobs"] = len(rows("SELECT id FROM poolops2_jobs"))
-    except Exception:
-        attention["jobs"] = 0
-
-    try:
-        attention["employees"] = len(rows("SELECT id FROM poolops2_employees WHERE coalesce(active, 1)=1"))
-    except Exception:
-        attention["employees"] = 0
 
     try:
         attention["today_jobs"] = len([j for j in jobs_for_user(user) if schedule_date(j) == today])
@@ -4079,6 +4077,31 @@ def command_center_attention(user):
         attention["recent_lessons"] = rows("SELECT * FROM hfo_legacy_lessons ORDER BY id DESC LIMIT 3")
     except Exception:
         pass
+
+    try:
+        attention["clients"] = len(rows("SELECT id FROM poolops2_clients"))
+    except Exception:
+        attention["clients"] = 0
+
+    try:
+        attention["properties"] = len(rows("SELECT id FROM poolops2_properties"))
+    except Exception:
+        attention["properties"] = 0
+
+    try:
+        attention["jobs"] = len(rows("SELECT id FROM poolops2_jobs"))
+    except Exception:
+        attention["jobs"] = 0
+
+    try:
+        attention["employees"] = len(rows("""
+            SELECT id
+            FROM poolops2_employees
+            WHERE coalesce(name,'') <> ''
+              AND lower(coalesce(role,'')) IN ('crew','employee','admin')
+        """))
+    except Exception:
+        attention["employees"] = 0
 
     return attention
 
