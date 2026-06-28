@@ -4,285 +4,429 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Heinlin Legacy Command Center</title>
-{% set cc = command_center %}
-{% set bg = cc.background_image %}
-{% set crest = cc.crest_image %}
-{% set user_name = user.name or user.username %}
 
-<style>
-html, body { margin:0; padding:0; min-height:100%; background:#030608; overflow:hidden; }
-body.legacy-body { background:#030608; color:#fff; }
-body.hfo-body {
-  background:#05090d !important;
-}
-body.hfo-body .shell {
-  max-width:none !important;
-  padding:0 !important;
-  margin:0 !important;
-}
-.legacy-wrap {
-  min-height:100vh;
-  display:grid;
-  grid-template-columns:280px 1fr;
-  background:
-    linear-gradient(90deg,rgba(0,0,0,.86),rgba(0,0,0,.28),rgba(0,0,0,.88)),
-    url("{{ bg }}");
-  background-size:cover;
-  background-position:center;
-  color:#fff;
-  overflow:hidden;
-}
-.legacy-sidebar {
-  background:linear-gradient(180deg,rgba(5,8,11,.97),rgba(9,12,15,.99));
-  border-right:1px solid rgba(214,179,106,.35);
-  padding:24px 22px;
-}
-.legacy-crest {
-  width:220px;
-  max-width:100%;
-  display:block;
-  margin:0 auto 26px;
-  filter:drop-shadow(0 16px 28px rgba(0,0,0,.7));
-}
-.user-name { color:#d6b36a; font-size:24px; font-weight:900; }
-.user-role { font-size:13px; letter-spacing:.12em; text-transform:uppercase; }
-.nav-link {
-  display:flex; gap:14px; align-items:center; padding:14px 14px;
-  color:#f5efe2; text-decoration:none; border-radius:14px;
-  font-size:18px; margin:5px 0;
-}
-.nav-link:hover,.nav-link.active { background:rgba(214,179,106,.18); color:#d6b36a; }
-.nav-sep { height:1px; background:rgba(255,255,255,.12); margin:22px 0; }
-.logout-btn { border:1px solid rgba(214,179,106,.45); border-radius:12px; padding:14px; color:#d6b36a; }
-.legacy-main { padding:28px 34px 38px; height:100vh; overflow:auto; }
-.topbar { display:flex; justify-content:space-between; gap:20px; align-items:flex-start; }
-.legacy-title {
-  font-size:clamp(54px,7vw,112px); line-height:.86; color:#d6b36a;
-  text-transform:uppercase; font-weight:1000; letter-spacing:.04em;
-  text-shadow:0 5px 25px rgba(0,0,0,.75);
-}
-.command { color:#fff; font-size:clamp(28px,3vw,48px); letter-spacing:.24em; margin-top:10px; text-transform:uppercase; }
-.founded { color:#d6b36a; letter-spacing:.28em; font-weight:900; margin-top:12px; }
-.motto { margin-top:12px; font-style:italic; font-size:18px; }
-.weather-box { text-align:right; font-size:18px; }
-.weather-temp { font-size:34px; font-weight:900; }
-.award-box {
-  margin-top:18px; width:310px; border:1px solid rgba(214,179,106,.75);
-  border-radius:12px; padding:22px; background:rgba(0,0,0,.54);
-  color:#d6b36a; text-align:center;
-}
-.award-img { max-width:78px; max-height:78px; display:block; margin:0 auto 10px; }
-.welcome {
-  width:min(560px,100%); margin:36px 0 22px; background:rgba(0,0,0,.62);
-  border:1px solid rgba(255,255,255,.22); border-radius:12px; padding:20px 26px; font-size:20px;
-}
-.welcome b { color:#d6b36a; }
-.attention-row {
-  display:grid; grid-template-columns:repeat(5,minmax(120px,1fr));
-  gap:12px; margin:0 0 24px;
-}
-.attention-card {
-  border:1px solid rgba(214,179,106,.42); background:rgba(0,0,0,.48);
-  border-radius:14px; padding:13px 14px;
-}
-.attention-num { font-size:28px; color:#d6b36a; font-weight:1000; }
-.attention-label { font-size:13px; color:#d8cfbd; }
-.card-grid { display:grid; grid-template-columns:repeat(5,minmax(170px,1fr)); gap:16px; }
-.legacy-card {
-  min-height:260px; border:1px solid rgba(214,179,106,.75); border-radius:12px;
-  overflow:hidden; position:relative; background:#111; box-shadow:0 16px 38px rgba(0,0,0,.55);
-}
-.legacy-card::before {
-  content:""; position:absolute; inset:0; background-image:var(--img);
-  background-size:cover; background-position:center; filter:brightness(.38); transform:scale(1.04);
-}
-.legacy-card::after { content:""; position:absolute; inset:0; background:linear-gradient(180deg,rgba(0,0,0,.18),rgba(0,0,0,.76)); }
-.card-inner {
-  position:relative; z-index:2; height:100%; min-height:260px; display:flex; flex-direction:column;
-  align-items:center; justify-content:center; text-align:center; padding:20px;
-}
-.icon-circle {
-  width:74px; height:74px; border-radius:50%; border:2px solid #d6b36a;
-  display:grid; place-items:center; color:#d6b36a; font-size:32px; margin-bottom:18px; background:rgba(0,0,0,.45);
-}
-.card-title { font-size:26px; font-weight:1000; text-transform:uppercase; text-shadow:0 3px 16px #000; }
-.card-sub { margin-top:14px; font-size:16px; line-height:1.35; }
-.card-btn {
-  margin-top:auto; color:#d6b36a; border:1px solid rgba(214,179,106,.55);
-  border-radius:8px; padding:11px 28px; text-decoration:none; background:rgba(0,0,0,.38);
-}
-.search-row { display:flex; gap:22px; align-items:center; margin:24px 0 0; }
-.search-row input {
-  width:min(560px,100%); padding:15px 18px; border-radius:8px;
-  border:1px solid rgba(255,255,255,.16); background:rgba(0,0,0,.55); color:#fff;
-}
-.tip { color:#ccc; }
-@media(max-width:1300px) { .card-grid { grid-template-columns:repeat(3,1fr); } }
-@media(max-width:1000px) { .legacy-wrap { grid-template-columns:1fr; } .legacy-sidebar { display:none; } .topbar { display:block; } .award-box,.weather-box { text-align:left; width:auto; } .attention-row { grid-template-columns:repeat(2,1fr); } }
-@media(max-width:650px) { .legacy-main { padding:22px 14px; } .card-grid { grid-template-columns:1fr; } }
+  {% set cc = command_center %}
+  {% set crest = cc.crest_image %}
+  {% set user_name = user.name or user.username %}
 
-.sidebar-toggle {
-  position:fixed;
-  left:18px;
-  top:18px;
-  z-index:9999;
-  width:48px;
-  height:48px;
-  border-radius:14px;
-  border:1px solid rgba(214,179,106,.55);
-  background:rgba(0,0,0,.78);
-  color:#d6b36a;
-  font-size:24px;
-  cursor:pointer;
-}
+  <style>
+    * { box-sizing:border-box; }
 
-.legacy-wrap {
-  background:
-    linear-gradient(90deg,rgba(0,0,0,.92),rgba(0,0,0,.74),rgba(0,0,0,.94)),
-    #05090d !important;
-  transition:grid-template-columns .25s ease;
-}
+    html, body {
+      margin:0;
+      min-height:100%;
+      background:#020506;
+      color:#f8efe0;
+      font-family: Georgia, "Times New Roman", serif;
+    }
 
-.legacy-sidebar {
-  transition:transform .25s ease, padding .25s ease;
-}
+    body {
+      overflow-x:hidden;
+      background:
+        radial-gradient(circle at 50% 20%, rgba(214,179,106,.08), transparent 36%),
+        linear-gradient(180deg, #05090d 0%, #010203 100%);
+    }
 
-.legacy-wrap.sidebar-collapsed {
-  grid-template-columns:0 1fr;
-}
+    .command-page {
+      min-height:100vh;
+      padding:26px clamp(18px, 4vw, 64px) 30px;
+      position:relative;
+    }
 
-.legacy-wrap.sidebar-collapsed .legacy-sidebar {
-  transform:translateX(-100%);
-  padding:0;
-  overflow:hidden;
-  border-right:0;
-}
+    .top-actions {
+      display:flex;
+      gap:14px;
+      align-items:center;
+      margin-bottom:26px;
+    }
 
-body.hfo-body {
-  background:#030608 !important;
-}
+    .top-btn {
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-width:124px;
+      min-height:56px;
+      padding:14px 24px;
+      border:1px solid rgba(214,179,106,.32);
+      border-radius:14px;
+      color:#f8efe0;
+      text-decoration:none;
+      font-size:20px;
+      font-weight:800;
+      background:rgba(10,13,15,.72);
+      box-shadow:0 10px 24px rgba(0,0,0,.28);
+    }
 
-body.hfo-body::before,
-body.hfo-body::after {
-  display:none !important;
-  background:none !important;
-}
+    .top-btn:hover {
+      color:#d6b36a;
+      border-color:rgba(214,179,106,.7);
+    }
 
-.legacy-wrap {
-  background:#030608 !important;
-  background-image:none !important;
-}
+    .top-btn.gold { color:#d6b36a; }
 
-.legacy-main {
-  background:#030608 !important;
-  background-image:none !important;
-}
-</style>
+    .weather-box {
+      position:absolute;
+      right:clamp(22px, 4vw, 70px);
+      top:30px;
+      text-align:right;
+      color:#fff;
+      text-shadow:0 4px 18px #000;
+    }
+
+    .weather-temp {
+      font-size:clamp(34px, 3.2vw, 48px);
+      font-weight:1000;
+      line-height:1;
+    }
+
+    .weather-box div:not(.weather-temp) {
+      font-size:20px;
+      margin-top:8px;
+    }
+
+    .hero-grid {
+      display:grid;
+      grid-template-columns:minmax(360px, .95fr) minmax(280px, .72fr) minmax(360px, .88fr);
+      gap:clamp(26px, 4vw, 60px);
+      align-items:center;
+      margin-top:12px;
+    }
+
+    .legacy-title {
+      color:#d6b36a;
+      font-size:clamp(64px, 7.5vw, 126px);
+      line-height:.86;
+      text-transform:uppercase;
+      font-weight:1000;
+      letter-spacing:.035em;
+      text-shadow:0 8px 30px rgba(0,0,0,.85);
+    }
+
+    .command {
+      color:#fff;
+      font-size:clamp(30px, 3.1vw, 52px);
+      letter-spacing:.28em;
+      margin-top:22px;
+      text-transform:uppercase;
+      text-shadow:0 7px 24px #000;
+    }
+
+    .gold-line {
+      width:min(520px, 100%);
+      height:1px;
+      margin:20px 0;
+      background:linear-gradient(90deg, transparent, #d6b36a, transparent);
+      position:relative;
+    }
+
+    .gold-line::after {
+      content:"◆";
+      position:absolute;
+      left:50%;
+      top:50%;
+      transform:translate(-50%, -50%);
+      color:#d6b36a;
+      font-size:12px;
+      background:#020506;
+      padding:0 9px;
+    }
+
+    .founded {
+      color:#d6b36a;
+      letter-spacing:.24em;
+      font-weight:900;
+      font-size:clamp(15px, 1.25vw, 21px);
+      text-transform:uppercase;
+    }
+
+    .motto {
+      margin-top:22px;
+      color:#fff;
+      font-style:italic;
+      font-size:clamp(19px, 1.6vw, 26px);
+      line-height:1.35;
+      max-width:620px;
+      text-shadow:0 5px 22px #000;
+    }
+
+    .welcome-box {
+      margin-top:34px;
+      max-width:520px;
+      border:1px solid rgba(214,179,106,.35);
+      border-radius:14px;
+      background:rgba(0,0,0,.38);
+      padding:18px 24px;
+      display:flex;
+      align-items:center;
+      gap:18px;
+    }
+
+    .welcome-icon {
+      width:58px;
+      height:58px;
+      border:2px solid #d6b36a;
+      border-radius:50%;
+      display:grid;
+      place-items:center;
+      color:#d6b36a;
+      font-size:30px;
+      flex:0 0 auto;
+    }
+
+    .welcome-divider {
+      width:1px;
+      height:58px;
+      background:rgba(214,179,106,.42);
+    }
+
+    .welcome-box b { color:#d6b36a; font-size:22px; }
+
+    .crest-stage {
+      display:flex;
+      justify-content:center;
+      align-items:center;
+    }
+
+    .main-crest {
+      width:min(360px, 100%);
+      max-height:430px;
+      object-fit:contain;
+      filter:drop-shadow(0 26px 44px rgba(0,0,0,.9));
+    }
+
+    .award-box {
+      width:min(430px,100%);
+      margin:0 auto;
+      border:1px solid rgba(214,179,106,.72);
+      border-radius:16px;
+      padding:24px 26px 28px;
+      background:rgba(0,0,0,.42);
+      color:#d6b36a;
+      text-align:center;
+      box-shadow:0 22px 44px rgba(0,0,0,.5);
+    }
+
+    .award-box .small-title {
+      font-size:15px;
+      letter-spacing:.06em;
+      text-transform:uppercase;
+      margin-bottom:12px;
+    }
+
+    .award-box .award-title {
+      font-size:24px;
+      margin-bottom:10px;
+    }
+
+    .award-box .award-subtitle {
+      font-size:31px;
+      text-transform:uppercase;
+      line-height:1.12;
+      margin-bottom:20px;
+    }
+
+    .award-img {
+      width:100%;
+      max-width:330px;
+      max-height:190px;
+      object-fit:contain;
+      display:block;
+      margin:0 auto 20px;
+      border:1px solid rgba(214,179,106,.7);
+      background:#f1dfb9;
+      box-shadow:0 12px 24px rgba(0,0,0,.55);
+    }
+
+    .attention-row {
+      margin:34px auto 26px;
+      max-width:1480px;
+      display:grid;
+      grid-template-columns:repeat(5,minmax(130px,1fr));
+      gap:14px;
+      border:1px solid rgba(214,179,106,.22);
+      border-radius:15px;
+      padding:14px;
+      background:rgba(0,0,0,.28);
+    }
+
+    .attention-card {
+      border:1px solid rgba(255,255,255,.08);
+      background:rgba(255,255,255,.025);
+      border-radius:12px;
+      padding:16px 14px;
+      text-align:center;
+    }
+
+    .attention-num {
+      color:#d6b36a;
+      font-size:30px;
+      font-weight:1000;
+    }
+
+    .attention-label {
+      color:#f8efe0;
+      font-size:12px;
+      text-transform:uppercase;
+      letter-spacing:.05em;
+    }
+
+    .quick-title {
+      max-width:1480px;
+      margin:0 auto 10px;
+      color:#d6b36a;
+      text-align:center;
+      text-transform:uppercase;
+      letter-spacing:.16em;
+      font-weight:900;
+      position:relative;
+    }
+
+    .quick-grid {
+      max-width:1480px;
+      margin:0 auto;
+      display:grid;
+      grid-template-columns:repeat(10,minmax(92px,1fr));
+      gap:10px;
+    }
+
+    .quick-card {
+      min-height:116px;
+      border:1px solid rgba(255,255,255,.14);
+      border-radius:11px;
+      background:linear-gradient(180deg,rgba(255,255,255,.055),rgba(255,255,255,.025));
+      text-decoration:none;
+      color:#f7eedf;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      text-align:center;
+      padding:12px 8px;
+      box-shadow:0 12px 24px rgba(0,0,0,.25);
+    }
+
+    .quick-card:hover {
+      border-color:rgba(214,179,106,.7);
+      transform:translateY(-1px);
+    }
+
+    .quick-icon {
+      color:#d6b36a;
+      font-size:30px;
+      margin-bottom:8px;
+      line-height:1;
+    }
+
+    .quick-name {
+      color:#d6b36a;
+      font-size:17px;
+      font-weight:900;
+      margin-bottom:4px;
+    }
+
+    .quick-sub {
+      color:#f8efe0;
+      font-size:12px;
+      line-height:1.2;
+    }
+
+    .footer-line {
+      margin:30px auto 0;
+      text-align:center;
+      color:rgba(214,179,106,.75);
+      font-size:12px;
+      letter-spacing:.18em;
+      text-transform:uppercase;
+    }
+
+    @media(max-width:1200px) {
+      .hero-grid { grid-template-columns:1fr; text-align:left; }
+      .crest-stage { justify-content:flex-start; }
+      .weather-box { position:static; text-align:left; margin:0 0 20px; }
+      .quick-grid { grid-template-columns:repeat(5,1fr); }
+    }
+
+    @media(max-width:700px) {
+      .top-actions { flex-wrap:wrap; }
+      .top-btn { min-width:auto; min-height:48px; font-size:16px; }
+      .legacy-title { font-size:54px; }
+      .command { font-size:25px; letter-spacing:.18em; }
+      .attention-row { grid-template-columns:repeat(2,1fr); }
+      .quick-grid { grid-template-columns:repeat(2,1fr); }
+    }
+  </style>
 </head>
-<body class="legacy-body">
+<body>
+  <div class="command-page">
+    <nav class="top-actions">
+      <a class="top-btn" href="javascript:history.back()">← Back</a>
+      <a class="top-btn gold" href="/jarvis">Dashboard</a>
+      <a class="top-btn gold" href="/logout">Logout</a>
+    </nav>
 
-<button class="sidebar-toggle" type="button" onclick="toggleLegacySidebar()">☰</button>
+    <div class="weather-box">
+      <div class="weather-temp">☾ 72°F</div>
+      <div>Clear</div>
+      <div>{{ cc.weather_location }}</div>
+    </div>
 
-<div class="legacy-wrap" id="legacyWrap">
-  <aside class="legacy-sidebar">
-    <img class="legacy-crest" src="{{ crest }}">
-    <div class="user-name">{{ user_name }}</div>
-    <div class="user-role">{{ user.role }}</div>
-
-    <div class="nav-sep"></div>
-    <a class="nav-link active" href="/jarvis">⌂ Dashboard</a>
-    <a class="nav-link" href="/accounts">👥 Accounts</a>
-    <a class="nav-link" href="/today-dashboard">▣ Today</a>
-    <a class="nav-link" href="/pool-systems">♒ Pool Systems</a>
-    <a class="nav-link" href="/field-operations">⚒ Field Operations</a>
-    <a class="nav-link" href="/business">▣ Business</a>
-    <a class="nav-link" href="/legacy">📖 Legacy Library</a>
-    <a class="nav-link" href="/ai-systems">🤖 Jarvis</a>
-
-    <div class="nav-sep"></div>
-    <a class="nav-link" href="/admin/users">👤 Users</a>
-    <a class="nav-link" href="/command-center-design">🎨 Design Studio</a>
-    <a class="nav-link" href="/dashboard-card-images">🖼 Old Card Images</a>
-
-    <div class="nav-sep"></div>
-    <a class="nav-link logout-btn" href="/logout">↪ Logout</a>
-  </aside>
-
-  <main class="legacy-main">
-    <div class="topbar">
-      <div>
-        <div class="legacy-title">Heinlin Legacy</div>
+    <section class="hero-grid">
+      <div class="hero-copy">
+        <div class="legacy-title">Heinlin<br>Legacy</div>
         <div class="command">Command Center</div>
-        <div class="founded">FOUNDED 1907 • 5 GENERATIONS STRONG</div>
+        <div class="gold-line"></div>
+        <div class="founded">Founded 1907 • 5 Generations Strong</div>
+        <div class="gold-line"></div>
         <div class="motto">{{ cc.motto }}</div>
-      </div>
 
-      <div>
-        <div class="weather-box">
-          <div class="weather-temp">☾ 72°F</div>
-          <div>Clear</div>
-          <div style="margin-top:16px;">{{ cc.weather_location }}</div>
-        </div>
-
-        <div class="award-box">
-          {% if cc.award_image %}<img class="award-img" src="{{ cc.award_image }}">{% endif %}
-          <div style="font-size:13px;">PROUD RECIPIENT</div>
-          <div style="font-size:20px;margin-top:10px;">{{ cc.award_title }}</div>
-          <div style="font-size:26px;margin-top:8px;">{{ cc.award_subtitle }}</div>
-          <div style="font-size:15px;margin-top:14px;">Honoring 100+ years<br>of business in Indiana</div>
+        <div class="welcome-box">
+          <div class="welcome-icon">♙</div>
+          <div class="welcome-divider"></div>
+          <div>
+            <div>Welcome back,</div>
+            <b>{{ user_name }}</b>
+            <div>Let’s make today legendary.</div>
+          </div>
         </div>
       </div>
-    </div>
 
-    <div class="welcome">
-      Welcome back, <b>{{ user_name }}</b>.<br>
-      Here’s what’s happening across your operation.
-    </div>
+      <div class="crest-stage">
+        <img class="main-crest" src="{{ crest }}" alt="Heinlin crest">
+      </div>
 
-    <div class="attention-row">
-      <div class="attention-card"><div class="attention-num">{{ attention.today_jobs }}</div><div class="attention-label">Jobs Today</div></div>
-      <div class="attention-card"><div class="attention-num">{{ attention.active_crew }}</div><div class="attention-label">Crew Clocked In</div></div>
-      <div class="attention-card"><div class="attention-num">{{ attention.pool_alerts }}</div><div class="attention-label">Pool Alerts</div></div>
-      <div class="attention-card"><div class="attention-num">{{ attention.open_invoices }}</div><div class="attention-label">Open Invoices</div></div>
-      <div class="attention-card"><div class="attention-num">{{ attention.legacy_lessons }}</div><div class="attention-label">Legacy Lessons</div></div>
-    </div>
+      <div class="award-box">
+        <div class="small-title">Proud Recipient</div>
+        <div class="award-title">{{ cc.award_title }}</div>
+        <div class="award-subtitle">{{ cc.award_subtitle }}</div>
+        {% if cc.award_image %}<img class="award-img" src="{{ cc.award_image }}" alt="Centennial Business Award certificate">{% endif %}
+        <div class="gold-line" style="margin-left:auto;margin-right:auto;width:170px;"></div>
+        <div style="font-size:19px;line-height:1.25;">Honoring 100+ years<br>of business in Indiana</div>
+      </div>
+    </section>
 
-    <div class="card-grid">
+    <section class="attention-row">
+      <div class="attention-card"><div class="attention-num">{{ attention.clients or 309 }}</div><div class="attention-label">Clients</div></div>
+      <div class="attention-card"><div class="attention-num">{{ attention.properties or 285 }}</div><div class="attention-label">Properties</div></div>
+      <div class="attention-card"><div class="attention-num">{{ attention.jobs or 9 }}</div><div class="attention-label">Jobs</div></div>
+      <div class="attention-card"><div class="attention-num">{{ attention.employees or 3 }}</div><div class="attention-label">Employees</div></div>
+      <div class="attention-card"><div class="attention-num">{{ attention.today_jobs }}</div><div class="attention-label">Today's Jobs</div></div>
+    </section>
+
+    <div class="quick-title">Quick Actions</div>
+    <section class="quick-grid">
       {% for card in cc.cards %}
-      <div class="legacy-card" style="--img:url('{{ card.image }}')">
-        <div class="card-inner">
-          <div class="icon-circle">{{ card.icon }}</div>
-          <div class="card-title">{{ card.title }}</div>
-          <div class="card-sub">{{ card.subtitle }}</div>
-          <a class="card-btn" href="{{ card.href }}">{{ card.button }}</a>
-        </div>
-      </div>
+        <a class="quick-card" href="{{ card.href }}">
+          <div class="quick-icon">{{ card.icon }}</div>
+          <div class="quick-name">{{ card.title }}</div>
+          <div class="quick-sub">{{ card.button }}</div>
+        </a>
       {% endfor %}
+    </section>
+
+    <div class="footer-line">
+      Built by the hands that perfected the term “work hard play harder.”<br>
+      Founded 1907 • 5 Generations Strong
     </div>
-
-    <form class="search-row" action="/jarvis/search" method="get">
-      <input name="q" placeholder="Search everything...">
-      <div class="tip">Pro Tip: Use Jarvis to find anything fast. Try “show me all MasterTemp repairs”</div>
-    </form>
-  </main>
-</div>
-
-<script>
-function toggleLegacySidebar() {
-  const wrap = document.getElementById("legacyWrap");
-  wrap.classList.toggle("sidebar-collapsed");
-  localStorage.setItem(
-    "heinlinSidebarCollapsed",
-    wrap.classList.contains("sidebar-collapsed") ? "yes" : "no"
-  );
-}
-
-document.addEventListener("DOMContentLoaded", function () {
-  const wrap = document.getElementById("legacyWrap");
-  if (localStorage.getItem("heinlinSidebarCollapsed") === "yes") {
-    wrap.classList.add("sidebar-collapsed");
-  }
-});
-</script>
+  </div>
 </body>
 </html>
