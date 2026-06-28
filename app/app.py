@@ -417,6 +417,7 @@ def ensure_schema():
         con.close()
 
     for table, cols in {
+        "poolops2_users": [("active", "BOOLEAN DEFAULT true" if USE_POSTGRES else "INTEGER DEFAULT 1")],
         "poolops2_clients": [("portal_username", "TEXT DEFAULT ''"), ("portal_password", "TEXT DEFAULT ''"), ("card_image", "TEXT DEFAULT ''")],
         "poolops2_properties": [("card_image", "TEXT DEFAULT ''"), ("pool_notes", "TEXT DEFAULT ''"), ("equipment_notes", "TEXT DEFAULT ''"), ("latitude", "REAL"), ("longitude", "REAL")],
         "poolops2_jobs": [("scheduled_start", "TEXT"), ("scheduled_end", "TEXT"), ("card_image", "TEXT DEFAULT ''")],
@@ -625,7 +626,7 @@ def require_login(request: Request):
 
 
 def is_admin(user):
-    return user and user.get("role") == "admin"
+    return user and str(user.get("role", "")).lower() == "admin"
 
 
 def is_client(user):
@@ -2132,7 +2133,7 @@ def current_user_identity(request: Request):
     user_email = user.get("email", "")
 
     return {
-        "id": str(user_id),
+        "id": f"{user_role}:{user_id}",
         "name": str(user_name),
         "role": str(user_role),
         "email": str(user_email),
@@ -2479,38 +2480,19 @@ async def time_clock_out(request: Request):
     exec_sql(
         """
         INSERT INTO hfo_location_points
-        (
-            session_id,
-            user_id,
-            user_name,
-            user_role,
-            lat,
-            lng,
-            accuracy,
-            captured_at
-        )
-        VALUES
-        (
-            :session_id,
-            :user_id,
-            :user_name,
-            :user_role,
-            :lat,
-            :lng,
-            :accuracy,
-            :captured_at
-        )
+        (session_id, user_id, user_name, user_role, lat, lng, accuracy, captured_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         """,
-        {
-            "session_id": open_session["id"],
-            "user_id": identity["id"],
-            "user_name": identity["name"],
-            "user_role": identity["role"],
-            "lat": str(form.get("lat", "")),
-            "lng": str(form.get("lng", "")),
-            "accuracy": str(form.get("accuracy", "")),
-            "captured_at": now,
-        },
+        (
+            open_session["id"],
+            identity["id"],
+            identity["name"],
+            identity["role"],
+            str(form.get("lat", "")),
+            str(form.get("lng", "")),
+            str(form.get("accuracy", "")),
+            now,
+        ),
     )
 
     return RedirectResponse("/time-clock", status_code=303)
@@ -2537,38 +2519,19 @@ async def time_clock_location(request: Request):
     exec_sql(
         """
         INSERT INTO hfo_location_points
-        (
-            session_id,
-            user_id,
-            user_name,
-            user_role,
-            lat,
-            lng,
-            accuracy,
-            captured_at
-        )
-        VALUES
-        (
-            :session_id,
-            :user_id,
-            :user_name,
-            :user_role,
-            :lat,
-            :lng,
-            :accuracy,
-            :captured_at
-        )
+        (session_id, user_id, user_name, user_role, lat, lng, accuracy, captured_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         """,
-        {
-            "session_id": open_session["id"],
-            "user_id": identity["id"],
-            "user_name": identity["name"],
-            "user_role": identity["role"],
-            "lat": str(form.get("lat", "")),
-            "lng": str(form.get("lng", "")),
-            "accuracy": str(form.get("accuracy", "")),
-            "captured_at": now,
-        },
+        (
+            open_session["id"],
+            identity["id"],
+            identity["name"],
+            identity["role"],
+            str(form.get("lat", "")),
+            str(form.get("lng", "")),
+            str(form.get("accuracy", "")),
+            now,
+        ),
     )
 
     return {"ok": True, "captured_at": now}
@@ -2880,17 +2843,6 @@ async def save_dashboard_card_images(request: Request):
         }
 
     design["dashboard_cards"] = dashboard_cards
-
-    DESIGN_FILE.write_text(json.dumps(design, indent=2), encoding="utf-8")
-
-    return RedirectResponse("/dashboard-card-images", status_code=303)
-
-    dashboard_theme = {
-        "pool_systems": str(form.get("pool_systems", "")).strip(),
-        "field_operations": str(form.get("field_operations", "")).strip(),
-        "business": str(form.get("business", "")).strip(),
-        "jarvis": str(form.get("jarvis", "")).strip(),
-    }
 
     DESIGN_FILE.write_text(json.dumps(design, indent=2), encoding="utf-8")
 
@@ -3471,7 +3423,13 @@ def crew(request: Request):
     u = require_login(request)
     if not u: return login_redirect()
     if not is_admin(u): return admin_redirect(u)
-    return templates.TemplateResponse("crew.html", ctx(request, employees=rows("SELECT * FROM poolops2_employees ORDER BY name")))
+    employee_rows = rows("""
+        SELECT *
+        FROM poolops2_employees
+        WHERE coalesce(name,'') <> ''
+        ORDER BY name
+    """)
+    return templates.TemplateResponse("crew.html", ctx(request, employees=employee_rows))
 
 @app.post("/crew/new")
 def crew_new(request: Request, name: str = Form("New Employee"), role: str = Form("Crew"), phone: str = Form(""), email: str = Form(""), username: str = Form(""), password: str = Form("")):
@@ -3647,6 +3605,7 @@ def employee_profile_save(request: Request, name: str = Form(""), phone: str = F
     exec_sql("UPDATE poolops2_employees SET name=?, phone=?, email=?, username=?, password=? WHERE id=?", (name, phone, email, username, password, u.get("id")))
     u.update({"name": name, "username": username})
     request.session["user"] = u
+    return RedirectResponse("/employee", status_code=303)
     
 
 @app.post("/employee/clock")
