@@ -4931,6 +4931,28 @@ def invisible_office_search(request: Request, q: str = ""):
             return "/quickbooks"
         return "/invisible-office"
 
+@app.get("/admin/users", response_class=HTMLResponse)
+def admin_users_page(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    if not is_admin(u):
+        return admin_redirect(u)
+
+    admin_users = rows("SELECT * FROM poolops2_users ORDER BY id")
+    employees = rows("SELECT * FROM poolops2_employees ORDER BY id")
+    clients = rows("SELECT * FROM poolops2_clients ORDER BY name")
+
+    return templates.TemplateResponse(
+        "admin_users.html",
+        ctx(
+            request,
+            admin_users=admin_users,
+            employees=employees,
+            clients=clients,
+        )
+    )
+
     def add_result(kind, title, detail, url, badge=""):
         results.append({"kind": kind, "title": title, "detail": detail, "url": url, "badge": badge})
 
