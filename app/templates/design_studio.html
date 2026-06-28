@@ -142,6 +142,55 @@
   <form method="post" action="/design-studio">
 
     <div class="studio-grid">
+      
+<section class="card" style="margin-top: 22px;">
+  <h2>Dashboard Card Background Images</h2>
+  <p>Use image paths like /static/your-image.jpg or a full image URL.</p>
+
+  {% set dash_cards = design.get("dashboard_cards", {}) if design else {} %}
+
+  <label>Accounts Card Background</label>
+  <input
+    name="dashboard_card_accounts"
+    value="{{ dash_cards.get('accounts', '') }}"
+    placeholder="/static/accounts.jpg"
+  >
+
+  <label>Today Card Background</label>
+  <input
+    name="dashboard_card_today"
+    value="{{ dash_cards.get('today', '') }}"
+    placeholder="/static/today.jpg"
+  >
+
+  <label>Pool Systems Card Background</label>
+  <input
+    name="dashboard_card_pool_systems"
+    value="{{ dash_cards.get('pool_systems', '') }}"
+    placeholder="/static/pool-systems.jpg"
+  >
+
+  <label>Field Operations Card Background</label>
+  <input
+    name="dashboard_card_field_operations"
+    value="{{ dash_cards.get('field_operations', '') }}"
+    placeholder="/static/field-ops.jpg"
+  >
+
+  <label>Business Card Background</label>
+  <input
+    name="dashboard_card_business"
+    value="{{ dash_cards.get('business', '') }}"
+    placeholder="/static/business.jpg"
+  >
+
+  <label>Jarvis Card Background</label>
+  <input
+    name="dashboard_card_jarvis"
+    value="{{ dash_cards.get('jarvis', '') }}"
+    placeholder="/static/jarvis.jpg"
+  >
+</section>
 
       <section class="studio-panel">
         <h2>Login Page</h2>

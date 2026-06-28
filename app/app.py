@@ -15,7 +15,8 @@ import uuid
 import boto3
 import csv
 import io
-import re 
+import re
+import html
 try:
     import psycopg
     from psycopg.rows import dict_row
@@ -433,6 +434,7 @@ def ensure_schema():
 @app.on_event("startup")
 def startup():
     ensure_schema()
+    ensure_legacy_schema()
     print("HEINLIN FIELD OPS READY")
 
 
@@ -636,7 +638,7 @@ def is_employee(user):
 
 def admin_redirect(user):
     if is_client(user):
-        return RedirectResponse("/jarvis", status_code=303)
+        return RedirectResponse("/client-portal", status_code=303)
     if is_employee(user):
         return RedirectResponse("/employee", status_code=303)
     return login_redirect()
@@ -918,7 +920,7 @@ def login_post(request: Request, username: str = Form(""), password: str = Form(
                 "role": "employee",
                 "name": e.get("name") or e.get("username") or username
             }
-            return RedirectResponse("/jarvis", status_code=303)
+            return RedirectResponse("/employee", status_code=303)
 
     # 3. Crew/employee fallback from users table
     crew_user = one(
@@ -938,7 +940,7 @@ def login_post(request: Request, username: str = Form(""), password: str = Form(
             "role": "employee",
             "name": crew_user.get("name") or crew_user.get("username") or username
         }
-        return RedirectResponse("/jarvis", status_code=303)
+        return RedirectResponse("/employee", status_code=303)
 
     # 4. Client portal login
     c = one(
@@ -957,7 +959,7 @@ def login_post(request: Request, username: str = Form(""), password: str = Form(
             "role": "client",
             "name": c["name"]
         }
-        return RedirectResponse("/jarvis", status_code=303)
+        return RedirectResponse("/client-portal", status_code=303)
 
     return templates.TemplateResponse(
         "login.html",
@@ -1019,26 +1021,25 @@ def jarvis_landing(request: Request):
     if not u:
         return login_redirect()
 
-    hour = datetime.now().hour
+    if is_employee(u):
+        return RedirectResponse("/crew-dashboard", status_code=303)
 
-    if hour < 12:
-        greeting = "Good morning"
-    elif hour < 17:
-        greeting = "Good afternoon"
-    else:
-        greeting = "Good evening"
+    if is_client(u):
+        return RedirectResponse("/client-dashboard", status_code=303)
 
-    today = date.today().isoformat()
+    ensure_legacy_schema()
+    design = design_settings()
+    command_center = command_center_settings(design)
+    attention = command_center_attention(u)
 
     return templates.TemplateResponse(
-        "jarvis.html",
+        "legacy_command_center.html",
         ctx(
             request,
-            today=today,
-            greeting=greeting,
+            command_center=command_center,
+            attention=attention,
         )
     )
-
 # ============================================================
 # HEINLIN FIELD OPS - ORGANIZED DASHBOARD SECTIONS
 # ============================================================
@@ -1131,6 +1132,12 @@ DASHBOARD_SECTIONS = {
                 "url": "/employee",
                 "button": "Open Employee Dashboard",
             },
+            {
+    "title": "Time Clock",
+    "subtitle": "Clock in/out and GPS tracking for admins, employees, and crew.",
+    "url": "/time-clock",
+    "button": "Open Time Clock",
+},
             {
                 "title": "Crew List",
                 "subtitle": "Crew records, employees, and field users.",
@@ -1227,6 +1234,12 @@ DASHBOARD_SECTIONS = {
         "subtitle": "AI system tools.",
         "description": "The Jarvis section is now cleaned up to show only the AI Systems card.",
         "items": [
+            {
+                "title": "Legacy Library",
+                "subtitle": "Lessons learned, standards, fixes, and Heinlin know-how from completed jobs.",
+                "url": "/legacy",
+                "button": "Open Legacy",
+            },
             {
                 "title": "AI Systems",
                 "subtitle": "Assistant and AI system tools.",
@@ -2025,6 +2038,8 @@ def dashboard_card_images_page(request: Request):
     u = require_login(request)
     if not u:
         return login_redirect()
+    if not is_admin(u):
+        return admin_redirect(u)
 
     design = design_settings()
     dashboard_cards = normalize_dashboard_cards(design)
@@ -2043,6 +2058,8 @@ async def save_dashboard_card_images(request: Request):
     u = require_login(request)
     if not u:
         return login_redirect()
+    if not is_admin(u):
+        return admin_redirect(u)
 
     form = await request.form()
 
@@ -2604,6 +2621,8 @@ def design_upload_page(request: Request):
     u = require_login(request)
     if not u:
         return login_redirect()
+    if not is_admin(u):
+        return admin_redirect(u)
 
     DESIGN_UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -2632,6 +2651,8 @@ async def save_design_upload(request: Request, image: UploadFile = File(...)):
     u = require_login(request)
     if not u:
         return login_redirect()
+    if not is_admin(u):
+        return admin_redirect(u)
 
     DESIGN_UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -2649,6 +2670,8 @@ def page_designer_page(request: Request):
     u = require_login(request)
     if not u:
         return login_redirect()
+    if not is_admin(u):
+        return admin_redirect(u)
 
     design = design_settings()
     pages = normalize_page_design(design)
@@ -2669,6 +2692,8 @@ async def save_page_designer(request: Request):
     u = require_login(request)
     if not u:
         return login_redirect()
+    if not is_admin(u):
+        return admin_redirect(u)
 
     form = await request.form()
 
@@ -2746,6 +2771,8 @@ def dashboard_card_images_page(request: Request):
     u = require_login(request)
     if not u:
         return login_redirect()
+    if not is_admin(u):
+        return admin_redirect(u)
 
     design = design_settings()
     dashboard_cards = normalize_dashboard_cards(design)
@@ -2764,6 +2791,8 @@ async def save_dashboard_card_images(request: Request):
     u = require_login(request)
     if not u:
         return login_redirect()
+    if not is_admin(u):
+        return admin_redirect(u)
 
     form = await request.form()
     design = design_settings()
@@ -2862,6 +2891,12 @@ def clients(request: Request):
     u = require_login(request)
     if not u:
         return login_redirect()
+
+    if is_client(u):
+        return RedirectResponse("/client-portal", status_code=303)
+
+    if not is_admin(u):
+        return admin_redirect(u)
 
     client_rows = rows(
         """
@@ -3011,13 +3046,21 @@ def properties(request: Request):
     if not u:
         return login_redirect()
 
-    property_rows = rows(
-        """
-        SELECT *
-        FROM poolops2_properties
-        ORDER BY id DESC
-        """
-    )
+    if is_employee(u):
+        return RedirectResponse("/employee", status_code=303)
+
+    if is_client(u):
+        property_rows = properties_for_user(u)
+    elif is_admin(u):
+        property_rows = rows(
+            """
+            SELECT *
+            FROM poolops2_properties
+            ORDER BY id DESC
+            """
+        )
+    else:
+        return login_redirect()
 
     return templates.TemplateResponse(
         "properties.html",
@@ -3122,13 +3165,10 @@ def jobs(request: Request):
     if not u:
         return login_redirect()
 
-    job_rows = rows(
-        """
-        SELECT *
-        FROM poolops2_jobs
-        ORDER BY id DESC
-        """
-    )
+    if is_client(u):
+        return RedirectResponse("/client-portal", status_code=303)
+
+    job_rows = jobs_for_user(u)
 
     return templates.TemplateResponse(
         "jobs.html",
@@ -3209,7 +3249,7 @@ def complete_job(job_id: int, request: Request):
         ("Complete", job_id)
     )
 
-    return RedirectResponse(f"/jobs/{job_id}", status_code=303)
+    return RedirectResponse(f"/jobs/{job_id}/legacy", status_code=303)
 
 @app.get("/schedule/year", response_class=HTMLResponse)
 def schedule_year(request: Request):
@@ -3757,6 +3797,495 @@ def client_portal(request: Request):
     return templates.TemplateResponse("client_portal.html", ctx(request, client=client, properties=props, photos=photos, jobs=jobs))
 
 
+
+# ============================================================
+# HEINLIN LEGACY - LESSONS, STANDARDS, AND JOB KNOWLEDGE
+# ============================================================
+
+def ensure_legacy_schema():
+    try:
+        exec_sql(
+            """
+            CREATE TABLE IF NOT EXISTS hfo_legacy_lessons (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                job_id INTEGER,
+                client TEXT DEFAULT '',
+                property TEXT DEFAULT '',
+                address TEXT DEFAULT '',
+                problem TEXT DEFAULT '',
+                cause TEXT DEFAULT '',
+                fix TEXT DEFAULT '',
+                lesson TEXT DEFAULT '',
+                standard_update TEXT DEFAULT '',
+                tags TEXT DEFAULT '',
+                created_by TEXT DEFAULT '',
+                created_at TEXT DEFAULT ''
+            )
+            """
+        )
+    except Exception:
+        exec_sql(
+            """
+            CREATE TABLE IF NOT EXISTS hfo_legacy_lessons (
+                id SERIAL PRIMARY KEY,
+                job_id INTEGER,
+                client TEXT DEFAULT '',
+                property TEXT DEFAULT '',
+                address TEXT DEFAULT '',
+                problem TEXT DEFAULT '',
+                cause TEXT DEFAULT '',
+                fix TEXT DEFAULT '',
+                lesson TEXT DEFAULT '',
+                standard_update TEXT DEFAULT '',
+                tags TEXT DEFAULT '',
+                created_by TEXT DEFAULT '',
+                created_at TEXT DEFAULT ''
+            )
+            """
+        )
+
+
+def _e(value):
+    return html.escape(str(value or ""))
+
+
+def legacy_shell(title, body, user=None):
+    return f"""
+    <!doctype html>
+    <html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>{_e(title)}</title>
+        <style>
+            body {{ margin:0; font-family:Arial, sans-serif; background:#071017; color:#f5efe2; }}
+            .wrap {{ max-width:1180px; margin:0 auto; padding:34px 18px 70px; }}
+            .top {{ display:flex; justify-content:space-between; gap:12px; align-items:center; flex-wrap:wrap; }}
+            h1 {{ margin:0; font-size:clamp(34px, 6vw, 74px); color:#d6b36a; letter-spacing:.04em; text-transform:uppercase; }}
+            .sub {{ color:#c9c1b0; font-size:18px; margin:8px 0 24px; }}
+            .card {{ background:rgba(255,255,255,.06); border:1px solid rgba(214,179,106,.35); border-radius:22px; padding:18px; margin:16px 0; box-shadow:0 16px 38px rgba(0,0,0,.35); }}
+            label {{ display:block; color:#d6b36a; font-weight:700; margin:14px 0 6px; }}
+            input, textarea {{ width:100%; box-sizing:border-box; background:#0b1720; color:#fff; border:1px solid rgba(214,179,106,.35); border-radius:14px; padding:12px; font-size:16px; }}
+            textarea {{ min-height:110px; }}
+            .btn, button {{ display:inline-block; background:#d6b36a; color:#071017; border:none; border-radius:999px; padding:12px 18px; font-weight:800; text-decoration:none; cursor:pointer; margin:4px 6px 4px 0; }}
+            .btn.dark {{ background:#10202c; color:#f5efe2; border:1px solid rgba(214,179,106,.45); }}
+            .grid {{ display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:14px; }}
+            .muted {{ color:#b8ae9d; }}
+            .pill {{ display:inline-block; padding:5px 10px; border:1px solid rgba(214,179,106,.5); border-radius:999px; color:#d6b36a; margin:2px; font-size:13px; }}
+            .lesson-title {{ font-size:22px; color:#fff; font-weight:800; margin-bottom:6px; }}
+        </style>
+    </head>
+    <body><div class="wrap">{body}</div></body>
+    </html>
+    """
+
+
+@app.get("/legacy", response_class=HTMLResponse)
+def legacy_library(request: Request, q: str = ""):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    if is_client(u):
+        return RedirectResponse("/client-portal", status_code=303)
+
+    ensure_legacy_schema()
+    q = (q or "").strip()
+
+    if q:
+        lessons = rows(
+            """
+            SELECT * FROM hfo_legacy_lessons
+            WHERE problem LIKE ? OR cause LIKE ? OR fix LIKE ? OR lesson LIKE ? OR standard_update LIKE ? OR tags LIKE ? OR client LIKE ? OR property LIKE ?
+            ORDER BY id DESC
+            LIMIT 200
+            """,
+            tuple([f"%{q}%"] * 8),
+        )
+    else:
+        lessons = rows("SELECT * FROM hfo_legacy_lessons ORDER BY id DESC LIMIT 200")
+
+    cards = []
+    for item in lessons:
+        tags = "".join(f'<span class="pill">{_e(t.strip())}</span>' for t in str(item.get("tags") or "").split(",") if t.strip())
+        job_link = f'<a class="btn dark" href="/jobs/{_e(item.get("job_id"))}">Open Job</a>' if item.get("job_id") else ""
+        cards.append(f"""
+        <div class="card">
+            <div class="lesson-title">{_e(item.get('problem') or 'Legacy Lesson')}</div>
+            <div class="muted">{_e(item.get('client'))} • {_e(item.get('property'))} • {_e(item.get('created_at'))}</div>
+            <p><b>Cause:</b> {_e(item.get('cause'))}</p>
+            <p><b>Fix:</b> {_e(item.get('fix'))}</p>
+            <p><b>What we learned:</b> {_e(item.get('lesson'))}</p>
+            <p><b>Heinlin Standard:</b> {_e(item.get('standard_update'))}</p>
+            <div>{tags}</div>
+            <div style="margin-top:12px;">{job_link}</div>
+        </div>
+        """)
+
+    body = f"""
+    <div class="top">
+        <div>
+            <h1>Heinlin Legacy</h1>
+            <div class="sub">Jobs → Photos → Notes → Lessons → Standards. This is the digital apprenticeship system.</div>
+        </div>
+        <div>
+            <a class="btn dark" href="/jarvis">Dashboard</a>
+            <a class="btn dark" href="/jobs">Jobs</a>
+        </div>
+    </div>
+    <form method="get" action="/legacy" class="card">
+        <label>Search the Heinlin playbook</label>
+        <input name="q" value="{_e(q)}" placeholder="heater, IntelliFlo3, concrete, winterize, valve actuator, skimmer leak...">
+        <button type="submit">Search Legacy</button>
+    </form>
+    <div class="grid">
+        {''.join(cards) if cards else '<div class="card"><b>No legacy lessons yet.</b><p class="muted">Complete a job, answer what we learned, and this library starts building itself.</p></div>'}
+    </div>
+    """
+    return HTMLResponse(legacy_shell("Heinlin Legacy", body, u))
+
+
+@app.get("/jobs/{job_id}/legacy", response_class=HTMLResponse)
+def job_legacy_review(request: Request, job_id: int):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    if is_client(u):
+        return RedirectResponse("/client-portal", status_code=303)
+
+    ensure_legacy_schema()
+    job = one("SELECT * FROM poolops2_jobs WHERE id=?", (job_id,))
+    if not job or not employee_can_access_job(u, job):
+        return admin_redirect(u)
+
+    existing = rows("SELECT * FROM hfo_legacy_lessons WHERE job_id=? ORDER BY id DESC", (job_id,))
+    existing_html = "".join(f"""
+        <div class="card">
+            <b>{_e(x.get('problem'))}</b>
+            <p><b>Lesson:</b> {_e(x.get('lesson'))}</p>
+            <p class="muted">Saved by {_e(x.get('created_by'))} at {_e(x.get('created_at'))}</p>
+        </div>
+    """ for x in existing)
+
+    body = f"""
+    <div class="top">
+        <div>
+            <h1>What Did We Learn?</h1>
+            <div class="sub">{_e(job.get('client'))} • {_e(job.get('property'))} • {_e(job.get('address'))}</div>
+        </div>
+        <div>
+            <a class="btn dark" href="/jobs/{job_id}">Back to Job</a>
+            <a class="btn dark" href="/legacy">Legacy Library</a>
+        </div>
+    </div>
+    <form class="card" method="post" action="/jobs/{job_id}/legacy">
+        <label>Problem found</label>
+        <textarea name="problem" placeholder="What was wrong, unusual, risky, expensive, confusing, or important on this job?"></textarea>
+
+        <label>Cause</label>
+        <textarea name="cause" placeholder="What caused it? Bad install, freeze damage, poor flow, wiring mistake, settling, corrosion, hidden valve, customer operation, etc."></textarea>
+
+        <label>Fix</label>
+        <textarea name="fix" placeholder="Exactly how did Heinlin fix it?"></textarea>
+
+        <label>What did we learn here?</label>
+        <textarea name="lesson" placeholder="The lesson future crews need to know before they hit this problem again."></textarea>
+
+        <label>Heinlin Standard / Playbook Update</label>
+        <textarea name="standard_update" placeholder="From now on, how should Heinlin handle this situation?"></textarea>
+
+        <label>Tags</label>
+        <input name="tags" placeholder="Pentair, heater, relay, winterization, concrete, liner, plumbing">
+
+        <button type="submit">Save to Heinlin Legacy</button>
+    </form>
+    {existing_html}
+    """
+    return HTMLResponse(legacy_shell("Legacy Review", body, u))
+
+
+@app.post("/jobs/{job_id}/legacy")
+def job_legacy_save(
+    request: Request,
+    job_id: int,
+    problem: str = Form(""),
+    cause: str = Form(""),
+    fix: str = Form(""),
+    lesson: str = Form(""),
+    standard_update: str = Form(""),
+    tags: str = Form(""),
+):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    if is_client(u):
+        return RedirectResponse("/client-portal", status_code=303)
+
+    ensure_legacy_schema()
+    job = one("SELECT * FROM poolops2_jobs WHERE id=?", (job_id,))
+    if not job or not employee_can_access_job(u, job):
+        return admin_redirect(u)
+
+    exec_sql(
+        """
+        INSERT INTO hfo_legacy_lessons
+        (job_id, client, property, address, problem, cause, fix, lesson, standard_update, tags, created_by, created_at)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
+        """,
+        (
+            job_id,
+            job.get("client", ""),
+            job.get("property", ""),
+            job.get("address", ""),
+            problem.strip(),
+            cause.strip(),
+            fix.strip(),
+            lesson.strip(),
+            standard_update.strip(),
+            tags.strip(),
+            u.get("name") or u.get("username") or "",
+            datetime.now().isoformat(timespec="seconds"),
+        ),
+    )
+
+    return RedirectResponse("/legacy", status_code=303)
+
+
+
+
+# ============================================================
+# HEINLIN LEGACY COMMAND CENTER - EDITABLE DASHBOARD + PROPERTY BRAIN
+# ============================================================
+
+COMMAND_CENTER_DEFAULT = {
+    "crest_image": "/static/heinlin-wide-crest.png",
+    "background_image": "/static/uploads/20260614_111449_87a15917.jpg",
+    "award_image": "",
+    "award_title": "Indiana Historical Society",
+    "award_subtitle": "CENTENNIAL BUSINESS AWARD",
+    "weather_location": "Evansville, IN",
+    "motto": "Built by the hands that perfected the term “work hard play harder.”",
+    "cards": [
+        {"key": "accounts", "title": "ACCOUNTS", "subtitle": "Manage clients, properties, contacts, and relationships.", "href": "/accounts", "button": "View Accounts", "icon": "👥", "image": "/static/uploads/fountain.jpg", "enabled": True, "order": 10},
+        {"key": "today", "title": "TODAY", "subtitle": "Daily schedule, weather, map, and crew overview.", "href": "/today-dashboard", "button": "Open Today", "icon": "📅", "image": "/static/uploads/pate.jpg", "enabled": True, "order": 20},
+        {"key": "pool_systems", "title": "POOL SYSTEMS", "subtitle": "Pentair monitoring, equipment notes, and system status.", "href": "/pool-systems", "button": "View Systems", "icon": "⚙", "image": "/static/uploads/McCord.jpg", "enabled": True, "order": 30},
+        {"key": "field_operations", "title": "FIELD OPERATIONS", "subtitle": "Crew tools, field logs, GPS, time clock, and site records.", "href": "/field-operations", "button": "Open Field Ops", "icon": "⛑", "image": "/static/uploads/maria.jpg", "enabled": True, "order": 40},
+        {"key": "business", "title": "BUSINESS", "subtitle": "Estimates, invoices, job costing, QuickBooks, and reporting.", "href": "/business", "button": "Open Business", "icon": "↗", "image": "/static/uploads/boger.jpg", "enabled": True, "order": 50},
+        {"key": "legacy", "title": "LEGACY LIBRARY", "subtitle": "Lessons learned, repairs, standards, and company knowledge.", "href": "/legacy", "button": "Open Library", "icon": "📖", "image": "/static/uploads/fountain.jpg", "enabled": True, "order": 60},
+        {"key": "jarvis", "title": "JARVIS", "subtitle": "Ask Jarvis anything. Get answers, ideas, and solutions.", "href": "/ai-systems", "button": "Talk to Jarvis", "icon": "⛲", "image": "/static/uploads/maria.jpg", "enabled": True, "order": 70},
+        {"key": "schedule", "title": "SCHEDULE", "subtitle": "View calendar, crew schedule, and client appointments.", "href": "/schedule/year", "button": "Open Schedule", "icon": "🗓", "image": "/static/uploads/pate.jpg", "enabled": True, "order": 80},
+        {"key": "photos", "title": "PHOTOS", "subtitle": "Job photos, before/after, equipment, and uploads.", "href": "/photos", "button": "View Photos", "icon": "📷", "image": "/static/uploads/McCord.jpg", "enabled": True, "order": 90},
+        {"key": "map", "title": "MAP", "subtitle": "Job sites, client locations, routes, and directions.", "href": "/map", "button": "Open Map", "icon": "📍", "image": "/static/uploads/boger.jpg", "enabled": True, "order": 100},
+    ],
+}
+
+
+def command_center_settings(design=None):
+    design = design or design_settings()
+    data = json.loads(json.dumps(COMMAND_CENTER_DEFAULT))
+    saved = design.get("command_center", {}) if isinstance(design, dict) else {}
+
+    for key in ["crest_image", "background_image", "award_image", "award_title", "award_subtitle", "weather_location", "motto"]:
+        if str(saved.get(key, "")).strip():
+            data[key] = str(saved.get(key)).strip()
+
+    # Pull old card-image settings forward so your existing Dashboard Card Images page still matters.
+    old_cards = normalize_dashboard_cards(design) if isinstance(design, dict) else {}
+
+    saved_cards = saved.get("cards", [])
+    saved_by_key = {}
+    if isinstance(saved_cards, list):
+        for card in saved_cards:
+            if isinstance(card, dict) and card.get("key"):
+                saved_by_key[str(card.get("key"))] = card
+
+    final_cards = []
+    for default_card in data["cards"]:
+        card = default_card.copy()
+        key = card["key"]
+
+        if key in old_cards and old_cards[key].get("image"):
+            card["image"] = old_cards[key].get("image")
+
+        if key in saved_by_key:
+            for field in ["title", "subtitle", "href", "button", "icon", "image"]:
+                if str(saved_by_key[key].get(field, "")).strip():
+                    card[field] = str(saved_by_key[key].get(field)).strip()
+            card["enabled"] = str(saved_by_key[key].get("enabled", card.get("enabled", True))).lower() not in ("0", "false", "off", "no")
+            try:
+                card["order"] = int(saved_by_key[key].get("order", card.get("order", 100)))
+            except Exception:
+                card["order"] = default_card.get("order", 100)
+
+        final_cards.append(card)
+
+    data["cards"] = sorted([c for c in final_cards if c.get("enabled", True)], key=lambda c: c.get("order", 100))
+    data["all_cards"] = sorted(final_cards, key=lambda c: c.get("order", 100))
+    return data
+
+
+def command_center_attention(user):
+    today = date.today().isoformat()
+    attention = {
+        "today_jobs": 0,
+        "active_crew": 0,
+        "pool_alerts": 0,
+        "open_invoices": 0,
+        "legacy_lessons": 0,
+        "recent_lessons": [],
+    }
+
+    try:
+        attention["today_jobs"] = len([j for j in jobs_for_user(user) if schedule_date(j) == today])
+    except Exception:
+        pass
+
+    try:
+        if is_admin(user):
+            attention["active_crew"] = len(rows("SELECT id FROM poolops2_employees WHERE clocked_in=?", (True if USE_POSTGRES else 1,)))
+    except Exception:
+        pass
+
+    try:
+        attention["pool_alerts"] = len(rows("SELECT id FROM pool_monitoring WHERE coalesce(current_alert,'')<>''"))
+    except Exception:
+        pass
+
+    try:
+        if is_admin(user):
+            attention["open_invoices"] = len(rows("SELECT id FROM poolops2_invoices WHERE lower(coalesce(status,'')) NOT IN ('paid','closed')"))
+    except Exception:
+        pass
+
+    try:
+        attention["legacy_lessons"] = len(rows("SELECT id FROM hfo_legacy_lessons"))
+        attention["recent_lessons"] = rows("SELECT * FROM hfo_legacy_lessons ORDER BY id DESC LIMIT 3")
+    except Exception:
+        pass
+
+    return attention
+
+
+@app.get("/command-center-design", response_class=HTMLResponse)
+def command_center_design_page(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    if not is_admin(u):
+        return admin_redirect(u)
+
+    design = design_settings()
+    command_center = command_center_settings(design)
+
+    return templates.TemplateResponse(
+        "command_center_design.html",
+        ctx(request, command_center=command_center)
+    )
+
+
+@app.post("/command-center-design")
+async def command_center_design_save(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    if not is_admin(u):
+        return admin_redirect(u)
+
+    form = await request.form()
+    design = design_settings()
+    current = command_center_settings(design)
+
+    saved = {
+        "crest_image": str(form.get("crest_image", current.get("crest_image", ""))).strip(),
+        "background_image": str(form.get("background_image", current.get("background_image", ""))).strip(),
+        "award_image": str(form.get("award_image", current.get("award_image", ""))).strip(),
+        "award_title": str(form.get("award_title", current.get("award_title", ""))).strip(),
+        "award_subtitle": str(form.get("award_subtitle", current.get("award_subtitle", ""))).strip(),
+        "weather_location": str(form.get("weather_location", current.get("weather_location", ""))).strip(),
+        "motto": str(form.get("motto", current.get("motto", ""))).strip(),
+        "cards": [],
+    }
+
+    for card in current.get("all_cards", current.get("cards", [])):
+        key = card.get("key")
+        saved["cards"].append({
+            "key": key,
+            "title": str(form.get(f"{key}_title", card.get("title", ""))).strip(),
+            "subtitle": str(form.get(f"{key}_subtitle", card.get("subtitle", ""))).strip(),
+            "href": str(form.get(f"{key}_href", card.get("href", ""))).strip(),
+            "button": str(form.get(f"{key}_button", card.get("button", ""))).strip(),
+            "icon": str(form.get(f"{key}_icon", card.get("icon", ""))).strip(),
+            "image": str(form.get(f"{key}_image", card.get("image", ""))).strip(),
+            "order": str(form.get(f"{key}_order", card.get("order", 100))).strip(),
+            "enabled": str(form.get(f"{key}_enabled", "")).lower() in ("1", "true", "on", "yes"),
+        })
+
+    design["command_center"] = saved
+    save_design_settings(design)
+
+    return RedirectResponse("/command-center-design", status_code=303)
+
+
+@app.get("/properties/{property_id}/brain", response_class=HTMLResponse)
+@app.get("/property-brain/{property_id}", response_class=HTMLResponse)
+def property_brain(request: Request, property_id: int):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+
+    prop = one("SELECT * FROM poolops2_properties WHERE id=?", (property_id,))
+    if not prop or not property_can_access(u, prop):
+        return admin_redirect(u)
+
+    cname = prop.get("client", "")
+    client = None
+    if prop.get("client_id"):
+        client = one("SELECT * FROM poolops2_clients WHERE id=?", (prop.get("client_id"),))
+    if not client and cname:
+        client = one("SELECT * FROM poolops2_clients WHERE name=?", (cname,))
+
+    jobs = rows(
+        """
+        SELECT * FROM poolops2_jobs
+        WHERE address=? OR property=? OR client=?
+        ORDER BY id DESC
+        """,
+        (prop.get("address", ""), prop.get("property_name", ""), cname),
+    )
+    photos = rows("SELECT * FROM poolops2_photo_logs WHERE property_id=? OR client=? ORDER BY id DESC LIMIT 80", (property_id, cname))
+    equipment = rows("SELECT * FROM poolops2_equipment WHERE property_id=? ORDER BY id DESC", (property_id,))
+
+    ensure_legacy_schema()
+    lessons = rows(
+        """
+        SELECT * FROM hfo_legacy_lessons
+        WHERE address=? OR property=? OR client=?
+        ORDER BY id DESC
+        LIMIT 60
+        """,
+        (prop.get("address", ""), prop.get("property_name", ""), cname),
+    )
+
+    return templates.TemplateResponse(
+        "property_brain.html",
+        ctx(
+            request,
+            prop=prop,
+            client=client,
+            jobs=jobs,
+            photos=photos,
+            equipment=equipment,
+            lessons=lessons,
+        )
+    )
+
+
+@app.get("/legacy-dashboard", response_class=HTMLResponse)
+def legacy_dashboard_alias(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    return RedirectResponse("/legacy", status_code=303)
+
 @app.get("/estimates", response_class=HTMLResponse)
 def estimates(request: Request):
     u = require_login(request)
@@ -4065,6 +4594,8 @@ def billing_page(request: Request):
     u = require_login(request)
     if not u:
         return login_redirect()
+    if not is_admin(u):
+        return admin_redirect(u)
 
     invoice_rows = rows(
         """
@@ -4122,6 +4653,8 @@ def invisible_office(request: Request):
     u = require_login(request)
     if not u:
         return login_redirect()
+    if not is_admin(u):
+        return admin_redirect(u)
 
     items = rows("SELECT * FROM invisible_office_items ORDER BY id DESC")
 

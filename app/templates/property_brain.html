@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+body.hfo-body { background:#071017 !important; }
+.brain-wrap { max-width:1220px; margin:0 auto; padding:34px 18px 70px; color:#f5efe2; }
+h1 { color:#d6b36a; font-size:clamp(38px,6vw,78px); margin:0; text-transform:uppercase; }
+.sub { color:#c9c1b0; margin:8px 0 22px; font-size:18px; }
+.grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:14px; }
+.card { border:1px solid rgba(214,179,106,.35); border-radius:22px; background:rgba(255,255,255,.06); padding:18px; margin:14px 0; }
+.card h2 { margin-top:0; color:#d6b36a; }
+.btn { display:inline-block; background:#d6b36a; color:#071017; border-radius:999px; padding:11px 17px; font-weight:900; text-decoration:none; margin:4px; }
+.btn.dark { background:#10202c; color:#f5efe2; border:1px solid rgba(214,179,106,.45); }
+.photo-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:10px; }
+.photo-grid img { width:100%; height:120px; object-fit:cover; border-radius:14px; border:1px solid rgba(214,179,106,.25); }
+.muted { color:#b8ae9d; }
+.item { border-top:1px solid rgba(255,255,255,.1); padding:10px 0; }
+</style>
+
+<div class="brain-wrap">
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;">
+    <div>
+      <h1>Property Brain</h1>
+      <div class="sub">{{ prop.client }} • {{ prop.property_name or prop.address }} • {{ prop.address }}</div>
+    </div>
+    <div>
+      <a class="btn dark" href="/properties/{{ prop.id }}">Property Card</a>
+      <a class="btn dark" href="/jarvis">Dashboard</a>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <h2>Owner</h2>
+      {% if client %}
+        <p><b>{{ client.name }}</b></p>
+        <p>{{ client.phone }} {{ client.mobile }}</p>
+        <p>{{ client.email }}</p>
+      {% else %}
+        <p class="muted">No client record linked.</p>
+      {% endif %}
+    </div>
+
+    <div class="card">
+      <h2>Pool Specs</h2>
+      <p><b>Type:</b> {{ prop.pool_type }}</p>
+      <p><b>Size:</b> {{ prop.pool_size }}</p>
+      <p><b>Depth:</b> {{ prop.pool_depth }}</p>
+      <p><b>Finish:</b> {{ prop.finish_type }}</p>
+      <p><b>Cover:</b> {{ prop.cover_type }}</p>
+    </div>
+
+    <div class="card">
+      <h2>Access + Notes</h2>
+      <p><b>Gate Code:</b> {{ prop.gate_code }}</p>
+      <p><b>Service Plan:</b> {{ prop.service_plan }}</p>
+      <p>{{ prop.notes }}</p>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <h2>Equipment</h2>
+      <p><b>Pump:</b> {{ prop.pump_model }}</p>
+      <p><b>Filter:</b> {{ prop.filter_model }}</p>
+      <p><b>Heater:</b> {{ prop.heater_model }}</p>
+      <p><b>Sanitizer:</b> {{ prop.sanitizer }}</p>
+      <p><b>Automation:</b> {{ prop.automation_system }}</p>
+
+      {% for e in equipment %}
+      <div class="item">
+        <b>{{ e.equipment_type }}</b> {{ e.brand }} {{ e.model }}<br>
+        <span class="muted">{{ e.serial }} {{ e.notes }}</span>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div class="card">
+      <h2>Service History</h2>
+      {% for job in jobs %}
+      <div class="item">
+        <b>{{ job.job_type }}</b> — {{ job.status }}<br>
+        <span class="muted">{{ job.date or job.scheduled_start }} • {{ job.crew }}</span><br>
+        <a class="btn dark" href="/jobs/{{ job.id }}">Open Job</a>
+      </div>
+      {% else %}
+      <p class="muted">No jobs found for this property yet.</p>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Legacy Lessons</h2>
+    {% for lesson in lessons %}
+    <div class="item">
+      <b>{{ lesson.problem }}</b>
+      <p><b>Fix:</b> {{ lesson.fix }}</p>
+      <p><b>What we learned:</b> {{ lesson.lesson }}</p>
+      <p class="muted">{{ lesson.tags }} • {{ lesson.created_at }}</p>
+    </div>
+    {% else %}
+    <p class="muted">No legacy lessons tied to this property yet.</p>
+    {% endfor %}
+  </div>
+
+  <div class="card">
+    <h2>Photos</h2>
+    <div class="photo-grid">
+      {% for ph in photos %}
+        {% if ph.photo_url %}
+        <a href="{{ ph.photo_url }}"><img src="{{ ph.photo_url }}" alt="{{ ph.title }}"></a>
+        {% endif %}
+      {% else %}
+        <p class="muted">No photos found.</p>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+{% endblock %}
