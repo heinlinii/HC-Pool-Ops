@@ -1,12 +1,17 @@
-{% extends "base.html" %}
-{% block content %}
-
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Heinlin Legacy Command Center</title>
 {% set cc = command_center %}
 {% set bg = cc.background_image %}
 {% set crest = cc.crest_image %}
 {% set user_name = user.name or user.username %}
 
 <style>
+html, body { margin:0; padding:0; min-height:100%; background:#030608; overflow:hidden; }
+body.legacy-body { background:#030608; color:#fff; }
 body.hfo-body {
   background:#05090d !important;
 }
@@ -173,6 +178,8 @@ body.hfo-body::after {
   background-image:none !important;
 }
 </style>
+</head>
+<body class="legacy-body">
 
 <button class="sidebar-toggle" type="button" onclick="toggleLegacySidebar()">☰</button>
 
@@ -277,5 +284,5 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 });
 </script>
-
-{% endblock %}
+</body>
+</html>
