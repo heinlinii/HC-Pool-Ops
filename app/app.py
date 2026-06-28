@@ -53,7 +53,6 @@ app.add_middleware(SessionMiddleware, secret_key="heinlin-field-ops-local-secret
 app.mount("/static", StaticFiles(directory=str(ROOT / "app" / "static")), name="static")
 templates = Jinja2Templates(directory=str(ROOT / "app" / "templates"))
 app.include_router(pool_monitoring.router)
-
 DEFAULT_THEME = {
     "title": "HEINLIN FIELD OPS",
     "subtitle": "Got pool related troubles? Ready to enter your work performed, materials used, problems found, reminders, and operational memory? Click on the fountain and tell Jarvis! He'll take care of the rest!",
@@ -4251,8 +4250,23 @@ def property_brain(request: Request, property_id: int):
         """,
         (prop.get("address", ""), prop.get("property_name", ""), cname),
     )
-    photos = rows("SELECT * FROM poolops2_photo_logs WHERE property_id=? OR client=? ORDER BY id DESC LIMIT 80", (property_id, cname))
+
+    photos = rows(
+        "SELECT * FROM poolops2_photo_logs WHERE property_id=? OR client=? ORDER BY id DESC LIMIT 100",
+        (property_id, cname),
+    )
+
     equipment = rows("SELECT * FROM poolops2_equipment WHERE property_id=? ORDER BY id DESC", (property_id,))
+
+    field_log_rows = rows(
+        """
+        SELECT * FROM field_logs
+        WHERE property=? OR address=? OR client=?
+        ORDER BY id DESC
+        LIMIT 80
+        """,
+        (prop.get("property_name", ""), prop.get("address", ""), cname),
+    )
 
     ensure_legacy_schema()
     lessons = rows(
@@ -4260,10 +4274,72 @@ def property_brain(request: Request, property_id: int):
         SELECT * FROM hfo_legacy_lessons
         WHERE address=? OR property=? OR client=?
         ORDER BY id DESC
-        LIMIT 60
+        LIMIT 80
         """,
         (prop.get("address", ""), prop.get("property_name", ""), cname),
     )
+
+    problem_words = ("leak", "leaking", "broken", "fail", "failed", "bad", "crack", "corrosion", "trip", "error", "problem", "issue", "damage")
+    known_problems = []
+
+    for j in jobs:
+        text = " ".join(str(j.get(k) or "") for k in ["job_type", "status", "notes", "priority"]).lower()
+        if any(w in text for w in problem_words):
+            known_problems.append({
+                "source": "Job",
+                "title": j.get("job_type") or "Job issue",
+                "date": j.get("date") or j.get("scheduled_start") or "",
+                "body": j.get("notes") or "",
+                "href": f"/jobs/{j.get('id')}",
+            })
+
+    for fl in field_log_rows:
+        text = " ".join(str(fl.get(k) or "") for k in ["issues", "next_steps", "work_completed"]).lower()
+        if any(w in text for w in problem_words):
+            known_problems.append({
+                "source": "Field Log",
+                "title": fl.get("issues") or fl.get("work_completed") or "Field issue",
+                "date": fl.get("date") or fl.get("created_at") or "",
+                "body": fl.get("next_steps") or fl.get("work_completed") or "",
+                "href": "/field-logs",
+            })
+
+    for lesson in lessons:
+        if lesson.get("problem"):
+            known_problems.append({
+                "source": "Legacy",
+                "title": lesson.get("problem") or "Legacy problem",
+                "date": lesson.get("created_at") or "",
+                "body": lesson.get("fix") or lesson.get("lesson") or "",
+                "href": "/legacy",
+            })
+
+    known_problems = known_problems[:12]
+
+    hidden_details = []
+    for label, value in [
+        ("Gate Code / Access", prop.get("gate_code")),
+        ("Service Plan", prop.get("service_plan")),
+        ("Pool Notes", prop.get("pool_notes")),
+        ("Equipment Notes", prop.get("equipment_notes")),
+        ("Property Notes / Hidden Valves", prop.get("notes")),
+    ]:
+        if str(value or "").strip():
+            hidden_details.append({"label": label, "value": value})
+
+    pool_summary_parts = []
+    if prop.get("pool_type") or prop.get("pool_size") or prop.get("pool_depth"):
+        pool_summary_parts.append(f"Pool: {prop.get('pool_type') or 'type unknown'} {prop.get('pool_size') or ''} {prop.get('pool_depth') or ''}".strip())
+    if prop.get("pump_model") or prop.get("filter_model") or prop.get("heater_model"):
+        pool_summary_parts.append(f"Equipment: Pump {prop.get('pump_model') or 'unknown'}, Filter {prop.get('filter_model') or 'unknown'}, Heater {prop.get('heater_model') or 'unknown'}")
+    if prop.get("automation_system") or prop.get("sanitizer"):
+        pool_summary_parts.append(f"Systems: {prop.get('automation_system') or 'automation unknown'} / {prop.get('sanitizer') or 'sanitizer unknown'}")
+    if known_problems:
+        pool_summary_parts.append(f"Known attention items: {len(known_problems)}")
+    if lessons:
+        pool_summary_parts.append(f"Legacy lessons recorded: {len(lessons)}")
+
+    pool_summary = " • ".join(pool_summary_parts) or "Not enough information recorded yet. Add pool specs, equipment notes, photos, jobs, and lessons to build this property brain."
 
     return templates.TemplateResponse(
         "property_brain.html",
@@ -4274,9 +4350,53 @@ def property_brain(request: Request, property_id: int):
             jobs=jobs,
             photos=photos,
             equipment=equipment,
+            field_logs=field_log_rows,
             lessons=lessons,
+            known_problems=known_problems,
+            hidden_details=hidden_details,
+            pool_summary=pool_summary,
+            brain_summary={
+                "known_pool": bool(prop.get("pool_type") or prop.get("pool_size") or prop.get("pool_depth")),
+                "known_equipment": bool(prop.get("pump_model") or prop.get("filter_model") or prop.get("heater_model") or equipment),
+                "known_access": bool(prop.get("gate_code") or prop.get("service_plan") or prop.get("notes")),
+                "job_count": len(jobs),
+                "photo_count": len(photos),
+                "lesson_count": len(lessons),
+                "problem_count": len(known_problems),
+                "field_log_count": len(field_log_rows),
+            },
         )
     )
+
+
+@app.post("/properties/{property_id}/brain/save")
+def property_brain_save(
+    request: Request,
+    property_id: int,
+    gate_code: str = Form(""),
+    service_plan: str = Form(""),
+    pool_notes: str = Form(""),
+    equipment_notes: str = Form(""),
+    notes: str = Form(""),
+):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+
+    prop = one("SELECT * FROM poolops2_properties WHERE id=?", (property_id,))
+    if not prop or not property_can_access(u, prop):
+        return admin_redirect(u)
+
+    exec_sql(
+        """
+        UPDATE poolops2_properties
+        SET gate_code=?, service_plan=?, pool_notes=?, equipment_notes=?, notes=?
+        WHERE id=?
+        """,
+        (gate_code.strip(), service_plan.strip(), pool_notes.strip(), equipment_notes.strip(), notes.strip(), property_id),
+    )
+
+    return RedirectResponse(f"/property-brain/{property_id}", status_code=303)
 
 
 @app.get("/legacy-dashboard", response_class=HTMLResponse)
