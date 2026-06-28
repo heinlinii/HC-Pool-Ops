@@ -6,6 +6,15 @@ from starlette.middleware.sessions import SessionMiddleware
 from pathlib import Path
 from datetime import datetime, date, timedelta
 from app.routes import pool_monitoring
+from app.routes.auth import (
+    current_user,
+    require_login,
+    is_admin,
+    is_client,
+    is_employee,
+    login_redirect,
+    admin_redirect,
+)
 import calendar
 import json
 import os
@@ -614,36 +623,7 @@ def save_design_settings(data):
     DESIGN_FILE.write_text(json.dumps(data, indent=2), encoding="utf-8")
 
 
-def current_user(request: Request):
-    return request.session.get("user")
-
-
-def require_login(request: Request):
-    u = current_user(request)
-    if not u:
-        return None
-    return u
-
-
-def is_admin(user):
-    return user and str(user.get("role", "")).lower() == "admin"
-
-
-def is_client(user):
-    return user and user.get("role") == "client"
-
-
-def is_employee(user):
-    return user and str(user.get("role", "")).lower() in ("employee", "crew")
-
-
-def admin_redirect(user):
-    if is_client(user):
-        return RedirectResponse("/client-portal", status_code=303)
-    if is_employee(user):
-        return RedirectResponse("/employee", status_code=303)
-    return login_redirect()
-
+# Auth helpers live in app/routes/auth.py for Core 2 route refactor.
 
 def client_name_for_user(user):
     if not user:
@@ -735,9 +715,7 @@ def photos_for_user(user):
     return []
 
 
-def login_redirect():
-    return RedirectResponse("/login", status_code=303)
-
+# login_redirect imported from app.routes.auth
 
 def safe_filename(filename):
     ext = Path(filename or "photo.jpg").suffix.lower() or ".jpg"
