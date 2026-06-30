@@ -832,6 +832,9 @@ app.include_router(properties.router)
 from app.routes import crew
 app.include_router(crew.router)
 
+from app.routes import schedule_board
+app.include_router(schedule_board.router)
+
 
 @app.get("/", response_class=HTMLResponse)
 def root(request: Request):
