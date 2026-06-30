@@ -410,6 +410,28 @@ COMMAND_CENTER_DEFAULT = {
         {"key": "map", "title": "Map", "subtitle": "Jobs and locations.", "href": "/map", "button": "Jobs & locations", "icon": "📍", "image": "", "enabled": True, "order": 130},
         {"key": "legacy", "title": "Legacy", "subtitle": "Lessons learned and Heinlin standards.", "href": "/legacy", "button": "Legacy Library", "icon": "📖", "image": "", "enabled": True, "order": 140},
         {"key": "jarvis", "title": "Jarvis", "subtitle": "AI assistant and daily organization.", "href": "/ai-systems", "button": "AI Assistant", "icon": "🤖", "image": "", "enabled": True, "order": 150},
+        {
+    "key": "employees",
+    "title": "Employees",
+    "subtitle": "Edit crew logins",
+    "href": "/crew",
+    "button": "Manage Crew",
+    "icon": "👥",
+    "image": "",
+    "enabled": True,
+    "order": 95,
+},
+{
+    "key": "admin_users",
+    "title": "Admin Users",
+    "subtitle": "Edit admin logins",
+    "href": "/admin/users",
+    "button": "Manage Admins",
+    "icon": "🔐",
+    "image": "",
+    "enabled": True,
+    "order": 96,
+},
     ],
 }
 
