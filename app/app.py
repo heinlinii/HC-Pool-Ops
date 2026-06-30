@@ -3238,6 +3238,9 @@ def invisible_office(request: Request):
 from app.routes import work_engine
 app.include_router(work_engine.router)
 
+from app.routes import property_brain
+app.include_router(property_brain.router)
+
 
 @app.post("/invisible-office/add")
 def invisible_office_add(
