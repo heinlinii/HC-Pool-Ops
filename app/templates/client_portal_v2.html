@@ -1,0 +1,354 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+  .cp-hero {
+    display: grid;
+    grid-template-columns: 1.4fr .8fr;
+    gap: 18px;
+    align-items: stretch;
+    margin-bottom: 18px;
+  }
+
+  .cp-title {
+    font-size: clamp(3.2rem, 8vw, 7.4rem);
+    line-height: .85;
+    margin: 0;
+    color: #d6b36a;
+    text-transform: uppercase;
+    letter-spacing: -.06em;
+  }
+
+  .cp-sub {
+    color: rgba(255,255,255,.78);
+    font-size: 1.1rem;
+    line-height: 1.45;
+    max-width: 760px;
+  }
+
+  .cp-metrics {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .cp-metric {
+    border: 1px solid rgba(214,179,106,.28);
+    background: rgba(255,255,255,.06);
+    border-radius: 20px;
+    padding: 16px;
+  }
+
+  .cp-metric strong {
+    display: block;
+    font-size: 2rem;
+    color: #fff;
+  }
+
+  .cp-metric span {
+    color: rgba(255,255,255,.62);
+    font-size: .82rem;
+    text-transform: uppercase;
+    letter-spacing: .12em;
+  }
+
+  .cp-section-title {
+    margin: 28px 0 10px;
+    color: #d6b36a;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+  }
+
+  .cp-card {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .cp-card h2 {
+    color: #fff;
+    margin-top: 0;
+  }
+
+  .cp-pill {
+    display: inline-flex;
+    align-items: center;
+    min-height: 28px;
+    border-radius: 999px;
+    padding: 4px 10px;
+    border: 1px solid rgba(214,179,106,.35);
+    color: #d6b36a;
+    background: rgba(0,0,0,.22);
+    font-weight: 800;
+    font-size: .82rem;
+    margin: 3px 4px 3px 0;
+  }
+
+  .cp-photo-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    gap: 12px;
+  }
+
+  .cp-photo {
+    border-radius: 18px;
+    overflow: hidden;
+    border: 1px solid rgba(214,179,106,.25);
+    background: rgba(255,255,255,.05);
+  }
+
+  .cp-photo img {
+    display: block;
+    width: 100%;
+    height: 140px;
+    object-fit: cover;
+    background: #111;
+  }
+
+  .cp-photo div {
+    padding: 10px;
+  }
+
+  .cp-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .cp-table th,
+  .cp-table td {
+    padding: 10px;
+    border-bottom: 1px solid rgba(255,255,255,.10);
+    text-align: left;
+    vertical-align: top;
+  }
+
+  .cp-table th {
+    color: rgba(255,255,255,.58);
+    font-size: 12px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+  }
+
+  .cp-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 14px;
+  }
+
+  .cp-admin-select {
+    margin-top: 14px;
+  }
+
+  @media (max-width: 900px) {
+    .cp-hero {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+{% if error %}
+  <section class="card">
+    <h1>Client Portal</h1>
+    <p>{{ error }}</p>
+  </section>
+{% elif client %}
+
+<section class="cp-hero">
+  <div class="card">
+    <h1 class="cp-title">{{ client.name }}</h1>
+    <p class="cp-sub">
+      Your properties, upcoming work, service history, photos, invoices, and requests in one place.
+    </p>
+
+    <div class="cp-actions">
+      <a class="btn primary" href="#request-service">Request Service</a>
+      <a class="btn secondary" href="/weather">Weather</a>
+      <a class="btn secondary" href="/contact-us">Contact Us</a>
+    </div>
+
+    {% if is_admin and admin_clients %}
+      <form class="cp-admin-select" method="get" action="/client-portal-v2">
+        <label>Admin Preview Client</label>
+        <select name="client_id" onchange="this.form.submit()">
+          {% for c in admin_clients %}
+            <option value="{{ c.id }}" {% if c.id == client.id %}selected{% endif %}>{{ c.name }}</option>
+          {% endfor %}
+        </select>
+      </form>
+    {% endif %}
+  </div>
+
+  <div class="cp-metrics">
+    <div class="cp-metric">
+      <strong>{{ properties|length }}</strong>
+      <span>Properties</span>
+    </div>
+    <div class="cp-metric">
+      <strong>{{ upcoming_jobs|length }}</strong>
+      <span>Upcoming</span>
+    </div>
+    <div class="cp-metric">
+      <strong>${{ "%.2f"|format(open_total or 0) }}</strong>
+      <span>Open Balance</span>
+    </div>
+    <div class="cp-metric">
+      <strong>{{ requests|length }}</strong>
+      <span>Requests</span>
+    </div>
+  </div>
+</section>
+
+<h2 class="cp-section-title">My Properties</h2>
+<section class="grid">
+  {% for p in properties %}
+    <a class="card cp-card" href="/properties/{{ p.id }}">
+      <h2>{{ p.property_name or p.address or "Property" }}</h2>
+      <p>{{ p.address }}{% if p.city %}, {{ p.city }}{% endif %}{% if p.state %}, {{ p.state }}{% endif %}</p>
+
+      {% if p.pool_type %}<span class="cp-pill">{{ p.pool_type }}</span>{% endif %}
+      {% if p.pool_size %}<span class="cp-pill">{{ p.pool_size }}</span>{% endif %}
+      {% if p.service_plan %}<span class="cp-pill">{{ p.service_plan }}</span>{% endif %}
+
+      {% set eq = equipment_by_property.get(p.id, []) %}
+      {% if eq %}
+        <p><strong>Equipment:</strong> {{ eq|length }} item{{ "" if eq|length == 1 else "s" }}</p>
+      {% endif %}
+    </a>
+  {% else %}
+    <div class="card">
+      <h2>No properties linked yet</h2>
+      <p>Contact Heinlin to connect your property record.</p>
+    </div>
+  {% endfor %}
+</section>
+
+<h2 class="cp-section-title">Upcoming Visits</h2>
+<section class="grid">
+  {% for j in upcoming_jobs %}
+    <div class="card cp-card">
+      <h2>{{ j.job_type or "Scheduled Work" }}</h2>
+      <p><strong>Date:</strong> {{ j.scheduled_start or j.date or "Not scheduled" }}</p>
+      <p><strong>Status:</strong> {{ j.status or "Scheduled" }}</p>
+      {% if j.address %}<p>{{ j.address }}</p>{% endif %}
+      {% if j.notes %}<p>{{ j.notes }}</p>{% endif %}
+    </div>
+  {% else %}
+    <div class="card">
+      <h2>No upcoming work</h2>
+      <p>No visits are currently scheduled.</p>
+    </div>
+  {% endfor %}
+</section>
+
+<section id="request-service" class="card">
+  <h2>Request Service</h2>
+  <form method="post" action="/client-portal-v2/request" class="stack">
+    <label>Property</label>
+    <select name="property_id">
+      <option value="0">General / Not sure</option>
+      {% for p in properties %}
+        <option value="{{ p.id }}">{{ p.property_name or p.address }}</option>
+      {% endfor %}
+    </select>
+
+    <label>Request Title</label>
+    <input name="title" placeholder="Example: Heater not firing">
+
+    <label>Details</label>
+    <textarea name="details" rows="5" placeholder="Tell us what you need help with..."></textarea>
+
+    <label>Priority</label>
+    <select name="priority">
+      <option value="Normal">Normal</option>
+      <option value="High">High</option>
+      <option value="Emergency">Emergency</option>
+    </select>
+
+    <button class="btn primary" type="submit">Send Request</button>
+  </form>
+</section>
+
+<h2 class="cp-section-title">Recent Photos</h2>
+<section class="cp-photo-grid">
+  {% for ph in photos %}
+    <article class="cp-photo">
+      <img src="{{ ph.photo_url }}" alt="{{ ph.title or 'Pool photo' }}">
+      <div>
+        <strong>{{ ph.title or "Photo" }}</strong>
+        <p>{{ ph.date or "" }}</p>
+      </div>
+    </article>
+  {% else %}
+    <div class="card">
+      <h2>No photos yet</h2>
+    </div>
+  {% endfor %}
+</section>
+
+<h2 class="cp-section-title">Billing</h2>
+<section class="card">
+  <table class="cp-table">
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Description</th>
+        <th>Status</th>
+        <th>Amount</th>
+        <th>Open</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for inv in invoices %}
+        <tr>
+          <td>{{ inv.date or "" }}</td>
+          <td>{{ inv.description or "" }}</td>
+          <td>{{ inv.status or "" }}</td>
+          <td>${{ "%.2f"|format(inv.amount or 0) }}</td>
+          <td>${{ "%.2f"|format(inv.open_balance if inv.open_balance is not none else 0) }}</td>
+        </tr>
+      {% else %}
+        <tr>
+          <td colspan="5">No invoices found.</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<h2 class="cp-section-title">Service History</h2>
+<section class="grid">
+  {% for j in recent_jobs %}
+    <div class="card cp-card">
+      <h2>{{ j.job_type or "Job" }}</h2>
+      <p><strong>Date:</strong> {{ j.scheduled_start or j.date or "" }}</p>
+      <p><strong>Status:</strong> {{ j.status or "" }}</p>
+      {% if j.address %}<p>{{ j.address }}</p>{% endif %}
+      {% if j.notes %}<p>{{ j.notes }}</p>{% endif %}
+    </div>
+  {% else %}
+    <div class="card">
+      <h2>No completed history yet</h2>
+    </div>
+  {% endfor %}
+</section>
+
+<h2 class="cp-section-title">Requests</h2>
+<section class="grid">
+  {% for r in requests %}
+    <div class="card cp-card">
+      <h2>{{ r.title }}</h2>
+      <p><strong>Status:</strong> {{ r.status }}</p>
+      <p><strong>Priority:</strong> {{ r.priority }}</p>
+      <p>{{ r.body }}</p>
+      <p>{{ r.created_at }}</p>
+    </div>
+  {% else %}
+    <div class="card">
+      <h2>No requests yet</h2>
+    </div>
+  {% endfor %}
+</section>
+
+{% endif %}
+
+{% endblock %}
