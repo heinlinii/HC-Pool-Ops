@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+body.hfo-body { background:#071017 !important; }
+.design-wrap { max-width:1180px; margin:0 auto; padding:34px 18px 70px; color:#f5efe2; }
+h1 { color:#d6b36a; font-size:clamp(36px,6vw,72px); text-transform:uppercase; margin:0 0 8px; }
+.sub { color:#c9c1b0; margin-bottom:22px; font-size:18px; }
+.card { border:1px solid rgba(214,179,106,.35); border-radius:22px; background:rgba(255,255,255,.06); padding:18px; margin:16px 0; }
+.grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:14px; }
+label { display:block; color:#d6b36a; font-weight:800; margin:12px 0 6px; }
+input, textarea { width:100%; box-sizing:border-box; background:#0b1720; color:#fff; border:1px solid rgba(214,179,106,.35); border-radius:12px; padding:11px; font-size:15px; }
+textarea { min-height:72px; }
+button, .btn { display:inline-block; background:#d6b36a; color:#071017; border:0; border-radius:999px; padding:12px 20px; font-weight:900; text-decoration:none; cursor:pointer; }
+.btn.dark { background:#10202c; color:#f5efe2; border:1px solid rgba(214,179,106,.45); }
+.preview-img { width:100%; height:125px; object-fit:cover; border-radius:14px; background:#111; border:1px solid rgba(214,179,106,.25); }
+.card-title { color:#fff; font-size:22px; font-weight:900; }
+.row { display:grid; grid-template-columns:80px 1fr; gap:12px; align-items:start; }
+.small { color:#b8ae9d; font-size:13px; }
+</style>
+
+<div class="design-wrap">
+  <div style="display:flex;justify-content:space-between;gap:14px;align-items:center;flex-wrap:wrap;">
+    <div>
+      <h1>Design Studio</h1>
+      <div class="sub">Change the crest, background, award, and every dashboard card from one page.</div>
+    </div>
+    <div>
+      <a class="btn dark" href="/jarvis">Dashboard</a>
+    </div>
+  </div>
+
+  <form method="post" action="/command-center-design">
+    <div class="card">
+      <h2>Command Center Images</h2>
+      <div class="grid">
+        <div>
+          <label>Crest / Logo URL</label>
+          <input name="crest_image" value="{{ command_center.crest_image }}">
+          <div class="small">Use /static/... or uploaded image URL.</div>
+        </div>
+        <div>
+          <label>Background Image URL</label>
+          <input name="background_image" value="{{ command_center.background_image }}">
+        </div>
+        <div>
+          <label>Award Image URL</label>
+          <input name="award_image" value="{{ command_center.award_image }}">
+        </div>
+      </div>
+
+      <div class="grid">
+        <div>
+          <label>Award Title</label>
+          <input name="award_title" value="{{ command_center.award_title }}">
+        </div>
+        <div>
+          <label>Award Subtitle</label>
+          <input name="award_subtitle" value="{{ command_center.award_subtitle }}">
+        </div>
+        <div>
+          <label>Weather Location Text</label>
+          <input name="weather_location" value="{{ command_center.weather_location }}">
+        </div>
+      </div>
+
+      <label>Motto</label>
+      <input name="motto" value="{{ command_center.motto }}">
+    </div>
+
+    <div class="card">
+      <h2>Dashboard Cards</h2>
+      <p class="small">Change image, wording, button, icon, URL, order, or turn a card off.</p>
+
+      <div class="grid">
+        {% for card in command_center.all_cards %}
+        <div class="card">
+          <div class="row">
+            <img class="preview-img" src="{{ card.image }}">
+            <div>
+              <div class="card-title">{{ card.title }}</div>
+              <div class="small">{{ card.key }}</div>
+              <label style="margin-top:8px;">
+                <input type="checkbox" name="{{ card.key }}_enabled" value="1" {% if card.enabled %}checked{% endif %} style="width:auto;">
+                Enabled
+              </label>
+            </div>
+          </div>
+
+          <label>Order</label>
+          <input name="{{ card.key }}_order" value="{{ card.order }}">
+
+          <label>Title</label>
+          <input name="{{ card.key }}_title" value="{{ card.title }}">
+
+          <label>Subtitle</label>
+          <textarea name="{{ card.key }}_subtitle">{{ card.subtitle }}</textarea>
+
+          <label>Image URL</label>
+          <input name="{{ card.key }}_image" value="{{ card.image }}">
+
+          <label>Icon</label>
+          <input name="{{ card.key }}_icon" value="{{ card.icon }}">
+
+          <label>Button Text</label>
+          <input name="{{ card.key }}_button" value="{{ card.button }}">
+
+          <label>Link URL</label>
+          <input name="{{ card.key }}_href" value="{{ card.href }}">
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <button type="submit">Save Command Center</button>
+    <a class="btn dark" href="/design-upload">Upload Images</a>
+  </form>
+</div>
+
+{% endblock %}

@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block content %}
+
+<section class="section-head">
+  <h1>Admin Users</h1>
+  <p>Edit admin logins, backup admin accounts, usernames, passwords, and active status.</p>
+</section>
+
+<section class="card">
+  <form method="post" action="/admin/users/new" class="inline-form">
+    <input name="name" placeholder="Admin name">
+    <input name="username" placeholder="Username">
+    <input name="password" placeholder="Password" value="changeme">
+    <button class="btn primary" type="submit">Add Admin</button>
+  </form>
+</section>
+
+<section class="grid">
+  {% for admin in admin_users %}
+    <div class="card">
+      <h2>{{ admin.name or admin.username or "Admin" }}</h2>
+      <p>Username: {{ admin.username }}</p>
+      <p>Role: {{ admin.role or "admin" }}</p>
+
+      <form method="post" action="/admin/users/{{ admin.id }}/save" class="stack">
+        <input name="name" value="{{ admin.name or '' }}" placeholder="Name">
+        <input name="username" value="{{ admin.username or '' }}" placeholder="Username">
+        <input name="password" value="{{ admin.password or '' }}" placeholder="Password">
+        <input name="active" value="{{ 1 if admin.active else 0 }}" placeholder="Active">
+
+        <button class="btn primary" type="submit">Save</button>
+      </form>
+
+      <form method="post" action="/admin/users/{{ admin.id }}/delete" onsubmit="return confirm('Delete this admin user?');">
+        <button class="btn danger" type="submit">Delete</button>
+      </form>
+    </div>
+  {% else %}
+    <div class="card">
+      <h2>No admin users found</h2>
+      <p>Add one above.</p>
+    </div>
+  {% endfor %}
+</section>
+
+{% endblock %}

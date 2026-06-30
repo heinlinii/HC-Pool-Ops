@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+{% block content %}
+
+<section class="section-head">
+  <h1>Pentair Monitoring Command Center</h1>
+  <p>Open Pentair Pro systems, track pool alerts, service notes, and next actions.</p>
+</section>
+
+<section class="card">
+  <h2>Add Monitored Pool</h2>
+
+  <form method="post" action="/pool-monitoring/add" class="inline-form">
+    <select name="client_id">
+      <option value="">Select client</option>
+      {% for client in clients %}
+        <option value="{{ client.id }}">{{ client.name }}</option>
+      {% endfor %}
+    </select>
+
+    <select name="property_id">
+      <option value="">Select property</option>
+      {% for prop in properties %}
+        <option value="{{ prop.id }}">
+          {{ prop.client or prop.client_name or "No client" }} — {{ prop.property_name or prop.address or "Property" }}
+        </option>
+      {% endfor %}
+    </select>
+
+    <input name="system_brand" placeholder="System brand" value="Pentair">
+    <input name="system_type" placeholder="System type">
+    <input name="pentair_account_email" placeholder="Pentair account email">
+    <input name="pentair_system_name" placeholder="Pentair system name">
+    <input name="pentair_dashboard_url" placeholder="Pentair Pro dashboard link">
+    <input name="monitoring_status" placeholder="Status" value="Needs Check">
+    <input name="current_alert" placeholder="Current alert">
+    <input name="next_action" placeholder="Next action">
+    <input name="equipment_notes" placeholder="Equipment notes">
+    <input name="service_notes" placeholder="Service notes">
+
+    <button class="btn primary" type="submit">Add Monitored Pool</button>
+  </form>
+</section>
+
+<section class="grid">
+  {% for item in records %}
+    <div class="card">
+      <h2>{{ item.client_name or "Pool System" }}</h2>
+
+      <p>{{ item.property_name or item.address or "No property selected" }}</p>
+
+      <p><strong>Brand:</strong> {{ item.system_brand or "Pentair" }}</p>
+      <p><strong>Status:</strong> {{ item.monitoring_status or "Needs Check" }}</p>
+      <p><strong>Last Checked:</strong> {{ item.last_checked or "Not checked yet" }}</p>
+
+      {% if item.system_type %}
+        <p><strong>System:</strong> {{ item.system_type }}</p>
+      {% endif %}
+
+      {% if item.pentair_system_name %}
+        <p><strong>Pentair System:</strong> {{ item.pentair_system_name }}</p>
+      {% endif %}
+
+      {% if item.pentair_account_email %}
+        <p><strong>Account:</strong> {{ item.pentair_account_email }}</p>
+      {% endif %}
+
+      {% if item.current_alert %}
+        <p><strong>Alert:</strong> {{ item.current_alert }}</p>
+      {% endif %}
+
+      {% if item.next_action %}
+        <p><strong>Next Action:</strong> {{ item.next_action }}</p>
+      {% endif %}
+
+      {% if item.equipment_notes %}
+        <p><strong>Equipment Notes:</strong> {{ item.equipment_notes }}</p>
+      {% endif %}
+
+      {% if item.service_notes %}
+        <p><strong>Service Notes:</strong> {{ item.service_notes }}</p>
+      {% endif %}
+
+      <div class="inline-form" style="margin-top: 14px;">
+        {% if item.pentair_dashboard_url %}
+          <a class="btn primary" href="{{ item.pentair_dashboard_url }}" target="_blank" rel="noopener noreferrer">
+            Open Pentair
+          </a>
+        {% else %}
+          <button class="btn" type="button" disabled>No Pentair Link</button>
+        {% endif %}
+
+        <form method="post" action="/pool-monitoring/{{ item.id }}/checked">
+          <button class="btn" type="submit">Mark Checked Today</button>
+        </form>
+      </div>
+
+      <details style="margin-top: 18px;">
+        <summary>Edit Monitoring Info</summary>
+
+        <form method="post" action="/pool-monitoring/{{ item.id }}/update" class="inline-form" style="margin-top: 12px;">
+          <input name="system_brand" value="{{ item.system_brand or 'Pentair' }}" placeholder="System brand">
+          <input name="system_type" value="{{ item.system_type or '' }}" placeholder="System type">
+          <input name="pentair_account_email" value="{{ item.pentair_account_email or '' }}" placeholder="Pentair account email">
+          <input name="pentair_system_name" value="{{ item.pentair_system_name or '' }}" placeholder="Pentair system name">
+          <input name="pentair_dashboard_url" value="{{ item.pentair_dashboard_url or '' }}" placeholder="Pentair Pro dashboard link">
+          <input name="monitoring_status" value="{{ item.monitoring_status or 'Needs Check' }}" placeholder="Status">
+          <input name="current_alert" value="{{ item.current_alert or '' }}" placeholder="Current alert">
+          <input name="next_action" value="{{ item.next_action or '' }}" placeholder="Next action">
+          <input name="equipment_notes" value="{{ item.equipment_notes or '' }}" placeholder="Equipment notes">
+          <input name="service_notes" value="{{ item.service_notes or '' }}" placeholder="Service notes">
+
+          <button class="btn primary" type="submit">Save Monitoring Info</button>
+        </form>
+      </details>
+
+      {% if is_admin %}
+        <form method="post" action="/pool-monitoring/{{ item.id }}/delete" style="margin-top: 14px;">
+          <button class="btn danger" type="submit">Delete</button>
+        </form>
+      {% endif %}
+    </div>
+  {% else %}
+    <div class="card">
+      <h2>No monitored pools yet</h2>
+      <p>Add a pool, then paste the Pentair Pro dashboard link into the record.</p>
+    </div>
+  {% endfor %}
+</section>
+
+{% endblock %}

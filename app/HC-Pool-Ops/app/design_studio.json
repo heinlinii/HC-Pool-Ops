@@ -1,0 +1,108 @@
+{
+  "global": {
+    "brass_color": "#d6b36a",
+    "dark_bg": "#071017",
+    "card_bg": "rgba(7, 14, 20, .94)",
+    "card_radius": "24px",
+    "page_padding": "80px 18px 40px",
+    "button_height": "104px",
+    "button_radius": "22px",
+    "mobile_page_padding": "56px 12px 28px"
+  },
+
+  "dashboard": {
+    "legacy_line": "Heinlin Field Ops • Founded 1907 • 5 Generations Strong",
+    "crest_image": "/static/heinlin-wide-crest.png",
+    "motto_first": "Work Hard.",
+    "motto_second": "Play Harder.",
+    "hero_subline": "Built by hand. Run like a machine. No lost notes. No mystery jobs.",
+    "search_title": "What needs handled?",
+    "search_subtitle": "Search it, say it, or hit the button.",
+    "search_placeholder": "Find a client, job, property, photo, log, map, weather...",
+    "handle_button": "Handle It",
+
+    "page_top_space": "54px",
+    "crest_width": "920px",
+    "crest_height": "420px",
+    "motto_size": "clamp(3rem, 7vw, 7.8rem)",
+    "motto_top_space": "22px",
+    "section_gap": "22px",
+    "button_height": "104px"
+  },
+
+  "login": {
+    "title": "Heinlin Field Ops",
+    "legacy_line": "Founded 1907 • 5 Generations Strong",
+    "subtitle": "Built by the hands that perfected the term work hard play harder.",
+    "button_text": "Enter Operations Center",
+    "crest_image": "/static/heinlin-wide-crest.png",
+    "background_image": "/static/uploads/Dedicated%20to%20Steve%20Meyerholtz.jpg",
+    "crest_width": "760px",
+    "card_width": "460px"
+  },
+
+  "clients": {
+    "title": "Clients",
+    "subtitle": "The people, properties, pools, and promises we are responsible for.",
+    "button_text": "Add Client"
+  },
+
+  "properties": {
+    "title": "Properties",
+    "subtitle": "Every pool, address, gate code, equipment pad, and detail in one place.",
+    "button_text": "Add Property"
+  },
+
+  "jobs": {
+    "title": "Jobs",
+    "subtitle": "Scheduled work, service calls, repairs, and field notes.",
+    "button_text": "Add Job"
+  },
+
+  "crew": {
+    "title": "Employees",
+    "subtitle": "Crew access, login credentials, roles, and field visibility.",
+    "button_text": "Add Employee"
+  },
+
+  "employee": {
+    "title": "Crew Portal",
+    "subtitle": "My jobs, clock in/out, photos, field notes, weather, and map.",
+    "button_text": "Clock / Field Work"
+  },
+
+  "schedule": {
+    "title": "Schedule",
+    "day_title": "Daily Schedule",
+    "week_title": "Weekly Schedule",
+    "subtitle": "Jobs, field work, service calls, and crew movement.",
+    "empty_text": "No jobs are scheduled for this view yet.",
+    "button_daily": "Daily",
+    "button_weekly": "Weekly",
+    "button_yearly": "Yearly",
+    "button_jobs": "Jobs",
+    "button_dashboard": "Dashboard",
+    "button_text": "Add Schedule Item"
+  },
+
+  "map": {
+    "title": "Field Map",
+    "subtitle": "Property pins, clocked-in employees, and jobsite locations.",
+    "map_height": "560px",
+    "mobile_map_height": "480px",
+    "top_padding": "115px",
+    "mobile_top_padding": "95px"
+  },
+
+  "photos": {
+    "title": "Photos",
+    "subtitle": "Job photos, property photos, progress shots, and field proof.",
+    "button_text": "Upload Photos"
+  },
+
+  "pool_monitoring": {
+    "title": "Pool Monitoring",
+    "subtitle": "Pentair access, pool alerts, service notes, and monitored systems.",
+    "button_text": "Add Pool Monitor"
+  }
+}

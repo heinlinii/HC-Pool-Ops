@@ -1,109 +1,162 @@
-{% extends "base.html" %}
-{% block content %}
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Organize My Day</title>
+  <style>
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: #071017;
+      color: #f8f3e7;
+      font-family: Arial, sans-serif;
+      padding: 28px;
+    }
 
-<section class="panel">
-  <div class="section-head">
+    .top {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    h1 {
+      margin: 0;
+      color: #d6b36a;
+      font-size: 42px;
+      text-transform: uppercase;
+    }
+
+    h2 {
+      color: #fff;
+      margin-top: 0;
+    }
+
+    p {
+      color: #d8d0bd;
+    }
+
+    .btn, button {
+      display: inline-block;
+      background: #d6b36a;
+      color: #071017;
+      border: none;
+      border-radius: 999px;
+      padding: 12px 18px;
+      font-weight: 900;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    .panel {
+      background: rgba(0,0,0,.45);
+      border: 1px solid rgba(214,179,106,.35);
+      border-radius: 18px;
+      padding: 18px;
+    }
+
+    .job {
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(214,179,106,.22);
+      border-radius: 14px;
+      padding: 14px;
+      margin-bottom: 12px;
+    }
+
+    .job strong {
+      color: #d6b36a;
+    }
+
+    @media (max-width: 900px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="top">
     <div>
       <h1>Organize My Day</h1>
-      <p class="muted">Today’s jobs, overdue work, crew status, and quick actions.</p>
+      <p>Today’s work, overdue jobs, crew status, and what needs handled.</p>
     </div>
-    <div class="actions">
-      <a class="btn" href="/dashboard">Dashboard</a>
-      <a class="btn" href="/schedule/year">Calendar</a>
-      <a class="btn" href="/map">Map</a>
-    </div>
-  </div>
-</section>
 
-<section class="grid cards">
-  <div class="card">
-    <h2>Today’s Jobs</h2>
-    <p class="big">{{ today_jobs|length }}</p>
+    <a class="btn" href="/jarvis">Command Center</a>
   </div>
 
-  <div class="card">
-    <h2>Overdue Jobs</h2>
-    <p class="big">{{ overdue_jobs|length }}</p>
+  <div class="grid">
+
+    <div class="panel">
+      <h2>Today’s Work</h2>
+
+      {% if today_jobs %}
+        {% for job in today_jobs %}
+          <div class="job">
+            <p><strong>{{ job.client or "Client" }}</strong></p>
+            <p>{{ job.property or job.address or "" }}</p>
+            <p>Status: {{ job.status or "Pending" }}</p>
+            <a class="btn" href="/jobs/{{ job.id }}">Open Job</a>
+          </div>
+        {% endfor %}
+      {% else %}
+        <p>No jobs scheduled for today.</p>
+      {% endif %}
+    </div>
+
+    <div class="panel">
+      <h2>Overdue / Needs Handled</h2>
+
+      {% if overdue_jobs %}
+        {% for job in overdue_jobs %}
+          <div class="job">
+            <p><strong>{{ job.client or "Client" }}</strong></p>
+            <p>{{ job.property or job.address or "" }}</p>
+            <p>Date: {{ job.date or job.scheduled_start or "" }}</p>
+            <p>Status: {{ job.status or "Pending" }}</p>
+            <a class="btn" href="/jobs/{{ job.id }}">Handle It</a>
+          </div>
+        {% endfor %}
+      {% else %}
+        <p>No overdue jobs found.</p>
+      {% endif %}
+    </div>
+
+    <div class="panel">
+      <h2>Crew Clocked In</h2>
+
+      {% if clocked_in %}
+        {% for emp in clocked_in %}
+          <div class="job">
+            <p><strong>{{ emp.name }}</strong></p>
+            <p>{{ emp.role or "Crew" }}</p>
+            <p>Clocked in: {{ emp.clocked_in_at or "" }}</p>
+          </div>
+        {% endfor %}
+      {% else %}
+        <p>No crew currently clocked in.</p>
+      {% endif %}
+    </div>
+
+    <div class="panel">
+      <h2>Quick Actions</h2>
+      <p>
+        <a class="btn" href="/jobs">Jobs</a>
+        <a class="btn" href="/schedule/day">Daily Schedule</a>
+        <a class="btn" href="/crew">Crew</a>
+        <a class="btn" href="/pool-monitoring">Pool Monitoring</a>
+      </p>
+    </div>
+
   </div>
 
-  <div class="card">
-    <h2>Clocked In</h2>
-    <p class="big">{{ clocked_in|length }}</p>
-  </div>
-</section>
-
-<section class="panel">
-  <h2>Today’s Work</h2>
-
-  {% if today_jobs %}
-    <div class="list-grid">
-      {% for j in today_jobs %}
-      <a class="list-card" href="/jobs/{{ j.id }}">
-        <h2>{{ j.job_type or "Job" }}</h2>
-        <p><strong>Client:</strong> {{ j.client }}</p>
-        <p><strong>Property:</strong> {{ j.property or j.address }}</p>
-        <p><strong>Crew:</strong> {{ j.crew }}</p>
-        <p><strong>Status:</strong> {{ j.status }}</p>
-      </a>
-      {% endfor %}
-    </div>
-  {% else %}
-    <p class="muted">No jobs scheduled for today.</p>
-  {% endif %}
-</section>
-
-<section class="panel">
-  <h2>Overdue Work</h2>
-
-  {% if overdue_jobs %}
-    <div class="list-grid">
-      {% for j in overdue_jobs %}
-      <a class="list-card danger" href="/jobs/{{ j.id }}">
-        <h2>{{ j.job_type or "Job" }}</h2>
-        <p><strong>Date:</strong> {{ j.date or j.scheduled_start }}</p>
-        <p><strong>Client:</strong> {{ j.client }}</p>
-        <p><strong>Status:</strong> {{ j.status }}</p>
-      </a>
-      {% endfor %}
-    </div>
-  {% else %}
-    <p class="muted">No overdue jobs. Good shape.</p>
-  {% endif %}
-</section>
-
-{% if is_admin %}
-<section class="panel">
-  <h2>Employees Clocked In</h2>
-
-  {% if clocked_in %}
-    <div class="list-grid">
-      {% for e in clocked_in %}
-      <div class="list-card">
-        <h2>{{ e.name }}</h2>
-        <p>{{ e.role }}</p>
-        <p>Last seen: {{ e.last_seen_at }}</p>
-        {% if e.clock_lat and e.clock_lng %}
-          <a class="btn primary" target="_blank" href="https://www.google.com/maps/search/?api=1&query={{ e.clock_lat }},{{ e.clock_lng }}">Open Location</a>
-        {% endif %}
-      </div>
-      {% endfor %}
-    </div>
-  {% else %}
-    <p class="muted">Nobody is clocked in yet.</p>
-  {% endif %}
-</section>
-{% endif %}
-
-<section class="panel">
-  <h2>Quick Actions</h2>
-  <div class="actions">
-    <a class="btn primary" href="/jobs">Jobs</a>
-    <a class="btn" href="/clients">Clients</a>
-    <a class="btn" href="/properties">Properties</a>
-    <a class="btn" href="/photos">Photos</a>
-    <a class="btn" href="/field-logs">Field Logs</a>
-    <a class="btn" href="/weather">Weather</a>
-  </div>
-</section>
-
-{% endblock %}
+</body>
+</html>

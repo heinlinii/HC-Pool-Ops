@@ -1,0 +1,251 @@
+{% extends "base.html" %}
+{% block content %}
+
+{% set bg = prop.card_image or '/static/uploads/20260614_111449_87a15917.jpg' %}
+
+<style>
+body.hfo-body { background:#05090d !important; }
+body.hfo-body .shell { max-width:none !important; padding:0 !important; margin:0 !important; }
+.brain-page {
+  min-height:100vh;
+  color:#f5efe2;
+  background:
+    linear-gradient(90deg,rgba(0,0,0,.88),rgba(0,0,0,.44),rgba(0,0,0,.9)),
+    url("{{ bg }}");
+  background-size:cover;
+  background-position:center;
+  padding:28px;
+}
+.brain-shell { max-width:1550px; margin:0 auto; }
+.brain-top { display:flex; justify-content:space-between; gap:24px; align-items:flex-start; margin-bottom:22px; }
+.eyebrow { color:#d6b36a; text-transform:uppercase; letter-spacing:.26em; font-weight:900; }
+h1 { margin:8px 0 6px; color:#d6b36a; font-size:clamp(44px,7vw,96px); line-height:.9; letter-spacing:.04em; text-transform:uppercase; text-shadow:0 10px 30px rgba(0,0,0,.75); }
+.sub { color:#efe6d2; font-size:20px; }
+.actions { display:flex; flex-wrap:wrap; gap:8px; justify-content:flex-end; }
+.btn, button { display:inline-block; border:1px solid rgba(214,179,106,.55); background:rgba(0,0,0,.45); color:#d6b36a; border-radius:10px; padding:12px 18px; font-weight:900; text-decoration:none; cursor:pointer; }
+button.primary, .btn.primary { background:#d6b36a; color:#071017; }
+.grid { display:grid; grid-template-columns:repeat(12,1fr); gap:16px; }
+.card { grid-column:span 4; background:rgba(5,10,14,.84); border:1px solid rgba(214,179,106,.42); border-radius:18px; padding:20px; box-shadow:0 18px 45px rgba(0,0,0,.55); backdrop-filter:blur(7px); }
+.card.wide { grid-column:span 8; }
+.card.full { grid-column:1/-1; }
+.card h2 { margin:0 0 14px; color:#d6b36a; text-transform:uppercase; letter-spacing:.08em; }
+.stat-row { display:grid; grid-template-columns:repeat(7,1fr); gap:12px; margin-bottom:16px; }
+.stat { background:rgba(0,0,0,.58); border:1px solid rgba(214,179,106,.38); border-radius:16px; padding:14px; text-align:center; }
+.stat b { color:#d6b36a; font-size:26px; display:block; }
+.summary-box { background:rgba(214,179,106,.12); border:1px solid rgba(214,179,106,.55); border-radius:18px; padding:20px; margin-bottom:16px; font-size:20px; line-height:1.45; }
+.item { border-top:1px solid rgba(255,255,255,.1); padding:12px 0; }
+.item:first-of-type { border-top:none; }
+.muted { color:#b9ae99; }
+.pill { display:inline-block; border:1px solid rgba(214,179,106,.45); color:#d6b36a; border-radius:999px; padding:4px 10px; margin:3px; font-size:13px; }
+.warning { border-color:rgba(255,164,90,.7); background:rgba(120,48,10,.28); }
+.warning h2 { color:#ffbf7a; }
+input, textarea { width:100%; box-sizing:border-box; background:rgba(0,0,0,.5); border:1px solid rgba(214,179,106,.35); color:#fff; border-radius:10px; padding:11px; margin:6px 0 12px; }
+textarea { min-height:92px; }
+label { color:#d6b36a; font-weight:900; }
+.photo-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:12px; }
+.photo-grid img { width:100%; height:130px; object-fit:cover; border-radius:14px; border:1px solid rgba(214,179,106,.34); }
+.know-list p { margin:8px 0; }
+.check { color:#d6b36a; font-weight:900; }
+.quick-row { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+@media(max-width:1200px){ .card,.card.wide{grid-column:1/-1;} .stat-row{grid-template-columns:repeat(2,1fr);} .brain-top{display:block;} .actions{justify-content:flex-start;margin-top:12px;} }
+@media(max-width:650px){ .brain-page{padding:16px;} .stat-row{grid-template-columns:1fr;} }
+</style>
+
+<div class="brain-page">
+  <div class="brain-shell">
+    <div class="brain-top">
+      <div>
+        <div class="eyebrow">Heinlin Property Brain v2</div>
+        <h1>{{ prop.property_name or prop.address or 'Property' }}</h1>
+        <div class="sub">{{ prop.client }} • {{ prop.address }}{% if prop.city %} • {{ prop.city }}, {{ prop.state }}{% endif %}</div>
+      </div>
+      <div class="actions">
+        <a class="btn" href="/properties/{{ prop.id }}">Property Card</a>
+        <a class="btn" href="/properties/{{ prop.id }}/brain">Brain</a>
+        <a class="btn" href="/properties">Properties</a>
+        <a class="btn" href="/legacy">Legacy Library</a>
+        <a class="btn primary" href="/jarvis">Command Center</a>
+      </div>
+    </div>
+
+    <div class="summary-box">
+      <b>What do we know about this pool?</b><br>
+      {{ pool_summary }}
+    </div>
+
+    <div class="stat-row">
+      <div class="stat"><b>{{ brain_summary.job_count }}</b>Jobs</div>
+      <div class="stat"><b>{{ brain_summary.photo_count }}</b>Photos</div>
+      <div class="stat"><b>{{ brain_summary.lesson_count }}</b>Lessons</div>
+      <div class="stat"><b>{{ brain_summary.problem_count }}</b>Known Problems</div>
+      <div class="stat"><b>{{ brain_summary.field_log_count }}</b>Field Logs</div>
+      <div class="stat"><b>{% if prop.gate_code %}Yes{% else %}No{% endif %}</b>Gate Code</div>
+      <div class="stat"><b>{{ prop.service_plan or 'None' }}</b>Plan</div>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <h2>What We Know</h2>
+        <div class="know-list">
+          <p><span class="check">{% if brain_summary.known_pool %}✓{% else %}—{% endif %}</span> Pool specs recorded</p>
+          <p><span class="check">{% if brain_summary.known_equipment %}✓{% else %}—{% endif %}</span> Equipment information recorded</p>
+          <p><span class="check">{% if brain_summary.known_access %}✓{% else %}—{% endif %}</span> Access/service notes recorded</p>
+          <p><span class="check">{% if lessons %}✓{% else %}—{% endif %}</span> Legacy lessons attached</p>
+          <p><span class="check">{% if photos %}✓{% else %}—{% endif %}</span> Photo history exists</p>
+        </div>
+        <div class="quick-row">
+          <a class="btn" href="/photos">Photos</a>
+          <a class="btn" href="/jobs">Jobs</a>
+          <a class="btn" href="/field-logs">Field Logs</a>
+        </div>
+      </div>
+
+      <div class="card warning">
+        <h2>Known Problems</h2>
+        {% for problem in known_problems %}
+          <div class="item">
+            <span class="pill">{{ problem.source }}</span>
+            <b>{{ problem.title }}</b><br>
+            <span class="muted">{{ problem.date }}</span>
+            <p>{{ problem.body }}</p>
+            <a class="btn" href="{{ problem.href }}">Open</a>
+          </div>
+        {% else %}
+          <p class="muted">No known problems found yet. Problems will appear here from jobs, field logs, and Legacy lessons.</p>
+        {% endfor %}
+      </div>
+
+      <div class="card">
+        <h2>Hidden Details</h2>
+        {% for detail in hidden_details %}
+          <div class="item">
+            <b>{{ detail.label }}</b>
+            <p>{{ detail.value }}</p>
+          </div>
+        {% else %}
+          <p class="muted">No hidden details recorded yet. Add gate code, hidden valves, customer preferences, and service notes below.</p>
+        {% endfor %}
+      </div>
+
+      <div class="card">
+        <h2>Owner</h2>
+        {% if client %}
+          <p><b>{{ client.name }}</b></p>
+          <p>{{ client.contact_name }}</p>
+          <p>{{ client.phone }} {{ client.mobile }}</p>
+          <p>{{ client.email }}</p>
+          <a class="btn" href="/clients/{{ client.id }}">Open Client</a>
+        {% else %}
+          <p class="muted">No client record linked.</p>
+        {% endif %}
+      </div>
+
+      <div class="card">
+        <h2>Pool Specs</h2>
+        <p><b>Type:</b> {{ prop.pool_type or '—' }}</p>
+        <p><b>Size:</b> {{ prop.pool_size or '—' }}</p>
+        <p><b>Depth:</b> {{ prop.pool_depth or '—' }}</p>
+        <p><b>Finish:</b> {{ prop.finish_type or '—' }}</p>
+        <p><b>Cover:</b> {{ prop.cover_type or '—' }}</p>
+      </div>
+
+      <div class="card">
+        <h2>Core Equipment</h2>
+        <p><b>Pump:</b> {{ prop.pump_model or '—' }}</p>
+        <p><b>Filter:</b> {{ prop.filter_model or '—' }}</p>
+        <p><b>Heater:</b> {{ prop.heater_model or '—' }}</p>
+        <p><b>Sanitizer:</b> {{ prop.sanitizer or '—' }}</p>
+        <p><b>Automation:</b> {{ prop.automation_system or '—' }}</p>
+      </div>
+
+      <div class="card full">
+        <h2>Edit Property Brain Notes</h2>
+        <form method="post" action="/properties/{{ prop.id }}/brain/save">
+          <label>Gate Code / Access</label>
+          <input name="gate_code" value="{{ prop.gate_code or '' }}">
+          <label>Service Plan</label>
+          <input name="service_plan" value="{{ prop.service_plan or '' }}">
+          <label>Pool Notes</label>
+          <textarea name="pool_notes">{{ prop.pool_notes or '' }}</textarea>
+          <label>Equipment Notes</label>
+          <textarea name="equipment_notes">{{ prop.equipment_notes or '' }}</textarea>
+          <label>Property Notes / Hidden Valves / Customer Preferences</label>
+          <textarea name="notes">{{ prop.notes or '' }}</textarea>
+          <button class="primary" type="submit">Save Property Brain</button>
+        </form>
+      </div>
+
+      <div class="card wide">
+        <h2>Equipment History</h2>
+        {% for e in equipment %}
+          <div class="item">
+            <b>{{ e.equipment_type }}</b> {{ e.brand }} {{ e.model }}<br>
+            <span class="muted">Serial: {{ e.serial or '—' }} • Installed: {{ e.installed_date or '—' }}</span>
+            <p>{{ e.notes }}</p>
+          </div>
+        {% else %}
+          <p class="muted">No separate equipment records yet. Add equipment from the property card.</p>
+        {% endfor %}
+      </div>
+
+      <div class="card">
+        <h2>Legacy Lessons</h2>
+        {% for lesson in lessons %}
+          <div class="item">
+            <b>{{ lesson.problem or 'Legacy Lesson' }}</b>
+            <p><b>Fix:</b> {{ lesson.fix }}</p>
+            <p><b>Learned:</b> {{ lesson.lesson }}</p>
+            <p class="muted">{{ lesson.tags }} • {{ lesson.created_at }}</p>
+          </div>
+        {% else %}
+          <p class="muted">No legacy lessons tied to this property yet.</p>
+        {% endfor %}
+      </div>
+
+      <div class="card wide">
+        <h2>Service History</h2>
+        {% for job in jobs %}
+          <div class="item">
+            <b>{{ job.job_type }}</b> — {{ job.status }} <span class="pill">{{ job.priority or 'Normal' }}</span><br>
+            <span class="muted">{{ job.date or job.scheduled_start }} • Crew: {{ job.crew }}</span>
+            <p>{{ job.notes }}</p>
+            <a class="btn" href="/jobs/{{ job.id }}">Open Job</a>
+            <a class="btn" href="/jobs/{{ job.id }}/legacy">What Did We Learn?</a>
+          </div>
+        {% else %}
+          <p class="muted">No jobs found for this property yet.</p>
+        {% endfor %}
+      </div>
+
+      <div class="card">
+        <h2>Field Logs</h2>
+        {% for log in field_logs %}
+          <div class="item">
+            <b>{{ log.date or log.created_at }}</b><br>
+            <span class="muted">{{ log.employee_name }}</span>
+            <p>{{ log.work_completed }}</p>
+            {% if log.issues %}<p><b>Issues:</b> {{ log.issues }}</p>{% endif %}
+            {% if log.next_steps %}<p><b>Next:</b> {{ log.next_steps }}</p>{% endif %}
+          </div>
+        {% else %}
+          <p class="muted">No field logs found for this property yet.</p>
+        {% endfor %}
+      </div>
+
+      <div class="card full">
+        <h2>Photo Memory</h2>
+        <div class="photo-grid">
+          {% for ph in photos %}
+            {% if ph.photo_url %}
+              <a href="{{ ph.photo_url }}" target="_blank"><img src="{{ ph.photo_url }}" alt="{{ ph.title }}"></a>
+            {% endif %}
+          {% else %}
+            <p class="muted">No photos found.</p>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

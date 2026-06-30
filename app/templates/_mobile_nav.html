@@ -1,5 +1,126 @@
-<div class="ops-mobile-bar">
-    <button type="button" onclick="history.back()" class="ops-mobile-btn">← Back</button>
-    <a href="/dashboard" class="ops-mobile-btn">Dashboard</a>
-    <a href="/logout" class="ops-mobile-btn danger">Logout</a>
-</div>
+{% extends "base.html" %}
+{% block content %}
+
+<section class="hero">
+  <div>
+    <div class="kicker">POOL MONITORING</div>
+    <h1>Pool Monitoring</h1>
+    <p>Track Pentair monitoring access, alerts, equipment status, and service follow-up.</p>
+  </div>
+
+  <a class="btn" href="/jarvis">Command Center</a>
+</section>
+
+<section class="panel">
+  <div class="section-head">
+    <h2>Add Monitored Pool</h2>
+  </div>
+
+  <form method="post" action="/pool-monitoring/add" class="form-grid">
+
+    <label>
+      Client
+      <select name="client_id">
+        <option value="">Select client</option>
+        {% for client in clients %}
+          <option value="{{ client.id }}">{{ client.name }}</option>
+        {% endfor %}
+      </select>
+    </label>
+
+    <label>
+      Property
+      <select name="property_id">
+        <option value="">Select property</option>
+        {% for property in properties %}
+          <option value="{{ property.id }}">
+            #{{ property.id }}
+            {% if property.address %} - {{ property.address }}{% endif %}
+          </option>
+        {% endfor %}
+      </select>
+    </label>
+
+    <label>
+      Pentair System
+      <select name="system_type">
+        <option value="IntelliCenter">IntelliCenter</option>
+        <option value="IntelliFlo3">IntelliFlo3</option>
+        <option value="IntelliConnect">IntelliConnect</option>
+        <option value="ScreenLogic">ScreenLogic</option>
+        <option value="Other Pentair">Other Pentair</option>
+      </select>
+    </label>
+
+    <label>
+      Customer Pentair Email
+      <input type="email" name="pentair_account_email" placeholder="customer@email.com">
+    </label>
+
+    <label>
+      Monitoring Status
+      <select name="monitoring_status">
+        <option>Not Started</option>
+        <option>Invite Sent</option>
+        <option>Active</option>
+        <option>Needs Setup</option>
+        <option>Offline</option>
+        <option>Removed</option>
+      </select>
+    </label>
+
+    <label>
+      Current Alert
+      <input type="text" name="current_alert" placeholder="Pump offline, heater fault, low flow, etc.">
+    </label>
+
+    <label>
+      Equipment Notes
+      <textarea name="equipment_notes" placeholder="Pump, heater, automation, salt cell, valves, filter, etc."></textarea>
+    </label>
+
+    <label>
+      Service Notes
+      <textarea name="service_notes" placeholder="What we checked, what needs done, what customer was told."></textarea>
+    </label>
+
+    <button class="btn" type="submit">Add Pool Monitoring</button>
+  </form>
+</section>
+
+<section class="card-grid">
+  {% if records %}
+    {% for record in records %}
+      <div class="dash-card">
+        <div>
+          <h2>{{ record.system_brand or "Pentair" }} {{ record.system_type or "" }}</h2>
+          <p><strong>Status:</strong> {{ record.monitoring_status or "Not Started" }}</p>
+          <p><strong>Email:</strong> {{ record.pentair_account_email or "Not entered" }}</p>
+          <p><strong>Last Checked:</strong> {{ record.last_checked or "Not checked yet" }}</p>
+
+          {% if record.current_alert %}
+            <p><strong>Alert:</strong> {{ record.current_alert }}</p>
+          {% endif %}
+
+          {% if record.equipment_notes %}
+            <p><strong>Equipment:</strong> {{ record.equipment_notes }}</p>
+          {% endif %}
+
+          {% if record.service_notes %}
+            <p><strong>Service:</strong> {{ record.service_notes }}</p>
+          {% endif %}
+
+          <form method="post" action="/pool-monitoring/{{ record.id }}/delete">
+            <button class="btn" type="submit">Delete</button>
+          </form>
+        </div>
+      </div>
+    {% endfor %}
+  {% else %}
+    <div class="panel">
+      <p>No monitored pools added yet.</p>
+    </div>
+  {% endif %}
+</section>
+
+{% endblock %}

@@ -1,1 +1,36 @@
-{% extends "base.html" %}{% block content %}<section class="section-head"><h1>Properties</h1><form method="post" action="/properties/new" class="inline"><input name="client" placeholder="Client"><input name="address" placeholder="Address"><button class="primary">+ Property</button></form></section><form class="search"><input name="q" value="{{ q }}" placeholder="Search properties"><button>Search</button></form><section class="list-grid">{% for p in properties %}<a class="list-card" href="/properties/{{ p.id }}" {% if p.card_image %}style="background-image:linear-gradient(rgba(0,0,0,.55),rgba(0,0,0,.78)),url('{{ p.card_image }}')"{% endif %}><h2>{{ p.property_name or p.client }}</h2><p>{{ p.address }}</p><p>{{ p.pool_type }} {{ p.pool_size }}</p></a>{% endfor %}</section>{% endblock %}
+{% extends "base.html" %}
+{% block content %}
+
+<section class="section-head">
+  <h1>{{ design.get('properties', {}).get('title', 'Properties') }}</h1>
+  <p>{{ design.get('properties', {}).get('subtitle', 'Every pool, address, gate code, equipment pad, and detail in one place.') }}</p>
+</section>
+
+<section class="card">
+  <form method="post" action="/properties/new" class="inline-form">
+    <input name="client" placeholder="Client name">
+    <input name="address" placeholder="Property address">
+    <button class="btn primary" type="submit">
+      {{ design.get('properties', {}).get('button_text', 'Add Property') }}
+    </button>
+  </form>
+</section>
+
+<section class="grid">
+  {% for prop in properties %}
+    <a class="card" href="/properties/{{ prop.id }}">
+      <h2>{{ prop.property_name or prop.address or "Property" }}</h2>
+      <p>{{ prop.client or "No client assigned" }}</p>
+      {% if prop.address %}
+        <p>{{ prop.address }}</p>
+      {% endif %}
+    </a>
+  {% else %}
+    <div class="card">
+      <h2>No properties yet</h2>
+      <p>Add your first property above.</p>
+    </div>
+  {% endfor %}
+</section>
+
+{% endblock %}

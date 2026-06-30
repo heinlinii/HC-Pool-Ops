@@ -1,35 +1,184 @@
 {% extends "base.html" %}
 {% block content %}
-<section class="panel">
-  <h1>Map / Property List</h1>
 
-  {% if is_admin and employees %}
-  <section class="panel">
-    <h2>Clocked-In Employees</h2>
-    <div class="list-grid">
-      {% for e in employees %}
-      <div class="list-card">
-        <h2>{{ e.name or e.username or "Employee" }}</h2>
-        <p>Status: Clocked In</p>
-        {% if e.clock_lat and e.clock_lng %}
-          <p>GPS: {{ e.clock_lat }}, {{ e.clock_lng }}</p>
-          <a class="btn primary" target="_blank" href="https://www.google.com/maps/search/?api=1&query={{ e.clock_lat }},{{ e.clock_lng }}">Open Location</a>
-        {% else %}
-          <p class="muted">No GPS location saved yet.</p>
-        {% endif %}
-      </div>
-      {% endfor %}
-    </div>
-  </section>
-  {% endif %}
+<style>
+  body.hfo-body .shell {
+    padding-top: 0 !important;
+  }
 
-  <section class="list-grid">
-    {% for p in properties %}
-      <a class="list-card" target="_blank" href="https://www.google.com/maps/search/?api=1&query={{ p.address }}">
-        <h2>{{ p.name or p.address }}</h2>
-        <p>{{ p.address }}</p>
-      </a>
-    {% endfor %}
+  .hfo-mobile-command {
+    padding: {{ design.get("map", {}).get("top_padding", "115px") }} 18px 40px !important;
+    margin: 0 auto !important;
+    width: 100% !important;
+    max-width: 1200px !important;
+    box-sizing: border-box !important;
+  }
+
+  .hfo-mobile-section {
+    margin: 0 !important;
+    padding: 28px !important;
+    border-radius: 28px !important;
+    background: rgba(7, 14, 20, .94) !important;
+    border: 1px solid rgba(214,179,106,.26) !important;
+  }
+
+  .hfo-mobile-section h2 {
+    margin: 0 0 14px !important;
+    color: #fff !important;
+    font-size: clamp(3rem, 7vw, 6.5rem) !important;
+    line-height: .9 !important;
+  }
+
+  .hfo-mobile-section .muted {
+    margin: 0 0 22px !important;
+    color: rgba(255,255,255,.76) !important;
+    font-weight: 850 !important;
+    font-size: 1.15rem !important;
+  }
+
+  #hfoMap {
+    width: 100% !important;
+    height: {{ design.get("map", {}).get("map_height", "560px") }} !important;
+    min-height: 420px !important;
+    border-radius: 22px !important;
+    overflow: hidden !important;
+    border: 1px solid rgba(214,179,106,.22) !important;
+    background: #071017 !important;
+  }
+
+  .hfo-map-pin {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 999px !important;
+    font-weight: 1000 !important;
+    color: #071017 !important;
+    background: #d6b36a !important;
+    border: 2px solid #fff !important;
+    box-shadow: 0 10px 22px rgba(0,0,0,.45) !important;
+  }
+
+  .hfo-employee-pin {
+    background: #86d9ff !important;
+  }
+
+  @media (max-width: 700px) {
+    .hfo-mobile-command {
+      padding: {{ design.get("map", {}).get("mobile_top_padding", "95px") }} 12px 28px !important;
+    }
+
+    .hfo-mobile-section {
+      padding: 18px !important;
+      border-radius: 22px !important;
+    }
+
+    .hfo-mobile-section h2 {
+      font-size: 3.2rem !important;
+    }
+
+    #hfoMap {
+      height: {{ design.get("map", {}).get("mobile_map_height", "480px") }} !important;
+      min-height: 380px !important;
+    }
+  }
+</style>
+<div class="hfo-mobile-command">
+
+  <section class="hfo-mobile-section">
+    {{ design.get("map", {}).get("subtitle", "Property pins, clocked-in employees, and jobsite locations.") }}
+    <p class="muted">
+      <h2>{{ design.get("map", {}).get("title", "Field Map") }}</h2>
+    </p>
+
+    <div id="hfoMap"></div>
   </section>
-</section>
+
+</div>
+
+<!-- Embed data as JSON to avoid JS/templating parsing issues -->
+<script id="hfo-data" type="application/json">{{ {'properties': properties, 'employees': employees} | tojson | safe }}</script>
+
+<script>
+  const hfoDataEl = document.getElementById('hfo-data');
+  const hfoData = hfoDataEl ? JSON.parse(hfoDataEl.textContent || hfoDataEl.innerText || '{}') : {};
+  var properties = (typeof window !== 'undefined' && window.properties) ? window.properties : (hfoData.properties || []);
+  var employees = (typeof window !== 'undefined' && window.employees) ? window.employees : (hfoData.employees || []);
+
+
+  const map = L.map("hfoMap").setView([37.9716, -87.5711], 11);
+
+  setTimeout(function () {
+    map.invalidateSize();
+  }, 250);
+
+
+  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom: 19,
+    attribution: '&copy; OpenStreetMap contributors'
+  }).addTo(map);
+
+  const propertyIcon = L.divIcon({
+    className: "hfo-map-pin hfo-property-pin",
+    html: "P",
+    iconSize: [34, 34],
+    iconAnchor: [17, 17]
+  });
+
+  const employeeIcon = L.divIcon({
+    className: "hfo-map-pin hfo-employee-pin",
+    html: "E",
+    iconSize: [34, 34],
+    iconAnchor: [17, 17]
+  });
+
+  let bounds = [];
+
+  properties.forEach(function(p) {
+    if (!p.latitude || !p.longitude) return;
+
+    const lat = parseFloat(p.latitude);
+    const lng = parseFloat(p.longitude);
+
+    if (isNaN(lat) || isNaN(lng)) return;
+
+    bounds.push([lat, lng]);
+
+    const title = p.property_name || p.address || "Property";
+    const client = p.client || "";
+    const address = p.address || "";
+
+    L.marker([lat, lng], { icon: propertyIcon })
+      .addTo(map)
+      .bindPopup(`
+        <strong>${title}</strong><br>
+        ${client}<br>
+        ${address}<br>
+        <a href="/properties/${p.id}">Open Property</a>
+      `);
+  });
+
+  employees.forEach(function(e) {
+    if (!e.clock_lat || !e.clock_lng) return;
+
+    const lat = parseFloat(e.clock_lat);
+    const lng = parseFloat(e.clock_lng);
+
+    if (isNaN(lat) || isNaN(lng)) return;
+
+    bounds.push([lat, lng]);
+
+    L.marker([lat, lng], { icon: employeeIcon })
+      .addTo(map)
+      .bindPopup(`
+        <strong>${e.name || "Employee"}</strong><br>
+        Clocked in<br>
+        ${e.clocked_in_at || ""}
+      `);
+  });
+
+  if (bounds.length > 0) {
+    map.fitBounds(bounds, { padding: [40, 40] });
+  }
+</script>
+
 {% endblock %}

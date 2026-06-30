@@ -1,47 +1,194 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{{ title or "Heinlin Command Center" }}</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Heinlin Field Ops</title>
 
- <link rel="stylesheet" href="/static/style.css?v=role-portals-1">
-<link rel="stylesheet" href="/static/hfo-theme.css?v=crest-card-only-1">
-<link rel="stylesheet" href="/static/login-final.css?v=crest-card-only-1">
+  <link rel="stylesheet" href="/static/hfo-theme.css">
+  <link rel="stylesheet" href="/static/login-final.css">
+  <!-- <link rel="stylesheet" href="/static/jarvis-final.css?v=23"> -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+{% set page_designs = design.get("pages", {}) if design else {} %}
+
+{% set path = request.url.path %}
+
+{% if path == "/jarvis" %}
+  {% set page_key = "dashboard" %}
+{% elif path.startswith("/accounts") %}
+  {% set page_key = "accounts" %}
+{% elif path.startswith("/today-dashboard") or path.startswith("/my-day") or path.startswith("/todays-work") %}
+  {% set page_key = "today" %}
+{% elif path.startswith("/field-operations") or path.startswith("/employee") or path.startswith("/crew") or path.startswith("/field-logs") or path.startswith("/gps") %}
+  {% set page_key = "field_operations" %}
+{% elif path.startswith("/pool-systems") or path.startswith("/pool-monitoring") %}
+  {% set page_key = "pool_systems" %}
+{% elif path.startswith("/business") or path.startswith("/employees") or path.startswith("/quickbooks") or path.startswith("/invisible-office") %}
+  {% set page_key = "business" %}
+{% elif path.startswith("/jarvis-tools") or path.startswith("/ai-systems") or path.startswith("/talk-to-jarvis") %}
+  {% set page_key = "jarvis_tools" %}
+{% elif path.startswith("/clients") %}
+  {% set page_key = "clients" %}
+{% elif path.startswith("/properties") %}
+  {% set page_key = "properties" %}
+{% elif path.startswith("/jobs") %}
+  {% set page_key = "jobs" %}
+{% elif path.startswith("/billing") %}
+  {% set page_key = "billing" %}
+{% elif path.startswith("/photos") %}
+  {% set page_key = "photos" %}
+{% elif path.startswith("/schedule") or path.startswith("/calendar") %}
+  {% set page_key = "schedule" %}
+{% elif path.startswith("/weather") %}
+  {% set page_key = "weather" %}
+{% elif path.startswith("/map") %}
+  {% set page_key = "map" %}
+{% elif path.startswith("/design-studio") or path.startswith("/page-designer") or path.startswith("/dashboard-card-images") or path.startswith("/design-upload") %}
+  {% set page_key = "design_studio" %}
+{% else %}
+  {% set page_key = "dashboard" %}
+{% endif %}
+
+{% set pg = page_designs.get(page_key, {}) %}
+
+<style>
+  :root {
+    --hfo-page-bg: {% if pg.get('background_image') %}url('{{ pg.get("background_image") }}'){% else %}none{% endif %};
+    --hfo-page-bg-size: {{ pg.get('background_size', 'cover') }};
+    --hfo-page-bg-position: {{ pg.get('background_position', 'center') }};
+    --hfo-page-bg-opacity: {{ pg.get('background_brightness', '0') }};
+    --hfo-page-overlay: {{ pg.get('page_overlay', '0.55') }};
+    --hfo-card-opacity: {{ pg.get('card_opacity', '0.08') }};
+    --hfo-card-radius: {{ pg.get('card_radius', '26px') }};
+    --hfo-title-size: {{ pg.get('title_size', 'clamp(44px, 8vw, 88px)') }};
+    --hfo-top-space: {{ pg.get('top_space', '28px') }};
+    --hfo-button-height: {{ pg.get('button_height', '48px') }};
+  }
+
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background-image: var(--hfo-page-bg);
+    background-size: var(--hfo-page-bg-size);
+    background-position: var(--hfo-page-bg-position);
+    background-repeat: no-repeat;
+    opacity: var(--hfo-page-bg-opacity);
+    pointer-events: none;
+    z-index: -3;
+  }
+
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,var(--hfo-page-overlay));
+    pointer-events: none;
+    z-index: -2;
+  }
+
+  .card,
+  .hfo-tool-card,
+  .hfo-command-card,
+  .hfo-page-card,
+  .hfo-card-editor,
+  .hfo-upload-card,
+  .hfo-file-card {
+    border-radius: var(--hfo-card-radius) !important;
+  }
+
+  .section-head h1,
+  .hfo-section-top h1,
+  .hfo-page-design-head h1,
+  .hfo-upload-head h1 {
+    font-size: var(--hfo-title-size) !important;
+  }
+
+  .btn,
+  .hfo-btn,
+  .hfo-quick-btn,
+  .hfo-tool-card a {
+    min-height: var(--hfo-button-height) !important;
+  }
+</style>
+
+  <style>
+    .hfo-top-actions {
+      position: relative !important;
+      margin: 0 !important;
+      padding: 8px 24px !important;
+      min-height: auto !important;
+      display: flex !important;
+      gap: 12px !important;
+      align-items: center !important;
+    }
+
+    .hfo-top-actions .btn,
+    .hfo-top-actions a,
+    .hfo-top-actions button {
+      width: 126px !important;
+      height: 72px !important;
+      min-height: 72px !important;
+      padding: 0 !important;
+      border-radius: 18px !important;
+
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+
+      background: rgba(15, 18, 20, .92) !important;
+      color: #fff !important;
+      border: 1px solid rgba(255,255,255,.13) !important;
+      box-shadow: 0 14px 34px rgba(0,0,0,.38) !important;
+
+      font-size: 1.05rem !important;
+      font-weight: 1000 !important;
+      text-decoration: none !important;
+      line-height: 1 !important;
+      cursor: pointer !important;
+    }
+
+    .hfo-top-actions .btn:hover,
+    .hfo-top-actions a:hover,
+    .hfo-top-actions button:hover {
+      transform: translateY(-1px);
+      border-color: rgba(214,179,106,.35) !important;
+    }
+
+    @media (max-width: 640px) {
+      .hfo-top-actions {
+        padding: 8px 10px !important;
+        gap: 8px !important;
+      }
+
+      .hfo-top-actions .btn,
+      .hfo-top-actions a,
+      .hfo-top-actions button {
+        width: 108px !important;
+        height: 62px !important;
+        min-height: 62px !important;
+        font-size: .95rem !important;
+        border-radius: 16px !important;
+      }
+    }
+  </style>
 </head>
 
 <body class="hfo-body">
 
-  
-
-  <script>
-    if ("scrollRestoration" in history) {
-      history.scrollRestoration = "manual";
-    }
-
-    window.addEventListener("load", function () {
-      window.scrollTo(0, 0);
-    });
-  </script>
-
-  {% if user and request.url.path != "/login" %}
-  <div class="top-action-bar">
-    <button class="btn" type="button" onclick="history.back()">← Back</button>
-
-    {% if is_employee %}
-      <a class="btn primary" href="/crew/my-day">Dashboard</a>
-    {% elif is_client %}
-      <a class="btn primary" href="/client-portal">Dashboard</a>
-    {% else %}
-      <a class="btn primary" href="/jarvis">Dashboard</a>
-    {% endif %}
-
-    <a class="btn danger" href="/logout">Logout</a>
-  </div>
+  {% if user %}
+    <div class="hfo-top-actions">
+      <button type="button" onclick="history.back()" class="btn secondary">← Back</button>
+      <a href="/jarvis" class="btn primary">Dashboard</a>
+      <a href="/logout" class="btn danger">Logout</a>
+    </div>
   {% endif %}
 
   <main class="shell">
-    {% block content %}{% endblock %}
+    {% block content %}
+    {% endblock %}
   </main>
 
 </body>

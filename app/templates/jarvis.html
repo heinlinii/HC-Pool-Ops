@@ -1,104 +1,285 @@
 {% extends "base.html" %}
 {% block content %}
 
-<div class="hfo-mobile-command">
+{% set dash = design.get("dashboard_cards", {}) if design else {} %}
 
-  <section class="hfo-identity-card">
-    <div class="hfo-identity-copy">
-      <p class="hfo-mini-label">HEINLIN FIELD OPS</p>
-      <h1>HEINLIN FIELD<br>OPS</h1>
-      <p class="hfo-founded">Founded 1907 • 5th Generation</p>
-    </div>
+{% macro card_style(key) -%}
+  {% set card = dash.get(key, {}) %}
+  {% if card is mapping %}
+    {% if card.get('image') %}
+      --card-bg: url('{{ card.get('image') }}');
+    {% endif %}
+    --card-size: {{ card.get('size', 'cover') }};
+    --card-position: {{ card.get('position', 'center') }};
+    --card-opacity: {{ card.get('brightness', '0.28') }};
+  {% elif card %}
+    --card-bg: url('{{ card }}');
+  {% endif %}
+{%- endmacro %}
 
-    <div class="hfo-identity-mainline">
-      <div class="hfo-family-crest" aria-label="Heinlin family crest">
-        <div class="hfo-v3-crest">
-  <div class="crest-top">♞</div>
-  <div class="crest-h">H</div>
-  <div class="crest-scroll"></div>
-</div>
+{% macro card_style_attr(key) -%}
+  {% set style = card_style(key) %}
+  {% if style %}
+    style="{{ style|safe }}"
+  {% endif %}
+{%- endmacro %}
 
-      <div class="hfo-identity-taglines">
-        <p>The Heinlin Way</p>
-        <p>Built by Hand</p>
-        <p>Run Like a Machine</p>
-        <p>Look Like a Million Bucks</p>
-        <strong>While Always Having a Damn Good Time.</strong>
-      </div>
-    </div>
+<style>
+  .hfo-command-wrap {
+    width: min(1180px, calc(100vw - 32px));
+    margin: 0 auto;
+    padding: 28px 0 60px;
+  }
 
-    <div class="hfo-award-plaque">
-      <div class="hfo-award-seal">IN</div>
-      <div>
-        <span>Indiana Historical Society</span>
-        <strong>Centennial Business Award</strong>
-        <em>Recipient</em>
-      </div>
-    </div>
+  .hfo-hero {
+    margin-bottom: 26px;
+  }
+
+  .hfo-hero-eyebrow {
+    color: rgba(255,255,255,.72);
+    text-transform: uppercase;
+    letter-spacing: .22em;
+    font-size: 12px;
+    font-weight: 800;
+    margin-bottom: 8px;
+  }
+
+  .hfo-hero h1 {
+    margin: 0;
+    font-size: clamp(42px, 7vw, 86px);
+    line-height: .95;
+    letter-spacing: -0.055em;
+  }
+
+  .hfo-hero p {
+    max-width: 760px;
+    color: rgba(255,255,255,.78);
+    font-size: 18px;
+    line-height: 1.5;
+    margin-top: 14px;
+  }
+
+  .hfo-command-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+  }
+
+  .hfo-command-card {
+    --card-bg: none;
+    --card-size: cover;
+    --card-position: center;
+    --card-opacity: .28;
+
+    position: relative;
+    display: block;
+    min-height: 205px;
+    padding: 24px;
+    border-radius: 28px;
+    text-decoration: none;
+    color: #fff;
+    background:
+      radial-gradient(circle at top left, rgba(255,255,255,.16), transparent 34%),
+      linear-gradient(135deg, rgba(32,38,42,.92), rgba(7,11,14,.96));
+    border: 1px solid rgba(255,255,255,.12);
+    box-shadow: 0 18px 50px rgba(0,0,0,.35);
+    overflow: hidden;
+    isolation: isolate;
+    transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease;
+  }
+
+  .hfo-command-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: var(--card-bg);
+    background-size: var(--card-size);
+    background-position: var(--card-position);
+    background-repeat: no-repeat;
+    opacity: var(--card-opacity);
+    z-index: -2;
+  }
+
+  .hfo-command-card::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(135deg, rgba(0,0,0,.72), rgba(0,0,0,.38)),
+      radial-gradient(circle at top left, rgba(59,130,246,.20), transparent 42%);
+    z-index: -1;
+  }
+
+  .hfo-command-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(59,130,246,.7);
+    box-shadow: 0 22px 65px rgba(0,0,0,.48);
+  }
+
+  .hfo-command-card h2 {
+    margin: 0;
+    font-size: clamp(34px, 5vw, 56px);
+    line-height: 1;
+    letter-spacing: -0.045em;
+  }
+
+  .hfo-command-card p {
+    color: rgba(255,255,255,.82);
+    font-size: 17px;
+    line-height: 1.42;
+    max-width: 520px;
+    margin: 12px 0 0;
+  }
+
+  .hfo-command-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 22px;
+    padding: 11px 15px;
+    border-radius: 999px;
+    background: rgba(59,130,246,.24);
+    border: 1px solid rgba(59,130,246,.48);
+    color: rgba(255,255,255,.94);
+    font-weight: 900;
+  }
+
+  .hfo-quick-actions {
+    margin-top: 22px;
+    padding: 20px;
+    border-radius: 26px;
+    background: rgba(255,255,255,.055);
+    border: 1px solid rgba(255,255,255,.11);
+  }
+
+  .hfo-quick-actions h2 {
+    margin: 0 0 14px;
+    font-size: 28px;
+  }
+
+  .hfo-quick-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .hfo-quick-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 10px 15px;
+    border-radius: 999px;
+    color: #fff;
+    text-decoration: none;
+    font-weight: 900;
+    background: rgba(255,255,255,.09);
+    border: 1px solid rgba(255,255,255,.14);
+  }
+
+  .hfo-quick-btn.primary {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    border-color: rgba(255,255,255,.18);
+  }
+
+  .hfo-note {
+    margin-top: 14px;
+    color: rgba(255,255,255,.58);
+    font-size: 13px;
+  }
+
+  @media (max-width: 820px) {
+    .hfo-command-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .hfo-command-card {
+      min-height: 170px;
+      padding: 22px;
+    }
+
+    .hfo-hero h1 {
+      font-size: clamp(44px, 14vw, 72px);
+    }
+  }
+</style>
+
+<div class="hfo-command-wrap">
+
+  <section class="hfo-hero">
+    <div class="hfo-hero-eyebrow">{{ greeting or "Welcome back" }}</div>
+    <h1>Heinlin Field Ops</h1>
+    <p>
+      Built by the hands that perfected the term work hard play harder.
+      Pick a department and get where you need to go without hunting through a pile of buttons.
+    </p>
   </section>
 
-  <section class="hfo-jarvis-card">
-    <div class="hfo-jarvis-title-row">
-      <h2>JARVIS</h2>
-      <span class="hfo-online-dot"></span>
-    </div>
+  <section class="hfo-command-grid">
 
-    <p class="hfo-online-word">Online</p>
+    <a class="hfo-command-card" href="/accounts" data-card="accounts" {{ card_style_attr('accounts') }}>
+      <h2>Accounts</h2>
+      <p>Clients, properties, jobs, billing, photos, estimates, and invoices.</p>
+      <span class="hfo-command-pill">Open Accounts →</span>
+    </a>
 
-    <h3>{{ greeting }}, {{ user.name or user.username or "Boss" }}.</h3>
+    <a class="hfo-command-card" href="/today-dashboard" data-card="today" {{ card_style_attr('today') }}>
+      <h2>Today</h2>
+      <p>Today’s work, schedule, map, weather, My Day, and crew activity.</p>
+      <span class="hfo-command-pill">Open Today →</span>
+    </a>
 
-    <div class="hfo-mobile-stats">
-      <div>
-        <strong>3</strong>
-        <span>Employees<br>Clocked In</span>
-      </div>
-      <div>
-        <strong>12</strong>
-        <span>Jobs<br>Scheduled</span>
-      </div>
-      <div>
-        <strong>1</strong>
-        <span>Priority<br>Issue</span>
-      </div>
-    </div>
+    <a class="hfo-command-card" href="/pool-systems" data-card="pool_systems" {{ card_style_attr('pool_systems') }}>
+      <h2>Pool Systems</h2>
+      <p>Pool monitoring, Pentair Pro links, weather protection, and equipment notes.</p>
+      <span class="hfo-command-pill">Open Pool Systems →</span>
+    </a>
 
-    <div class="hfo-handle-zone">
-      <h4>What needs handled?</h4>
+    <a class="hfo-command-card" href="/field-operations" data-card="field_operations" {{ card_style_attr('field_operations') }}>
+      <h2>Field Operations</h2>
+      <p>Employee dashboard, crew list, field logs, GPS day log, and photos.</p>
+      <span class="hfo-command-pill">Open Field Ops →</span>
+    </a>
 
-      <form method="get" action="/jarvis/search" class="hfo-mobile-search">
-        <input name="q" placeholder="Find a client, job, property, photo, log, map, weather..." autofocus>
-        <button class="btn primary" type="submit">Handle It</button>
-      </form>
+    <a class="hfo-command-card" href="/business" data-card="business" {{ card_style_attr('business') }}>
+      <h2>Business</h2>
+      <p>Employees, QuickBooks, invoice import, design studio, and office tools.</p>
+      <span class="hfo-command-pill">Open Business →</span>
+    </a>
 
-      <a class="hfo-talk-link" href="/assistant-interview-live">Talk to Jarvis</a>
-    </div>
+    <a class="hfo-command-card" href="/jarvis-tools" data-card="jarvis" {{ card_style_attr('jarvis') }}>
+      <h2>Jarvis</h2>
+      <p>AI Systems and assistant tools.</p>
+      <span class="hfo-command-pill">Open Jarvis →</span>
+    </a>
+
   </section>
 
-  <section class="hfo-mobile-section hfo-live-operations-v3">
-    <h2>Live Operations</h2>
-    <div class="hfo-mobile-buttons three">
-      <a href="/jarvis">Today's Work</a>
-      <a href="/employee-portal">My Day</a>
-      <a href="/weather">Weather</a>
-    </div>
-  </section>
+  <section class="hfo-quick-actions">
+    <h2>Quick Actions</h2>
 
-  <section class="hfo-mobile-section hfo-command-buttons-v3">
-    <h2>Command Center</h2>
-    <div class="hfo-mobile-buttons">
-      <a href="/clients">Clients</a>
-      <a href="/properties">Properties</a>
-      <a href="/jobs">Jobs</a>
-      <a href="/photos">Photos</a>
-      <a href="/map">Map</a>
-      <a href="/field-logs">Field Logs</a>
-      <a href="/employee-portal">Employees</a>
-      <a href="/estimates">Estimates</a>
+    <div class="hfo-quick-row">
+      <a class="hfo-quick-btn primary" href="/clients">Clients</a>
+      <a class="hfo-quick-btn primary" href="/properties">Properties</a>
+      <a class="hfo-quick-btn primary" href="/jobs">Jobs</a>
+      <a class="hfo-quick-btn" href="/billing">Billing</a>
+      <a class="hfo-quick-btn" href="/photos">Photos</a>
+      <a class="hfo-quick-btn" href="/schedule">Schedule</a>
+      <a class="hfo-quick-btn" href="/weather">Weather</a>
+      <a class="hfo-quick-btn" href="/map">Map</a>
+      <a class="hfo-quick-btn" href="/time-clock">Clock In / Out</a>
+      <a class="hfo-quick-btn" href="/pool-monitoring">Pool Monitoring</a>
+      <a class="hfo-quick-btn" href="/talk-to-jarvis">Talk to Jarvis</a>
+      <a class="hfo-quick-btn" href="/assistant-interview-live">Live Interview</a>
+      <a class="hfo-quick-btn" href="/design-studio">Design Studio</a>
+      <a class="hfo-quick-btn" href="/dashboard-card-images">Card Images</a>
+      <a class="hfo-quick-btn" href="/page-designer">Page Designer</a>
+      <a class="hfo-quick-btn" href="/design-upload">Upload Images</a>
     </div>
-  </section>
 
-  <section class="hfo-mobile-section hfo-footer-v3">
-    <strong>All the Knowledge of Concrete & Pools from 5 Generations of the Heinlin Family, Now Reside Inside Jarvis.</strong>
+    <div class="hfo-note">
+      Use Card Images to adjust each dashboard card image, size, position, and brightness.
+    </div>
   </section>
 
 </div>

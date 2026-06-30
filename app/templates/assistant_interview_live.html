@@ -1,117 +1,48 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live Assistant Interview</title>
-    <link rel="stylesheet" href="/static/style.css?v=40">
-</head>
+{% extends "base.html" %}
+{% block content %}
 
-<script>
+<section class="section-head">
+  <h1>Talk to Jarvis</h1>
+  <p>Tell Jarvis what needs handled. Jarvis will file it into Invisible Office.</p>
+</section>
 
-const search = document.getElementById("clientSearch");
-const select = document.getElementById("clientSelect");
+<section class="card">
+  <h2>Send It to Jarvis</h2>
 
-search.addEventListener("input", function () {
+  <form method="post" action="/assistant-live/send" class="stack">
+    <textarea
+      name="message"
+      placeholder="Tell Jarvis what needs handled..."
+      style="min-height:160px;width:100%;"
+      autofocus
+    ></textarea>
 
-    const query = this.value.toLowerCase();
+    <div class="inline-form">
+      <input name="client" placeholder="Client, if known">
+      <input name="property" placeholder="Property / job, if known">
+      <input name="due_date" type="date">
+      <select name="priority">
+        <option value="">Priority</option>
+        <option value="Normal">Normal</option>
+        <option value="High">High</option>
+        <option value="Urgent">Urgent</option>
+      </select>
+    </div>
 
-    Array.from(select.options).forEach(option => {
+    <button class="btn primary" type="submit">Send It</button>
+  </form>
+</section>
 
-        const match = option.text.toLowerCase().includes(query);
+<section class="grid">
+  <a class="card" href="/invisible-office">
+    <h2>Invisible Office</h2>
+    <p>View the notes, tasks, follow-ups, and reminders Jarvis has filed.</p>
+  </a>
 
-        option.style.display = match ? "block" : "none";
+  <a class="card" href="/jarvis">
+    <h2>Dashboard</h2>
+    <p>Return to Heinlin Field Ops.</p>
+  </a>
+</section>
 
-    });
-
-});
-
-</script>
-
-<body>
-{% include "_mobile_nav.html" %}
-
-<div class="topbar-back">
-    <button onclick="history.back()" class="back-btn">
-        ← Back
-    </button>
-</div>
-
-<div class="app-layout">
-
-    {% include "_sidebar.html" %}
-
-    <main class="main-content with-sidebar">
-
-        <section class="hero-card">
-            <h1>Live Assistant Interview</h1>
-
-            <p>
-                PoolOps interviews you and captures your field knowledge.
-            </p>
-        </section>
-
-        <section class="content-card">
-
-            <div class="assistant-chat">
-
-                <div class="assistant-bubble">
-                    Tell me about this pool.
-                </div>
-
-                <form method="post" action="/assistant-interview-live">
-
-                    <div class="form-grid">
-
-              <div class="form-group">
-    <label>Select Existing Client</label>
-
-    <input
-        type="text"
-        id="clientSearch"
-        placeholder="Search clients..."
-        autocomplete="off"
-    >
-
-    <select
-        name="client"
-        id="clientSelect"
-        required
-        size="8"
-        style="margin-top:10px;"
-    >
-
-        {% for client in clients %}
-
-        <option value="{{ client.name }}">
-            {{ client.name }}
-        </option>
-
-        {% endfor %}
-
-    </select>
-
-</div>
-
-<div class="form-group">
-    <label>Or Add New Client</label>
-
-    <input
-        type="text"
-        name="new_client"
-        placeholder="New client name"
-    >
-</div>      
-
-                        <div class="form-group form-full">
-                            <label>Your Answer</label>
-
-{% include "_ai_prompt_panel.html" %}
-
-                            <textarea
-                                name="notes"
-                                rows="10"
-                                placeholder="Use your microphone and speak naturally..."
-                                required
-                            ></textarea>
-</html>
+{% endblock %}

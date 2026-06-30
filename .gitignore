@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+*.db
+*.sqlite
+*.sqlite3
+backup_*.json
+poolops2_local_before_*.db

@@ -1,90 +1,70 @@
-{% extends "base.html" %}{% block content %}
-<section class="hero invisible-hero">
-  <div>
-    <div class="kicker">INVISIBLE OFFICE</div>
-    <h1>Jarvis Command Desk</h1>
-    <p>Ask questions, capture job notes, build estimates, check field problems, and keep Heinlin operational memory in one place.</p>
-  </div>
-  <a class="btn" href="/dashboard">Back to Dashboard</a>
+{% extends "base.html" %}
+{% block content %}
+
+<section class="section-head">
+  <h1>Invisible Office</h1>
+  <p>Saved notes, follow-ups, reminders, materials, problems, billing notes, and Jarvis-filed work.</p>
 </section>
 
-<section class="panel">
-  <div class="grid-4">
-    <a class="mini-stat" href="/weather"><b>Weather Desk</b><span>Check jobsite conditions</span></a>
-    <a class="mini-stat" href="/jobs"><b>Today’s Jobs</b><span>Open job hub</span></a>
-    <a class="mini-stat" href="/crew"><b>Crew Status</b><span>People and assignments</span></a>
-    <a class="mini-stat" href="/estimates"><b>Open Estimates</b><span>Build and review quotes</span></a>
-  </div>
-</section>
+<section class="card">
+  <h2>Add Office Item</h2>
 
-<section class="panel jarvis-command-panel">
-  <h2>Ask Jarvis</h2>
-  <p class="muted">Search Heinlin Field Ops memory across clients, properties, jobs, field logs, photos, estimates, and notes.</p>
-  <form action="/invisible-office/search" method="get" class="jarvis-search">
-    <input name="q" value="{{ q or '' }}" placeholder="Example: Smith Residence heater, Larry Bennett, IF code, 20x40 pool, invoices..." autofocus>
-    <button class="btn" type="submit">Search Memory</button>
-  </form>
-
-  {% if q %}
-    <h3>Search Results for “{{ q }}”</h3>
-    {% if results %}
-      <div class="list">
-        {% for r in results %}
-          <a class="row-card" href="{{ r.url }}">
-            <b>{{ r.kind }}: {{ r.title }}</b>
-            <p>{{ r.detail }}</p>
-          </a>
-        {% endfor %}
-      </div>
-    {% else %}
-      <p class="muted">No matching records found yet. Save it as an office note below so Jarvis remembers it.</p>
-    {% endif %}
-  {% endif %}
-</section>
-
-<section class="panel">
-  <h2>Jarvis Assistant</h2>
-  <p class="muted">Quick capture for jobsite memory. Put anything here you do not want to lose.</p>
-  <form action="/invisible-office/note" method="post">
-    <label>Quick note / field memory</label>
-    <textarea name="note" rows="5" placeholder="Example: Smith Residence heater IF code. Checked gas pressure, flame sensor, board. Need follow-up with gas company."></textarea>
-    <button class="btn" type="submit">Save Office Note</button>
+  <form method="post" action="/invisible-office/add" class="stack">
+    <textarea name="note" placeholder="Type a note, reminder, follow-up, material, problem, or task..." style="min-height:110px;width:100%;"></textarea>
+    <button class="btn primary" type="submit">Save Note</button>
   </form>
 </section>
 
-<section class="card-grid">
-  <a class="dash-card" href="/clients"><div class="card-bg" style="background-image:url('{{ theme.clients_image }}')"></div><div><h2>Client Memory</h2><p>Client cards, contacts, portal credentials.</p></div></a>
-  <a class="dash-card" href="/properties"><div class="card-bg" style="background-image:url('{{ theme.properties_image }}')"></div><div><h2>Property Brain</h2><p>Pool details, equipment, photos, notes.</p></div></a>
-  <a class="dash-card" href="/jobs"><div class="card-bg" style="background-image:url('{{ theme.jobs_image }}')"></div><div><h2>Job Hub</h2><p>Open jobs, crew, priorities, schedules.</p></div></a>
-  <a class="dash-card" href="/estimates"><div class="card-bg" style="background-image:url('{{ theme.estimates_image }}')"></div><div><h2>Estimate Builder</h2><p>Build service and construction estimates.</p></div></a>
-  <a class="dash-card" href="/job-costing"><div class="card-bg" style="background-image:url('{{ theme.job_costing_image }}')"></div><div><h2>Job Costing</h2><p>Labor, materials, subs, profit tracking.</p></div></a>
-  <a class="dash-card" href="/quickbooks"><div class="card-bg" style="background-image:url('{{ theme.quickbooks_image }}')"></div><div><h2>QuickBooks Prep</h2><p>Invoices, billing, export workflow.</p></div></a>
-  <a class="dash-card" href="/weather"><div class="card-bg" style="background-image:url('{{ theme.weather_image }}')"></div><div><h2>Weather Desk</h2><p>Jobsite planning and weather notes.</p></div></a>
-  <a class="dash-card" href="/field-logs"><div class="card-bg" style="background-image:url('{{ theme.field_log_image }}')"></div><div><h2>Field Logs</h2><p>Daily records, materials, problems, next steps.</p></div></a>
-  <a class="dash-card" href="/photos"><div class="card-bg" style="background-image:url('{{ theme.photos_image }}')"></div><div><h2>Photo Memory</h2><p>Job and property photos.</p></div></a>
-</section>
+<section class="grid">
+  {% for item in items %}
+    <div class="card">
+      <h2>{{ item.title or item.category or "Office Item" }}</h2>
 
-<section class="panel">
-  <h2>Saved Office Notes</h2>
-  {% if notes %}
-    <div class="list">
-      {% for n in notes %}
-        <div class="row-card"><b>{{ n.created_at }}</b><p>{{ n.note }}</p></div>
-      {% endfor %}
+      <p>
+        <strong>{{ item.category or "General Note" }}</strong>
+        {% if item.priority %}
+          - Priority: {{ item.priority }}
+        {% endif %}
+      </p>
+
+      <p>{{ item.body or item.note }}</p>
+
+      {% if item.client %}
+        <p><strong>Client:</strong> {{ item.client }}</p>
+      {% endif %}
+
+      {% if item.property %}
+        <p><strong>Property:</strong> {{ item.property }}</p>
+      {% endif %}
+
+      {% if item.due_date %}
+        <p><strong>Due:</strong> {{ item.due_date }}</p>
+      {% endif %}
+
+      {% if item.status %}
+        <p><strong>Status:</strong> {{ item.status }}</p>
+      {% endif %}
+
+      {% if item.source %}
+        <p class="muted">Source: {{ item.source }}</p>
+      {% endif %}
+
+      {% if item.created_at %}
+        <p class="muted">{{ item.created_at }}</p>
+      {% endif %}
+
+      {% if is_admin %}
+        <form method="post" action="/invisible-office/{{ item.id }}/delete" onsubmit="return confirm('Delete this item?');">
+          <button class="btn danger" type="submit">Delete</button>
+        </form>
+      {% endif %}
     </div>
   {% else %}
-    <p class="muted">No office notes yet.</p>
-  {% endif %}
+    <div class="card">
+      <h2>No Invisible Office items yet</h2>
+      <p>Tell Jarvis something from Talk to Jarvis, and it will show up here.</p>
+    </div>
+  {% endfor %}
 </section>
 
-<style>
-.grid-4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
-.mini-stat{display:block;text-decoration:none;color:inherit;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.045);border-radius:18px;padding:16px}
-.mini-stat b{display:block;font-size:1.08rem;margin-bottom:6px}
-.mini-stat span{opacity:.74}
-.jarvis-search{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center}
-.jarvis-search input{width:100%;font-size:1.05rem;padding:16px;border-radius:16px;border:1px solid rgba(255,255,255,.16);background:rgba(0,0,0,.25);color:inherit}
-.jarvis-command-panel{border-color:rgba(80,180,255,.32)}
-@media(max-width:800px){.grid-4{grid-template-columns:1fr 1fr}.jarvis-search{grid-template-columns:1fr}.jarvis-search button{width:100%}}
-</style>
 {% endblock %}

@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block content %}
+
+<section class="section-head">
+  <h1>GPS Stops</h1>
+  <p>Detected crew stops for {{ today }} based on GPS points.</p>
+</section>
+
+<section class="card">
+  <h2>Stop Rules</h2>
+  <p>A stop is counted when an employee stays within about 150 feet for at least 5 minutes.</p>
+  <p>Total raw GPS points today: {{ points|length }}</p>
+
+  <a class="btn primary" href="/gps/day">View Raw GPS Points</a>
+  <a class="btn secondary" href="/employee">Employee Portal</a>
+  <a class="btn secondary" href="/jarvis">Dashboard</a>
+</section>
+
+<section class="grid">
+  {% for stop in stops %}
+    <div class="card">
+      <h2>{{ stop.employee_name }}</h2>
+
+      <p>
+        <strong>Arrived:</strong>
+        {{ stop.start_time.strftime("%I:%M %p") if stop.start_time else "" }}
+      </p>
+
+      <p>
+        <strong>Left:</strong>
+        {{ stop.end_time.strftime("%I:%M %p") if stop.end_time else "" }}
+      </p>
+
+      <p>
+        <strong>Time spent:</strong>
+        {{ stop.minutes }} minutes
+      </p>
+
+      <p>
+        <strong>Points recorded:</strong>
+        {{ stop.point_count }}
+      </p>
+
+      <p>
+        Lat: {{ "%.6f"|format(stop.latitude) }}<br>
+        Lng: {{ "%.6f"|format(stop.longitude) }}
+      </p>
+
+      <a
+        class="btn primary"
+        target="_blank"
+        href="https://www.google.com/maps?q={{ stop.latitude }},{{ stop.longitude }}"
+      >
+        Open Stop Map
+      </a>
+    </div>
+  {% else %}
+    <div class="card">
+      <h2>No stops detected yet</h2>
+      <p>No location stayed in one area long enough to count as a stop.</p>
+      <p>Make sure GPS tracking is running from the Employee Portal.</p>
+    </div>
+  {% endfor %}
+</section>
+
+{% endblock %}

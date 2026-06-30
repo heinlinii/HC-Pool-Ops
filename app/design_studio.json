@@ -1,0 +1,490 @@
+{
+  "global": {
+    "brass_color": "#d6b36a",
+    "dark_bg": "#071017",
+    "card_bg": "rgba(7, 14, 20, .94)",
+    "card_radius": "24px",
+    "page_padding": "80px 18px 40px",
+    "button_height": "104px",
+    "button_radius": "22px",
+    "mobile_page_padding": "56px 12px 28px"
+  },
+  "dashboard": {
+    "legacy_line": "The Heinlin name has had a hand in shaping this community for more than half of its existence",
+    "crest_image": "/static/heinlin-wide-crest.png",
+    "motto_first": "Work Hard",
+    "motto_second": "Live Harder",
+    "hero_subline": "Built by hands that took pride in what they did and always had a damn good time doing it",
+    "search_title": "What do we have to un fuck today?",
+    "search_subtitle": "Search it, say it, or hit the damn button.",
+    "search_placeholder": "Find a client, job, property, photo, log, map, weather...",
+    "handle_button": "Send It",
+    "page_top_space": "10px",
+    "crest_width": "920px",
+    "crest_height": "420px",
+    "motto_size": "clamp(3rem, 7vw, 7.8rem)",
+    "motto_top_space": "22px",
+    "section_gap": "22px",
+    "button_height": "104px"
+  },
+  "login": {
+    "title": "Heinlin Family Business",
+    "legacy_line": "Founded 1907 \u2022 5 Generations Strong",
+    "subtitle": "My family has 120 years of construction knowledge in this community. My goal is to save as much of that knowledge and history as possible. If you have anything to add to this memory bank, especially old stories, please do so.",
+    "button_text": "Enter the Heinlin Family Legacy",
+    "crest_image": "/static/heinlin-wide-crest.png",
+    "background_image": "shiloh-company-mascot.jpg",
+    "crest_width": "760px",
+    "card_width": "460px"
+  },
+  "schedule": {
+    "title": "Schedule",
+    "day_title": "Daily Schedule",
+    "week_title": "Weekly Schedule",
+    "subtitle": "Jobs, field work, service calls, and crew movement.",
+    "empty_text": "No jobs are scheduled for this view yet.",
+    "button_daily": "Daily",
+    "button_weekly": "Weekly",
+    "button_yearly": "Yearly",
+    "button_jobs": "Jobs",
+    "button_dashboard": "Dashboard",
+    "button_text": "Add Schedule Item"
+  },
+  "map": {
+    "title": "Field Map",
+    "subtitle": "Property pins, clocked-in employees, and jobsite locations.",
+    "map_height": "560px",
+    "mobile_map_height": "480px",
+    "top_padding": "115px",
+    "mobile_top_padding": "95px"
+  },
+  "clients": {
+    "title": "Client Command",
+    "subtitle": "The people, properties, pools, and promises we are responsible for.",
+    "button_text": "Add Client"
+  },
+  "properties": {
+    "title": "Properties",
+    "subtitle": "Every pool, address, gate code, equipment pad, and detail in one place.",
+    "button_text": "Add Property"
+  },
+  "jobs": {
+    "title": "Work Board",
+    "subtitle": "Scheduled work, service calls, repairs, and field notes.",
+    "button_text": "Add Job"
+  },
+  "crew": {
+    "title": "Team Command",
+    "subtitle": "Crew access, login credentials, roles, and field visibility.",
+    "button_text": "Add Employee"
+  },
+  "employee": {
+    "title": "Crew Portal",
+    "subtitle": "My jobs, clock in/out, photos, field notes, weather, and map.",
+    "button_text": "Clock / Field Work"
+  },
+  "crew_dashboard": {
+    "greeting_prefix": "Good morning",
+    "title": "Field Crew",
+    "subtitle": "My jobs, clock in/out, photos, field notes, weather, and map.",
+    "section_title": "Crew Tools",
+    "crest_image": "/static/heinlin-wide-crest.png",
+    "crest_width": "340px",
+    "crest_top": "210px",
+    "crest_right": "70px",
+    "crest_opacity": "0.92",
+    "hero_padding_top": "150px",
+    "dashboard_padding_top": "120px",
+    "tools": [
+      {
+        "description": "Today's work",
+        "enabled": true,
+        "href": "/crew/my-day",
+        "label": "My Day"
+      },
+      {
+        "description": "Clock and GPS",
+        "enabled": true,
+        "href": "/employee",
+        "label": "Crew Portal"
+      },
+      {
+        "description": "Assigned work",
+        "enabled": true,
+        "href": "/jobs",
+        "label": "My Jobs"
+      },
+      {
+        "description": "Field proof",
+        "enabled": true,
+        "href": "/photos",
+        "label": "Photos"
+      },
+      {
+        "description": "Today",
+        "enabled": true,
+        "href": "/schedule/day",
+        "label": "Schedule"
+      },
+      {
+        "description": "Locations",
+        "enabled": true,
+        "href": "/map",
+        "label": "Map"
+      },
+      {
+        "description": "Conditions",
+        "enabled": true,
+        "href": "/weather",
+        "label": "Weather"
+      },
+      {
+        "description": "Freeze risk dashboard",
+        "enabled": true,
+        "href": "/freeze-watch",
+        "label": "Freeze Watch"
+      },
+      {
+        "description": "Jarvis tools and office memory",
+        "enabled": true,
+        "href": "/ai-systems",
+        "label": "AI Systems"
+      },
+      {
+        "description": "Tell Jarvis what needs handled, filed, remembered, or followed up.",
+        "enabled": true,
+        "href": "/assistant-interview-live",
+        "label": "Talk to Jarvis"
+      },
+      {
+        "description": "Saved notes, follow-ups, reminders, materials, problems, billing notes, and Jarvis-filed work.",
+        "enabled": true,
+        "href": "/invisible-office",
+        "label": "Invisible Office"
+      }
+    ]
+  },
+  "ai_systems": {
+    "title": "AI Systems",
+    "subtitle": "All Jarvis tools, office memory, and AI workflows in one place.",
+    "cards": [
+      {
+        "label": "Talk to Jarvis",
+        "description": "Tell Jarvis what needs handled, filed, remembered, or followed up.",
+        "href": "/assistant-interview-live",
+        "image": "",
+        "enabled": true
+      },
+      {
+        "label": "Invisible Office",
+        "description": "Saved notes, follow-ups, reminders, materials, problems, billing notes, and Jarvis-filed work.",
+        "href": "/invisible-office",
+        "image": "",
+        "enabled": true
+      },
+      {
+        "label": "Organize My Day",
+        "description": "Turn work, notes, and priorities into a useful day plan.",
+        "href": "/organize-my-day",
+        "image": "",
+        "enabled": true
+      },
+      {
+        "label": "Design Studio",
+        "description": "Edit dashboard wording, buttons, and visual settings.",
+        "href": "/design-studio",
+        "image": "",
+        "enabled": true,
+        "roles": [
+          "admin"
+        ]
+      },
+      {
+        "label": "Link Check",
+        "description": "Check app navigation and find broken internal links.",
+        "href": "/admin/link-check",
+        "image": "",
+        "enabled": true,
+        "roles": [
+          "admin"
+        ]
+      },
+      {
+        "label": "Crew Portal",
+        "description": "Clock, GPS, jobs, photos, and field tools.",
+        "href": "/employee",
+        "image": "",
+        "enabled": true,
+        "roles": [
+          "employee"
+        ]
+      }
+    ]
+  },
+  "photos": {
+    "title": "Field Proof",
+    "subtitle": "Job photos, property photos, progress shots, and field proof.",
+    "button_text": "Upload Photos"
+  },
+  "pool_monitoring": {
+    "title": "Pool Monitoring",
+    "subtitle": "Pentair access, pool alerts, service notes, and monitored systems.",
+    "button_text": "Add Pool Monitor"
+  },
+  "dashboard_cards": {
+    "accounts": {
+      "image": "/static/heinlin-login-bg-truck.jpg",
+      "size": "cover",
+      "position": "center",
+      "brightness": "0.9"
+    },
+    "today": {
+      "image": "",
+      "size": "cover",
+      "position": "center",
+      "brightness": "0.3"
+    },
+    "pool_systems": {
+      "image": "",
+      "size": "cover",
+      "position": "center",
+      "brightness": "0.3"
+    },
+    "field_operations": {
+      "image": "",
+      "size": "cover",
+      "position": "center",
+      "brightness": "0.3"
+    },
+    "business": {
+      "image": "/static/design_uploads/20260626_225655_20260115_131840000_iOS.jpg",
+      "size": "contain",
+      "position": "center",
+      "brightness": "0.75"
+    },
+    "jarvis": {
+      "image": "/static/uploads/20260614_111449_87a15917.jpg",
+      "size": "contain",
+      "position": "center",
+      "brightness": "0.75"
+    }
+  },
+  "pages": {
+    "dashboard": {
+      "background_image": "/static/heinlin-wide-crest2.png",
+      "background_size": "contain",
+      "background_position": "top",
+      "background_brightness": "0.90",
+      "page_overlay": "0.55",
+      "card_opacity": "0.08",
+      "card_radius": "26px",
+      "title_size": "clamp(44px, 8vw, 88px)",
+      "top_space": "28px",
+      "button_height": "48px"
+    },
+    "accounts": {
+      "background_image": "",
+      "background_size": "cover",
+      "background_position": "center",
+      "background_brightness": "0.28",
+      "page_overlay": "0.55",
+      "card_opacity": "0.08",
+      "card_radius": "26px",
+      "title_size": "clamp(44px, 8vw, 88px)",
+      "top_space": "28px",
+      "button_height": "48px"
+    },
+    "today": {
+      "background_image": "",
+      "background_size": "cover",
+      "background_position": "center",
+      "background_brightness": "0.28",
+      "page_overlay": "0.55",
+      "card_opacity": "0.08",
+      "card_radius": "26px",
+      "title_size": "clamp(44px, 8vw, 88px)",
+      "top_space": "28px",
+      "button_height": "48px"
+    },
+    "field_operations": {
+      "background_image": "",
+      "background_size": "cover",
+      "background_position": "center",
+      "background_brightness": "0.28",
+      "page_overlay": "0.55",
+      "card_opacity": "0.08",
+      "card_radius": "26px",
+      "title_size": "clamp(44px, 8vw, 88px)",
+      "top_space": "28px",
+      "button_height": "48px"
+    },
+    "pool_systems": {
+      "background_image": "",
+      "background_size": "cover",
+      "background_position": "center",
+      "background_brightness": "0.28",
+      "page_overlay": "0.55",
+      "card_opacity": "0.08",
+      "card_radius": "26px",
+      "title_size": "clamp(44px, 8vw, 88px)",
+      "top_space": "28px",
+      "button_height": "48px"
+    },
+    "business": {
+      "background_image": "",
+      "background_size": "cover",
+      "background_position": "center",
+      "background_brightness": "0.28",
+      "page_overlay": "0.55",
+      "card_opacity": "0.08",
+      "card_radius": "26px",
+      "title_size": "clamp(44px, 8vw, 88px)",
+      "top_space": "28px",
+      "button_height": "48px"
+    },
+    "jarvis_tools": {
+      "background_image": "",
+      "background_size": "cover",
+      "background_position": "center",
+      "background_brightness": "0.28",
+      "page_overlay": "0.55",
+      "card_opacity": "0.08",
+      "card_radius": "26px",
+      "title_size": "clamp(44px, 8vw, 88px)",
+      "top_space": "28px",
+      "button_height": "48px"
+    },
+    "clients": {
+      "background_image": "",
+      "background_size": "cover",
+      "background_position": "center",
+      "background_brightness": "0.28",
+      "page_overlay": "0.55",
+      "card_opacity": "0.08",
+      "card_radius": "26px",
+      "title_size": "clamp(44px, 8vw, 88px)",
+      "top_space": "28px",
+      "button_height": "48px"
+    },
+    "properties": {
+      "background_image": "",
+      "background_size": "cover",
+      "background_position": "center",
+      "background_brightness": "0.28",
+      "page_overlay": "0.55",
+      "card_opacity": "0.08",
+      "card_radius": "26px",
+      "title_size": "clamp(44px, 8vw, 88px)",
+      "top_space": "28px",
+      "button_height": "48px"
+    },
+    "jobs": {
+      "background_image": "",
+      "background_size": "cover",
+      "background_position": "center",
+      "background_brightness": "0.28",
+      "page_overlay": "0.55",
+      "card_opacity": "0.08",
+      "card_radius": "26px",
+      "title_size": "clamp(44px, 8vw, 88px)",
+      "top_space": "28px",
+      "button_height": "48px"
+    },
+    "billing": {
+      "background_image": "",
+      "background_size": "cover",
+      "background_position": "center",
+      "background_brightness": "0.28",
+      "page_overlay": "0.55",
+      "card_opacity": "0.08",
+      "card_radius": "26px",
+      "title_size": "clamp(44px, 8vw, 88px)",
+      "top_space": "28px",
+      "button_height": "48px"
+    },
+    "photos": {
+      "background_image": "",
+      "background_size": "cover",
+      "background_position": "center",
+      "background_brightness": "0.28",
+      "page_overlay": "0.55",
+      "card_opacity": "0.08",
+      "card_radius": "26px",
+      "title_size": "clamp(44px, 8vw, 88px)",
+      "top_space": "28px",
+      "button_height": "48px"
+    },
+    "schedule": {
+      "background_image": "",
+      "background_size": "cover",
+      "background_position": "center",
+      "background_brightness": "0.28",
+      "page_overlay": "0.55",
+      "card_opacity": "0.08",
+      "card_radius": "26px",
+      "title_size": "clamp(44px, 8vw, 88px)",
+      "top_space": "28px",
+      "button_height": "48px"
+    },
+    "weather": {
+      "background_image": "",
+      "background_size": "cover",
+      "background_position": "center",
+      "background_brightness": "0.28",
+      "page_overlay": "0.55",
+      "card_opacity": "0.08",
+      "card_radius": "26px",
+      "title_size": "clamp(44px, 8vw, 88px)",
+      "top_space": "28px",
+      "button_height": "48px"
+    },
+    "map": {
+      "background_image": "",
+      "background_size": "cover",
+      "background_position": "center",
+      "background_brightness": "0.28",
+      "page_overlay": "0.55",
+      "card_opacity": "0.08",
+      "card_radius": "26px",
+      "title_size": "clamp(44px, 8vw, 88px)",
+      "top_space": "28px",
+      "button_height": "48px"
+    },
+    "employee": {
+      "background_image": "",
+      "background_size": "cover",
+      "background_position": "center",
+      "background_brightness": "0.28",
+      "page_overlay": "0.55",
+      "card_opacity": "0.08",
+      "card_radius": "26px",
+      "title_size": "clamp(44px, 8vw, 88px)",
+      "top_space": "28px",
+      "button_height": "48px"
+    },
+    "pool_monitoring": {
+      "background_image": "",
+      "background_size": "cover",
+      "background_position": "center",
+      "background_brightness": "0.28",
+      "page_overlay": "0.55",
+      "card_opacity": "0.08",
+      "card_radius": "26px",
+      "title_size": "clamp(44px, 8vw, 88px)",
+      "top_space": "28px",
+      "button_height": "48px"
+    },
+    "design_studio": {
+      "background_image": "",
+      "background_size": "cover",
+      "background_position": "center",
+      "background_brightness": "0.28",
+      "page_overlay": "0.55",
+      "card_opacity": "0.08",
+      "card_radius": "26px",
+      "title_size": "clamp(44px, 8vw, 88px)",
+      "top_space": "28px",
+      "button_height": "48px"
+    }
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "dashboard": {
+    "legacy_line": "Heinlin Field Ops • Founded 1907 • 5 Generations Strong",
+    "crest_image": "/static/heinlin-wide-crest.png",
+    "motto_first": "Work Hard.",
+    "motto_second": "Play Harder.",
+    "hero_subline": "Built by hand. Run like a machine. No lost notes. No mystery jobs.",
+    "search_title": "What needs handled?",
+    "search_subtitle": "Search it, say it, or hit the button.",
+    "search_placeholder": "Find a client, job, property, photo, log, map, weather...",
+    "handle_button": "Handle It",
+
+    "page_top_space": "54px",
+    "crest_width": "920px",
+    "crest_height": "420px",
+    "motto_size": "clamp(3rem, 7vw, 7.8rem)",
+    "motto_top_space": "22px",
+    "section_gap": "22px",
+    "button_height": "104px"
+  }
+}

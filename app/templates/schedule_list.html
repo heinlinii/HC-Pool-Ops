@@ -1,1 +1,145 @@
-{% extends "base.html" %}{% block content %}<h1>{{ title }}</h1><section class="list-grid">{% for j in jobs %}<a class="list-card" href="/jobs/{{ j.id }}"><h2>{{ j.client }}</h2><p>{{ j.address }}</p><p>{{ j.status }} · {{ j.date }}</p></a>{% endfor %}</section>{% endblock %}
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+  body.hfo-body .shell {
+    padding-top: 0 !important;
+  }
+
+  .schedule-page {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 115px 18px 40px;
+    color: #fff;
+  }
+
+  .schedule-hero {
+    padding: 28px;
+    border-radius: 28px;
+    background: rgba(7,14,20,.94);
+    border: 1px solid rgba(214,179,106,.26);
+    margin-bottom: 18px;
+  }
+
+  .schedule-hero h1 {
+    margin: 0;
+    color: #fff;
+    font-size: clamp(3rem, 7vw, 7rem);
+    line-height: .9;
+  }
+
+  .schedule-hero p {
+    color: rgba(255,255,255,.72);
+    font-weight: 850;
+    margin-bottom: 0;
+  }
+
+  .schedule-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 18px;
+  }
+
+  .schedule-actions a {
+    text-decoration: none;
+    padding: 13px 18px;
+    border-radius: 999px;
+    font-weight: 1000;
+    color: #071017;
+    background: linear-gradient(135deg, #7b5a22, #d6b36a, #5f4519);
+  }
+
+  .job-list {
+    display: grid;
+    gap: 12px;
+  }
+
+  .job-card {
+    padding: 18px;
+    border-radius: 20px;
+    background: rgba(7,14,20,.90);
+    border: 1px solid rgba(214,179,106,.20);
+    text-decoration: none;
+  }
+
+  .job-card strong {
+    color: #d6b36a;
+    font-size: 1.15rem;
+  }
+
+  .job-card span {
+    display: block;
+    margin-top: 5px;
+    color: rgba(255,255,255,.74);
+    font-weight: 800;
+  }
+
+  .empty-card {
+    padding: 26px;
+    border-radius: 22px;
+    background: rgba(7,14,20,.86);
+    border: 1px dashed rgba(214,179,106,.35);
+    color: rgba(255,255,255,.76);
+    font-weight: 900;
+  }
+
+  @media (max-width: 700px) {
+    .schedule-page {
+      padding: 95px 12px 28px;
+    }
+
+    .schedule-hero {
+      padding: 20px;
+      border-radius: 22px;
+    }
+
+    .schedule-hero h1 {
+      font-size: 3.4rem;
+    }
+  }
+</style>
+
+<div class="schedule-page">
+
+  <section class="schedule-hero">
+   <h1>{{ title or design.get("schedule", {}).get("title", "Schedule") }}</h1>
+<p>
+  {{ design.get("schedule", {}).get("subtitle", "Jobs, field work, service calls, and crew movement.") }}
+  {% if selected_day %}<span>{{ selected_day }}</span>{% endif %}
+</p>
+  </section>
+
+  <div class="schedule-actions">
+    <a href="/schedule/day">{{ design.get("schedule", {}).get("button_daily", "Daily") }}</a>
+<a href="/schedule/week">{{ design.get("schedule", {}).get("button_weekly", "Weekly") }}</a>
+<a href="/schedule/year">{{ design.get("schedule", {}).get("button_yearly", "Yearly") }}</a>
+<a href="/jobs">{{ design.get("schedule", {}).get("button_jobs", "Jobs") }}</a>
+<a href="/jarvis">{{ design.get("schedule", {}).get("button_dashboard", "Dashboard") }}</a>
+  </div>
+
+  <section class="job-list">
+    {% if jobs %}
+      {% for job in jobs %}
+        <a class="job-card" href="/jobs/{{ job.id }}">
+          <strong>{{ job.job_type or "Job" }}</strong>
+          <span>
+            {{ job.client or "No client" }}
+            {% if job.address %} • {{ job.address }}{% endif %}
+          </span>
+          <span>
+            Status: {{ job.status or "Pending" }}
+            {% if job.crew %} • Crew: {{ job.crew }}{% endif %}
+          </span>
+        </a>
+      {% endfor %}
+    {% else %}
+      <div class="empty-card">
+        {{ design.get("schedule", {}).get("empty_text", "No jobs are scheduled for this view yet.") }}
+      </div>
+    {% endif %}
+  </section>
+
+</div>
+
+{% endblock %}

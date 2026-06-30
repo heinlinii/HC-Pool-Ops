@@ -1,0 +1,285 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+  .hfo-clock-wrap {
+    width: min(980px, calc(100vw - 32px));
+    margin: 0 auto;
+    padding: 32px 0 70px;
+  }
+
+  .hfo-clock-head h1 {
+    margin: 0;
+    font-size: clamp(44px, 8vw, 88px);
+    line-height: .95;
+    letter-spacing: -0.06em;
+  }
+
+  .hfo-clock-head p {
+    color: rgba(255,255,255,.78);
+    font-size: 18px;
+    line-height: 1.5;
+    max-width: 760px;
+  }
+
+  .hfo-clock-card {
+    margin-top: 20px;
+    padding: 22px;
+    border-radius: 26px;
+    background: rgba(255,255,255,.07);
+    border: 1px solid rgba(255,255,255,.13);
+  }
+
+  .hfo-status {
+    display: inline-flex;
+    padding: 9px 13px;
+    border-radius: 999px;
+    font-weight: 900;
+    background: rgba(255,255,255,.10);
+    border: 1px solid rgba(255,255,255,.15);
+  }
+
+  .hfo-status.in {
+    background: rgba(34,197,94,.20);
+    border-color: rgba(34,197,94,.40);
+  }
+
+  .hfo-status.out {
+    background: rgba(239,68,68,.18);
+    border-color: rgba(239,68,68,.35);
+  }
+
+  .hfo-clock-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 18px;
+  }
+
+  .hfo-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 52px;
+    padding: 12px 18px;
+    border-radius: 999px;
+    color: #fff;
+    text-decoration: none;
+    font-weight: 900;
+    border: 1px solid rgba(255,255,255,.15);
+    cursor: pointer;
+    background: rgba(255,255,255,.10);
+  }
+
+  .hfo-btn.primary {
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+  }
+
+  .hfo-btn.danger {
+    background: linear-gradient(135deg, #ef4444, #b91c1c);
+  }
+
+  .hfo-clock-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 12px;
+    overflow: hidden;
+    border-radius: 18px;
+  }
+
+  .hfo-clock-table th,
+  .hfo-clock-table td {
+    padding: 10px;
+    border-bottom: 1px solid rgba(255,255,255,.10);
+    text-align: left;
+    color: rgba(255,255,255,.86);
+  }
+
+  .hfo-clock-table th {
+    color: rgba(255,255,255,.62);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: .12em;
+  }
+
+  .hfo-small {
+    color: rgba(255,255,255,.58);
+    font-size: 13px;
+  }
+
+  @media (max-width: 700px) {
+    .hfo-clock-table {
+      font-size: 13px;
+    }
+  }
+</style>
+
+<div class="hfo-clock-wrap">
+
+  <section class="hfo-clock-head">
+    <h1>Time Clock</h1>
+    <p>
+      Clock in, clock out, and track GPS while logged in.
+      This works for admin, employee, and crew accounts.
+    </p>
+  </section>
+
+  <section class="hfo-clock-card">
+    <h2>{{ identity.name }}</h2>
+    <p class="hfo-small">
+      Role: {{ identity.role or "unknown" }}
+      {% if identity.email %} • {{ identity.email }}{% endif %}
+    </p>
+
+    {% if open_session %}
+      <div class="hfo-status in">Clocked In</div>
+      <p>
+        <strong>Clocked in at:</strong> {{ open_session.clock_in_at }}
+      </p>
+      <p class="hfo-small">
+        GPS tracking is active while this page is open.
+      </p>
+
+      <form method="post" action="/time-clock/out" id="clockOutForm">
+        <input type="hidden" name="lat" id="outLat">
+        <input type="hidden" name="lng" id="outLng">
+        <input type="hidden" name="accuracy" id="outAccuracy">
+
+        <div class="hfo-clock-actions">
+          <button class="hfo-btn danger" type="submit">Clock Out</button>
+          <a class="hfo-btn" href="/employee">Employee Dashboard</a>
+          <a class="hfo-btn" href="/jarvis">Dashboard</a>
+        </div>
+      </form>
+
+    {% else %}
+      <div class="hfo-status out">Clocked Out</div>
+      <p class="hfo-small">
+        Tap Clock In and allow location access when the browser asks.
+      </p>
+
+      <form method="post" action="/time-clock/in" id="clockInForm">
+        <input type="hidden" name="lat" id="inLat">
+        <input type="hidden" name="lng" id="inLng">
+        <input type="hidden" name="accuracy" id="inAccuracy">
+        <input type="hidden" name="notes" value="">
+
+        <div class="hfo-clock-actions">
+          <button class="hfo-btn primary" type="submit">Clock In</button>
+          <a class="hfo-btn" href="/employee">Employee Dashboard</a>
+          <a class="hfo-btn" href="/jarvis">Dashboard</a>
+        </div>
+      </form>
+    {% endif %}
+  </section>
+
+  {% if open_session %}
+    <section class="hfo-clock-card">
+      <h2>Recent GPS Points</h2>
+
+      <table class="hfo-clock-table">
+        <thead>
+          <tr>
+            <th>Time</th>
+            <th>Latitude</th>
+            <th>Longitude</th>
+            <th>Accuracy</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for point in recent_points %}
+            <tr>
+              <td>{{ point.captured_at }}</td>
+              <td>{{ point.lat }}</td>
+              <td>{{ point.lng }}</td>
+              <td>{{ point.accuracy }}</td>
+            </tr>
+          {% else %}
+            <tr>
+              <td colspan="4">No GPS points yet.</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+  {% endif %}
+
+  <section class="hfo-clock-card">
+    <h2>Recent Time Clock Sessions</h2>
+
+    <table class="hfo-clock-table">
+      <thead>
+        <tr>
+          <th>Status</th>
+          <th>Clock In</th>
+          <th>Clock Out</th>
+          <th>In GPS</th>
+          <th>Out GPS</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in recent_sessions %}
+          <tr>
+            <td>{{ s.status }}</td>
+            <td>{{ s.clock_in_at }}</td>
+            <td>{{ s.clock_out_at or "" }}</td>
+            <td>{{ s.clock_in_lat }}, {{ s.clock_in_lng }}</td>
+            <td>{{ s.clock_out_lat }}, {{ s.clock_out_lng }}</td>
+          </tr>
+        {% else %}
+          <tr>
+            <td colspan="5">No sessions yet.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+
+</div>
+
+<div id="timeClockData" data-open-session="{{ (open_session is defined and open_session is not none) | tojson }}" style="display:none;"></div>
+
+<script>
+  function sendTrackingPoint() {
+    if (!navigator.geolocation) {
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      function(position) {
+        const formData = new FormData();
+        formData.append("lat", position.coords.latitude);
+        formData.append("lng", position.coords.longitude);
+        formData.append("accuracy", position.coords.accuracy);
+        formData.append("speed", position.coords.speed || "");
+        formData.append("heading", position.coords.heading || "");
+        formData.append("source", "time_clock");
+        formData.append("note", "auto_tracking");
+
+        fetch("/time-clock/location", {
+          method: "POST",
+          body: formData
+        }).catch(function(error) {
+          console.log("time clock tracking failed", error);
+        });
+
+        fetch("/gps/ping", {
+          method: "POST",
+          body: formData
+        }).catch(function(error) {
+          console.log("gps ping failed", error);
+        });
+      },
+      function(error) {
+        console.log("GPS tracking unavailable:", error);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 30000
+      }
+    );
+  }
+</script>
+
+{% endblock %}

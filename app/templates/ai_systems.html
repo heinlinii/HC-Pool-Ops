@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block content %}
+
+{% set ai_systems = design.get('ai_systems', {}) %}
+{% set cards = ai_systems.get('cards', []) %}
+
+<style>
+  .ai-system-card {
+    position: relative;
+    min-height: 170px;
+    overflow: hidden;
+    isolation: isolate;
+  }
+
+  .ai-system-card.has-image {
+    background:
+      linear-gradient(90deg, rgba(2, 7, 11, .88), rgba(2, 7, 11, .58)),
+      var(--card-image),
+      rgba(7, 14, 20, .94) !important;
+    background-size: cover !important;
+    background-position: center center !important;
+  }
+
+  .ai-system-card h2,
+  .ai-system-card p {
+    position: relative;
+    z-index: 1;
+    text-shadow: 0 2px 16px rgba(0,0,0,.74);
+  }
+
+  @media (max-width: 640px) {
+    .ai-system-card {
+      min-height: 145px;
+    }
+  }
+</style>
+
+<section class="section-head">
+  <h1>{{ ai_systems.get('title', 'AI Systems') }}</h1>
+  <p>{{ ai_systems.get('subtitle', 'All Jarvis tools, office memory, and AI workflows in one place.') }}</p>
+</section>
+
+<section class="grid">
+  {% for card in cards %}
+    {% set roles = card.get('roles', []) %}
+    {% set show_card = card.get('enabled', true) and (not roles or (is_admin and 'admin' in roles) or (is_employee and 'employee' in roles) or (is_client and 'client' in roles)) %}
+    {% if show_card %}
+      {% set image = card.get('image', '') %}
+      <a
+        class="card ai-system-card{% if image %} has-image{% endif %}"
+        href="{{ card.get('href', '#') }}"
+        {% if image %}style="--card-image: url('{{ image }}');"{% endif %}
+      >
+        <h2>{{ card.get('label', 'AI Tool') }}</h2>
+        <p>{{ card.get('description', '') }}</p>
+      </a>
+    {% endif %}
+  {% endfor %}
+</section>
+
+{% endblock %}

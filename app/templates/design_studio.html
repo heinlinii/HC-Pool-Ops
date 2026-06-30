@@ -1,0 +1,632 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+  .studio-page {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 80px 18px 40px;
+    color: #fff;
+  }
+
+  .studio-hero {
+    margin-bottom: 24px;
+    padding: 24px;
+    border-radius: 24px;
+    background: rgba(7, 14, 20, .94);
+    border: 1px solid rgba(214,179,106,.28);
+  }
+
+  .studio-hero h1 {
+    margin: 0;
+    color: #d6b36a;
+    font-size: clamp(2.4rem, 5vw, 5rem);
+    line-height: .9;
+    text-transform: uppercase;
+  }
+
+  .studio-hero p {
+    color: rgba(255,255,255,.78);
+    font-weight: 800;
+  }
+
+  .studio-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+  }
+
+  .studio-panel {
+    padding: 20px;
+    border-radius: 20px;
+    background: rgba(7, 14, 20, .94);
+    border: 1px solid rgba(214,179,106,.24);
+  }
+
+  .studio-panel h2 {
+    margin-top: 0;
+    color: #d6b36a;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+  }
+
+  .studio-field {
+    margin-bottom: 14px;
+  }
+
+  .studio-field label {
+    display: block;
+    margin-bottom: 6px;
+    color: #d8d0bd;
+    font-weight: 900;
+  }
+
+  .studio-field input,
+  .studio-field textarea {
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 44px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    border: 1px solid rgba(214,179,106,.30);
+    background: rgba(0,0,0,.36);
+    color: #fff;
+    font-size: 1rem;
+  }
+
+  .studio-field textarea {
+    min-height: 90px;
+  }
+
+  .studio-actions {
+    margin-top: 20px;
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .studio-btn {
+    border: none;
+    border-radius: 999px;
+    padding: 13px 18px;
+    font-weight: 1000;
+    text-transform: uppercase;
+    cursor: pointer;
+    background: linear-gradient(135deg, #7b5a22, #d6b36a, #5f4519);
+    color: #071017;
+  }
+
+  .studio-link {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: 13px 18px;
+    font-weight: 1000;
+    text-transform: uppercase;
+    text-decoration: none;
+    background: rgba(255,255,255,.06);
+    color: #fff;
+    border: 1px solid rgba(214,179,106,.24);
+  }
+
+  .preview-box {
+    margin-top: 12px;
+    padding: 16px;
+    border-radius: 16px;
+    background: rgba(0,0,0,.25);
+    border: 1px solid rgba(214,179,106,.18);
+  }
+
+  .preview-box img {
+    width: 100%;
+    max-height: 260px;
+    object-fit: contain;
+    background: #000;
+    border-radius: 12px;
+  }
+
+  @media (max-width: 850px) {
+    .studio-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<div class="studio-page">
+
+  <div class="studio-hero">
+    <h1>Heinlin Design Studio</h1>
+    <p>Change app wording, images, spacing, and layout controls without digging through code.</p>
+  </div>
+
+  <form method="post" action="/design-studio">
+
+    <div class="studio-grid">
+      
+<section class="card" style="margin-top: 22px;">
+  <h2>Dashboard Card Background Images</h2>
+  <p>Use image paths like /static/your-image.jpg or a full image URL.</p>
+
+  {% set dash_cards = design.get("dashboard_cards", {}) if design else {} %}
+
+  <label>Accounts Card Background</label>
+  <input
+    name="dashboard_card_accounts"
+    value="{{ dash_cards.get('accounts', '') }}"
+    placeholder="/static/accounts.jpg"
+  >
+
+  <label>Today Card Background</label>
+  <input
+    name="dashboard_card_today"
+    value="{{ dash_cards.get('today', '') }}"
+    placeholder="/static/today.jpg"
+  >
+
+  <label>Pool Systems Card Background</label>
+  <input
+    name="dashboard_card_pool_systems"
+    value="{{ dash_cards.get('pool_systems', '') }}"
+    placeholder="/static/pool-systems.jpg"
+  >
+
+  <label>Field Operations Card Background</label>
+  <input
+    name="dashboard_card_field_operations"
+    value="{{ dash_cards.get('field_operations', '') }}"
+    placeholder="/static/field-ops.jpg"
+  >
+
+  <label>Business Card Background</label>
+  <input
+    name="dashboard_card_business"
+    value="{{ dash_cards.get('business', '') }}"
+    placeholder="/static/business.jpg"
+  >
+
+  <label>Jarvis Card Background</label>
+  <input
+    name="dashboard_card_jarvis"
+    value="{{ dash_cards.get('jarvis', '') }}"
+    placeholder="/static/jarvis.jpg"
+  >
+</section>
+
+      <section class="studio-panel">
+        <h2>Login Page</h2>
+
+        <div class="studio-field">
+          <label>Login title</label>
+          <input name="login_title" value="{{ design.get('login', {}).get('title', 'Heinlin Field Ops') }}">
+        </div>
+
+        <div class="studio-field">
+          <label>Login legacy line</label>
+          <input name="login_legacy_line" value="{{ design.get('login', {}).get('legacy_line', 'Founded 1907 • 5 Generations Strong') }}">
+        </div>
+
+        <div class="studio-field">
+          <label>Login subtitle</label>
+          <textarea name="login_subtitle">{{ design.get('login', {}).get('subtitle', 'Built by the hands that perfected the term work hard play harder.') }}</textarea>
+        </div>
+
+        <div class="studio-field">
+          <label>Login button text</label>
+          <input name="login_button_text" value="{{ design.get('login', {}).get('button_text', 'Enter Operations Center') }}">
+        </div>
+
+        <div class="studio-field">
+          <label>Login crest image path</label>
+          <input name="login_crest_image" value="{{ design.get('login', {}).get('crest_image', '/static/heinlin-wide-crest.png') }}">
+        </div>
+
+        <div class="studio-field">
+          <label>Login background image path</label>
+          <input name="login_background_image" value="{{ design.get('login', {}).get('background_image', '/static/heinlin-wide-crest.png') }}">
+        </div>
+
+        <div class="studio-field">
+          <label>Login crest width</label>
+          <input name="login_crest_width" value="{{ design.get('login', {}).get('crest_width', '760px') }}">
+        </div>
+
+        <div class="studio-field">
+          <label>Login card width</label>
+          <input name="login_card_width" value="{{ design.get('login', {}).get('card_width', '460px') }}">
+        </div>
+      </section>
+
+      <section class="studio-panel">
+        <h2>Dashboard Words</h2>
+
+        <div class="studio-field">
+          <label>Top legacy line</label>
+          <input name="legacy_line" value="{{ design.get('dashboard', {}).get('legacy_line', 'Heinlin Field Ops • Founded 1907 • 5 Generations Strong') }}">
+        </div>
+
+        <div class="studio-field">
+          <label>Motto first line</label>
+          <input name="motto_first" value="{{ design.get('dashboard', {}).get('motto_first', 'Work Hard.') }}">
+        </div>
+
+        <div class="studio-field">
+          <label>Motto second line</label>
+          <input name="motto_second" value="{{ design.get('dashboard', {}).get('motto_second', 'Play Harder.') }}">
+        </div>
+
+        <div class="studio-field">
+          <label>Hero subline</label>
+          <textarea name="hero_subline">{{ design.get('dashboard', {}).get('hero_subline', 'Built by hand. Run like a machine. No lost notes. No mystery jobs.') }}</textarea>
+        </div>
+      </section>
+
+      <section class="studio-panel">
+        <h2>Search / Handle It</h2>
+
+        <div class="studio-field">
+          <label>Search title</label>
+          <input name="search_title" value="{{ design.get('dashboard', {}).get('search_title', 'What needs handled?') }}">
+        </div>
+
+        <div class="studio-field">
+          <label>Search subtitle</label>
+          <input name="search_subtitle" value="{{ design.get('dashboard', {}).get('search_subtitle', 'Search it, say it, or hit the button.') }}">
+        </div>
+
+        <div class="studio-field">
+          <label>Search placeholder</label>
+          <input name="search_placeholder" value="{{ design.get('dashboard', {}).get('search_placeholder', 'Find a client, job, property, photo, log, map, weather...') }}">
+        </div>
+
+        <div class="studio-field">
+          <label>Button text</label>
+          <input name="handle_button" value="{{ design.get('dashboard', {}).get('handle_button', 'Handle It') }}">
+        </div>
+      </section>
+
+      <section class="studio-panel">
+        <h2>Crest / Image</h2>
+
+        <div class="studio-field">
+          <label>Crest image path</label>
+          <input name="crest_image" value="{{ design.get('dashboard', {}).get('crest_image', '/static/heinlin-wide-crest.png') }}">
+        </div>
+
+        <div class="preview-box">
+          <img src="{{ design.get('dashboard', {}).get('crest_image', '/static/heinlin-wide-crest.png') }}" alt="Current crest preview">
+        </div>
+      </section>
+
+      <section class="studio-panel">
+        <h2>Layout Controls</h2>
+
+        <div class="studio-field">
+          <label>Space at top of page</label>
+          <input name="page_top_space" value="{{ design.get('dashboard', {}).get('page_top_space', '54px') }}">
+        </div>
+
+        <div class="studio-field">
+          <label>Crest width</label>
+          <input name="crest_width" value="{{ design.get('dashboard', {}).get('crest_width', '920px') }}">
+        </div>
+
+        <div class="studio-field">
+          <label>Crest max height</label>
+          <input name="crest_height" value="{{ design.get('dashboard', {}).get('crest_height', '420px') }}">
+        </div>
+
+        <div class="studio-field">
+          <label>Motto size</label>
+          <input name="motto_size" value="{{ design.get('dashboard', {}).get('motto_size', 'clamp(3rem, 7vw, 7.8rem)') }}">
+        </div>
+
+        <div class="studio-field">
+          <label>Space above motto</label>
+          <input name="motto_top_space" value="{{ design.get('dashboard', {}).get('motto_top_space', '22px') }}">
+        </div>
+
+        <div class="studio-field">
+          <label>Section spacing</label>
+          <input name="section_gap" value="{{ design.get('dashboard', {}).get('section_gap', '22px') }}">
+        </div>
+
+        <div class="studio-field">
+          <label>Button height</label>
+          <input name="button_height" value="{{ design.get('dashboard', {}).get('button_height', '104px') }}">
+        </div>
+      </section>
+
+      <section class="studio-panel">
+        <h2>Schedule Page</h2>
+
+        <div class="studio-field">
+          <label>Schedule title</label>
+          <input name="schedule_title" value="{{ design.get('schedule', {}).get('title', 'Schedule') }}">
+        </div>
+
+        <div class="studio-field">
+          <label>Daily schedule title</label>
+          <input name="schedule_day_title" value="{{ design.get('schedule', {}).get('day_title', 'Daily Schedule') }}">
+        </div>
+
+        <div class="studio-field">
+          <label>Weekly schedule title</label>
+          <input name="schedule_week_title" value="{{ design.get('schedule', {}).get('week_title', 'Weekly Schedule') }}">
+        </div>
+
+        <div class="studio-field">
+          <label>Schedule subtitle</label>
+          <textarea name="schedule_subtitle">{{ design.get('schedule', {}).get('subtitle', 'Jobs, field work, service calls, and crew movement.') }}</textarea>
+        </div>
+
+        <div class="studio-field">
+          <label>Empty schedule message</label>
+          <input name="schedule_empty_text" value="{{ design.get('schedule', {}).get('empty_text', 'No jobs are scheduled for this view yet.') }}">
+        </div>
+
+        <div class="studio-field">
+          <label>Daily button text</label>
+          <input name="schedule_button_daily" value="{{ design.get('schedule', {}).get('button_daily', 'Daily') }}">
+        </div>
+
+        <div class="studio-field">
+          <label>Weekly button text</label>
+          <input name="schedule_button_weekly" value="{{ design.get('schedule', {}).get('button_weekly', 'Weekly') }}">
+        </div>
+
+        <div class="studio-field">
+          <label>Yearly button text</label>
+          <input name="schedule_button_yearly" value="{{ design.get('schedule', {}).get('button_yearly', 'Yearly') }}">
+        </div>
+      </section>
+
+      <section class="studio-panel">
+        <h2>Map Page</h2>
+
+        <div class="studio-field">
+          <label>Map title</label>
+          <input name="map_title" value="{{ design.get('map', {}).get('title', 'Field Map') }}">
+        </div>
+
+        <div class="studio-field">
+          <label>Map subtitle</label>
+          <textarea name="map_subtitle">{{ design.get('map', {}).get('subtitle', 'Property pins, clocked-in employees, and jobsite locations.') }}</textarea>
+        </div>
+
+        <div class="studio-field">
+          <label>Desktop map height</label>
+          <input name="map_height" value="{{ design.get('map', {}).get('map_height', '560px') }}">
+        </div>
+
+        <div class="studio-field">
+          <label>Mobile map height</label>
+          <input name="mobile_map_height" value="{{ design.get('map', {}).get('mobile_map_height', '480px') }}">
+        </div>
+
+        <div class="studio-field">
+          <label>Desktop top spacing</label>
+          <input name="map_top_padding" value="{{ design.get('map', {}).get('top_padding', '115px') }}">
+        </div>
+
+        <div class="studio-field">
+          <label>Mobile top spacing</label>
+          <input name="map_mobile_top_padding" value="{{ design.get('map', {}).get('mobile_top_padding', '95px') }}">
+        </div>
+      </section>
+
+      <section class="studio-panel">
+        <h2>Clients Page</h2>
+
+        <div class="studio-field">
+          <label>Clients title</label>
+          <input name="clients_title" value="{{ design.get('clients', {}).get('title', 'Clients') }}">
+        </div>
+
+        <div class="studio-field">
+          <label>Clients subtitle</label>
+          <textarea name="clients_subtitle">{{ design.get('clients', {}).get('subtitle', 'The people, properties, pools, and promises we are responsible for.') }}</textarea>
+        </div>
+
+        <div class="studio-field">
+          <label>Clients button text</label>
+          <input name="clients_button_text" value="{{ design.get('clients', {}).get('button_text', 'Add Client') }}">
+        </div>
+      </section>
+
+      <section class="studio-panel">
+        <h2>Properties Page</h2>
+
+        <div class="studio-field">
+          <label>Properties title</label>
+          <input name="properties_title" value="{{ design.get('properties', {}).get('title', 'Properties') }}">
+        </div>
+
+        <div class="studio-field">
+          <label>Properties subtitle</label>
+          <textarea name="properties_subtitle">{{ design.get('properties', {}).get('subtitle', 'Every pool, address, gate code, equipment pad, and detail in one place.') }}</textarea>
+        </div>
+
+        <div class="studio-field">
+          <label>Properties button text</label>
+          <input name="properties_button_text" value="{{ design.get('properties', {}).get('button_text', 'Add Property') }}">
+        </div>
+      </section>
+
+      <section class="studio-panel">
+        <h2>Jobs Page</h2>
+
+        <div class="studio-field">
+          <label>Jobs title</label>
+          <input name="jobs_title" value="{{ design.get('jobs', {}).get('title', 'Jobs') }}">
+        </div>
+
+        <div class="studio-field">
+          <label>Jobs subtitle</label>
+          <textarea name="jobs_subtitle">{{ design.get('jobs', {}).get('subtitle', 'Scheduled work, service calls, repairs, and field notes.') }}</textarea>
+        </div>
+
+        <div class="studio-field">
+          <label>Jobs button text</label>
+          <input name="jobs_button_text" value="{{ design.get('jobs', {}).get('button_text', 'Add Job') }}">
+        </div>
+      </section>
+
+<section class="studio-panel">
+  <h2>Crew / Employees Page</h2>
+
+  <div class="studio-field">
+    <label>Crew title</label>
+    <input name="crew_title" value="{{ design.get('crew', {}).get('title', 'Employees') }}">
+  </div>
+
+  <div class="studio-field">
+    <label>Crew subtitle</label>
+    <textarea name="crew_subtitle">{{ design.get('crew', {}).get('subtitle', 'Crew access, login credentials, roles, and field visibility.') }}</textarea>
+  </div>
+
+  <div class="studio-field">
+    <label>Crew button text</label>
+    <input name="crew_button_text" value="{{ design.get('crew', {}).get('button_text', 'Add Employee') }}">
+  </div>
+</section>
+
+<section class="studio-panel">
+  <h2>Employee Portal Page</h2>
+
+  <div class="studio-field">
+    <label>Employee portal title</label>
+    <input name="employee_title" value="{{ design.get('employee', {}).get('title', 'Crew Portal') }}">
+  </div>
+
+  <div class="studio-field">
+    <label>Employee portal subtitle</label>
+    <textarea name="employee_subtitle">{{ design.get('employee', {}).get('subtitle', 'My jobs, clock in/out, photos, field notes, weather, and map.') }}</textarea>
+  </div>
+
+  <div class="studio-field">
+    <label>Employee portal button text</label>
+    <input name="employee_button_text" value="{{ design.get('employee', {}).get('button_text', 'Clock / Field Work') }}">
+  </div>
+</section>
+
+<section class="studio-panel">
+  <h2>Crew Dashboard Builder</h2>
+
+  <div class="studio-field">
+    <label>Crew dashboard title</label>
+    <input name="crew_dashboard_title" value="{{ design.get('crew_dashboard', {}).get('title', 'Crew Portal') }}">
+  </div>
+
+  <div class="studio-field">
+    <label>Crew dashboard subtitle</label>
+    <textarea name="crew_dashboard_subtitle">{{ design.get('crew_dashboard', {}).get('subtitle', 'My jobs, clock in/out, photos, field notes, weather, and map.') }}</textarea>
+  </div>
+
+  <div class="studio-field">
+    <label>Crew dashboard section title</label>
+    <input name="crew_dashboard_section_title" value="{{ design.get('crew_dashboard', {}).get('section_title', 'Crew Tools') }}">
+  </div>
+
+  <div class="studio-field">
+    <label>Crew dashboard crest image</label>
+    <input name="crew_dashboard_crest_image" value="{{ design.get('crew_dashboard', {}).get('crest_image', '/static/heinlin-wide-crest.png') }}">
+  </div>
+
+  <div class="studio-field">
+    <label>Crew dashboard crest width</label>
+    <input name="crew_dashboard_crest_width" value="{{ design.get('crew_dashboard', {}).get('crest_width', '340px') }}">
+  </div>
+
+  <div class="studio-field">
+    <label>Crew dashboard crest top</label>
+    <input name="crew_dashboard_crest_top" value="{{ design.get('crew_dashboard', {}).get('crest_top', '210px') }}">
+  </div>
+
+  <div class="studio-field">
+    <label>Crew dashboard crest right</label>
+    <input name="crew_dashboard_crest_right" value="{{ design.get('crew_dashboard', {}).get('crest_right', '70px') }}">
+  </div>
+
+  <div class="studio-field">
+    <label>Crew dashboard crest opacity</label>
+    <input name="crew_dashboard_crest_opacity" value="{{ design.get('crew_dashboard', {}).get('crest_opacity', '0.92') }}">
+  </div>
+
+  <div class="studio-field">
+    <label>Crew dashboard hero padding top</label>
+    <input name="crew_dashboard_hero_padding_top" value="{{ design.get('crew_dashboard', {}).get('hero_padding_top', '150px') }}">
+  </div>
+
+  <div class="studio-field">
+    <label>Crew dashboard page padding top</label>
+    <input name="crew_dashboard_dashboard_padding_top" value="{{ design.get('crew_dashboard', {}).get('dashboard_padding_top', '120px') }}">
+  </div>
+
+  <div class="studio-field">
+    <label>Buttons / Tools JSON</label>
+    <textarea name="crew_dashboard_tools_json">{{ design.get('crew_dashboard', {}).get('tools', []) | tojson }}</textarea>
+    <p class="muted">Each button needs label, description, href, and enabled.</p>
+  </div>
+</section>
+
+<section class="studio-panel">
+  <h2>AI Systems Cards</h2>
+
+  <div class="studio-field">
+    <label>Cards JSON</label>
+    <textarea name="ai_systems_cards_json">{{ design.get('ai_systems', {}).get('cards', []) | tojson }}</textarea>
+    <p class="muted">Each card can use label, description, href, image, enabled, and optional roles. Use image paths like /static/heinlin-wide-crest.png.</p>
+  </div>
+</section>
+
+<section class="studio-panel">
+  <h2>Photos Page</h2>
+
+  <div class="studio-field">
+    <label>Photos title</label>
+    <input name="photos_title" value="{{ design.get('photos', {}).get('title', 'Photos') }}">
+  </div>
+
+  <div class="studio-field">
+    <label>Photos subtitle</label>
+    <textarea name="photos_subtitle">{{ design.get('photos', {}).get('subtitle', 'Job photos, property photos, progress shots, and field proof.') }}</textarea>
+  </div>
+
+  <div class="studio-field">
+    <label>Photos button text</label>
+    <input name="photos_button_text" value="{{ design.get('photos', {}).get('button_text', 'Upload Photos') }}">
+  </div>
+</section>
+
+<section class="studio-panel">
+  <h2>Pool Monitoring Page</h2>
+
+  <div class="studio-field">
+    <label>Pool Monitoring title</label>
+    <input name="pool_monitoring_title" value="{{ design.get('pool_monitoring', {}).get('title', 'Pool Monitoring') }}">
+  </div>
+
+  <div class="studio-field">
+    <label>Pool Monitoring subtitle</label>
+    <textarea name="pool_monitoring_subtitle">{{ design.get('pool_monitoring', {}).get('subtitle', 'Pentair access, pool alerts, service notes, and monitored systems.') }}</textarea>
+  </div>
+
+  <div class="studio-field">
+    <label>Pool Monitoring button text</label>
+    <input name="pool_monitoring_button_text" value="{{ design.get('pool_monitoring', {}).get('button_text', 'Add Pool Monitor') }}">
+  </div>
+</section>
+
+    </div>
+
+    <div class="studio-actions">
+      <button class="studio-btn" type="submit">Save Design</button>
+      <a class="studio-link" href="/jarvis">View Dashboard</a>
+      <a class="studio-link" href="/admin/link-check">Link Check</a>
+    </div>
+
+  </form>
+
+</div>
+
+{% endblock %}

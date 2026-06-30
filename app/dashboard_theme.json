@@ -1,9 +1,22 @@
 {
   "title": "HEINLIN FIELD OPS",
   "subtitle": "GOT POOL RELATED TROUBLES? READY TO ENTER YOUR WORK PERFORMED, MATERIALS USED, PROBLEMS FOUND, REMINDERS, AND OPERATIONAL MEMOREY? CLICK ON THE FOUNTAIN AND TELL JARVIS! HE'LL TAKE CARE OF THE REST!",
-  "hero_title": "Jarvis for Pool Operations",
+  "hero_title": "Fuck You",
   "hero_subtitle": "",
+  "background_image": "/static/uploads/20260616_212059_cf0675fe.jpg",
+  "calendar_background": "/static/uploads/20260614_004313_b8b447a3.jpg",
+  "clients_image": "/static/uploads/20260614_111449_87a15917.jpg",
+  "properties_image": "/static/uploads/maria.jpg",
+  "jobs_image": "/static/uploads/McCord.jpg",
+  "schedule_image": "/static/uploads/pate.jpg",
+  "photos_image": "/static/uploads/boger.jpg",
+  "crew_image": "/static/uploads/fountain.jpg",
+  "estimates_image": "/static/uploads/maria.jpg",
+  "job_costing_image": "/static/uploads/McCord.jpg",
+  "quickbooks_image": "/static/uploads/pate.jpg",
+  "weather_image": "/static/uploads/boger.jpg",
+  "field_log_image": "/static/uploads/fountain.jpg",
+  "map_image": "/static/uploads/maria.jpg",
   "accent": "#22d3ee",
-  "hero_image": "/static/uploads/dashboard_hero_jarvis_pool_button.jpg",
-  "background_image": "/static/uploads/dashboard_bg_fountain image 3.png"
+  "hero_image": "/static/uploads/dashboard_hero_jarvis_pool_button.jpg"
 }

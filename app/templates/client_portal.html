@@ -1,5 +1,38 @@
 {% extends "base.html" %}{% block content %}
-<section class="section-head"><h1>{{ client.name if client else 'Client Portal' }}</h1></section>
+<style>
+  .client-portal-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin: 12px 0 18px;
+  }
+
+  .client-portal-actions a {
+    min-height: 54px;
+    padding: 0 18px;
+    border-radius: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    font-weight: 1000;
+  }
+
+  @media (max-width: 700px) {
+    .client-portal-actions {
+      display: grid;
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<section class="section-head">
+  <h1>{{ client.name if client else 'Client Portal' }}</h1>
+  <div class="client-portal-actions">
+    <a class="primary-button" href="/weather">Weather</a>
+    <a class="primary-button" href="/contact-us">Contact Us</a>
+  </div>
+</section>
 {% if client %}
 <section class="panel">
   <h2>Your Client Info</h2>
@@ -34,5 +67,4 @@
 <section class="photo-grid">
 {% for ph in photos %}<article><img src="{{ ph.photo_url }}"><b>{{ ph.title }}</b><p>{{ ph.date }}</p><p>{{ ph.notes }}</p></article>{% endfor %}
 </section>
-<section class="panel"><h2>Weather</h2><p><a class="primary-button" href="/weather">Open Weather Desk</a></p></section>
 {% endblock %}
