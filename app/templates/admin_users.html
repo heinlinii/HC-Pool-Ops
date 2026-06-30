@@ -1,15 +1,60 @@
 {% extends "base.html" %}
 {% block content %}
-<div style="padding:90px 24px; color:white;">
-  <h1 style="color:#d6b36a;">Admin Users</h1>
 
-  <h2>Admin / App Users</h2>
-  <pre>{{ admin_users }}</pre>
+<section class="section-head">
+  <h1>User Management</h1>
+  <p>Admin, Office, Crew, and Client login control.</p>
+</section>
 
-  <h2>Employees</h2>
-  <pre>{{ employees }}</pre>
+<section class="card">
+  <h2>Add User</h2>
+  <form method="post" action="/admin/users/new" class="inline-form">
+    <input name="name" placeholder="Name">
+    <input name="username" placeholder="Username">
+    <input name="password" placeholder="Password" value="changeme">
+    <select name="role">
+      <option value="admin">Admin</option>
+      <option value="office">Office</option>
+      <option value="crew">Crew</option>
+      <option value="client">Client</option>
+    </select>
+    <button class="btn primary" type="submit">Add User</button>
+  </form>
+</section>
 
-  <h2>Clients</h2>
-  <pre>{{ clients }}</pre>
-</div>
+<section class="grid">
+  {% for u in app_users %}
+    <div class="card">
+      <h2>{{ u.name or u.username or "User" }}</h2>
+      <p><strong>Username:</strong> {{ u.username }}</p>
+      <p><strong>Role:</strong> {{ u.role }}</p>
+
+      <form method="post" action="/admin/users/{{ u.id }}/save" class="stack">
+        <input name="name" value="{{ u.name or '' }}" placeholder="Name">
+        <input name="username" value="{{ u.username or '' }}" placeholder="Username">
+        <input name="password" value="{{ u.password or '' }}" placeholder="Password">
+
+        <select name="role">
+          <option value="admin" {% if u.role == "admin" %}selected{% endif %}>Admin</option>
+          <option value="office" {% if u.role == "office" %}selected{% endif %}>Office</option>
+          <option value="crew" {% if u.role in ["crew","employee"] %}selected{% endif %}>Crew</option>
+          <option value="client" {% if u.role == "client" %}selected{% endif %}>Client</option>
+        </select>
+
+        <input name="active" value="{{ 1 if u.active else 0 }}" placeholder="Active 1/0">
+        <button class="btn primary" type="submit">Save</button>
+      </form>
+
+      <form method="post" action="/admin/users/{{ u.id }}/delete" onsubmit="return confirm('Delete this user?');">
+        <button class="btn danger" type="submit">Delete</button>
+      </form>
+    </div>
+  {% else %}
+    <div class="card">
+      <h2>No users found</h2>
+      <p>Add one above.</p>
+    </div>
+  {% endfor %}
+</section>
+
 {% endblock %}

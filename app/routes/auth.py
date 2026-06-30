@@ -10,16 +10,24 @@ def require_login(request: Request):
     return current_user(request)
 
 
+def role_of(user):
+    return str((user or {}).get("role", "")).lower().strip()
+
+
 def is_admin(user):
-    return user and str(user.get("role", "")).lower() == "admin"
+    return role_of(user) == "admin"
+
+
+def is_office(user):
+    return role_of(user) == "office"
 
 
 def is_client(user):
-    return user and str(user.get("role", "")).lower() == "client"
+    return role_of(user) == "client"
 
 
 def is_employee(user):
-    return user and str(user.get("role", "")).lower() in ("employee", "crew")
+    return role_of(user) in ("employee", "crew")
 
 
 def login_redirect():
@@ -31,4 +39,6 @@ def admin_redirect(user):
         return RedirectResponse("/client-portal", status_code=303)
     if is_employee(user):
         return RedirectResponse("/employee", status_code=303)
+    if is_office(user):
+        return RedirectResponse("/billing", status_code=303)
     return login_redirect()

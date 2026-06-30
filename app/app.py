@@ -626,6 +626,15 @@ def save_design_settings(data):
 
 # Auth helpers live in app/routes/auth.py for Core 2 route refactor.
 
+
+def is_office_user(user):
+    return user and str(user.get("role", "")).lower().strip() == "office"
+
+
+def can_accounting(user):
+    return is_admin(user) or is_office_user(user)
+
+
 def client_name_for_user(user):
     if not user:
         return ""
@@ -705,10 +714,6 @@ def properties_for_user(user):
         cname = client_name_for_user(user)
         return rows("SELECT * FROM poolops2_properties WHERE client_id=? OR client=? ORDER BY address", (user.get("id"), cname))
     return []
-
-from app.routes import properties
-app.include_router(properties.router)
-
 
 def photos_for_user(user):
     if is_admin(user) or is_employee(user):
@@ -815,8 +820,18 @@ def ctx(request, **kw):
         "is_admin": is_admin(u),
         "is_client": is_client(u),
         "is_employee": is_employee(u),
+        "is_office": is_office_user(u),
         **kw,
     }
+
+
+# Route modules that need ctx/app helpers must be included AFTER ctx exists.
+from app.routes import properties
+app.include_router(properties.router)
+
+from app.routes import crew
+app.include_router(crew.router)
+
 
 @app.get("/", response_class=HTMLResponse)
 def root(request: Request):
@@ -848,23 +863,41 @@ def login_post(request: Request, username: str = Form(""), password: str = Form(
     # 1. Admin login from users table
     u = one(
         """
-        SELECT * FROM poolops2_users
-        WHERE lower(username)=lower(?)
-          AND password=?
-          AND lower(coalesce(role,''))='admin'
+       SELECT * FROM poolops2_users
+WHERE lower(username)=lower(?)
+  AND password=?
+  AND lower(coalesce(role,'')) IN
+      ('admin','office','crew','employee','client')
         """,
         (username, password)
     )
 
     if u:
+        role = str(u.get("role") or "crew").lower()
+
+        if role == "employee":
+            role = "crew"
+
         request.session["user"] = {
             "id": u["id"],
             "username": u.get("username") or u.get("name") or username,
-            "role": "admin",
-            "name": u.get("name") or u.get("username") or username
+            "role": role,
+            "name": u.get("name") or u.get("username") or username,
         }
-        return RedirectResponse("/jarvis", status_code=303)
 
+        if role == "admin":
+            return RedirectResponse("/jarvis", status_code=303)
+
+        if role == "office":
+            return RedirectResponse("/billing", status_code=303)
+
+        if role == "crew":
+            return RedirectResponse("/employee", status_code=303)
+
+        if role == "client":
+            return RedirectResponse("/client-portal", status_code=303)
+
+        return RedirectResponse("/jarvis", status_code=303)
     # 2. Crew / employee login
     if USE_POSTGRES:
         employee_sql = """
@@ -2827,7 +2860,7 @@ def estimates(request: Request):
     u = require_login(request)
     if not u:
         return login_redirect()
-    if not is_admin(u):
+    if not can_accounting(u):
         return admin_redirect(u)
 
     return templates.TemplateResponse(
@@ -2852,7 +2885,7 @@ def job_costing(request: Request):
     u = require_login(request)
     if not u:
         return login_redirect()
-    if not is_admin(u):
+    if not can_accounting(u):
         return admin_redirect(u)
 
     return templates.TemplateResponse(
@@ -2908,7 +2941,7 @@ def quickbooks(request: Request):
     u = require_login(request)
     if not u:
         return login_redirect()
-    if not is_admin(u):
+    if not can_accounting(u):
         return admin_redirect(u)
 
     return templates.TemplateResponse("quickbooks.html", ctx(request))
@@ -2919,7 +2952,7 @@ def quickbooks_invoice_import_page(request: Request):
     if not u:
         return login_redirect()
 
-    if not is_admin(u):
+    if not can_accounting(u):
         return RedirectResponse("/jarvis", status_code=303)
 
     return templates.TemplateResponse(
@@ -2937,7 +2970,7 @@ async def quickbooks_invoice_import(
     if not u:
         return login_redirect()
 
-    if not is_admin(u):
+    if not can_accounting(u):
         return RedirectResponse("/jarvis", status_code=303)
 
     imported = []
@@ -3130,7 +3163,7 @@ def billing_page(request: Request):
     u = require_login(request)
     if not u:
         return login_redirect()
-    if not is_admin(u):
+    if not can_accounting(u):
         return admin_redirect(u)
 
     invoice_rows = rows(
