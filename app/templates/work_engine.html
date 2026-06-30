@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block content %}
+
+<section class="section-head">
+  <h1>Work Engine</h1>
+  <p>Tell Jarvis what happened. It can create schedule work, billing drafts, material notes, and property memory from one message.</p>
+</section>
+
+<section class="card">
+  <form method="post" action="/work-engine/handle" class="stack">
+    <textarea name="message" rows="7" placeholder="Example: Smith actuator failed. Randy needs to replace it Wednesday. Bring two Jandy check valves. Bill two hours labor."></textarea>
+    <button class="btn primary" type="submit">Analyze Work</button>
+  </form>
+</section>
+
+{% if suggestions %}
+<section class="card">
+  <h2>Jarvis understood this:</h2>
+
+  <p><strong>Client:</strong> {{ suggestions.client or "Not matched" }}</p>
+  <p><strong>Property:</strong> {{ suggestions.property or "Not matched" }}</p>
+  <p><strong>Assigned To:</strong> {{ suggestions.assigned_to or "Unassigned" }}</p>
+  <p><strong>Due Date:</strong> {{ suggestions.due_date or "Not detected" }}</p>
+  <p><strong>Category:</strong> {{ suggestions.category }}</p>
+  <p><strong>Priority:</strong> {{ suggestions.priority }}</p>
+  <p><strong>Labor Hours Mentioned:</strong> {{ suggestions.hours }}</p>
+
+  <form method="post" action="/work-engine/handle" class="stack">
+    <input type="hidden" name="message" value="{{ suggestions.message }}">
+    <input type="hidden" name="approve" value="yes">
+
+    <label>
+      <input type="checkbox" name="create_schedule" value="yes" {% if suggestions.schedule_suggested %}checked{% endif %}>
+      Create schedule/job item
+    </label>
+
+    <label>
+      <input type="checkbox" name="create_material" value="yes" {% if suggestions.material_suggested %}checked{% endif %}>
+      Create material note
+    </label>
+
+    <label>
+      <input type="checkbox" name="create_billing" value="yes" {% if suggestions.billing_suggested %}checked{% endif %}>
+      Create billing draft
+    </label>
+
+    <button class="btn primary" type="submit">Approve and File It</button>
+  </form>
+</section>
+{% endif %}
+
+<section class="grid">
+  <a class="card" href="/schedule/day">
+    <h2>Schedule</h2>
+    <p>See work created from Jarvis.</p>
+  </a>
+
+  <a class="card" href="/invisible-office">
+    <h2>Invisible Office</h2>
+    <p>Review filed notes, materials, follow-ups, and tasks.</p>
+  </a>
+
+  <a class="card" href="/billing">
+    <h2>Billing</h2>
+    <p>Review draft invoices.</p>
+  </a>
+
+  <a class="card" href="/client-login-help">
+    <h2>Client Logins</h2>
+    <p>Manage client portal access.</p>
+  </a>
+</section>
+
+{% endblock %}

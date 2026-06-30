@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block content %}
+
+<section class="section-head">
+  <h1>Client Logins</h1>
+  <p>Client portal usernames and passwords stay tied to client records.</p>
+</section>
+
+<section class="card">
+  <input
+    id="clientLoginSearch"
+    type="search"
+    placeholder="Search clients by name, email, username, or password..."
+    style="width:100%;"
+    oninput="filterClientLogins()"
+  >
+</section>
+
+<section class="grid" id="clientLoginGrid">
+  {% for c in clients %}
+    <div
+      class="card client-login-card"
+      data-search="{{ (c.name ~ ' ' ~ (c.email or '') ~ ' ' ~ (c.portal_username or '') ~ ' ' ~ (c.portal_password or '')) | lower }}"
+    >
+      <h2>{{ c.name }}</h2>
+      <p>{{ c.email or "" }}</p>
+
+      <form method="post" action="/client-login-help/{{ c.id }}/save" class="stack">
+        <input name="portal_username" value="{{ c.portal_username or '' }}" placeholder="Client username">
+        <input name="portal_password" value="{{ c.portal_password or '' }}" placeholder="Client password">
+        <button class="btn primary" type="submit">Save Client Login</button>
+      </form>
+
+      {% if c.portal_username %}
+        <p><strong>Client login:</strong> {{ c.portal_username }}</p>
+      {% endif %}
+    </div>
+  {% else %}
+    <div class="card">
+      <h2>No clients found</h2>
+      <p>Add clients first.</p>
+    </div>
+  {% endfor %}
+</section>
+
+<script>
+  function filterClientLogins() {
+    const q = document.getElementById("clientLoginSearch").value.toLowerCase().trim();
+    const cards = document.querySelectorAll(".client-login-card");
+
+    cards.forEach(function(card) {
+      const haystack = card.dataset.search || "";
+      card.style.display = haystack.includes(q) ? "" : "none";
+    });
+  }
+</script>
+
+{% endblock %}
