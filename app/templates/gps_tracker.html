@@ -2,20 +2,41 @@
 {% block content %}
 
 <section class="section-head">
-  <h1>GPS Tracker</h1>
-  <p>Clock in, keep this page open, and let Field Ops record your route, stops, and time on site.</p>
+  <h1>Field Clock + GPS</h1>
+  <p>Clock in, start tracking, and let Field Ops record your route, stops, and time on site.</p>
 </section>
 
 <section class="card">
   <h2>Tracking as {{ employee_name }}</h2>
+
+  {% if clocked_in %}
+    <p class="badge">Clocked In{% if clocked_in_at %} since {{ clocked_in_at }}{% endif %}</p>
+  {% else %}
+    <p class="badge">Not Clocked In</p>
+  {% endif %}
+
   <p class="muted">
-    Browser GPS only works while this page is open and permission is granted.
-    For best results, keep the phone awake or reopen this page throughout the day.
+    Tap Clock In first, then Start GPS Tracking. Keep this page open while you work.
   </p>
 
   <div class="grid">
+    <form method="post" action="/gps/clock" id="clock-in-form">
+      <input type="hidden" name="action" value="in">
+      <input type="hidden" name="lat" id="clock-in-lat">
+      <input type="hidden" name="lng" id="clock-in-lng">
+      <button class="btn primary" type="button" onclick="clockWithGps('in')">Clock In</button>
+    </form>
+
     <button class="btn primary" type="button" onclick="startTracking()">Start GPS Tracking</button>
-    <button class="btn danger" type="button" onclick="stopTracking()">Stop Tracking</button>
+
+    <button class="btn danger" type="button" onclick="stopTracking()">Stop GPS Tracking</button>
+
+    <form method="post" action="/gps/clock" id="clock-out-form">
+      <input type="hidden" name="action" value="out">
+      <input type="hidden" name="lat" id="clock-out-lat">
+      <input type="hidden" name="lng" id="clock-out-lng">
+      <button class="btn danger" type="button" onclick="clockWithGps('out')">Clock Out</button>
+    </form>
   </div>
 
   <div class="card" style="margin-top:16px;">
@@ -36,9 +57,9 @@
     <p>See stops and time spent at each place.</p>
   </a>
 
-  <a class="card" href="/map">
-    <h2>Map</h2>
-    <p>Open the Field Map.</p>
+  <a class="card" href="/employee">
+    <h2>Employee Portal</h2>
+    <p>Open the old employee clock page.</p>
   </a>
 
   <a class="card" href="/jarvis">
@@ -51,6 +72,7 @@
 let gpsWatchId = null;
 let lastSentAt = 0;
 let lastPosition = null;
+let forcePingTimer = null;
 
 function statusText(message) {
   document.getElementById("gps-status").textContent = message;
@@ -58,6 +80,36 @@ function statusText(message) {
 
 function lastText(message) {
   document.getElementById("gps-last").textContent = message;
+}
+
+function clockWithGps(action) {
+  const formId = action === "in" ? "clock-in-form" : "clock-out-form";
+  const latId = action === "in" ? "clock-in-lat" : "clock-out-lat";
+  const lngId = action === "in" ? "clock-in-lng" : "clock-out-lng";
+
+  statusText(action === "in" ? "Clocking in..." : "Clocking out...");
+
+  if (!navigator.geolocation) {
+    document.getElementById(formId).submit();
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(
+    function(position) {
+      document.getElementById(latId).value = position.coords.latitude;
+      document.getElementById(lngId).value = position.coords.longitude;
+      document.getElementById(formId).submit();
+    },
+    function(error) {
+      statusText("GPS unavailable for clock. Saving clock without location.");
+      document.getElementById(formId).submit();
+    },
+    {
+      enableHighAccuracy: true,
+      maximumAge: 10000,
+      timeout: 15000
+    }
+  );
 }
 
 async function sendPoint(position, forced=false) {
@@ -90,7 +142,7 @@ async function sendPoint(position, forced=false) {
     const data = await res.json();
 
     if (data.ok) {
-      statusText("Tracking is ON.");
+      statusText("GPS tracking is ON.");
       lastText(
         "Last saved: " +
         new Date().toLocaleTimeString() +
@@ -128,7 +180,11 @@ function startTracking() {
     }
   );
 
-  setInterval(function() {
+  if (forcePingTimer) {
+    clearInterval(forcePingTimer);
+  }
+
+  forcePingTimer = setInterval(function() {
     if (lastPosition) {
       sendPoint(lastPosition, true);
     }
@@ -143,7 +199,12 @@ function stopTracking() {
     gpsWatchId = null;
   }
 
-  statusText("Tracking stopped.");
+  if (forcePingTimer) {
+    clearInterval(forcePingTimer);
+    forcePingTimer = null;
+  }
+
+  statusText("GPS tracking stopped.");
 }
 </script>
 

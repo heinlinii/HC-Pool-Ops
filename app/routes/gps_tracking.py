@@ -87,17 +87,62 @@ def ensure_gps_schema():
 
 
 def current_tracker_identity(user):
-    """
-    Admins can track as themselves. Crew tracks as their employee record.
-    If an admin does not have an employee row, we still save points under their user id/name.
-    """
     if not user:
         return 0, "Unknown"
 
     employee_id = user.get("id") or 0
-    employee_name = user.get("name") or user.get("username") or "User"
+    employee_name = user.get("name") or user.get("username") or "Mike"
 
     return employee_id, employee_name
+
+
+def get_or_create_employee_for_user(user):
+    h = _helpers()
+
+    employee_id, employee_name = current_tracker_identity(user)
+    username = user.get("username") or employee_name.lower().replace(" ", ".")
+
+    existing = h["one"](
+        """
+        SELECT *
+        FROM poolops2_employees
+        WHERE lower(name)=lower(?) OR lower(username)=lower(?)
+        ORDER BY id
+        LIMIT 1
+        """,
+        (employee_name, username),
+    )
+
+    if existing:
+        return existing
+
+    _safe_exec(
+        """
+        INSERT INTO poolops2_employees
+        (name, role, phone, email, username, password, active)
+        VALUES (?,?,?,?,?,?,?)
+        """,
+        (
+            employee_name,
+            "Admin" if h["is_admin"](user) else "Crew",
+            "",
+            "",
+            username,
+            "",
+            True if h["USE_POSTGRES"] else 1,
+        ),
+    )
+
+    return h["one"](
+        """
+        SELECT *
+        FROM poolops2_employees
+        WHERE lower(name)=lower(?) OR lower(username)=lower(?)
+        ORDER BY id DESC
+        LIMIT 1
+        """,
+        (employee_name, username),
+    )
 
 
 def miles_between(lat1, lng1, lat2, lng2):
@@ -165,10 +210,6 @@ def points_for_day(day):
 
 
 def build_stops(points, stop_radius_miles=0.10, min_minutes=3):
-    """
-    Groups GPS points into stops.
-    A new stop begins when movement jumps outside the radius or time gap gets large.
-    """
     grouped = {}
 
     for p in points:
@@ -264,16 +305,65 @@ def gps_tracker(request: Request):
 
     ensure_gps_schema()
 
-    employee_id, employee_name = current_tracker_identity(user)
+    employee = get_or_create_employee_for_user(user)
+    employee_id = employee.get("id")
+    employee_name = employee.get("name") or user.get("name") or user.get("username") or "Mike"
 
     return h["templates"].TemplateResponse(
         "gps_tracker.html",
         h["ctx"](
             request,
+            employee=employee,
             employee_id=employee_id,
             employee_name=employee_name,
+            clocked_in=employee.get("clocked_in"),
+            clocked_in_at=employee.get("clocked_in_at"),
         ),
     )
+
+
+@router.post("/gps/clock")
+def gps_clock(
+    request: Request,
+    action: str = Form("in"),
+    lat: str = Form(""),
+    lng: str = Form(""),
+):
+    h = _helpers()
+    user = h["require_login"](request)
+
+    if not user:
+        return h["login_redirect"]()
+
+    if not (h["is_admin"](user) or h["is_employee"](user)):
+        return h["admin_redirect"](user)
+
+    employee = get_or_create_employee_for_user(user)
+
+    now = datetime.now().isoformat(timespec="minutes")
+    clocked = action == "in"
+
+    _safe_exec(
+        """
+        UPDATE poolops2_employees
+        SET clocked_in=?,
+            clock_lat=?,
+            clock_lng=?,
+            clocked_in_at=?,
+            last_seen_at=?
+        WHERE id=?
+        """,
+        (
+            True if clocked else False,
+            float(lat) if lat else None,
+            float(lng) if lng else None,
+            now if clocked else "",
+            now,
+            employee.get("id"),
+        ),
+    )
+
+    return RedirectResponse("/gps", status_code=303)
 
 
 @router.post("/gps/ping")
@@ -298,7 +388,9 @@ def gps_ping(
 
     ensure_gps_schema()
 
-    employee_id, employee_name = current_tracker_identity(user)
+    employee = get_or_create_employee_for_user(user)
+    employee_id = employee.get("id")
+    employee_name = employee.get("name") or user.get("name") or user.get("username") or "Mike"
 
     _safe_exec(
         """
