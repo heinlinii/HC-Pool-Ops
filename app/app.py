@@ -3253,6 +3253,9 @@ app.include_router(job_detail_v2.router)
 from app.routes import mike_mode
 app.include_router(mike_mode.router)
 
+from app.routes import jarvis_approval
+app.include_router(jarvis_approval.router)
+
 @app.post("/invisible-office/add")
 def invisible_office_add(
     request: Request,

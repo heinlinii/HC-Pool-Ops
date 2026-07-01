@@ -3,18 +3,19 @@
 
 <section class="section-head">
   <h1>Talk to Jarvis</h1>
-  <p>Tell Jarvis what needs handled. Jarvis will file it into Invisible Office.</p>
+  <p>Tell Jarvis what needs handled. Jarvis will organize it first, then you approve it before it gets filed.</p>
 </section>
 
 <section class="card">
   <h2>Send It to Jarvis</h2>
 
-  <form method="post" action="/assistant-live/send" class="stack">
+  <form method="post" action="/assistant-live/preview" class="stack">
     <textarea
       name="message"
       placeholder="Tell Jarvis what needs handled..."
       style="min-height:160px;width:100%;"
       autofocus
+      required
     ></textarea>
 
     <div class="inline-form">
@@ -41,7 +42,7 @@
 
   <a class="card" href="/jarvis">
     <h2>Dashboard</h2>
-    <p>Return to Heinlin Field Ops.</p>
+    <p>Return to Mike Mode.</p>
   </a>
 </section>
 
