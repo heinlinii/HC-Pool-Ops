@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block content %}
+
+<section class="section-head">
+  <h1>Edit Invisible Office Entry</h1>
+  <p>Fix the category, title, body, client, property, due date, priority, or status.</p>
+</section>
+
+<section class="card">
+  <form method="post" action="/invisible-office/{{ item.id }}/edit" class="stack">
+
+    <label>Category</label>
+    <select name="category">
+      {% set categories = [
+        "General Note",
+        "Client Follow-Up",
+        "Material Needed",
+        "Billing Note",
+        "Schedule Task",
+        "Problem Found",
+        "Equipment Note"
+      ] %}
+      {% for cat in categories %}
+        <option value="{{ cat }}" {% if item.category == cat %}selected{% endif %}>{{ cat }}</option>
+      {% endfor %}
+    </select>
+
+    <label>Title</label>
+    <input name="title" value="{{ item.title or '' }}" placeholder="Short reminder title">
+
+    <label>Body / Notes</label>
+    <textarea name="body" rows="9" placeholder="What needs handled?">{{ item.body or '' }}</textarea>
+
+    <div class="inline-form">
+      <div>
+        <label>Client</label>
+        <input name="client" value="{{ item.client or '' }}" placeholder="Client name">
+      </div>
+
+      <div>
+        <label>Property / Job</label>
+        <input name="property" value="{{ item.property or '' }}" placeholder="Property, job, or address">
+      </div>
+
+      <div>
+        <label>Job ID</label>
+        <input name="job_id" value="{{ item.job_id or '' }}" placeholder="Optional job ID">
+      </div>
+    </div>
+
+    <div class="inline-form">
+      <div>
+        <label>Assigned To</label>
+        <input name="assigned_to" value="{{ item.assigned_to or '' }}" placeholder="Mike, Randy, Marty...">
+      </div>
+
+      <div>
+        <label>Due Date</label>
+        <input name="due_date" type="date" value="{{ item.due_date or '' }}">
+      </div>
+
+      <div>
+        <label>Priority</label>
+        <select name="priority">
+          {% set priorities = ["Normal", "High", "Urgent"] %}
+          {% for p in priorities %}
+            <option value="{{ p }}" {% if item.priority == p %}selected{% endif %}>{{ p }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div>
+        <label>Status</label>
+        <select name="status">
+          {% set statuses = ["Open", "In Progress", "Waiting", "Done", "Closed"] %}
+          {% for s in statuses %}
+            <option value="{{ s }}" {% if item.status == s %}selected{% endif %}>{{ s }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <div class="inline-form" style="margin-top:16px;">
+      <button class="btn primary" type="submit">Save Changes</button>
+      <a class="btn" href="/invisible-office">Cancel</a>
+      <a class="btn" href="/jarvis">Back to Mike Mode</a>
+    </div>
+  </form>
+</section>
+
+<section class="card">
+  <h2>Entry Info</h2>
+  <p><strong>Source:</strong> {{ item.source or "Unknown" }}</p>
+  <p><strong>Created By:</strong> {{ item.created_by or "Unknown" }}</p>
+  <p><strong>Created At:</strong> {{ item.created_at or "Unknown" }}</p>
+</section>
+
+{% endblock %}

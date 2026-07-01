@@ -2,69 +2,125 @@
 {% block content %}
 
 <section class="section-head">
-  <h1>Invisible Office</h1>
-  <p>Saved notes, follow-ups, reminders, materials, problems, billing notes, and Jarvis-filed work.</p>
+  <h1>{{ title or "Invisible Office" }}</h1>
+  <p>Jarvis-filed notes, follow-ups, reminders, materials, problems, billing notes, and office memory.</p>
 </section>
 
 <section class="card">
-  <h2>Add Office Item</h2>
+  <h2>Find Office Memory</h2>
+
+  <form action="/invisible-office/search" method="get" class="inline-form">
+    <input
+      name="q"
+      value="{{ q or '' }}"
+      placeholder="Search client, property, job, invoice, photo, note, material, problem..."
+      autofocus
+    >
+    <button class="btn primary" type="submit">Search</button>
+  </form>
+</section>
+
+{% if q %}
+<section class="card">
+  <h2>Search Results for “{{ q }}”</h2>
+
+  {% if results %}
+    <div class="list">
+      {% for r in results %}
+        <a class="row-card" href="{{ r.url }}">
+          <b>{{ r.kind }}: {{ r.title }}</b>
+          {% if r.badge %}
+            <span class="badge">{{ r.badge }}</span>
+          {% endif %}
+          <p>{{ r.detail }}</p>
+        </a>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="muted">No matching records found.</p>
+  {% endif %}
+</section>
+{% endif %}
+
+<section class="card">
+  <h2>Add Office Note</h2>
 
   <form method="post" action="/invisible-office/add" class="stack">
-    <textarea name="note" placeholder="Type a note, reminder, follow-up, material, problem, or task..." style="min-height:110px;width:100%;"></textarea>
+    <textarea
+      name="note"
+      rows="5"
+      placeholder="Type a note, reminder, follow-up, billing item, material need, or problem..."
+    ></textarea>
+
     <button class="btn primary" type="submit">Save Note</button>
   </form>
 </section>
 
-<section class="grid">
-  {% for item in items %}
-    <div class="card">
-      <h2>{{ item.title or item.category or "Office Item" }}</h2>
+<section class="card">
+  <div class="section-head" style="margin-bottom:12px;">
+    <h2>Open Invisible Office Items</h2>
+    <p>These are the things Jarvis has filed for you to handle.</p>
+  </div>
 
-      <p>
-        <strong>{{ item.category or "General Note" }}</strong>
-        {% if item.priority %}
-          - Priority: {{ item.priority }}
-        {% endif %}
-      </p>
+  {% if items %}
+    <div class="list">
+      {% for item in items %}
+        <div class="row-card">
+          <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap;">
+            <div>
+              <b>{{ item.title or item.category or "Office Item" }}</b>
+              <p class="muted">
+                {{ item.category or "General Note" }}
+                {% if item.priority %} • {{ item.priority }}{% endif %}
+                {% if item.status %} • {{ item.status }}{% endif %}
+                {% if item.due_date %} • Due {{ item.due_date }}{% endif %}
+              </p>
+            </div>
 
-      <p>{{ item.body or item.note }}</p>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <a class="btn" href="/invisible-office/{{ item.id }}/edit">Edit</a>
 
-      {% if item.client %}
-        <p><strong>Client:</strong> {{ item.client }}</p>
-      {% endif %}
+              {% if item.job_id %}
+                <a class="btn" href="/jobs/{{ item.job_id }}">Open Job</a>
+              {% endif %}
 
-      {% if item.property %}
-        <p><strong>Property:</strong> {{ item.property }}</p>
-      {% endif %}
+              <form method="post" action="/invisible-office/{{ item.id }}/delete" onsubmit="return confirm('Delete this Invisible Office item?');">
+                <button class="btn danger" type="submit">Delete</button>
+              </form>
+            </div>
+          </div>
 
-      {% if item.due_date %}
-        <p><strong>Due:</strong> {{ item.due_date }}</p>
-      {% endif %}
+          <p style="white-space:pre-wrap;">{{ item.body or "" }}</p>
 
-      {% if item.status %}
-        <p><strong>Status:</strong> {{ item.status }}</p>
-      {% endif %}
+          <p class="muted">
+            {% if item.client %}<strong>Client:</strong> {{ item.client }}{% endif %}
+            {% if item.property %} • <strong>Property:</strong> {{ item.property }}{% endif %}
+            {% if item.assigned_to %} • <strong>Assigned:</strong> {{ item.assigned_to }}{% endif %}
+          </p>
 
-      {% if item.source %}
-        <p class="muted">Source: {{ item.source }}</p>
-      {% endif %}
-
-      {% if item.created_at %}
-        <p class="muted">{{ item.created_at }}</p>
-      {% endif %}
-
-      {% if is_admin %}
-        <form method="post" action="/invisible-office/{{ item.id }}/delete" onsubmit="return confirm('Delete this item?');">
-          <button class="btn danger" type="submit">Delete</button>
-        </form>
-      {% endif %}
+          <p class="muted">
+            Source: {{ item.source or "manual" }}
+            {% if item.created_by %} • By {{ item.created_by }}{% endif %}
+            {% if item.created_at %} • {{ item.created_at }}{% endif %}
+          </p>
+        </div>
+      {% endfor %}
     </div>
   {% else %}
-    <div class="card">
-      <h2>No Invisible Office items yet</h2>
-      <p>Tell Jarvis something from Talk to Jarvis, and it will show up here.</p>
-    </div>
-  {% endfor %}
+    <p class="muted">No Invisible Office items yet.</p>
+  {% endif %}
+</section>
+
+<section class="grid">
+  <a class="card" href="/assistant-interview-live">
+    <h2>Talk to Jarvis</h2>
+    <p>Send a new item to Jarvis.</p>
+  </a>
+
+  <a class="card" href="/jarvis">
+    <h2>Mike Mode</h2>
+    <p>Return to the cockpit.</p>
+  </a>
 </section>
 
 {% endblock %}
