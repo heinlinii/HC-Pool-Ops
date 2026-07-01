@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+  .mm-title{margin:0;color:#d6b36a;font-size:clamp(3rem,9vw,8rem);line-height:.82;letter-spacing:-.07em;text-transform:uppercase}
+  .mm-hero{display:grid;grid-template-columns:1.1fr .9fr;gap:18px;margin-bottom:18px}
+  .mm-talk{min-height:210px;border-radius:34px;border:2px solid rgba(214,179,106,.6);background:radial-gradient(circle at 50% 20%,rgba(214,179,106,.28),transparent 45%),linear-gradient(135deg,rgba(214,179,106,.20),rgba(0,0,0,.35));color:#d6b36a;text-decoration:none;display:flex;align-items:center;justify-content:center;text-align:center;font-size:clamp(2.4rem,7vw,5.6rem);font-weight:1000;text-transform:uppercase;letter-spacing:-.05em;box-shadow:0 22px 60px rgba(0,0,0,.5)}
+  .mm-talk span{display:block;color:rgba(255,255,255,.78);font-size:1rem;letter-spacing:.08em;margin-top:8px}
+  .mm-buttons{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:18px 0}
+  .mm-buttons a{min-height:120px;border-radius:24px;text-decoration:none;border:1px solid rgba(214,179,106,.32);background:rgba(255,255,255,.055);color:#fff;padding:14px;display:flex;flex-direction:column;justify-content:center;text-align:center}
+  .mm-buttons strong{color:#d6b36a;text-transform:uppercase;font-size:1.2rem}
+  .mm-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:18px}
+  .mm-item{border-top:1px solid rgba(255,255,255,.1);padding:12px 0}
+  .mm-item:first-child{border-top:0}
+  .mm-pill{display:inline-flex;border:1px solid rgba(214,179,106,.34);color:#d6b36a;border-radius:999px;padding:4px 10px;margin:3px 4px 3px 0;background:rgba(0,0,0,.22);font-weight:800;font-size:.8rem}
+  .mm-muted{color:rgba(255,255,255,.62)}
+  .mm-metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .mm-metrics div{border:1px solid rgba(214,179,106,.25);background:rgba(255,255,255,.05);border-radius:18px;padding:14px}
+  .mm-metrics strong{display:block;color:#fff;font-size:1.8rem}
+  .mm-metrics span{color:rgba(255,255,255,.58);text-transform:uppercase;font-size:.72rem;letter-spacing:.11em}
+  @media(max-width:900px){.mm-hero,.mm-grid{grid-template-columns:1fr}.mm-buttons{grid-template-columns:repeat(2,minmax(0,1fr))}}
+  @media(max-width:620px){.mm-buttons{grid-template-columns:1fr}.mm-talk{min-height:150px}}
+</style>
+
+<section class="mm-hero">
+  <div class="card">
+    <h1 class="mm-title">Mike Mode</h1>
+    <p>This is the computer version of your working brain. Talk to Jarvis, see what matters today, and let the app file the office work where it belongs.</p>
+  </div>
+  <a class="mm-talk" href="/work-engine">
+    <div>Talk to Jarvis<span>Say it once. Jarvis files it.</span></div>
+  </a>
+</section>
+
+<section class="mm-buttons">
+  <a href="/work-engine"><strong>Talk</strong><span>Tell Jarvis what happened</span></a>
+  <a href="/schedule-board"><strong>My Day</strong><span>Today's whiteboard</span></a>
+  <a href="/office"><strong>Office</strong><span>Money, calls, orders</span></a>
+  <a href="/invisible-office/search"><strong>Find</strong><span>Client, job, property, note</span></a>
+</section>
+
+<section class="mm-grid">
+  <div>
+    <section class="card">
+      <h2>What Do I Do Today?</h2>
+      {% for job in today_jobs %}
+        <div class="mm-item">
+          <strong>{{ job.job_type or "Job" }}</strong>
+          <div class="mm-muted">
+            {{ job.client or "No client" }}
+            {% if job.property %} • {{ job.property }}{% endif %}
+            {% if job.address %}<br>{{ job.address }}{% endif %}
+          </div>
+          <span class="mm-pill">{{ job.status or "Scheduled" }}</span>
+          <span class="mm-pill">{{ job.crew or "Unassigned" }}</span>
+          <span class="mm-pill">{{ job.priority or "Normal" }}</span>
+          {% if job.notes %}<p>{{ job.notes }}</p>{% endif %}
+          <a class="btn secondary" href="/job-v2/{{ job.id }}">Open Job</a>
+        </div>
+      {% else %}
+        <p>No jobs scheduled for today.</p>
+      {% endfor %}
+    </section>
+
+    <section class="card">
+      <h2>Dump A Thought</h2>
+      <form method="post" action="/mike/quick-note" class="stack">
+        <textarea name="note" rows="5" placeholder="Type a quick thought here if you can't talk. Example: Need to call Smith about heater quote."></textarea>
+        <button class="btn primary" type="submit">Save Thought</button>
+      </form>
+    </section>
+  </div>
+
+  <div>
+    <section class="card">
+      <h2>Don't Forget</h2>
+      {% for item in reminders[:10] %}
+        <div class="mm-item">
+          <strong>{{ item.title or item.category or "Reminder" }}</strong>
+          <div>
+            <span class="mm-pill">{{ item.priority or "Normal" }}</span>
+            <span class="mm-pill">{{ item.category or "Office" }}</span>
+          </div>
+          {% if item.client %}<p><strong>{{ item.client }}</strong></p>{% endif %}
+          <p>{{ item.body or "" }}</p>
+        </div>
+      {% else %}
+        <p>No open reminders.</p>
+      {% endfor %}
+    </section>
+
+    <section class="card">
+      <h2>Right Now</h2>
+      <div class="mm-metrics">
+        <div><strong>{{ clocked_in|length }}</strong><span>Clocked In</span></div>
+        <div><strong>{{ client_requests|length }}</strong><span>Client Requests</span></div>
+        <div><strong>{{ open_invoices|length }}</strong><span>Open Invoices</span></div>
+        <div><strong>${{ "%.2f"|format(open_balance or 0) }}</strong><span>Open Balance</span></div>
+      </div>
+      {% if clocked_in %}
+        <h3>Crew Clocked In</h3>
+        {% for emp in clocked_in %}
+          <span class="mm-pill">{{ emp.name }}</span>
+        {% endfor %}
+      {% endif %}
+    </section>
+
+    <section class="card">
+      <h2>Fast Links</h2>
+      <div class="stack">
+        <a class="btn secondary" href="/gps-replay">GPS Replay</a>
+        <a class="btn secondary" href="/client-login-help">Client Logins</a>
+        <a class="btn secondary" href="/admin/users">User Management</a>
+      </div>
+    </section>
+  </div>
+</section>
+
+{% endblock %}

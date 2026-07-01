@@ -3247,6 +3247,12 @@ app.include_router(client_portal_v2.router)
 from app.routes import office
 app.include_router(office.router)
 
+from app.routes import job_detail_v2
+app.include_router(job_detail_v2.router)
+
+from app.routes import mike_mode
+app.include_router(mike_mode.router)
+
 @app.post("/invisible-office/add")
 def invisible_office_add(
     request: Request,
