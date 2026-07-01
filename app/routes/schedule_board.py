@@ -1,4 +1,7 @@
+from collections import defaultdict
 from datetime import date, datetime, timedelta
+import re
+
 from fastapi import APIRouter, Request, Form
 from fastapi.responses import RedirectResponse, HTMLResponse
 
@@ -7,8 +10,9 @@ from app.routes.auth import (
     login_redirect,
     admin_redirect,
     is_admin,
-    is_client,
+    is_office,
     is_employee,
+    is_client,
 )
 
 router = APIRouter()
@@ -35,18 +39,6 @@ def exec_sql(*args, **kwargs):
     return core().exec_sql(*args, **kwargs)
 
 
-def jobs_for_user(*args, **kwargs):
-    return core().jobs_for_user(*args, **kwargs)
-
-
-def schedule_date(*args, **kwargs):
-    return core().schedule_date(*args, **kwargs)
-
-
-def can_accounting(*args, **kwargs):
-    return core().can_accounting(*args, **kwargs)
-
-
 class _TemplatesProxy:
     def __getattr__(self, name):
         return getattr(core().templates, name)
@@ -55,179 +47,210 @@ class _TemplatesProxy:
 templates = _TemplatesProxy()
 
 
-def is_office_user(user):
-    return user and str(user.get("role", "")).lower().strip() == "office"
-
-
-def _today():
-    return date.today()
-
-
-def _safe_date(raw):
-    raw = str(raw or "").strip()
-    if not raw:
-        return _today().isoformat()
-    try:
-        return date.fromisoformat(raw[:10]).isoformat()
-    except Exception:
-        return _today().isoformat()
-
-
-def _date_nav(selected_day):
-    d = date.fromisoformat(selected_day)
-    return {
-        "today": _today().isoformat(),
-        "prev": (d - timedelta(days=1)).isoformat(),
-        "next": (d + timedelta(days=1)).isoformat(),
-        "pretty": d.strftime("%A, %B %d, %Y").replace(" 0", " ") if hasattr(d, "strftime") else selected_day,
-    }
-
-
-def _normalize_crew(value):
-    value = str(value or "").strip()
+def _safe_date(value):
     if not value:
-        return "Unassigned"
-    return value
+        return ""
+    return str(value)[:10]
 
 
-def _lane_sort_key(name):
-    lower = str(name or "").lower()
-    if lower == "office":
-        return (0, lower)
-    if lower == "unassigned":
-        return (99, lower)
-    return (10, lower)
+def _pretty_date(day_text):
+    try:
+        d = date.fromisoformat(day_text)
+        return d.strftime("%A, %B %d, %Y").replace(" 0", " ")
+    except Exception:
+        return day_text
 
 
-def _job_visible_to_user(user, job):
-    if is_admin(user) or is_office_user(user):
-        return True
-    if is_employee(user):
-        crew = str(job.get("crew") or "").lower()
-        name = str(user.get("name") or "").lower()
-        username = str(user.get("username") or "").lower()
-        return crew in ("", "unassigned") or (name and name in crew) or (username and username in crew)
-    return False
+def _add_days(day_text, amount):
+    try:
+        d = date.fromisoformat(day_text)
+    except Exception:
+        d = date.today()
+    return (d + timedelta(days=amount)).isoformat()
 
 
-def _jobs_for_day(user, selected_day):
-    job_rows = rows("SELECT * FROM poolops2_jobs ORDER BY scheduled_start, date, id")
-    visible = []
-    for j in job_rows:
-        if schedule_date(j) != selected_day:
+def _is_done(status):
+    return str(status or "").strip().lower() in ("complete", "completed", "done", "closed")
+
+
+def _materials_from_text(text):
+    text = text or ""
+    found = []
+
+    structured = re.search(r"Materials:\s*(.+)", text, flags=re.I)
+    if structured:
+        chunk = structured.group(1).split("\n", 1)[0]
+        found.extend([x.strip(" -•\t") for x in re.split(r",|;|\band\b", chunk) if x.strip(" -•\t")])
+
+    lower = text.lower()
+    patterns = [
+        r"bring\s+([^\\.\\n]+)",
+        r"need\s+([^\\.\\n]+)",
+        r"materials?\s*[:\-]\s*([^\\.\\n]+)",
+        r"order\s+([^\\.\\n]+)",
+        r"pick up\s+([^\\.\\n]+)",
+        r"pickup\s+([^\\.\\n]+)",
+    ]
+    for pat in patterns:
+        for m in re.finditer(pat, lower, flags=re.I):
+            chunk = m.group(1)
+            chunk = re.split(r"\bfor\b|\bto\b|\bbefore\b", chunk)[0]
+            found.extend([x.strip(" -•\t") for x in re.split(r",|;|\band\b", chunk) if x.strip(" -•\t")])
+
+    clean = []
+    seen = set()
+    for item in found:
+        item = item.strip()
+        if not item or len(item) > 80:
             continue
-        if _job_visible_to_user(user, j):
-            visible.append(j)
-    return visible
+        key = item.lower()
+        if key not in seen:
+            clean.append(item)
+            seen.add(key)
+    return clean[:8]
 
 
-def _office_items_for_day(user, selected_day):
-    if not (is_admin(user) or is_office_user(user)):
-        return []
-    try:
-        return rows(
-            """
-            SELECT *
-            FROM invisible_office_items
-            WHERE COALESCE(status,'Open') NOT IN ('Done','Complete','Completed')
-              AND (
-                    due_date=?
-                 OR (COALESCE(due_date,'')='' AND category IN ('Billing Note','Client Follow-Up','Material Needed','Schedule Task','General Note'))
-              )
-            ORDER BY
-              CASE priority WHEN 'High' THEN 1 WHEN 'Normal' THEN 2 ELSE 3 END,
-              id DESC
-            LIMIT 200
-            """,
-            (selected_day,),
-        )
-    except Exception:
-        return []
+def _property_link_for_job(job):
+    address = str(job.get("address") or "").strip()
+    property_name = str(job.get("property") or "").strip()
+    client = str(job.get("client") or "").strip()
+
+    prop = None
+    if address:
+        prop = one("SELECT * FROM poolops2_properties WHERE address=? LIMIT 1", (address,))
+    if not prop and property_name:
+        prop = one("SELECT * FROM poolops2_properties WHERE property_name=? LIMIT 1", (property_name,))
+    if not prop and client:
+        prop = one("SELECT * FROM poolops2_properties WHERE client=? ORDER BY id LIMIT 1", (client,))
+
+    return prop.get("id") if prop else None
 
 
-def _employees():
-    try:
-        return rows("SELECT * FROM poolops2_employees WHERE COALESCE(name,'')<>'' ORDER BY name")
-    except Exception:
-        return []
+def _normalize_job(job):
+    j = dict(job)
+    notes = j.get("notes") or ""
+    j["schedule_day"] = _safe_date(j.get("scheduled_start") or j.get("date"))
+    j["materials"] = _materials_from_text(notes)
+    j["property_id"] = _property_link_for_job(j)
+    j["is_done"] = _is_done(j.get("status"))
+    j["display_time"] = ""
+    raw = str(j.get("scheduled_start") or "")
+    if "T" in raw and len(raw) >= 16:
+        j["display_time"] = raw[11:16]
+    return j
 
 
-def _clients():
-    try:
-        return rows("SELECT * FROM poolops2_clients ORDER BY name")
-    except Exception:
-        return []
+def _office_items_for_day(day_text):
+    items = rows(
+        """
+        SELECT *
+        FROM invisible_office_items
+        WHERE due_date=?
+          AND status NOT IN ('Complete', 'Completed', 'Done', 'Closed')
+        ORDER BY
+          CASE priority
+            WHEN 'High' THEN 1
+            WHEN 'Emergency' THEN 0
+            ELSE 5
+          END,
+          id DESC
+        """,
+        (day_text,),
+    )
 
-
-def _build_lanes(user, selected_day):
-    lanes = {}
-
-    for job in _jobs_for_day(user, selected_day):
-        crew = _normalize_crew(job.get("crew"))
-        lanes.setdefault(crew, {"name": crew, "jobs": [], "office_items": []})
-        lanes[crew]["jobs"].append(job)
-
-    office_items = _office_items_for_day(user, selected_day)
-    if office_items:
-        lanes.setdefault("Office", {"name": "Office", "jobs": [], "office_items": []})
-        lanes["Office"]["office_items"].extend(office_items)
-
-    if not lanes:
-        lanes["Unassigned"] = {"name": "Unassigned", "jobs": [], "office_items": []}
-
-    return [lanes[k] for k in sorted(lanes.keys(), key=_lane_sort_key)]
+    grouped = defaultdict(list)
+    for item in items:
+        category = item.get("category") or "Office"
+        grouped[category].append(item)
+    return dict(grouped)
 
 
 @router.get("/schedule-board", response_class=HTMLResponse)
 def schedule_board(request: Request):
-    user = require_login(request)
-    if not user:
+    u = require_login(request)
+    if not u:
         return login_redirect()
-    if is_client(user):
-        return RedirectResponse("/client-portal", status_code=303)
 
-    selected_day = _safe_date(request.query_params.get("date"))
-    lanes = _build_lanes(user, selected_day)
+    if is_client(u):
+        return RedirectResponse("/client-portal-v2", status_code=303)
+
+    selected_day = request.query_params.get("date") or date.today().isoformat()
+    show_done = request.query_params.get("show_done") == "1"
+
+    job_rows = rows(
+        """
+        SELECT *
+        FROM poolops2_jobs
+        WHERE COALESCE(scheduled_start, date, '') LIKE ?
+           OR date=?
+        ORDER BY
+          COALESCE(scheduled_start, date, '') ASC,
+          id ASC
+        """,
+        (f"{selected_day}%", selected_day),
+    )
+
+    jobs = [_normalize_job(j) for j in job_rows]
+    if not show_done:
+        jobs = [j for j in jobs if not j["is_done"]]
+
+    lanes = defaultdict(list)
+    for job in jobs:
+        crew = str(job.get("crew") or "").strip()
+        if not crew or crew.lower() == "unassigned":
+            lane = "Unassigned"
+        else:
+            lane = crew
+        lanes[lane].append(job)
+
+    lane_order = sorted([k for k in lanes.keys() if k != "Unassigned"])
+    if "Unassigned" in lanes:
+        lane_order.append("Unassigned")
+
+    employees = rows("SELECT * FROM poolops2_employees WHERE coalesce(name,'') <> '' ORDER BY name")
+    office_items = _office_items_for_day(selected_day)
 
     return templates.TemplateResponse(
         "schedule_board.html",
         ctx(
             request,
             selected_day=selected_day,
-            nav=_date_nav(selected_day),
-            lanes=lanes,
-            employees=_employees(),
-            clients=_clients(),
-            can_edit=(is_admin(user) or is_office_user(user)),
-        ),
+            pretty_day=_pretty_date(selected_day),
+            prev_day=_add_days(selected_day, -1),
+            next_day=_add_days(selected_day, 1),
+            lanes=dict(lanes),
+            lane_order=lane_order,
+            employees=employees,
+            office_items=office_items,
+            show_done=show_done,
+        )
     )
 
 
-@router.get("/schedule/board", response_class=HTMLResponse)
-def schedule_board_alias(request: Request):
-    selected_day = request.query_params.get("date") or _today().isoformat()
-    return RedirectResponse(f"/schedule-board?date={selected_day}", status_code=303)
-
-
-@router.post("/schedule-board/add-job")
-def schedule_board_add_job(
+@router.post("/schedule-board/add")
+def schedule_board_add(
     request: Request,
+    selected_day: str = Form(""),
     client: str = Form(""),
     property: str = Form(""),
     address: str = Form(""),
-    job_type: str = Form("Work Item"),
+    job_type: str = Form("Task"),
     crew: str = Form("Unassigned"),
-    scheduled_date: str = Form(""),
     priority: str = Form("Normal"),
     notes: str = Form(""),
+    materials: str = Form(""),
 ):
-    user = require_login(request)
-    if not user:
+    u = require_login(request)
+    if not u:
         return login_redirect()
-    if not (is_admin(user) or is_office_user(user)):
-        return admin_redirect(user)
 
-    selected_day = _safe_date(scheduled_date)
+    if not (is_admin(u) or is_office(u)):
+        return admin_redirect(u)
+
+    day = selected_day or date.today().isoformat()
+    clean_notes = notes.strip()
+    if materials.strip():
+        clean_notes = (clean_notes + "\n\n" if clean_notes else "") + f"Materials: {materials.strip()}"
 
     exec_sql(
         """
@@ -239,100 +262,68 @@ def schedule_board_add_job(
             client.strip(),
             property.strip(),
             address.strip(),
-            job_type.strip() or "Work Item",
+            job_type.strip() or "Task",
             "Scheduled",
             crew.strip() or "Unassigned",
-            selected_day,
-            selected_day,
+            day,
+            day,
             priority.strip() or "Normal",
-            notes.strip(),
-        ),
+            clean_notes,
+        )
     )
 
-    return RedirectResponse(f"/schedule-board?date={selected_day}", status_code=303)
+    return RedirectResponse(f"/schedule-board?date={day}", status_code=303)
 
 
-@router.post("/schedule-board/add-office-task")
-def schedule_board_add_office_task(
-    request: Request,
-    title: str = Form("Office Task"),
-    body: str = Form(""),
-    client: str = Form(""),
-    property: str = Form(""),
-    assigned_to: str = Form("Office"),
-    due_date: str = Form(""),
-    category: str = Form("Schedule Task"),
-    priority: str = Form("Normal"),
-):
-    user = require_login(request)
-    if not user:
-        return login_redirect()
-    if not (is_admin(user) or is_office_user(user)):
-        return admin_redirect(user)
-
-    selected_day = _safe_date(due_date)
-    exec_sql(
-        """
-        INSERT INTO invisible_office_items
-        (source, category, title, body, client, property, assigned_to, due_date, priority, status, created_by, created_at)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
-        """,
-        (
-            "Schedule Board",
-            category.strip() or "Schedule Task",
-            title.strip() or "Office Task",
-            body.strip(),
-            client.strip(),
-            property.strip(),
-            assigned_to.strip() or "Office",
-            selected_day,
-            priority.strip() or "Normal",
-            "Open",
-            user.get("name") or user.get("username") or "",
-            datetime.now().isoformat(timespec="seconds"),
-        ),
-    )
-    return RedirectResponse(f"/schedule-board?date={selected_day}", status_code=303)
-
-
-@router.post("/schedule-board/jobs/{job_id}/status")
+@router.post("/schedule-board/job/{job_id}/status")
 def schedule_board_job_status(
     request: Request,
     job_id: int,
     status: str = Form("Scheduled"),
     selected_day: str = Form(""),
 ):
-    user = require_login(request)
-    if not user:
+    u = require_login(request)
+    if not u:
         return login_redirect()
-    if not (is_admin(user) or is_employee(user) or is_office_user(user)):
-        return admin_redirect(user)
 
-    job = one("SELECT * FROM poolops2_jobs WHERE id=?", (job_id,))
-    if not job or not _job_visible_to_user(user, job):
-        return RedirectResponse("/schedule-board", status_code=303)
+    if not (is_admin(u) or is_office(u) or is_employee(u)):
+        return admin_redirect(u)
 
-    exec_sql("UPDATE poolops2_jobs SET status=? WHERE id=?", (status.strip() or "Scheduled", job_id))
-    return RedirectResponse(f"/schedule-board?date={_safe_date(selected_day)}", status_code=303)
+    exec_sql("UPDATE poolops2_jobs SET status=? WHERE id=?", (status, job_id))
+    return RedirectResponse(f"/schedule-board?date={selected_day or date.today().isoformat()}", status_code=303)
 
 
-@router.post("/schedule-board/items/{item_id}/status")
-def schedule_board_item_status(
+@router.post("/schedule-board/job/{job_id}/assign")
+def schedule_board_job_assign(
     request: Request,
-    item_id: int,
-    status: str = Form("Open"),
+    job_id: int,
+    crew: str = Form("Unassigned"),
     selected_day: str = Form(""),
 ):
-    user = require_login(request)
-    if not user:
+    u = require_login(request)
+    if not u:
         return login_redirect()
-    if not (is_admin(user) or is_office_user(user)):
-        return admin_redirect(user)
 
-    completed_at = datetime.now().isoformat(timespec="seconds") if status in ("Done", "Complete", "Completed") else ""
-    try:
-        exec_sql("UPDATE invisible_office_items SET status=?, completed_at=? WHERE id=?", (status, completed_at, item_id))
-    except Exception:
-        exec_sql("UPDATE invisible_office_items SET status=? WHERE id=?", (status, item_id))
+    if not (is_admin(u) or is_office(u)):
+        return admin_redirect(u)
 
-    return RedirectResponse(f"/schedule-board?date={_safe_date(selected_day)}", status_code=303)
+    exec_sql("UPDATE poolops2_jobs SET crew=? WHERE id=?", (crew.strip() or "Unassigned", job_id))
+    return RedirectResponse(f"/schedule-board?date={selected_day or date.today().isoformat()}", status_code=303)
+
+
+@router.post("/schedule-board/office/{item_id}/status")
+def schedule_board_office_status(
+    request: Request,
+    item_id: int,
+    status: str = Form("Complete"),
+    selected_day: str = Form(""),
+):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+
+    if not (is_admin(u) or is_office(u)):
+        return admin_redirect(u)
+
+    exec_sql("UPDATE invisible_office_items SET status=? WHERE id=?", (status, item_id))
+    return RedirectResponse(f"/schedule-board?date={selected_day or date.today().isoformat()}", status_code=303)

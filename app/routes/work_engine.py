@@ -82,32 +82,24 @@ def guess_due_date(text):
     for word in ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]:
         if word in lower:
             return _next_weekday_iso(word)
-
     m = re.search(r"\b(20\d{2}-\d{2}-\d{2})\b", text)
     if m:
         return m.group(1)
-
     return ""
 
 
 def guess_category(text):
     lower = text.lower()
-
     if any(x in lower for x in ["schedule", "tomorrow", "monday", "tuesday", "wednesday", "thursday", "friday", "come back", "return"]):
         return "Schedule Task"
-
     if any(x in lower for x in ["bill", "invoice", "charge", "payment", "quickbooks", "paid", "estimate", "quote"]):
         return "Billing Note"
-
     if any(x in lower for x in ["material", "materials", "bring", "need", "buy", "order", "pickup", "pick up", "valve", "pipe", "fitting", "sand", "cement", "glue"]):
         return "Material Needed"
-
     if any(x in lower for x in ["call", "text", "email", "follow up", "follow-up", "reach out"]):
         return "Client Follow-Up"
-
     if any(x in lower for x in ["problem", "issue", "leak", "broken", "failed", "cracked", "not working", "bad"]):
         return "Problem Found"
-
     return "General Note"
 
 
@@ -165,6 +157,32 @@ def extract_hours(text):
         return 0
 
 
+def extract_materials(text):
+    lower = text.lower()
+    chunks = []
+    for pat in [
+        r"bring\s+([^\.]+)",
+        r"need\s+([^\.]+)",
+        r"order\s+([^\.]+)",
+        r"pick up\s+([^\.]+)",
+        r"pickup\s+([^\.]+)",
+        r"materials?\s*[:\-]\s*([^\.]+)",
+    ]:
+        for m in re.finditer(pat, lower):
+            chunk = m.group(1)
+            chunk = re.split(r"\bfor\b|\bto\b|\bbefore\b", chunk)[0]
+            chunks.extend([x.strip(" -•\t") for x in re.split(r",|;|\band\b", chunk) if x.strip(" -•\t")])
+    clean = []
+    seen = set()
+    for item in chunks:
+        if not item or len(item) > 80:
+            continue
+        if item not in seen:
+            clean.append(item)
+            seen.add(item)
+    return clean[:8]
+
+
 def should_create_job(text):
     lower = text.lower()
     return any(x in lower for x in [
@@ -216,12 +234,9 @@ def work_engine_page(request: Request):
         return login_redirect()
 
     if is_client(u):
-        return RedirectResponse("/client-portal", status_code=303)
+        return RedirectResponse("/client-portal-v2", status_code=303)
 
-    return templates.TemplateResponse(
-        "work_engine.html",
-        ctx(request)
-    )
+    return templates.TemplateResponse("work_engine.html", ctx(request))
 
 
 @router.post("/work-engine/handle", response_class=HTMLResponse)
@@ -232,13 +247,14 @@ def work_engine_handle(
     create_schedule: str = Form(""),
     create_billing: str = Form(""),
     create_material: str = Form(""),
+    create_office: str = Form(""),
 ):
     u = require_login(request)
     if not u:
         return login_redirect()
 
     if is_client(u):
-        return RedirectResponse("/client-portal", status_code=303)
+        return RedirectResponse("/client-portal-v2", status_code=303)
 
     text = _clean(message)
     if not text:
@@ -263,10 +279,12 @@ def work_engine_handle(
     category = guess_category(text)
     priority = guess_priority(text)
     hours = extract_hours(text)
+    materials = extract_materials(text)
 
     schedule_suggested = should_create_job(text)
     billing_suggested = should_create_billing(text)
     material_suggested = should_create_material(text)
+    office_suggested = category in ("Billing Note", "Client Follow-Up", "Material Needed")
 
     title = text[:80] + ("..." if len(text) > 80 else "")
 
@@ -281,16 +299,20 @@ def work_engine_handle(
             "category": category,
             "priority": priority,
             "hours": hours,
+            "materials": materials,
             "schedule_suggested": schedule_suggested,
             "billing_suggested": billing_suggested,
             "material_suggested": material_suggested,
+            "office_suggested": office_suggested,
         }
-        return templates.TemplateResponse(
-            "work_engine.html",
-            ctx(request, suggestions=suggestions)
-        )
+        return templates.TemplateResponse("work_engine.html", ctx(request, suggestions=suggestions))
 
     job_id = None
+    structured_notes = text
+    if materials:
+        structured_notes += "\n\nMaterials: " + ", ".join(materials)
+    if hours:
+        structured_notes += f"\nLabor Hours: {hours}"
 
     if create_schedule == "yes":
         job_id = exec_sql(
@@ -309,7 +331,7 @@ def work_engine_handle(
                 due_date or _today_iso(),
                 due_date or _today_iso(),
                 priority,
-                text,
+                structured_notes,
             )
         )
 
@@ -328,7 +350,6 @@ def work_engine_handle(
 
     if create_billing == "yes":
         amount = 0
-        desc = title
         notes = "Created from Work Engine"
         if hours:
             notes += f" | Labor hours mentioned: {hours}"
@@ -338,17 +359,7 @@ def work_engine_handle(
             (job_id, client, description, amount, status, date, notes, open_balance, source)
             VALUES (?,?,?,?,?,?,?,?,?)
             """,
-            (
-                job_id,
-                client_name,
-                desc,
-                amount,
-                "Draft",
-                _today_iso(),
-                notes,
-                amount,
-                "Work Engine",
-            )
+            (job_id, client_name, title, amount, "Draft", _today_iso(), notes, amount, "Work Engine")
         )
 
     if create_material == "yes":
@@ -356,7 +367,7 @@ def work_engine_handle(
             request,
             text,
             "Material Needed",
-            title,
+            "Materials: " + (", ".join(materials) if materials else title),
             client=client_name,
             property_name=property_name,
             job_id=job_id,
@@ -365,7 +376,21 @@ def work_engine_handle(
             priority=priority,
         )
 
-    return RedirectResponse("/invisible-office", status_code=303)
+    if create_office == "yes":
+        save_invisible_item(
+            request,
+            text,
+            category if category in ("Billing Note", "Client Follow-Up") else "Office Task",
+            title,
+            client=client_name,
+            property_name=property_name,
+            job_id=job_id,
+            assigned_to="Office",
+            due_date=due_date or _today_iso(),
+            priority=priority,
+        )
+
+    return RedirectResponse(f"/schedule-board?date={due_date or _today_iso()}", status_code=303)
 
 
 @router.get("/client-login-help", response_class=HTMLResponse)
@@ -378,10 +403,7 @@ def client_login_help(request: Request):
 
     clients = rows("SELECT * FROM poolops2_clients ORDER BY name")
 
-    return templates.TemplateResponse(
-        "client_login_help.html",
-        ctx(request, clients=clients)
-    )
+    return templates.TemplateResponse("client_login_help.html", ctx(request, clients=clients))
 
 
 @router.post("/client-login-help/{client_id}/save")

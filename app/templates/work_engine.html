@@ -3,7 +3,7 @@
 
 <section class="section-head">
   <h1>Work Engine</h1>
-  <p>Tell Jarvis what happened. It can create schedule work, billing drafts, material notes, and property memory from one message.</p>
+  <p>Tell Jarvis what happened. It can create schedule work, office tasks, material notes, billing drafts, and property memory from one message.</p>
 </section>
 
 <section class="card">
@@ -25,6 +25,14 @@
   <p><strong>Priority:</strong> {{ suggestions.priority }}</p>
   <p><strong>Labor Hours Mentioned:</strong> {{ suggestions.hours }}</p>
 
+  {% if suggestions.materials %}
+    <p><strong>Materials:</strong>
+      {% for m in suggestions.materials %}
+        <span class="pill">{{ m }}</span>
+      {% endfor %}
+    </p>
+  {% endif %}
+
   <form method="post" action="/work-engine/handle" class="stack">
     <input type="hidden" name="message" value="{{ suggestions.message }}">
     <input type="hidden" name="approve" value="yes">
@@ -44,15 +52,20 @@
       Create billing draft
     </label>
 
-    <button class="btn primary" type="submit">Approve and File It</button>
+    <label>
+      <input type="checkbox" name="create_office" value="yes" {% if suggestions.office_suggested %}checked{% endif %}>
+      Create office task
+    </label>
+
+    <button class="btn primary" type="submit">Approve and Send to Board</button>
   </form>
 </section>
 {% endif %}
 
 <section class="grid">
   <a class="card" href="/schedule-board">
-    <h2>Schedule</h2>
-    <p>See work created from Jarvis on the contractor whiteboard.</p>
+    <h2>Schedule Board</h2>
+    <p>Work Engine items land here after approval.</p>
   </a>
 
   <a class="card" href="/invisible-office">

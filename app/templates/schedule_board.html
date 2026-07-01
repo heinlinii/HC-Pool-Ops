@@ -2,327 +2,293 @@
 {% block content %}
 
 <style>
-  .schedule-board-page {
-    max-width: 1500px;
-    margin: 0 auto;
-    padding: 112px 16px 42px;
+  .sb-top {
+    display:grid;
+    grid-template-columns:1fr auto;
+    gap:16px;
+    align-items:end;
+    margin-bottom:18px;
   }
 
-  .schedule-board-hero {
-    border: 1px solid rgba(214,179,106,.32);
-    background: linear-gradient(135deg, rgba(214,179,106,.10), rgba(7,14,20,.96));
-    border-radius: 28px;
-    padding: 24px;
-    margin-bottom: 16px;
+  .sb-title {
+    margin:0;
+    color:#d6b36a;
+    font-size:clamp(3rem, 8vw, 7rem);
+    line-height:.84;
+    text-transform:uppercase;
+    letter-spacing:-.06em;
   }
 
-  .schedule-board-hero h1 {
-    margin: 0;
-    font-size: clamp(3.4rem, 7vw, 7.8rem);
-    line-height: .88;
-    letter-spacing: -.06em;
+  .sb-date-nav {
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    justify-content:flex-end;
   }
 
-  .schedule-board-hero p {
-    margin: 8px 0 0;
-    color: rgba(255,255,255,.74);
-    font-weight: 850;
-    font-size: 1.05rem;
+  .sb-board {
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(310px, 1fr));
+    gap:16px;
+    align-items:start;
   }
 
-  .board-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    margin: 14px 0 18px;
+  .sb-lane {
+    border:1px solid rgba(214,179,106,.34);
+    background:rgba(255,255,255,.045);
+    border-radius:24px;
+    padding:14px;
+    min-height:220px;
   }
 
-  .board-actions a,
-  .board-actions button {
-    border: 1px solid rgba(214,179,106,.35);
-    background: rgba(7,14,20,.84);
-    color: #d6b36a;
-    text-decoration: none;
-    border-radius: 999px;
-    padding: 12px 16px;
-    font-weight: 1000;
-    cursor: pointer;
+  .sb-lane h2 {
+    margin:0 0 12px;
+    color:#d6b36a;
+    text-transform:uppercase;
+    letter-spacing:.04em;
   }
 
-  .board-actions .primary {
-    color: #071017;
-    background: linear-gradient(135deg, #7b5a22, #d6b36a, #5f4519);
+  .sb-job {
+    border:1px solid rgba(255,255,255,.12);
+    border-radius:18px;
+    padding:14px;
+    margin-bottom:12px;
+    background:rgba(0,0,0,.24);
   }
 
-  .quick-add-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 12px;
-    margin-bottom: 18px;
+  .sb-job.done {
+    opacity:.55;
   }
 
-  .quick-add-card,
-  .lane {
-    border: 1px solid rgba(214,179,106,.25);
-    background: rgba(7,14,20,.90);
-    border-radius: 24px;
-    padding: 16px;
+  .sb-job h3 {
+    margin:0 0 6px;
+    color:#fff;
   }
 
-  .quick-add-card h2,
-  .lane h2 {
-    margin: 0 0 10px;
-    color: #d6b36a;
+  .sb-pill {
+    display:inline-flex;
+    align-items:center;
+    border:1px solid rgba(214,179,106,.35);
+    color:#d6b36a;
+    border-radius:999px;
+    padding:3px 9px;
+    font-size:.78rem;
+    font-weight:800;
+    margin:2px 3px 2px 0;
+    background:rgba(0,0,0,.2);
   }
 
-  .quick-add-card input,
-  .quick-add-card select,
-  .quick-add-card textarea {
-    width: 100%;
-    box-sizing: border-box;
-    margin: 5px 0;
-    padding: 11px 12px;
-    border-radius: 14px;
-    border: 1px solid rgba(214,179,106,.25);
-    background: rgba(0,0,0,.32);
-    color: #fff;
+  .sb-actions {
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    margin-top:10px;
   }
 
-  .board-lanes {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-    gap: 14px;
-    align-items: start;
+  .sb-actions form {
+    display:inline-flex;
+    gap:6px;
+    align-items:center;
   }
 
-  .lane-head {
-    display: flex;
-    justify-content: space-between;
-    gap: 10px;
-    align-items: baseline;
-    border-bottom: 1px solid rgba(255,255,255,.10);
-    padding-bottom: 10px;
-    margin-bottom: 10px;
+  .sb-actions select {
+    min-width:120px;
   }
 
-  .lane-count {
-    color: rgba(255,255,255,.56);
-    font-weight: 900;
-    white-space: nowrap;
+  .sb-small {
+    color:rgba(255,255,255,.64);
+    font-size:.9rem;
   }
 
-  .work-card {
-    display: block;
-    margin: 10px 0;
-    padding: 14px;
-    border-radius: 18px;
-    background: rgba(255,255,255,.055);
-    border: 1px solid rgba(255,255,255,.10);
-    color: #fff;
-    text-decoration: none;
+  .sb-materials {
+    margin-top:10px;
+    padding:10px;
+    border-radius:14px;
+    background:rgba(214,179,106,.08);
+    border:1px solid rgba(214,179,106,.18);
   }
 
-  .work-card.job {
-    border-left: 4px solid #d6b36a;
+  .sb-materials strong {
+    color:#d6b36a;
   }
 
-  .work-card.office {
-    border-left: 4px solid #60a5fa;
+  .sb-form-grid {
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(190px,1fr));
+    gap:10px;
   }
 
-  .work-title {
-    color: #fff;
-    font-size: 1.08rem;
-    font-weight: 1000;
-    margin-bottom: 6px;
+  .sb-form-grid textarea {
+    min-height:85px;
   }
 
-  .work-meta {
-    color: rgba(255,255,255,.72);
-    font-weight: 800;
-    margin: 4px 0;
-  }
-
-  .work-notes {
-    color: rgba(255,255,255,.58);
-    margin-top: 8px;
-    line-height: 1.35;
-  }
-
-  .status-row {
-    display: flex;
-    gap: 6px;
-    flex-wrap: wrap;
-    margin-top: 12px;
-  }
-
-  .status-row form {
-    margin: 0;
-  }
-
-  .status-row button {
-    border: 1px solid rgba(214,179,106,.26);
-    background: rgba(0,0,0,.20);
-    color: #d6b36a;
-    border-radius: 999px;
-    padding: 7px 10px;
-    font-weight: 900;
-    cursor: pointer;
-  }
-
-  .pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    border-radius: 999px;
-    border: 1px solid rgba(214,179,106,.26);
-    color: #d6b36a;
-    padding: 5px 9px;
-    font-size: .78rem;
-    font-weight: 1000;
-    margin: 4px 4px 0 0;
-  }
-
-  .empty-lane {
-    color: rgba(255,255,255,.50);
-    font-weight: 850;
-    padding: 12px 0;
-  }
-
-  @media (max-width: 700px) {
-    .schedule-board-page {
-      padding: 92px 10px 28px;
+  @media(max-width:760px) {
+    .sb-top {
+      grid-template-columns:1fr;
     }
-
-    .board-lanes {
-      grid-template-columns: 1fr;
+    .sb-date-nav {
+      justify-content:flex-start;
     }
   }
 </style>
 
-<div class="schedule-board-page">
-
-  <section class="schedule-board-hero">
-    <h1>Schedule Board</h1>
-    <p>{{ nav.pretty }} — crew work, office tasks, materials, billing notes, and Work Engine follow-through.</p>
-  </section>
-
-  <div class="board-actions">
-    <a href="/schedule-board?date={{ nav.prev }}">← Previous Day</a>
-    <a class="primary" href="/schedule-board?date={{ nav.today }}">Today</a>
-    <a href="/schedule-board?date={{ nav.next }}">Next Day →</a>
-    <a href="/work-engine">Work Engine</a>
-    <a href="/schedule/day?date={{ selected_day }}">Old Daily View</a>
-    <a href="/jarvis">Dashboard</a>
+<section class="sb-top">
+  <div>
+    <h1 class="sb-title">Schedule Board</h1>
+    <p>{{ pretty_day }}</p>
   </div>
+  <div class="sb-date-nav">
+    <a class="btn secondary" href="/schedule-board?date={{ prev_day }}">Previous</a>
+    <a class="btn primary" href="/schedule-board">Today</a>
+    <a class="btn secondary" href="/schedule-board?date={{ next_day }}">Next</a>
+    <a class="btn secondary" href="/work-engine">Work Engine</a>
+  </div>
+</section>
 
-  {% if can_edit %}
-  <section class="quick-add-grid">
-    <form class="quick-add-card" method="post" action="/schedule-board/add-job">
-      <h2>Add Crew Work</h2>
-      <input type="hidden" name="scheduled_date" value="{{ selected_day }}">
-      <input name="job_type" placeholder="Task / job type">
+<section class="card">
+  <form method="get" action="/schedule-board" class="inline-form">
+    <input type="date" name="date" value="{{ selected_day }}">
+    <label style="display:flex;align-items:center;gap:8px;">
+      <input type="checkbox" name="show_done" value="1" {% if show_done %}checked{% endif %}>
+      Show completed
+    </label>
+    <button class="btn primary" type="submit">Load</button>
+  </form>
+</section>
+
+{% if is_admin or user.role == "office" %}
+<section class="card">
+  <h2>Quick Add Work</h2>
+  <form method="post" action="/schedule-board/add" class="stack">
+    <input type="hidden" name="selected_day" value="{{ selected_day }}">
+    <div class="sb-form-grid">
       <input name="client" placeholder="Client">
       <input name="property" placeholder="Property">
       <input name="address" placeholder="Address">
+      <input name="job_type" placeholder="Task / Job Type">
       <select name="crew">
         <option value="Unassigned">Unassigned</option>
-        {% for emp in employees %}
-          <option value="{{ emp.name }}">{{ emp.name }}</option>
+        {% for e in employees %}
+          <option value="{{ e.name }}">{{ e.name }}</option>
         {% endfor %}
+        <option value="Office">Office</option>
       </select>
       <select name="priority">
-        <option value="Normal">Normal</option>
-        <option value="High">High</option>
-        <option value="Low">Low</option>
+        <option>Normal</option>
+        <option>High</option>
+        <option>Emergency</option>
       </select>
-      <textarea name="notes" rows="3" placeholder="Materials, notes, instructions..."></textarea>
-      <button class="primary" type="submit">Add to Board</button>
-    </form>
+    </div>
+    <textarea name="materials" placeholder="Materials needed: valves, sand, actuator, glue..."></textarea>
+    <textarea name="notes" placeholder="Notes / instructions"></textarea>
+    <button class="btn primary" type="submit">Add to Board</button>
+  </form>
+</section>
+{% endif %}
 
-    <form class="quick-add-card" method="post" action="/schedule-board/add-office-task">
-      <h2>Add Office Task</h2>
-      <input type="hidden" name="due_date" value="{{ selected_day }}">
-      <input name="title" placeholder="Invoice, call, order, follow-up...">
-      <input name="client" placeholder="Client">
-      <input name="property" placeholder="Property">
-      <select name="category">
-        <option value="Schedule Task">Schedule Task</option>
-        <option value="Billing Note">Billing Note</option>
-        <option value="Client Follow-Up">Client Follow-Up</option>
-        <option value="Material Needed">Material Needed</option>
-        <option value="General Note">General Note</option>
-      </select>
-      <select name="priority">
-        <option value="Normal">Normal</option>
-        <option value="High">High</option>
-        <option value="Low">Low</option>
-      </select>
-      <textarea name="body" rows="3" placeholder="Details..."></textarea>
-      <button class="primary" type="submit">Add Office Task</button>
-    </form>
-  </section>
-  {% endif %}
+<section class="sb-board">
+  {% for lane in lane_order %}
+    <div class="sb-lane">
+      <h2>{{ lane }}</h2>
 
-  <section class="board-lanes">
-    {% for lane in lanes %}
-      <div class="lane">
-        <div class="lane-head">
-          <h2>{{ lane.name }}</h2>
-          <div class="lane-count">{{ lane.jobs|length + lane.office_items|length }} items</div>
-        </div>
+      {% for job in lanes.get(lane, []) %}
+        <article class="sb-job {% if job.is_done %}done{% endif %}">
+          <h3>{{ job.job_type or "Task" }}</h3>
 
-        {% for job in lane.jobs %}
-          <div class="work-card job">
-            <a href="/jobs/{{ job.id }}" style="color:inherit;text-decoration:none;">
-              <div class="work-title">{{ job.job_type or "Work Item" }}</div>
-              <div class="work-meta">{{ job.client or "No client" }}{% if job.property %} • {{ job.property }}{% endif %}</div>
-              {% if job.address %}<div class="work-meta">📍 {{ job.address }}</div>{% endif %}
-              <span class="pill">{{ job.status or "Scheduled" }}</span>
-              <span class="pill">{{ job.priority or "Normal" }}</span>
-              {% if job.notes %}<div class="work-notes">{{ job.notes }}</div>{% endif %}
-            </a>
+          <div>
+            {% if job.display_time %}<span class="sb-pill">{{ job.display_time }}</span>{% endif %}
+            <span class="sb-pill">{{ job.status or "Scheduled" }}</span>
+            <span class="sb-pill">{{ job.priority or "Normal" }}</span>
+          </div>
 
-            <div class="status-row">
-              {% for status in ["Scheduled", "In Progress", "Complete"] %}
-                <form method="post" action="/schedule-board/jobs/{{ job.id }}/status">
-                  <input type="hidden" name="selected_day" value="{{ selected_day }}">
-                  <input type="hidden" name="status" value="{{ status }}">
-                  <button type="submit">{{ status }}</button>
-                </form>
+          <p>
+            <strong>{{ job.client or "No client" }}</strong>
+            {% if job.property %}<br>{{ job.property }}{% endif %}
+            {% if job.address %}<br>{{ job.address }}{% endif %}
+          </p>
+
+          {% if job.materials %}
+            <div class="sb-materials">
+              <strong>Bring / Materials</strong><br>
+              {% for m in job.materials %}
+                <span class="sb-pill">{{ m }}</span>
               {% endfor %}
             </div>
+          {% endif %}
+
+          {% if job.notes %}
+            <p class="sb-small">{{ job.notes }}</p>
+          {% endif %}
+
+          <div class="sb-actions">
+            <a class="btn secondary" href="/jobs/{{ job.id }}">Job</a>
+            {% if job.property_id %}
+              <a class="btn secondary" href="/property-brain-v2/{{ job.property_id }}">Property Brain</a>
+            {% endif %}
+
+            <form method="post" action="/schedule-board/job/{{ job.id }}/status">
+              <input type="hidden" name="selected_day" value="{{ selected_day }}">
+              <select name="status">
+                <option {% if job.status == "Scheduled" %}selected{% endif %}>Scheduled</option>
+                <option {% if job.status == "In Progress" %}selected{% endif %}>In Progress</option>
+                <option {% if job.status == "Complete" %}selected{% endif %}>Complete</option>
+              </select>
+              <button class="btn secondary" type="submit">Set</button>
+            </form>
+
+            {% if is_admin or user.role == "office" %}
+              <form method="post" action="/schedule-board/job/{{ job.id }}/assign">
+                <input type="hidden" name="selected_day" value="{{ selected_day }}">
+                <select name="crew">
+                  <option value="Unassigned">Unassigned</option>
+                  {% for e in employees %}
+                    <option value="{{ e.name }}" {% if job.crew == e.name %}selected{% endif %}>{{ e.name }}</option>
+                  {% endfor %}
+                  <option value="Office" {% if job.crew == "Office" %}selected{% endif %}>Office</option>
+                </select>
+                <button class="btn secondary" type="submit">Assign</button>
+              </form>
+            {% endif %}
           </div>
-        {% endfor %}
+        </article>
+      {% else %}
+        <p class="sb-small">No work in this lane.</p>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="sb-lane">
+      <h2>No Field Work</h2>
+      <p class="sb-small">No scheduled field work for this date.</p>
+    </div>
+  {% endfor %}
 
-        {% for item in lane.office_items %}
-          <div class="work-card office">
-            <div class="work-title">{{ item.title or "Office Task" }}</div>
-            <div class="work-meta">{{ item.category or "Task" }}{% if item.client %} • {{ item.client }}{% endif %}</div>
-            {% if item.property %}<div class="work-meta">{{ item.property }}</div>{% endif %}
-            <span class="pill">{{ item.status or "Open" }}</span>
-            <span class="pill">{{ item.priority or "Normal" }}</span>
-            {% if item.body %}<div class="work-notes">{{ item.body }}</div>{% endif %}
+  <div class="sb-lane">
+    <h2>Office</h2>
 
-            <div class="status-row">
-              {% for status in ["Open", "Done"] %}
-                <form method="post" action="/schedule-board/items/{{ item.id }}/status">
-                  <input type="hidden" name="selected_day" value="{{ selected_day }}">
-                  <input type="hidden" name="status" value="{{ status }}">
-                  <button type="submit">{{ status }}</button>
-                </form>
-              {% endfor %}
-            </div>
-          </div>
-        {% endfor %}
+    {% for category, items in office_items.items() %}
+      <h3>{{ category }}</h3>
+      {% for item in items %}
+        <article class="sb-job">
+          <h3>{{ item.title or "Office Task" }}</h3>
+          <span class="sb-pill">{{ item.priority or "Normal" }}</span>
+          <span class="sb-pill">{{ item.status or "Open" }}</span>
+          {% if item.client %}<p><strong>{{ item.client }}</strong></p>{% endif %}
+          {% if item.property %}<p>{{ item.property }}</p>{% endif %}
+          <p class="sb-small">{{ item.body }}</p>
 
-        {% if not lane.jobs and not lane.office_items %}
-          <div class="empty-lane">Nothing scheduled here yet.</div>
-        {% endif %}
-      </div>
+          {% if is_admin or user.role == "office" %}
+            <form method="post" action="/schedule-board/office/{{ item.id }}/status">
+              <input type="hidden" name="selected_day" value="{{ selected_day }}">
+              <input type="hidden" name="status" value="Complete">
+              <button class="btn secondary" type="submit">Mark Complete</button>
+            </form>
+          {% endif %}
+        </article>
+      {% endfor %}
+    {% else %}
+      <p class="sb-small">No office tasks due today.</p>
     {% endfor %}
-  </section>
-
-</div>
+  </div>
+</section>
 
 {% endblock %}
