@@ -2492,21 +2492,62 @@ def employee_profile_save(request: Request, name: str = Form(""), phone: str = F
 @app.post("/employee/clock")
 def employee_clock(request: Request, action: str = Form("in"), lat: str = Form(""), lng: str = Form("")):
     u = require_login(request)
-    if not u or not is_employee(u):
+
+    if not u:
+        return login_redirect()
+
+    if not (is_employee(u) or is_admin(u)):
         return login_redirect()
 
     now = datetime.now().isoformat(timespec="minutes")
     clocked = action == "in"
 
+    employee_id = u.get("id")
+    employee_name = u.get("name") or u.get("username") or "Mike"
+
+    if is_admin(u):
+        existing = one(
+            "SELECT * FROM poolops2_employees WHERE lower(name)=lower(?) OR lower(username)=lower(?) ORDER BY id LIMIT 1",
+            (employee_name, u.get("username") or "")
+        )
+
+        if not existing:
+            employee_id = exec_sql(
+                """
+                INSERT INTO poolops2_employees
+                (name, role, phone, email, username, password, active)
+                VALUES (?,?,?,?,?,?,?)
+                """,
+                (
+                    employee_name,
+                    "Admin",
+                    "",
+                    "",
+                    u.get("username") or employee_name.lower().replace(" ", "."),
+                    "",
+                    True if USE_POSTGRES else 1,
+                )
+            )
+        else:
+            employee_id = existing.get("id")
+
     exec_sql(
-        "UPDATE poolops2_employees SET clocked_in=?, clock_lat=?, clock_lng=?, clocked_in_at=?, last_seen_at=? WHERE id=?",
+        """
+        UPDATE poolops2_employees
+        SET clocked_in=?,
+            clock_lat=?,
+            clock_lng=?,
+            clocked_in_at=?,
+            last_seen_at=?
+        WHERE id=?
+        """,
         (
             clocked,
             float(lat) if lat else None,
             float(lng) if lng else None,
             now if clocked else "",
             now,
-            u.get("id")
+            employee_id,
         )
     )
 
