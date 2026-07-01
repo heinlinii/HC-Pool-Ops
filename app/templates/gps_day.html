@@ -3,18 +3,34 @@
 
 <section class="section-head">
   <h1>GPS Day Log</h1>
-  <p>Recorded crew location points for {{ today }}.</p>
+  <p>Raw GPS points recorded for {{ selected_day }}.</p>
+</section>
+
+<section class="card">
+  <form method="get" action="/gps/day" class="inline-form">
+    <input type="date" name="date" value="{{ selected_day }}">
+    <button class="btn primary" type="submit">Load Day</button>
+    <a class="btn" href="/gps">Tracker</a>
+    <a class="btn" href="/gps/stops?date={{ selected_day }}">Stops</a>
+    <a class="btn" href="/jarvis">Mike Mode</a>
+  </form>
 </section>
 
 <section class="grid">
   {% for p in points %}
     <div class="card">
       <h2>{{ p.employee_name or "Employee" }}</h2>
-      <p>{{ p.created_at }}</p>
-      <p>Lat: {{ p.latitude }} • Lng: {{ p.longitude }}</p>
+      <p><strong>Time:</strong> {{ p.created_at }}</p>
+      <p><strong>Lat:</strong> {{ p.latitude }} • <strong>Lng:</strong> {{ p.longitude }}</p>
+
       {% if p.accuracy %}
-        <p>Accuracy: {{ p.accuracy }} meters</p>
+        <p><strong>Accuracy:</strong> {{ p.accuracy }} meters</p>
       {% endif %}
+
+      {% if p.speed %}
+        <p><strong>Speed:</strong> {{ p.speed }}</p>
+      {% endif %}
+
       <a class="btn primary" target="_blank" href="https://www.google.com/maps?q={{ p.latitude }},{{ p.longitude }}">
         Open Map
       </a>
@@ -22,7 +38,8 @@
   {% else %}
     <div class="card">
       <h2>No GPS points yet</h2>
-      <p>No employee locations have been recorded today.</p>
+      <p>No locations have been recorded for this day.</p>
+      <a class="btn primary" href="/gps">Start Tracking</a>
     </div>
   {% endfor %}
 </section>

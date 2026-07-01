@@ -3259,6 +3259,12 @@ app.include_router(jarvis_approval.router)
 from app.routes import invisible_office_edit
 app.include_router(invisible_office_edit.router)
 
+from app.routes import gps_tracking
+app.include_router(gps_tracking.router)
+
+from app.routes import account_management
+app.include_router(account_management.router)
+
 @app.post("/invisible-office/add")
 def invisible_office_add(
     request: Request,

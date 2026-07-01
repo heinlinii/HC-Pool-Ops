@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+{% block content %}
+
+<section class="section-head">
+  <h1>GPS Tracker</h1>
+  <p>Clock in, keep this page open, and let Field Ops record your route, stops, and time on site.</p>
+</section>
+
+<section class="card">
+  <h2>Tracking as {{ employee_name }}</h2>
+  <p class="muted">
+    Browser GPS only works while this page is open and permission is granted.
+    For best results, keep the phone awake or reopen this page throughout the day.
+  </p>
+
+  <div class="grid">
+    <button class="btn primary" type="button" onclick="startTracking()">Start GPS Tracking</button>
+    <button class="btn danger" type="button" onclick="stopTracking()">Stop Tracking</button>
+  </div>
+
+  <div class="card" style="margin-top:16px;">
+    <h2>Status</h2>
+    <p id="gps-status">Not tracking yet.</p>
+    <p id="gps-last"></p>
+  </div>
+</section>
+
+<section class="grid">
+  <a class="card" href="/gps/day">
+    <h2>GPS Day Log</h2>
+    <p>See every recorded GPS point for today.</p>
+  </a>
+
+  <a class="card" href="/gps/stops">
+    <h2>GPS Stops</h2>
+    <p>See stops and time spent at each place.</p>
+  </a>
+
+  <a class="card" href="/map">
+    <h2>Map</h2>
+    <p>Open the Field Map.</p>
+  </a>
+
+  <a class="card" href="/jarvis">
+    <h2>Mike Mode</h2>
+    <p>Return to the cockpit.</p>
+  </a>
+</section>
+
+<script>
+let gpsWatchId = null;
+let lastSentAt = 0;
+let lastPosition = null;
+
+function statusText(message) {
+  document.getElementById("gps-status").textContent = message;
+}
+
+function lastText(message) {
+  document.getElementById("gps-last").textContent = message;
+}
+
+async function sendPoint(position, forced=false) {
+  const now = Date.now();
+
+  if (!forced && now - lastSentAt < 60000) {
+    return;
+  }
+
+  lastSentAt = now;
+  lastPosition = position;
+
+  const c = position.coords;
+
+  const form = new FormData();
+  form.append("latitude", c.latitude);
+  form.append("longitude", c.longitude);
+  form.append("accuracy", c.accuracy || 0);
+  form.append("speed", c.speed || 0);
+  form.append("heading", c.heading || 0);
+  form.append("source", "admin_gps_tracker");
+  form.append("note", "GPS tracker page");
+
+  try {
+    const res = await fetch("/gps/ping", {
+      method: "POST",
+      body: form
+    });
+
+    const data = await res.json();
+
+    if (data.ok) {
+      statusText("Tracking is ON.");
+      lastText(
+        "Last saved: " +
+        new Date().toLocaleTimeString() +
+        " • Lat " + c.latitude.toFixed(6) +
+        " • Lng " + c.longitude.toFixed(6) +
+        " • Accuracy " + Math.round(c.accuracy || 0) + "m"
+      );
+    } else {
+      statusText("GPS save failed: " + (data.error || "Unknown error"));
+    }
+  } catch (err) {
+    statusText("GPS save failed. Check connection.");
+  }
+}
+
+function startTracking() {
+  if (!navigator.geolocation) {
+    statusText("This device/browser does not support GPS.");
+    return;
+  }
+
+  statusText("Requesting GPS permission...");
+
+  gpsWatchId = navigator.geolocation.watchPosition(
+    function(position) {
+      sendPoint(position);
+    },
+    function(error) {
+      statusText("GPS error: " + error.message);
+    },
+    {
+      enableHighAccuracy: true,
+      maximumAge: 15000,
+      timeout: 20000
+    }
+  );
+
+  setInterval(function() {
+    if (lastPosition) {
+      sendPoint(lastPosition, true);
+    }
+  }, 120000);
+
+  statusText("Tracking started. Waiting for first GPS point...");
+}
+
+function stopTracking() {
+  if (gpsWatchId !== null) {
+    navigator.geolocation.clearWatch(gpsWatchId);
+    gpsWatchId = null;
+  }
+
+  statusText("Tracking stopped.");
+}
+</script>
+
+{% endblock %}

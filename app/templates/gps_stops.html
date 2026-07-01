@@ -3,62 +3,41 @@
 
 <section class="section-head">
   <h1>GPS Stops</h1>
-  <p>Detected crew stops for {{ today }} based on GPS points.</p>
+  <p>Estimated stops and time spent for {{ selected_day }}.</p>
 </section>
 
 <section class="card">
-  <h2>Stop Rules</h2>
-  <p>A stop is counted when an employee stays within about 150 feet for at least 5 minutes.</p>
-  <p>Total raw GPS points today: {{ points|length }}</p>
-
-  <a class="btn primary" href="/gps/day">View Raw GPS Points</a>
-  <a class="btn secondary" href="/employee">Employee Portal</a>
-  <a class="btn secondary" href="/jarvis">Dashboard</a>
+  <form method="get" action="/gps/stops" class="inline-form">
+    <input type="date" name="date" value="{{ selected_day }}">
+    <button class="btn primary" type="submit">Load Stops</button>
+    <a class="btn" href="/gps">Tracker</a>
+    <a class="btn" href="/gps/day?date={{ selected_day }}">Raw Day Log</a>
+    <a class="btn" href="/jarvis">Mike Mode</a>
+  </form>
 </section>
 
 <section class="grid">
   {% for stop in stops %}
     <div class="card">
       <h2>{{ stop.employee_name }}</h2>
+      <p><strong>Arrived:</strong> {{ stop.start.strftime("%I:%M %p") }}</p>
+      <p><strong>Left:</strong> {{ stop.end.strftime("%I:%M %p") }}</p>
+      <p><strong>Time Spent:</strong> {{ stop.minutes }} minutes {% if stop.hours >= 1 %}({{ stop.hours }} hours){% endif %}</p>
+      <p><strong>GPS Points:</strong> {{ stop.point_count }}</p>
+      <p><strong>Location:</strong> {{ "%.6f"|format(stop.latitude) }}, {{ "%.6f"|format(stop.longitude) }}</p>
 
-      <p>
-        <strong>Arrived:</strong>
-        {{ stop.start_time.strftime("%I:%M %p") if stop.start_time else "" }}
-      </p>
-
-      <p>
-        <strong>Left:</strong>
-        {{ stop.end_time.strftime("%I:%M %p") if stop.end_time else "" }}
-      </p>
-
-      <p>
-        <strong>Time spent:</strong>
-        {{ stop.minutes }} minutes
-      </p>
-
-      <p>
-        <strong>Points recorded:</strong>
-        {{ stop.point_count }}
-      </p>
-
-      <p>
-        Lat: {{ "%.6f"|format(stop.latitude) }}<br>
-        Lng: {{ "%.6f"|format(stop.longitude) }}
-      </p>
-
-      <a
-        class="btn primary"
-        target="_blank"
-        href="https://www.google.com/maps?q={{ stop.latitude }},{{ stop.longitude }}"
-      >
-        Open Stop Map
+      <a class="btn primary" target="_blank" href="{{ stop.maps_url }}">
+        Open Stop on Map
       </a>
     </div>
   {% else %}
     <div class="card">
-      <h2>No stops detected yet</h2>
-      <p>No location stayed in one area long enough to count as a stop.</p>
-      <p>Make sure GPS tracking is running from the Employee Portal.</p>
+      <h2>No stops calculated yet</h2>
+      <p>
+        Either no GPS points exist for this day, or the recorded points did not stay in one place long enough
+        to count as a stop.
+      </p>
+      <a class="btn primary" href="/gps">Start Tracking</a>
     </div>
   {% endfor %}
 </section>

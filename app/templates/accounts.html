@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+{% block content %}
+
+<section class="section-head">
+  <h1>Login Manager</h1>
+  <p>Create and edit admin, office, crew, employee, and client-style logins.</p>
+</section>
+
+<section class="grid">
+  <a class="card" href="/jarvis">
+    <h2>Mike Mode</h2>
+    <p>Back to the cockpit.</p>
+  </a>
+
+  <a class="card" href="/crew">
+    <h2>Crew</h2>
+    <p>Open crew cards.</p>
+  </a>
+
+  <a class="card" href="/gps">
+    <h2>GPS Tracker</h2>
+    <p>Clock in and track GPS.</p>
+  </a>
+</section>
+
+<section class="card">
+  <h2>Create User Login</h2>
+
+  <form method="post" action="/accounts/users/add" class="inline-form">
+    <input name="name" placeholder="Display name">
+    <input name="username" placeholder="Username" required>
+    <input name="password" placeholder="Password" required>
+    <select name="role">
+      <option value="admin">admin</option>
+      <option value="office">office</option>
+      <option value="crew">crew</option>
+      <option value="employee">employee</option>
+      <option value="client">client</option>
+    </select>
+    <button class="btn primary" type="submit">Create Login</button>
+  </form>
+</section>
+
+<section class="card">
+  <h2>User Logins</h2>
+
+  {% if users %}
+    <div class="list">
+      {% for u in users %}
+        <form method="post" action="/accounts/users/{{ u.id }}/save" class="row-card">
+          <div class="inline-form">
+            <div>
+              <label>Name</label>
+              <input name="name" value="{{ u.name or '' }}">
+            </div>
+
+            <div>
+              <label>Username</label>
+              <input name="username" value="{{ u.username or '' }}">
+            </div>
+
+            <div>
+              <label>Password</label>
+              <input name="password" value="{{ u.password or '' }}">
+            </div>
+
+            <div>
+              <label>Role</label>
+              <select name="role">
+                {% for role in ["admin", "office", "crew", "employee", "client"] %}
+                  <option value="{{ role }}" {% if u.role == role %}selected{% endif %}>{{ role }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div>
+              <label>Active</label>
+              <select name="active">
+                <option value="1" {% if u.active is not defined or u.active %}selected{% endif %}>Active</option>
+                <option value="0" {% if u.active is defined and not u.active %}selected{% endif %}>Inactive</option>
+              </select>
+            </div>
+          </div>
+
+          <button class="btn primary" type="submit">Save Login</button>
+        </form>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="muted">No user logins found.</p>
+  {% endif %}
+</section>
+
+<section class="card">
+  <h2>Create Employee Login</h2>
+
+  <form method="post" action="/accounts/employees/add" class="inline-form">
+    <input name="name" placeholder="Employee name" required>
+    <input name="role" placeholder="Role" value="Crew">
+    <input name="phone" placeholder="Phone">
+    <input name="email" placeholder="Email">
+    <input name="username" placeholder="Username">
+    <input name="password" placeholder="Password">
+    <button class="btn primary" type="submit">Create Employee</button>
+  </form>
+</section>
+
+<section class="card">
+  <h2>Employee Logins</h2>
+
+  {% if employees %}
+    <div class="list">
+      {% for e in employees %}
+        <form method="post" action="/accounts/employees/{{ e.id }}/save" class="row-card">
+          <div class="inline-form">
+            <div>
+              <label>Name</label>
+              <input name="name" value="{{ e.name or '' }}">
+            </div>
+
+            <div>
+              <label>Role</label>
+              <input name="role" value="{{ e.role or '' }}">
+            </div>
+
+            <div>
+              <label>Phone</label>
+              <input name="phone" value="{{ e.phone or '' }}">
+            </div>
+
+            <div>
+              <label>Email</label>
+              <input name="email" value="{{ e.email or '' }}">
+            </div>
+
+            <div>
+              <label>Username</label>
+              <input name="username" value="{{ e.username or '' }}">
+            </div>
+
+            <div>
+              <label>Password</label>
+              <input name="password" value="{{ e.password or '' }}">
+            </div>
+
+            <div>
+              <label>Active</label>
+              <select name="active">
+                <option value="1" {% if e.active is not defined or e.active %}selected{% endif %}>Active</option>
+                <option value="0" {% if e.active is defined and not e.active %}selected{% endif %}>Inactive</option>
+              </select>
+            </div>
+          </div>
+
+          <button class="btn primary" type="submit">Save Employee Login</button>
+        </form>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="muted">No employees found.</p>
+  {% endif %}
+</section>
+
+{% endblock %}
