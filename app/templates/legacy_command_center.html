@@ -3,9 +3,7 @@
 
 <style>
   :root {
-    --hfo-bg: #070707;
-    --hfo-card: rgba(15, 15, 15, 0.9);
-    --hfo-card-soft: rgba(25, 25, 25, 0.78);
+    --hfo-card: rgba(12, 12, 12, 0.88);
     --hfo-border: rgba(189, 148, 74, 0.42);
     --hfo-gold: #b68a3a;
     --hfo-gold-bright: #d7ad5f;
@@ -13,15 +11,16 @@
     --hfo-muted: #b8ad9d;
     --hfo-danger: #c75b4a;
     --hfo-good: #6fa96f;
+    --hfo-warn: #d7ad5f;
   }
 
   body.hfo-body {
     min-height: 100vh !important;
     background:
-      linear-gradient(rgba(0, 0, 0, 0.76), rgba(0, 0, 0, 0.9)),
-      url("/static/Dedicated%20to%20Steve%20Meyerholtz.jpg") !important;
-    background-size: cover !important;
-    background-position: center center !important;
+      linear-gradient(rgba(0, 0, 0, 0.72), rgba(0, 0, 0, 0.88)),
+      url("/static/heinlin-wide-crest.png") !important;
+    background-size: min(980px, 92vw) auto !important;
+    background-position: top center !important;
     background-repeat: no-repeat !important;
     background-attachment: fixed !important;
   }
@@ -42,6 +41,7 @@
   .mike-mode-wrap {
     width: min(1480px, 100%);
     margin: 0 auto;
+    padding-top: 250px;
   }
 
   .legacy-strip {
@@ -49,50 +49,52 @@
     grid-template-columns: auto 1fr auto;
     gap: 18px;
     align-items: center;
-    padding: 14px 18px;
+    padding: 22px 24px;
     margin-bottom: 18px;
     border: 1px solid var(--hfo-border);
-    border-radius: 22px;
+    border-radius: 26px;
     background:
-      linear-gradient(135deg, rgba(20, 20, 20, 0.95), rgba(8, 8, 8, 0.9));
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+      linear-gradient(135deg, rgba(20, 20, 20, 0.88), rgba(8, 8, 8, 0.88));
+    box-shadow: 0 22px 65px rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(8px);
   }
 
   .legacy-crest {
-    width: 120px;
-    height: 76px;
+    width: 118px;
+    height: 78px;
     object-fit: contain;
     filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.9));
   }
 
   .legacy-title h1 {
     margin: 0;
-    font-size: clamp(1.75rem, 3.2vw, 3.25rem);
-    line-height: 1;
-    letter-spacing: 0.04em;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: clamp(3.4rem, 7vw, 6rem);
+    line-height: 0.9;
+    letter-spacing: 0.025em;
     text-transform: uppercase;
-    color: var(--hfo-text);
+    color: #fff;
   }
 
   .legacy-title p {
-    margin: 8px 0 0;
+    margin: 14px 0 0;
     color: var(--hfo-muted);
-    font-size: clamp(0.92rem, 1.4vw, 1.05rem);
+    font-size: clamp(1rem, 1.4vw, 1.25rem);
   }
 
   .legacy-badge {
     text-align: right;
     color: var(--hfo-gold-bright);
-    font-weight: 800;
-    letter-spacing: 0.08em;
+    font-weight: 900;
+    letter-spacing: 0.12em;
     text-transform: uppercase;
-    font-size: 0.95rem;
+    font-size: 1rem;
     white-space: nowrap;
   }
 
   .cockpit-grid {
     display: grid;
-    grid-template-columns: 1.35fr 0.9fr;
+    grid-template-columns: 1.2fr 0.85fr;
     gap: 18px;
   }
 
@@ -104,12 +106,13 @@
 
   .cockpit-card {
     border: 1px solid var(--hfo-border);
-    border-radius: 22px;
+    border-radius: 24px;
     background:
-      radial-gradient(circle at top left, rgba(182, 138, 58, 0.12), transparent 36%),
-      linear-gradient(145deg, var(--hfo-card), rgba(5, 5, 5, 0.92));
-    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.38);
+      radial-gradient(circle at top left, rgba(182, 138, 58, 0.12), transparent 34%),
+      linear-gradient(145deg, var(--hfo-card), rgba(4, 4, 4, 0.92));
+    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.42);
     overflow: hidden;
+    backdrop-filter: blur(7px);
   }
 
   .card-head {
@@ -117,13 +120,14 @@
     justify-content: space-between;
     gap: 14px;
     align-items: center;
-    padding: 16px 18px 10px;
-    border-bottom: 1px solid rgba(189, 148, 74, 0.16);
+    padding: 17px 20px 11px;
+    border-bottom: 1px solid rgba(189, 148, 74, 0.18);
   }
 
   .card-head h2 {
     margin: 0;
-    font-size: 1.05rem;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 1.25rem;
     letter-spacing: 0.08em;
     text-transform: uppercase;
     color: var(--hfo-gold-bright);
@@ -135,7 +139,7 @@
   }
 
   .card-body {
-    padding: 18px;
+    padding: 18px 20px 20px;
   }
 
   .jarvis-callout {
@@ -146,41 +150,39 @@
   }
 
   .jarvis-callout h2 {
-    margin: 0 0 8px;
-    font-size: clamp(1.8rem, 3vw, 3rem);
-    line-height: 1.02;
+    margin: 0 0 10px;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: clamp(2.6rem, 4vw, 4.2rem);
+    line-height: 0.95;
+    color: #fff;
   }
 
   .jarvis-callout p {
     max-width: 780px;
     margin: 0;
     color: var(--hfo-muted);
-    font-size: 1.04rem;
-    line-height: 1.5;
+    font-size: 1.05rem;
+    line-height: 1.55;
   }
 
   .talk-button {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-width: 210px;
-    min-height: 62px;
-    padding: 15px 22px;
+    min-width: 260px;
+    min-height: 78px;
+    padding: 18px 24px;
     border-radius: 18px;
-    border: 1px solid rgba(215, 173, 95, 0.65);
+    border: 1px solid rgba(215, 173, 95, 0.68);
     background:
-      linear-gradient(135deg, rgba(215, 173, 95, 0.95), rgba(126, 88, 31, 0.95));
-    color: #120d06;
-    font-size: 1.05rem;
-    font-weight: 900;
+      linear-gradient(135deg, rgba(215, 173, 95, 0.96), rgba(126, 88, 31, 0.96));
+    color: #170f05;
+    font-size: 1.15rem;
+    font-weight: 950;
     letter-spacing: 0.05em;
     text-transform: uppercase;
     text-decoration: none;
-  }
-
-  .talk-button:hover {
-    transform: translateY(-1px);
-    filter: brightness(1.05);
+    box-shadow: 0 14px 34px rgba(0, 0, 0, 0.45);
   }
 
   .quick-command-row {
@@ -192,7 +194,7 @@
 
   .quick-command {
     display: block;
-    min-height: 86px;
+    min-height: 82px;
     padding: 14px;
     border-radius: 18px;
     border: 1px solid rgba(189, 148, 74, 0.22);
@@ -214,9 +216,47 @@
     line-height: 1.35;
   }
 
-  .mission-list {
+  .stat-strip {
     display: grid;
-    gap: 12px;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 11px;
+    margin-bottom: 18px;
+  }
+
+  .stat-box {
+    border-radius: 18px;
+    border: 1px solid rgba(189, 148, 74, 0.22);
+    background: rgba(255,255,255,0.045);
+    padding: 14px;
+  }
+
+  .stat-box strong {
+    display: block;
+    color: #fff;
+    font-size: 1.85rem;
+    line-height: 1;
+  }
+
+  .stat-box span {
+    display: block;
+    margin-top: 6px;
+    color: var(--hfo-muted);
+    font-size: 0.82rem;
+  }
+
+  .mission-list,
+  .reminder-list,
+  .status-grid {
+    display: grid;
+    gap: 11px;
+  }
+
+  .mission-item,
+  .status-row,
+  .reminder {
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.045);
+    border: 1px solid rgba(255,255,255,0.075);
   }
 
   .mission-item {
@@ -225,9 +265,6 @@
     gap: 12px;
     align-items: center;
     padding: 13px 14px;
-    border-radius: 16px;
-    background: rgba(255, 255, 255, 0.045);
-    border: 1px solid rgba(255, 255, 255, 0.075);
   }
 
   .mission-num {
@@ -238,7 +275,7 @@
     place-items: center;
     color: #111;
     background: var(--hfo-gold-bright);
-    font-weight: 900;
+    font-weight: 950;
   }
 
   .mission-text strong {
@@ -252,12 +289,21 @@
     font-size: 0.86rem;
   }
 
-  .mission-tag {
+  .mission-tag,
+  .status-pill {
     color: var(--hfo-muted);
-    font-size: 0.8rem;
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    font-size: 0.78rem;
+    border: 1px solid rgba(255,255,255,0.12);
     border-radius: 999px;
     padding: 5px 9px;
+    white-space: nowrap;
+  }
+
+  .mission-tag.high,
+  .status-pill.high {
+    color: #ffd6c8;
+    border-color: rgba(199, 91, 74, 0.65);
+    background: rgba(199, 91, 74, 0.12);
   }
 
   .find-anything {
@@ -268,7 +314,7 @@
 
   .find-anything input {
     width: 100%;
-    min-height: 52px;
+    min-height: 54px;
     padding: 0 16px;
     border-radius: 16px;
     border: 1px solid rgba(189, 148, 74, 0.28);
@@ -283,20 +329,14 @@
   }
 
   .find-anything button {
-    min-height: 52px;
-    padding: 0 18px;
+    min-height: 54px;
+    padding: 0 22px;
     border-radius: 16px;
     border: 1px solid rgba(215, 173, 95, 0.55);
     background: rgba(182, 138, 58, 0.18);
     color: var(--hfo-gold-bright);
-    font-weight: 800;
+    font-weight: 900;
     cursor: pointer;
-  }
-
-  .status-grid,
-  .reminder-list {
-    display: grid;
-    gap: 10px;
   }
 
   .status-row {
@@ -305,8 +345,6 @@
     gap: 10px;
     align-items: center;
     padding: 12px;
-    border-radius: 15px;
-    background: rgba(255, 255, 255, 0.045);
   }
 
   .dot {
@@ -316,17 +354,9 @@
     background: var(--hfo-muted);
   }
 
-  .dot.good {
-    background: var(--hfo-good);
-  }
-
-  .dot.warn {
-    background: var(--hfo-gold-bright);
-  }
-
-  .dot.danger {
-    background: var(--hfo-danger);
-  }
+  .dot.good { background: var(--hfo-good); }
+  .dot.warn { background: var(--hfo-warn); }
+  .dot.danger { background: var(--hfo-danger); }
 
   .status-row strong {
     display: block;
@@ -338,19 +368,13 @@
     font-size: 0.82rem;
   }
 
-  .status-pill {
-    font-size: 0.78rem;
-    color: var(--hfo-muted);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 999px;
-    padding: 5px 8px;
-  }
-
   .reminder {
     padding: 12px;
     border-left: 4px solid var(--hfo-gold);
-    border-radius: 12px;
-    background: rgba(255, 255, 255, 0.045);
+  }
+
+  .reminder.high {
+    border-left-color: var(--hfo-danger);
   }
 
   .reminder strong {
@@ -375,8 +399,8 @@
     padding: 13px;
     min-height: 74px;
     border-radius: 16px;
-    background: rgba(255, 255, 255, 0.045);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255,255,255,0.045);
+    border: 1px solid rgba(255,255,255,0.08);
     color: var(--hfo-text);
     text-decoration: none;
   }
@@ -392,12 +416,23 @@
     font-size: 0.83rem;
   }
 
+  .empty-note {
+    margin: 0;
+    color: var(--hfo-muted);
+    line-height: 1.45;
+  }
+
   @media (max-width: 1050px) {
+    .mike-mode-wrap {
+      padding-top: 170px;
+    }
+
     .cockpit-grid {
       grid-template-columns: 1fr;
     }
 
-    .quick-command-row {
+    .quick-command-row,
+    .stat-strip {
       grid-template-columns: repeat(2, 1fr);
     }
 
@@ -415,8 +450,16 @@
       padding: 14px;
     }
 
+    .mike-mode-wrap {
+      padding-top: 130px;
+    }
+
     .legacy-strip {
       grid-template-columns: auto 1fr;
+    }
+
+    .legacy-title h1 {
+      font-size: clamp(2.7rem, 12vw, 4.2rem);
     }
 
     .legacy-badge {
@@ -426,12 +469,13 @@
     }
 
     .legacy-crest {
-      width: 96px;
-      height: 60px;
+      width: 84px;
+      height: 58px;
     }
 
     .quick-command-row,
-    .office-links {
+    .office-links,
+    .stat-strip {
       grid-template-columns: 1fr;
     }
 
@@ -466,6 +510,28 @@
       </div>
     </section>
 
+    <div class="stat-strip">
+      <div class="stat-box">
+        <strong>{{ mike_mode_stats.today_jobs if mike_mode_stats else 0 }}</strong>
+        <span>Jobs today</span>
+      </div>
+
+      <div class="stat-box">
+        <strong>{{ mike_mode_stats.overdue_jobs if mike_mode_stats else 0 }}</strong>
+        <span>Overdue jobs</span>
+      </div>
+
+      <div class="stat-box">
+        <strong>{{ mike_mode_stats.client_requests if mike_mode_stats else 0 }}</strong>
+        <span>Client requests</span>
+      </div>
+
+      <div class="stat-box">
+        <strong>{{ mike_mode_stats.clocked_in if mike_mode_stats else 0 }}</strong>
+        <span>Crew clocked in</span>
+      </div>
+    </div>
+
     <div class="cockpit-grid">
 
       <main class="main-stack">
@@ -492,7 +558,7 @@
                 <span>Job notes, materials, problems, and proof of work.</span>
               </a>
 
-              <a class="quick-command" href="/schedule">
+              <a class="quick-command" href="/schedule/day">
                 <strong>Schedule</strong>
                 <span>Today, this week, and what has to happen next.</span>
               </a>
@@ -519,41 +585,36 @@
           <div class="card-body">
             <div class="mission-list">
 
-              <div class="mission-item">
-                <div class="mission-num">1</div>
-                <div class="mission-text">
-                  <strong>Open the day with Jarvis</strong>
-                  <span>Dump everything out of your head before the work starts.</span>
+              {% for job in today_jobs %}
+                <div class="mission-item">
+                  <div class="mission-num">{{ loop.index }}</div>
+                  <div class="mission-text">
+                    <strong>{{ job.client or job.property or job.address or "Job" }}</strong>
+                    <span>{{ job.job_type or "Scheduled work" }}{% if job.address %} • {{ job.address }}{% endif %}</span>
+                  </div>
+                  <a class="mission-tag" href="/jobs/{{ job.id }}">Open</a>
                 </div>
-                <div class="mission-tag">Start here</div>
-              </div>
+              {% else %}
+                <div class="mission-item">
+                  <div class="mission-num">✓</div>
+                  <div class="mission-text">
+                    <strong>No scheduled jobs found for today.</strong>
+                    <span>Use Jarvis, Schedule, or Jobs to load the day.</span>
+                  </div>
+                  <a class="mission-tag" href="/schedule/day">Schedule</a>
+                </div>
+              {% endfor %}
 
-              <div class="mission-item">
-                <div class="mission-num">2</div>
-                <div class="mission-text">
-                  <strong>Check schedule and crew</strong>
-                  <span>Know who is where, what is late, and what needs handled.</span>
+              {% for job in overdue_jobs %}
+                <div class="mission-item">
+                  <div class="mission-num">!</div>
+                  <div class="mission-text">
+                    <strong>Overdue: {{ job.client or job.property or job.address or "Job" }}</strong>
+                    <span>{{ job.job_type or "Work" }}{% if job.date or job.scheduled_start %} • {{ job.date or job.scheduled_start }}{% endif %}</span>
+                  </div>
+                  <a class="mission-tag high" href="/jobs/{{ job.id }}">Handle</a>
                 </div>
-                <div class="mission-tag">Control</div>
-              </div>
-
-              <div class="mission-item">
-                <div class="mission-num">3</div>
-                <div class="mission-text">
-                  <strong>Capture proof as work happens</strong>
-                  <span>Photos, notes, changes, extras, materials, and client decisions.</span>
-                </div>
-                <div class="mission-tag">Protect it</div>
-              </div>
-
-              <div class="mission-item">
-                <div class="mission-num">4</div>
-                <div class="mission-text">
-                  <strong>Close the loop before quitting time</strong>
-                  <span>Billing, follow-ups, tomorrow’s prep, and anything you promised somebody.</span>
-                </div>
-                <div class="mission-tag">Finish</div>
-              </div>
+              {% endfor %}
 
             </div>
           </div>
@@ -590,20 +651,29 @@
 
           <div class="card-body">
             <div class="reminder-list">
-              <div class="reminder">
-                <strong>Tell Jarvis before you trust your memory.</strong>
-                <span>Anything important gets spoken, typed, logged, or scheduled.</span>
-              </div>
 
-              <div class="reminder">
-                <strong>Photos before cover-up.</strong>
-                <span>Plumbing, steel, grades, equipment, cracks, damage, and change orders.</span>
-              </div>
+              {% for item in high_priority %}
+                <a class="reminder high" href="/invisible-office">
+                  <strong>{{ item.title or item.category or "High Priority" }}</strong>
+                  <span>{{ item.body or item.client or item.property or "Open high-priority item." }}</span>
+                </a>
+              {% else %}
+                <div class="reminder">
+                  <strong>Tell Jarvis before you trust your memory.</strong>
+                  <span>Anything important gets spoken, typed, logged, or scheduled.</span>
+                </div>
 
-              <div class="reminder">
-                <strong>Extras are not free.</strong>
-                <span>If the job changed, log it before the day buries it.</span>
-              </div>
+                <div class="reminder">
+                  <strong>Photos before cover-up.</strong>
+                  <span>Plumbing, steel, grades, equipment, cracks, damage, and change orders.</span>
+                </div>
+
+                <div class="reminder">
+                  <strong>Extras are not free.</strong>
+                  <span>If the job changed, log it before the day buries it.</span>
+                </div>
+              {% endfor %}
+
             </div>
           </div>
         </section>
@@ -616,32 +686,27 @@
 
           <div class="card-body">
             <div class="status-grid">
-              <div class="status-row">
-                <div class="dot warn"></div>
-                <div>
-                  <strong>Clock-ins</strong>
-                  <span>Check who has started the day.</span>
-                </div>
-                <div class="status-pill">Review</div>
-              </div>
 
-              <div class="status-row">
-                <div class="dot good"></div>
-                <div>
-                  <strong>Today’s jobs</strong>
-                  <span>Match people, places, and priorities.</span>
+              {% for emp in clocked_in %}
+                <div class="status-row">
+                  <div class="dot good"></div>
+                  <div>
+                    <strong>{{ emp.name or emp.username or "Crew" }}</strong>
+                    <span>{% if emp.clocked_in_at %}Since {{ emp.clocked_in_at }}{% else %}Clocked in{% endif %}</span>
+                  </div>
+                  <a class="status-pill" href="/map">Map</a>
                 </div>
-                <div class="status-pill">Open</div>
-              </div>
+              {% else %}
+                <div class="status-row">
+                  <div class="dot warn"></div>
+                  <div>
+                    <strong>No crew clocked in yet</strong>
+                    <span>Check employee portal or time clock when the day starts.</span>
+                  </div>
+                  <a class="status-pill" href="/crew">Crew</a>
+                </div>
+              {% endfor %}
 
-              <div class="status-row">
-                <div class="dot"></div>
-                <div>
-                  <strong>Field notes</strong>
-                  <span>Catch job details while they are fresh.</span>
-                </div>
-                <div class="status-pill">Log</div>
-              </div>
             </div>
           </div>
         </section>
@@ -654,15 +719,19 @@
 
           <div class="card-body">
             <div class="reminder-list">
-              <div class="reminder">
-                <strong>New requests</strong>
-                <span>Check calls, texts, emails, and portal requests before the day gets loud.</span>
-              </div>
 
-              <div class="reminder">
-                <strong>Waiting on customer</strong>
-                <span>Approvals, deposits, color choices, access, pets, gates, water, and power.</span>
-              </div>
+              {% for item in client_requests %}
+                <a class="reminder {% if item.priority and item.priority|lower == 'high' %}high{% endif %}" href="/invisible-office">
+                  <strong>{{ item.title or item.client or "Client follow-up" }}</strong>
+                  <span>{{ item.body or item.property or "Open client request." }}</span>
+                </a>
+              {% else %}
+                <div class="reminder">
+                  <strong>No open client follow-ups found.</strong>
+                  <span>Anything you tell Jarvis that sounds like a call, text, email, or follow-up will show here.</span>
+                </div>
+              {% endfor %}
+
             </div>
           </div>
         </section>
@@ -674,7 +743,23 @@
           </div>
 
           <div class="card-body">
-            <div class="office-links">
+            <div class="reminder-list">
+
+              {% for item in office_reminders %}
+                <a class="reminder {% if item.priority and item.priority|lower == 'high' %}high{% endif %}" href="/invisible-office">
+                  <strong>{{ item.category or "Reminder" }}{% if item.title %}: {{ item.title }}{% endif %}</strong>
+                  <span>{{ item.body or item.client or item.property or "Open office item." }}</span>
+                </a>
+              {% else %}
+                <div class="reminder">
+                  <strong>No open office reminders found.</strong>
+                  <span>Billing notes, material needs, schedule tasks, problems, and equipment notes will show here.</span>
+                </div>
+              {% endfor %}
+
+            </div>
+
+            <div class="office-links" style="margin-top:14px;">
               <a class="office-link" href="/clients">
                 <strong>Clients</strong>
                 <span>People and contact info.</span>
@@ -690,19 +775,9 @@
                 <span>Open work and history.</span>
               </a>
 
-              <a class="office-link" href="/estimates">
-                <strong>Estimates</strong>
-                <span>Get the price out.</span>
-              </a>
-
-              <a class="office-link" href="/weather">
-                <strong>Weather</strong>
-                <span>Know what can pour.</span>
-              </a>
-
-              <a class="office-link" href="/map">
-                <strong>Map</strong>
-                <span>See the day by location.</span>
+              <a class="office-link" href="/invisible-office">
+                <strong>Invisible Office</strong>
+                <span>Jarvis-filed reminders.</span>
               </a>
             </div>
           </div>
