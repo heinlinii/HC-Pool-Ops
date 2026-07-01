@@ -62,7 +62,7 @@ app.add_middleware(SessionMiddleware, secret_key="heinlin-field-ops-local-secret
 app.mount("/static", StaticFiles(directory=str(ROOT / "app" / "static")), name="static")
 templates = Jinja2Templates(directory=str(ROOT / "app" / "templates"))
 app.include_router(pool_monitoring.router)
-app.include_router(timeclock.router)
+# app.include_router(timeclock.router)
 
 DEFAULT_THEME = {
     "title": "HEINLIN FIELD OPS",
