@@ -1,19 +1,52 @@
 {% extends "base.html" %}
 {% block content %}
 
+<style>
+  .jarvis-big-box {
+    min-height: 230px;
+    font-size: 1.15rem;
+    line-height: 1.45;
+  }
+
+  .jarvis-help-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+  }
+
+  .jarvis-example {
+    border: 1px solid rgba(255,255,255,.12);
+    border-radius: 18px;
+    padding: 14px;
+    background: rgba(255,255,255,.045);
+  }
+
+  .jarvis-example strong {
+    display: block;
+    margin-bottom: 5px;
+  }
+</style>
+
 <section class="section-head">
   <h1>Talk to Jarvis</h1>
-  <p>Tell Jarvis what needs handled. Jarvis will organize it first, then you approve it before it gets filed.</p>
+  <p>Say where you want to go, what you need remembered, or what needs handled. Jarvis will either take you there or file it.</p>
 </section>
 
 <section class="card">
-  <h2>Send It to Jarvis</h2>
+  <h2>What do you need?</h2>
 
-  <form method="post" action="/assistant-live/preview" class="stack">
+  <form method="post" action="/jarvis-command" class="stack">
     <textarea
-      name="message"
-      placeholder="Tell Jarvis what needs handled..."
-      style="min-height:160px;width:100%;"
+      class="jarvis-big-box"
+      name="command"
+      placeholder="Examples:
+Take me to GPS stops
+Show me today's schedule
+Open photos
+Remind me to call Smith tomorrow
+Randy finished the plumbing at the Johnson job
+Need to bill McCord for heater repair
+Look at the liner leak on Oak Street"
       autofocus
       required
     ></textarea>
@@ -30,19 +63,55 @@
       </select>
     </div>
 
-    <button class="btn primary" type="submit">Send It</button>
+    <button class="btn primary" type="submit">Tell Jarvis</button>
   </form>
 </section>
 
+<section class="card">
+  <h2>You can say things like this</h2>
+
+  <div class="jarvis-help-grid">
+    <div class="jarvis-example">
+      <strong>Go somewhere</strong>
+      <p>“Take me to GPS stops.”</p>
+      <p>“Open billing.”</p>
+      <p>“Show me today’s schedule.”</p>
+    </div>
+
+    <div class="jarvis-example">
+      <strong>Save a reminder</strong>
+      <p>“Remind me to call Smith tomorrow.”</p>
+      <p>“Need to order check valves.”</p>
+    </div>
+
+    <div class="jarvis-example">
+      <strong>Log work done</strong>
+      <p>“Randy finished the plumbing at Johnson.”</p>
+      <p>“We poured the shallow end today.”</p>
+    </div>
+
+    <div class="jarvis-example">
+      <strong>Office crap</strong>
+      <p>“Bill McCord for the heater repair.”</p>
+      <p>“Need to look at the Oak Street liner leak.”</p>
+    </div>
+  </div>
+</section>
+
 <section class="grid">
+  <a class="card" href="/jarvis-destinations">
+    <h2>What Can I Ask For?</h2>
+    <p>See the pages Jarvis knows how to open.</p>
+  </a>
+
   <a class="card" href="/invisible-office">
     <h2>Invisible Office</h2>
     <p>View the notes, tasks, follow-ups, and reminders Jarvis has filed.</p>
   </a>
 
   <a class="card" href="/jarvis">
-    <h2>Dashboard</h2>
-    <p>Return to Mike Mode.</p>
+    <h2>Mike Mode</h2>
+    <p>Return to the cockpit.</p>
   </a>
 </section>
 

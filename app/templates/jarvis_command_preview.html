@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block content %}
+
+<section class="section-head">
+  <h1>Approve Jarvis Filing</h1>
+  <p>Jarvis thinks this should be filed. Check it before it goes into Invisible Office.</p>
+</section>
+
+<section class="card">
+  <h2>Preview</h2>
+
+  <form method="post" action="/jarvis-command/save" class="stack">
+    <label>Category</label>
+    <select name="category">
+      {% set categories = [
+        "General Note",
+        "Client Follow-Up",
+        "Material Needed",
+        "Billing Note",
+        "Schedule Task",
+        "Problem Found",
+        "Equipment Note"
+      ] %}
+      {% for cat in categories %}
+        <option value="{{ cat }}" {% if preview.category == cat %}selected{% endif %}>{{ cat }}</option>
+      {% endfor %}
+    </select>
+
+    <label>Priority</label>
+    <select name="priority">
+      {% set priorities = ["Normal", "High", "Urgent"] %}
+      {% for p in priorities %}
+        <option value="{{ p }}" {% if preview.priority == p %}selected{% endif %}>{{ p }}</option>
+      {% endfor %}
+    </select>
+
+    <label>Title</label>
+    <input name="title" value="{{ preview.title or '' }}" required>
+
+    <label>Body</label>
+    <textarea name="body" rows="8" required>{{ preview.body or raw_message }}</textarea>
+
+    <div class="inline-form">
+      <div>
+        <label>Client</label>
+        <input name="client" value="{{ client or '' }}" placeholder="Client">
+      </div>
+
+      <div>
+        <label>Property / Job</label>
+        <input name="property" value="{{ property or '' }}" placeholder="Property / job">
+      </div>
+
+      <div>
+        <label>Due Date</label>
+        <input name="due_date" type="date" value="{{ due_date or '' }}">
+      </div>
+    </div>
+
+    <div class="inline-form" style="margin-top:16px;">
+      <button class="btn primary" type="submit">Approve and File It</button>
+      <a class="btn" href="/assistant-interview-live">Change It</a>
+      <a class="btn" href="/jarvis">Cancel</a>
+    </div>
+  </form>
+</section>
+
+<section class="card">
+  <h2>Original Message</h2>
+  <p style="white-space:pre-wrap;">{{ raw_message }}</p>
+</section>
+
+{% endblock %}
