@@ -1,0 +1,211 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+  .office-hero {
+    display:grid;
+    grid-template-columns:1.2fr .8fr;
+    gap:18px;
+    align-items:stretch;
+    margin-bottom:18px;
+  }
+
+  .office-title {
+    margin:0;
+    font-size:clamp(3.4rem, 8vw, 7.6rem);
+    line-height:.84;
+    letter-spacing:-.06em;
+    color:#d6b36a;
+    text-transform:uppercase;
+  }
+
+  .office-sub {
+    color:rgba(255,255,255,.76);
+    font-size:1.1rem;
+    max-width:760px;
+  }
+
+  .office-metrics {
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:12px;
+  }
+
+  .office-metric {
+    border:1px solid rgba(214,179,106,.3);
+    border-radius:20px;
+    padding:16px;
+    background:rgba(255,255,255,.06);
+  }
+
+  .office-metric strong {
+    display:block;
+    color:#fff;
+    font-size:2rem;
+  }
+
+  .office-metric span {
+    color:rgba(255,255,255,.58);
+    font-size:.78rem;
+    text-transform:uppercase;
+    letter-spacing:.12em;
+  }
+
+  .office-section {
+    margin:28px 0 10px;
+    color:#d6b36a;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+  }
+
+  .office-table {
+    width:100%;
+    border-collapse:collapse;
+  }
+
+  .office-table th,
+  .office-table td {
+    padding:10px;
+    border-bottom:1px solid rgba(255,255,255,.1);
+    text-align:left;
+    vertical-align:top;
+  }
+
+  .office-table th {
+    color:rgba(255,255,255,.58);
+    font-size:12px;
+    text-transform:uppercase;
+    letter-spacing:.12em;
+  }
+
+  .office-actions {
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    margin-top:14px;
+  }
+
+  @media(max-width:900px) {
+    .office-hero {
+      grid-template-columns:1fr;
+    }
+  }
+</style>
+
+<section class="office-hero">
+  <div class="card">
+    <h1 class="office-title">Office</h1>
+    <p class="office-sub">
+      Accounting, billing, invoices, estimates, job costing, QuickBooks, and receivables.
+      Office users should live here instead of seeing the whole field system.
+    </p>
+
+    <div class="office-actions">
+      <a class="btn primary" href="/billing">Billing</a>
+      <a class="btn secondary" href="/quickbooks">QuickBooks</a>
+      <a class="btn secondary" href="/estimates">Estimates</a>
+      <a class="btn secondary" href="/job-costing">Job Costing</a>
+      <a class="btn secondary" href="/quickbooks/invoices/import">Import Invoices</a>
+    </div>
+  </div>
+
+  <div class="office-metrics">
+    <div class="office-metric">
+      <strong>${{ "%.2f"|format(total_open or 0) }}</strong>
+      <span>Open Balance</span>
+    </div>
+    <div class="office-metric">
+      <strong>${{ "%.2f"|format(total_paid or 0) }}</strong>
+      <span>Paid Total</span>
+    </div>
+    <div class="office-metric">
+      <strong>{{ open_invoices|length }}</strong>
+      <span>Open Invoices</span>
+    </div>
+    <div class="office-metric">
+      <strong>{{ draft_estimates|length }}</strong>
+      <span>Draft Estimates</span>
+    </div>
+  </div>
+</section>
+
+<h2 class="office-section">Open Invoices</h2>
+<section class="card">
+  <table class="office-table">
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Client</th>
+        <th>Description</th>
+        <th>Status</th>
+        <th>Amount</th>
+        <th>Open</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for inv in open_invoices[:30] %}
+        <tr>
+          <td>{{ inv.date or "" }}</td>
+          <td>{{ inv.client or "" }}</td>
+          <td>{{ inv.description or "" }}</td>
+          <td>{{ inv.status or "" }}</td>
+          <td>${{ "%.2f"|format(inv.amount or 0) }}</td>
+          <td>${{ "%.2f"|format(inv.open_balance if inv.open_balance is not none else inv.amount or 0) }}</td>
+        </tr>
+      {% else %}
+        <tr><td colspan="6">No open invoices found.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<h2 class="office-section">Draft / Pending Estimates</h2>
+<section class="grid">
+  {% for e in draft_estimates[:20] %}
+    <a class="card" href="/estimates">
+      <h2>{{ e.title or "Estimate" }}</h2>
+      <p>{{ e.client or "" }}{% if e.property %} • {{ e.property }}{% endif %}</p>
+      <p>Status: {{ e.status or "Draft" }}</p>
+      <p>${{ "%.2f"|format(e.amount or 0) }}</p>
+    </a>
+  {% else %}
+    <div class="card">
+      <h2>No pending estimates</h2>
+      <p>Draft and pending estimates will show here.</p>
+    </div>
+  {% endfor %}
+</section>
+
+<h2 class="office-section">Recent Job Costing</h2>
+<section class="card">
+  <table class="office-table">
+    <thead>
+      <tr>
+        <th>Job</th>
+        <th>Client</th>
+        <th>Labor</th>
+        <th>Materials</th>
+        <th>Subs</th>
+        <th>Other</th>
+        <th>Invoice</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for c in job_costs[:30] %}
+        <tr>
+          <td>{{ c.job_id or "" }}</td>
+          <td>{{ c.client or "" }}</td>
+          <td>${{ "%.2f"|format(c.labor or 0) }}</td>
+          <td>${{ "%.2f"|format(c.materials or 0) }}</td>
+          <td>${{ "%.2f"|format(c.subs or 0) }}</td>
+          <td>${{ "%.2f"|format((c.equipment or 0) + (c.fuel or 0) + (c.other or 0)) }}</td>
+          <td>${{ "%.2f"|format(c.invoice_amount or 0) }}</td>
+        </tr>
+      {% else %}
+        <tr><td colspan="7">No job costing rows found.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+{% endblock %}

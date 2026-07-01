@@ -3244,6 +3244,8 @@ app.include_router(property_brain.router)
 from app.routes import client_portal_v2
 app.include_router(client_portal_v2.router)
 
+from app.routes import office
+app.include_router(office.router)
 
 @app.post("/invisible-office/add")
 def invisible_office_add(
