@@ -894,8 +894,8 @@ WHERE lower(username)=lower(?)
         if role == "office":
             return RedirectResponse("/billing", status_code=303)
 
-        if role == "crew":
-            return RedirectResponse("/employee", status_code=303)
+        if role in ("crew", "employee", "worker"):
+            return RedirectResponse("/crew-home", status_code=303)
 
         if role == "client":
             return RedirectResponse("/client-portal", status_code=303)
@@ -3312,6 +3312,8 @@ app.include_router(jarvis_command.router)
 from app.routes import jarvis_brain
 app.include_router(jarvis_brain.router)
 
+from app.routes import crew_home
+app.include_router(crew_home.router)
 
 @app.post("/invisible-office/add")
 def invisible_office_add(

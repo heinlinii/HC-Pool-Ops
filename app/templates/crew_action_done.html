@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block content %}
+
+<section class="section-head">
+  <h1>{{ title }}</h1>
+  <p>{{ message }}</p>
+</section>
+
+<section class="card">
+  <h2>Next Move</h2>
+
+  <div class="grid">
+    <a class="card" href="{{ primary_href }}">
+      <h2>{{ primary_label }}</h2>
+      <p>Go here next.</p>
+    </a>
+
+    <a class="card" href="{{ secondary_href }}">
+      <h2>{{ secondary_label }}</h2>
+      <p>Return to crew home.</p>
+    </a>
+  </div>
+</section>
+
+{% endblock %}

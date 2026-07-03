@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+  .crew-shell {
+    max-width: 980px;
+    margin: 0 auto;
+  }
+
+  .crew-hero {
+    padding: 26px;
+    border-radius: 26px;
+    background:
+      radial-gradient(circle at top left, rgba(190, 145, 65, .22), transparent 34%),
+      rgba(0, 0, 0, .44);
+    border: 1px solid rgba(255,255,255,.12);
+    box-shadow: 0 18px 55px rgba(0,0,0,.35);
+  }
+
+  .crew-hero h1 {
+    font-size: clamp(2rem, 5vw, 3.4rem);
+    margin-bottom: 8px;
+  }
+
+  .crew-command {
+    min-height: 190px;
+    font-size: 1.1rem;
+    line-height: 1.45;
+    width: 100%;
+  }
+
+  .crew-status {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 14px;
+  }
+
+  .crew-pill {
+    padding: 10px 14px;
+    border-radius: 999px;
+    background: rgba(255,255,255,.06);
+    border: 1px solid rgba(255,255,255,.1);
+  }
+
+  .crew-job {
+    padding: 14px;
+    border-radius: 18px;
+    background: rgba(255,255,255,.045);
+    border: 1px solid rgba(255,255,255,.09);
+    margin-top: 10px;
+  }
+
+  .crew-quick-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 10px;
+  }
+</style>
+
+<div class="crew-shell">
+
+  <section class="crew-hero">
+    <h1>Morning {{ employee_name }}.</h1>
+
+    <p>
+      Tell Jarvis what you need from the field. Clock in, start GPS, open today’s jobs,
+      upload photos, report problems, request materials, or say what got done.
+    </p>
+
+    <div class="crew-status">
+      {% if clocked_in %}
+        <span class="crew-pill">Clocked In{% if clocked_in_at %} since {{ clocked_in_at }}{% endif %}</span>
+      {% else %}
+        <span class="crew-pill">Not Clocked In</span>
+      {% endif %}
+    </div>
+  </section>
+
+  <section class="card" style="margin-top:18px;">
+    <h2>Talk to Jarvis</h2>
+
+    <form method="post" action="/crew-home/ask" class="stack">
+      <textarea
+        class="crew-command"
+        name="command"
+        placeholder="Say it plain:
+Clock me in
+Start tracking me
+Show my jobs
+Open map
+Upload photos
+Need two check valves
+Problem at Smith, liner leaking near steps
+Finished plumbing at Johnson
+Clock me out"
+        autofocus
+        required
+      ></textarea>
+
+      <div class="inline-form">
+        <input name="client" placeholder="Client, if known">
+        <input name="property" placeholder="Property / job, if known">
+        <input name="due_date" type="date">
+        <select name="priority">
+          <option value="">Priority</option>
+          <option value="Normal">Normal</option>
+          <option value="High">High</option>
+          <option value="Urgent">Urgent</option>
+        </select>
+      </div>
+
+      <button class="btn primary" type="submit">Tell Jarvis</button>
+    </form>
+  </section>
+
+  <section class="card">
+    <h2>Quick Field Actions</h2>
+
+    <div class="crew-quick-grid">
+      <form method="post" action="/crew-home/ask">
+        <input type="hidden" name="command" value="Clock me in">
+        <button class="btn primary" type="submit">Clock In</button>
+      </form>
+
+      <form method="post" action="/crew-home/ask">
+        <input type="hidden" name="command" value="Start tracking me">
+        <button class="btn primary" type="submit">Start GPS</button>
+      </form>
+
+      <a class="btn" href="/photos">Upload Photos</a>
+      <a class="btn" href="/map">Map</a>
+      <a class="btn" href="/weather">Weather</a>
+      <a class="btn" href="/gps/stops">GPS Stops</a>
+
+      <form method="post" action="/crew-home/ask">
+        <input type="hidden" name="command" value="Clock me out">
+        <button class="btn danger" type="submit">Clock Out</button>
+      </form>
+    </div>
+  </section>
+
+  <section class="card" id="today-jobs">
+    <h2>Today’s Jobs</h2>
+
+    {% if jobs %}
+      {% for job in jobs %}
+        <div class="crew-job">
+          <h3>{{ job.title or job.name or job.job_name or job.client_name or "Scheduled Work" }}</h3>
+
+          <p class="muted">
+            {% if job.start_time %}{{ job.start_time }}{% endif %}
+            {% if job.end_time %} - {{ job.end_time }}{% endif %}
+            {% if job.address %} • {{ job.address }}{% endif %}
+            {% if job.property %} • {{ job.property }}{% endif %}
+            {% if job.status %} • {{ job.status }}{% endif %}
+          </p>
+
+          {% if job.description %}
+            <p>{{ job.description }}</p>
+          {% elif job.notes %}
+            <p>{{ job.notes }}</p>
+          {% endif %}
+
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
+            {% if job.job_id %}
+              <a class="btn" href="/jobs/{{ job.job_id }}">Open Job</a>
+            {% elif job.id %}
+              <a class="btn" href="/schedule">Open Schedule</a>
+            {% endif %}
+
+            <a class="btn" href="/photos">Photos</a>
+          </div>
+        </div>
+      {% endfor %}
+    {% else %}
+      <p class="muted">No jobs found for today. Check schedule or ask Jarvis.</p>
+      <a class="btn" href="/schedule/day">Open Daily Schedule</a>
+    {% endif %}
+  </section>
+
+  <section class="card">
+    <h2>What you can say</h2>
+
+    <div class="crew-job">
+      <strong>Clock / GPS</strong>
+      <p class="muted">“Clock me in” • “Start tracking me” • “Show my stops” • “Clock me out”</p>
+    </div>
+
+    <div class="crew-job">
+      <strong>Job updates</strong>
+      <p class="muted">“Finished plumbing at Johnson” • “Need two check valves” • “Problem at Smith liner leak”</p>
+    </div>
+
+    <div class="crew-job">
+      <strong>Field tools</strong>
+      <p class="muted">“Open map” • “Open weather” • “Upload photos” • “Show my jobs”</p>
+    </div>
+  </section>
+
+</div>
+
+{% endblock %}
