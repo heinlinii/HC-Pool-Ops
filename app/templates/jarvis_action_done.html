@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block content %}
+
+<section class="section-head">
+  <h1>{{ title }}</h1>
+  <p>{{ message }}</p>
+</section>
+
+<section class="card">
+  <h2>Next Move</h2>
+
+  <div class="grid">
+    <a class="card" href="{{ primary_href }}">
+      <h2>{{ primary_label }}</h2>
+      <p>Go here next.</p>
+    </a>
+
+    <a class="card" href="{{ secondary_href }}">
+      <h2>{{ secondary_label }}</h2>
+      <p>Return to Jarvis.</p>
+    </a>
+  </div>
+</section>
+
+<section class="card">
+  <h2>Say this next</h2>
+  <p class="muted">
+    “Start tracking me” opens GPS. “Show my stops” opens the GPS stop report.
+    “Clock me out” clocks you out.
+  </p>
+</section>
+
+{% endblock %}

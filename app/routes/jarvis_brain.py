@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from fastapi import APIRouter, Request, Form
 from fastapi.responses import RedirectResponse, HTMLResponse
 
@@ -12,6 +14,10 @@ def _helpers():
         login_redirect,
         save_invisible_office_item,
         classify_invisible_office_item,
+        rows,
+        one,
+        exec_sql,
+        USE_POSTGRES,
     )
 
     return {
@@ -21,11 +27,110 @@ def _helpers():
         "login_redirect": login_redirect,
         "save_invisible_office_item": save_invisible_office_item,
         "classify_invisible_office_item": classify_invisible_office_item,
+        "rows": rows,
+        "one": one,
+        "exec_sql": exec_sql,
+        "USE_POSTGRES": USE_POSTGRES,
     }
 
 
 def clean(text):
     return " ".join((text or "").lower().replace("’", "'").split())
+
+
+def role_for_user(user):
+    role = clean(user.get("role") if user else "")
+
+    if role in ["admin", "owner"]:
+        return "admin"
+
+    if role in ["office", "manager"]:
+        return "office"
+
+    if role in ["crew", "employee", "worker"]:
+        return "crew"
+
+    if role in ["client", "customer"]:
+        return "client"
+
+    return role or "guest"
+
+
+def get_or_create_employee_for_user(user):
+    h = _helpers()
+
+    employee_name = user.get("name") or user.get("username") or "Mike"
+    username = user.get("username") or employee_name.lower().replace(" ", ".")
+
+    existing = h["one"](
+        """
+        SELECT *
+        FROM poolops2_employees
+        WHERE lower(name)=lower(?) OR lower(username)=lower(?)
+        ORDER BY id
+        LIMIT 1
+        """,
+        (employee_name, username),
+    )
+
+    if existing:
+        return existing
+
+    role = "Admin" if role_for_user(user) == "admin" else "Crew"
+
+    h["exec_sql"](
+        """
+        INSERT INTO poolops2_employees
+        (name, role, phone, email, username, password, active)
+        VALUES (?,?,?,?,?,?,?)
+        """,
+        (
+            employee_name,
+            role,
+            "",
+            "",
+            username,
+            "",
+            True if h["USE_POSTGRES"] else 1,
+        ),
+    )
+
+    return h["one"](
+        """
+        SELECT *
+        FROM poolops2_employees
+        WHERE lower(name)=lower(?) OR lower(username)=lower(?)
+        ORDER BY id DESC
+        LIMIT 1
+        """,
+        (employee_name, username),
+    )
+
+
+def clock_user(user, action):
+    h = _helpers()
+
+    employee = get_or_create_employee_for_user(user)
+    now = datetime.now().isoformat(timespec="minutes")
+    clocked = action == "in"
+
+    h["exec_sql"](
+        """
+        UPDATE poolops2_employees
+        SET clocked_in=?,
+            clocked_in_at=?,
+            last_seen_at=?
+        WHERE id=?
+        """,
+        (
+            True if clocked else False,
+            now if clocked else "",
+            now,
+            employee.get("id"),
+        ),
+    )
+
+    return employee, now
 
 
 DESTINATIONS = [
@@ -34,13 +139,10 @@ DESTINATIONS = [
         "href": "/gps",
         "roles": ["admin", "crew", "employee"],
         "keywords": [
-            "clock me in",
-            "clock in",
-            "clock out",
+            "gps",
             "start gps",
             "start tracking",
             "track me",
-            "gps",
             "field clock",
             "where am i",
         ],
@@ -350,24 +452,6 @@ NAV_WORDS = [
 ]
 
 
-def role_for_user(user):
-    role = clean(user.get("role") if user else "")
-
-    if role in ["admin", "owner"]:
-        return "admin"
-
-    if role in ["office", "manager"]:
-        return "office"
-
-    if role in ["crew", "employee", "worker"]:
-        return "crew"
-
-    if role in ["client", "customer"]:
-        return "client"
-
-    return role or "guest"
-
-
 def allowed_destinations(role):
     if role == "employee":
         role = "crew"
@@ -411,6 +495,37 @@ def looks_like_nav(command):
     return any(word in lower for word in NAV_WORDS)
 
 
+def wants_clock_in(command):
+    lower = clean(command)
+
+    return any(
+        phrase in lower
+        for phrase in [
+            "clock me in",
+            "clock in",
+            "punch me in",
+            "start my day",
+            "start work",
+        ]
+    )
+
+
+def wants_clock_out(command):
+    lower = clean(command)
+
+    return any(
+        phrase in lower
+        for phrase in [
+            "clock me out",
+            "clock out",
+            "punch me out",
+            "end my day",
+            "done for the day",
+            "stop work",
+        ]
+    )
+
+
 @router.post("/jarvis/ask", response_class=HTMLResponse)
 def jarvis_ask(
     request: Request,
@@ -432,6 +547,39 @@ def jarvis_ask(
         return RedirectResponse("/jarvis", status_code=303)
 
     role = role_for_user(user)
+
+    if role in ["admin", "crew", "employee"] and wants_clock_in(text):
+        employee, timestamp = clock_user(user, "in")
+
+        return h["templates"].TemplateResponse(
+            "jarvis_action_done.html",
+            h["ctx"](
+                request,
+                title="You’re Clocked In",
+                message=f"{employee.get('name') or 'You'} are clocked in at {timestamp}.",
+                primary_label="Start GPS Tracking",
+                primary_href="/gps",
+                secondary_label="Back to Jarvis",
+                secondary_href="/jarvis",
+            ),
+        )
+
+    if role in ["admin", "crew", "employee"] and wants_clock_out(text):
+        employee, timestamp = clock_user(user, "out")
+
+        return h["templates"].TemplateResponse(
+            "jarvis_action_done.html",
+            h["ctx"](
+                request,
+                title="You’re Clocked Out",
+                message=f"{employee.get('name') or 'You'} are clocked out at {timestamp}.",
+                primary_label="View GPS Stops",
+                primary_href="/gps/stops",
+                secondary_label="Back to Jarvis",
+                secondary_href="/jarvis",
+            ),
+        )
+
     destination = best_destination(text, role)
 
     if destination and (looks_like_nav(text) or not looks_like_save(text)):
