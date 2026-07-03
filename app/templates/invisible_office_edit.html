@@ -11,15 +11,18 @@
 
     <label>Category</label>
     <select name="category">
-      {% set categories = [
-        "General Note",
-        "Client Follow-Up",
-        "Material Needed",
-        "Billing Note",
-        "Schedule Task",
-        "Problem Found",
-        "Equipment Note"
-      ] %}
+     {% set categories = [
+  "General Note",
+  "Reminder",
+  "Work Done",
+  "Work To Look At",
+  "Client Follow-Up",
+  "Material Needed",
+  "Billing Note",
+  "Schedule Task",
+  "Problem Found",
+  "Equipment Note"
+] %}
       {% for cat in categories %}
         <option value="{{ cat }}" {% if item.category == cat %}selected{% endif %}>{{ cat }}</option>
       {% endfor %}

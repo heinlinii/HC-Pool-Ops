@@ -403,6 +403,59 @@ DESTINATIONS = [
     },
 ]
 
+def mike_brain_classify(text):
+    lower = clean(text)
+
+    category = "General Note"
+    priority = "Normal"
+    title = "Office Note"
+
+    if any(word in lower for word in ["urgent", "asap", "right now", "today", "before i forget", "important"]):
+        priority = "High"
+
+    if any(word in lower for word in ["remind", "remember", "don't forget", "dont forget", "call", "text", "email", "follow up", "follow-up"]):
+        category = "Reminder"
+        title = "Reminder"
+
+    if any(word in lower for word in ["finished", "complete", "completed", "done", "work done", "wrapped up"]):
+        category = "Work Done"
+        title = "Work Done"
+
+    if any(word in lower for word in ["look at", "check", "inspect", "go look", "needs looked at", "take a look"]):
+        category = "Work To Look At"
+        title = "Work To Look At"
+
+    if any(word in lower for word in ["bill", "billing", "invoice", "charge", "collect", "payment", "paid"]):
+        category = "Billing Note"
+        title = "Billing Note"
+
+    if any(word in lower for word in ["material", "materials", "need", "order", "buy", "pick up", "check valve", "pipe", "fitting", "salt", "sand", "liner", "pump", "filter"]):
+        if category == "General Note":
+            category = "Material Needed"
+            title = "Material Needed"
+
+    if any(word in lower for word in ["problem", "issue", "leak", "broken", "not working", "error", "loud", "noise", "tripping", "won't", "wont"]):
+        category = "Problem Found"
+        title = "Problem Found"
+
+    if any(word in lower for word in ["heater", "pump", "filter", "automation", "pentair", "hayward", "jandy", "valve"]):
+        if category == "General Note":
+            category = "Equipment Note"
+            title = "Equipment Note"
+
+    short = (text or "").strip()
+
+    if len(short) <= 80:
+        title = short
+    else:
+        title = short[:77].rstrip() + "..."
+
+    return {
+        "category": category,
+        "priority": priority,
+        "title": title,
+        "body": short,
+    }
 
 SAVE_WORDS = [
     "remind",
@@ -603,7 +656,7 @@ def jarvis_ask(
 
         return RedirectResponse(href, status_code=303)
 
-    preview = h["classify_invisible_office_item"](text)
+    preview = mike_brain_classify(text)
 
     if priority.strip():
         preview["priority"] = priority.strip()
