@@ -794,3 +794,22 @@ def jarvis_home(request: Request):
             brain_buckets=buckets,
         ),
     )
+
+@router.post("/jarvis/item/{item_id}/done")
+def jarvis_mark_item_done(request: Request, item_id: int):
+    h = _helpers()
+    user = h["require_login"](request)
+
+    if not user:
+        return h["login_redirect"]()
+
+    h["exec_sql"](
+        """
+        UPDATE invisible_office_items
+        SET status='Done'
+        WHERE id=?
+        """,
+        (item_id,),
+    )
+
+    return RedirectResponse("/jarvis", status_code=303)

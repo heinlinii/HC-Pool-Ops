@@ -226,11 +226,15 @@ Need to look at liner leak on Oak Street"
                   <p style="white-space:pre-wrap;margin-top:8px;">{{ item.body }}</p>
                 {% endif %}
 
-                <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
-                  <a class="btn" href="/invisible-office/{{ item.id }}/edit">Edit</a>
-                  <a class="btn" href="/invisible-office">Open Office</a>
-                </div>
-              </div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
+  <a class="btn" href="/invisible-office/{{ item.id }}/edit">Edit</a>
+
+  <form method="post" action="/jarvis/item/{{ item.id }}/done">
+    <button class="btn primary" type="submit">Mark Done</button>
+  </form>
+
+  <a class="btn" href="/invisible-office">Open Office</a>
+</div>
             {% endfor %}
           </div>
         </div>
