@@ -708,3 +708,89 @@ def jarvis_file(
         )
 
     return RedirectResponse("/invisible-office", status_code=303)
+
+@router.get("/jarvis", response_class=HTMLResponse)
+def jarvis_home(request: Request):
+    h = _helpers()
+    user = h["require_login"](request)
+
+    if not user:
+        return h["login_redirect"]()
+
+    role = role_for_user(user)
+
+    brain_items = []
+
+    if role in ["admin", "office"]:
+        brain_items = h["rows"](
+            """
+            SELECT *
+            FROM invisible_office_items
+            WHERE COALESCE(status, 'Open') NOT IN ('Done', 'Closed')
+            ORDER BY
+              CASE
+                WHEN priority='Urgent' THEN 1
+                WHEN priority='High' THEN 2
+                ELSE 3
+              END,
+              due_date,
+              id DESC
+            LIMIT 40
+            """
+        )
+
+    elif role in ["crew", "employee"]:
+        brain_items = h["rows"](
+            """
+            SELECT *
+            FROM invisible_office_items
+            WHERE COALESCE(status, 'Open') NOT IN ('Done', 'Closed')
+              AND category IN ('Work Done', 'Work To Look At', 'Material Needed', 'Problem Found', 'Equipment Note')
+            ORDER BY
+              CASE
+                WHEN priority='Urgent' THEN 1
+                WHEN priority='High' THEN 2
+                ELSE 3
+              END,
+              due_date,
+              id DESC
+            LIMIT 25
+            """
+        )
+
+    buckets = {
+        "Don’t Forget": [],
+        "Work To Look At": [],
+        "Work Done": [],
+        "Billing Notes": [],
+        "Materials Needed": [],
+        "Problems Found": [],
+        "Everything Else": [],
+    }
+
+    for item in brain_items:
+        category = item.get("category") or "General Note"
+
+        if category in ["Reminder", "Client Follow-Up", "Schedule Task"]:
+            buckets["Don’t Forget"].append(item)
+        elif category == "Work To Look At":
+            buckets["Work To Look At"].append(item)
+        elif category == "Work Done":
+            buckets["Work Done"].append(item)
+        elif category == "Billing Note":
+            buckets["Billing Notes"].append(item)
+        elif category == "Material Needed":
+            buckets["Materials Needed"].append(item)
+        elif category in ["Problem Found", "Equipment Note"]:
+            buckets["Problems Found"].append(item)
+        else:
+            buckets["Everything Else"].append(item)
+
+    return h["templates"].TemplateResponse(
+        "legacy_command_center.html",
+        h["ctx"](
+            request,
+            role=role,
+            brain_buckets=buckets,
+        ),
+    )

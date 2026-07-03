@@ -199,6 +199,50 @@ Need to look at liner leak on Oak Street"
     </div>
   </section>
 
+  {% if brain_buckets is defined %}
+  <section class="card">
+    <h2>Jarvis Brain Buckets</h2>
+    <p class="jarvis-small">These are the open things Jarvis has filed for you.</p>
+
+    {% for bucket_name, bucket_items in brain_buckets.items() %}
+      {% if bucket_items %}
+        <div style="margin-top:18px;">
+          <h3>{{ bucket_name }}</h3>
+
+          <div class="jarvis-options">
+            {% for item in bucket_items[:6] %}
+              <div class="jarvis-option-line">
+                <strong>{{ item.title or item.category or "Office Item" }}</strong>
+
+                <span class="jarvis-small">
+                  {{ item.category or "General Note" }}
+                  {% if item.priority %} • {{ item.priority }}{% endif %}
+                  {% if item.due_date %} • Due {{ item.due_date }}{% endif %}
+                  {% if item.client %} • {{ item.client }}{% endif %}
+                  {% if item.property %} • {{ item.property }}{% endif %}
+                </span>
+
+                {% if item.body %}
+                  <p style="white-space:pre-wrap;margin-top:8px;">{{ item.body }}</p>
+                {% endif %}
+
+                <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
+                  <a class="btn" href="/invisible-office/{{ item.id }}/edit">Edit</a>
+                  <a class="btn" href="/invisible-office">Open Office</a>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      {% endif %}
+    {% endfor %}
+
+    <div style="margin-top:18px;">
+      <a class="btn primary" href="/invisible-office">Open Invisible Office</a>
+    </div>
+  </section>
+  {% endif %}
+
 </div>
 
 {% endblock %}
