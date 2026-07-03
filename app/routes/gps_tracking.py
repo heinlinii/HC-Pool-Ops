@@ -318,6 +318,7 @@ def gps_tracker(request: Request):
             employee_name=employee_name,
             clocked_in=employee.get("clocked_in"),
             clocked_in_at=employee.get("clocked_in_at"),
+            autostart=request.query_params.get("autostart") == "1",
         ),
     )
 

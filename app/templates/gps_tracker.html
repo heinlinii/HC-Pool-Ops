@@ -208,4 +208,14 @@ function stopTracking() {
 }
 </script>
 
+{% if autostart %}
+<script>
+window.addEventListener("load", function() {
+  setTimeout(function() {
+    startTracking();
+  }, 800);
+});
+</script>
+{% endif %}
+
 {% endblock %}

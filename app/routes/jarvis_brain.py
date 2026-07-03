@@ -558,7 +558,7 @@ def jarvis_ask(
                 title="You’re Clocked In",
                 message=f"{employee.get('name') or 'You'} are clocked in at {timestamp}.",
                 primary_label="Start GPS Tracking",
-                primary_href="/gps",
+                primary_href="/gps?autostart=1",
                 secondary_label="Back to Jarvis",
                 secondary_href="/jarvis",
             ),
@@ -579,7 +579,20 @@ def jarvis_ask(
                 secondary_href="/jarvis",
             ),
         )
+    lower_text = clean(text)
 
+    if role in ["admin", "crew", "employee"] and any(
+        phrase in lower_text
+        for phrase in [
+            "start tracking",
+            "start gps",
+            "track me",
+            "start tracking me",
+            "gps me",
+        ]
+    ):
+        return RedirectResponse("/gps?autostart=1", status_code=303)
+    
     destination = best_destination(text, role)
 
     if destination and (looks_like_nav(text) or not looks_like_save(text)):
