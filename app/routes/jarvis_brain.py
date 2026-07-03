@@ -578,6 +578,120 @@ def wants_clock_out(command):
         ]
     )
 
+def wants_mark_done(command):
+    lower = clean(command)
+
+    done_phrases = [
+        "mark done",
+        "mark it done",
+        "mark this done",
+        "mark as done",
+        "mark complete",
+        "mark completed",
+        "close out",
+        "close this",
+        "close it",
+        "finish",
+        "finished",
+        "complete this",
+        "completed this",
+        "done with",
+        "handled",
+        "taken care of",
+    ]
+
+    return any(phrase in lower for phrase in done_phrases)
+
+
+def remove_done_words(command):
+    lower = clean(command)
+
+    junk = [
+        "mark",
+        "done",
+        "complete",
+        "completed",
+        "finished",
+        "finish",
+        "close",
+        "closed",
+        "out",
+        "this",
+        "it",
+        "as",
+        "with",
+        "the",
+        "a",
+        "an",
+        "item",
+        "reminder",
+        "note",
+        "task",
+        "handled",
+        "taken care of",
+    ]
+
+    words = [
+        w for w in lower.split()
+        if w not in junk and len(w) > 1
+    ]
+
+    return " ".join(words).strip()
+
+
+def find_open_brain_item(command):
+    h = _helpers()
+
+    search = remove_done_words(command)
+
+    if not search:
+        return None
+
+    words = [w for w in search.split() if len(w) > 1]
+
+    if not words:
+        return None
+
+    items = h["rows"](
+        """
+        SELECT *
+        FROM invisible_office_items
+        WHERE COALESCE(status, 'Open') NOT IN ('Done', 'Closed')
+        ORDER BY id DESC
+        LIMIT 80
+        """
+    )
+
+    best_item = None
+    best_score = 0
+
+    for item in items:
+        haystack = clean(
+            " ".join(
+                [
+                    str(item.get("title") or ""),
+                    str(item.get("body") or ""),
+                    str(item.get("client") or ""),
+                    str(item.get("property") or ""),
+                    str(item.get("category") or ""),
+                ]
+            )
+        )
+
+        score = 0
+
+        for word in words:
+            if word in haystack:
+                score += len(word)
+
+        if score > best_score:
+            best_score = score
+            best_item = item
+
+    if best_score <= 0:
+        return None
+
+    return best_item
 
 @router.post("/jarvis/ask", response_class=HTMLResponse)
 def jarvis_ask(
@@ -600,6 +714,44 @@ def jarvis_ask(
         return RedirectResponse("/jarvis", status_code=303)
 
     role = role_for_user(user)
+    if role in ["admin", "office", "crew", "employee"] and wants_mark_done(text):
+        item = find_open_brain_item(text)
+
+        if item:
+            h["exec_sql"](
+                """
+                UPDATE invisible_office_items
+                SET status='Done'
+                WHERE id=?
+                """,
+                (item.get("id"),),
+            )
+
+            return h["templates"].TemplateResponse(
+                "jarvis_action_done.html",
+                h["ctx"](
+                    request,
+                    title="Marked Done",
+                    message=f"I marked this done: {item.get('title') or item.get('body') or 'Office item'}",
+                    primary_label="Back to Jarvis",
+                    primary_href="/jarvis",
+                    secondary_label="Open Invisible Office",
+                    secondary_href="/invisible-office",
+                ),
+            )
+
+        return h["templates"].TemplateResponse(
+            "jarvis_action_done.html",
+            h["ctx"](
+                request,
+                title="I Couldn’t Find That One",
+                message="I knew you wanted to mark something done, but I couldn’t confidently match it to an open item.",
+                primary_label="Open Jarvis",
+                primary_href="/jarvis",
+                secondary_label="Open Invisible Office",
+                secondary_href="/invisible-office",
+            ),
+        )
 
     if role in ["admin", "crew", "employee"] and wants_clock_in(text):
         employee, timestamp = clock_user(user, "in")
