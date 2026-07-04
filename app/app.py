@@ -3597,9 +3597,14 @@ def invisible_office_search(request: Request, q: str = ""):
 
 # ============================================================
 # JARVIS BRAIN LAYER - HEINLIN FIELD OPS
-# EMERGENCY STABLE VERSION
-# Purpose: get /jarvis-brain working without crashing the app.
+# LEVEL 2 SAFE MEMORY VERSION
+# Purpose: stable Jarvis page + safe command memory.
 # ============================================================
+
+import os as _jb_os
+import json as _jb_json
+import html as _jb_html
+from datetime import datetime as _jb_datetime
 
 try:
     from fastapi import Request
@@ -3612,18 +3617,308 @@ except Exception:
     pass
 
 
+JARVIS_BRAIN_VERSION = "level-2-safe-memory-2026-07-04"
+
+
+def _jb_now():
+    return _jb_datetime.now().isoformat(timespec="seconds")
+
+
+def _jb_storage_dir():
+    path = _jb_os.path.join(_jb_os.getcwd(), "jarvis_storage")
+    _jb_os.makedirs(path, exist_ok=True)
+    return path
+
+
+def _jb_file(name):
+    return _jb_os.path.join(_jb_storage_dir(), name)
+
+
+def _jb_write_jsonl(name, item):
+    item = dict(item or {})
+    item.setdefault("created_at", _jb_now())
+    with open(_jb_file(name), "a", encoding="utf-8") as f:
+        f.write(_jb_json.dumps(item, ensure_ascii=False) + "\n")
+
+
+def _jb_read_jsonl(name, limit=25):
+    path = _jb_file(name)
+    if not _jb_os.path.exists(path):
+        return []
+    items = []
+    with open(path, "r", encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                items.append(_jb_json.loads(line))
+            except Exception:
+                pass
+    items.reverse()
+    return items[:limit]
+
+
+def _jb_user(request):
+    try:
+        f = globals().get("current_user")
+        if callable(f):
+            u = f(request)
+            if u:
+                return u
+    except Exception:
+        pass
+
+    try:
+        if hasattr(request, "session"):
+            return request.session.get("user") or {}
+    except Exception:
+        pass
+
+    return {}
+
+
+def _jb_name(user):
+    return str(
+        (user or {}).get("name")
+        or (user or {}).get("username")
+        or (user or {}).get("email")
+        or "Mike"
+    ).strip()
+
+
+def _jb_role(user):
+    role = str((user or {}).get("role") or "admin").lower().strip()
+    if role == "employee":
+        role = "crew"
+    return role
+
+
+def _jb_classify(text):
+    raw = str(text or "").strip()
+    low = raw.lower()
+
+    intent = "memory"
+    category = "General Note"
+    priority = "Normal"
+
+    if any(x in low for x in ["billing", "bill", "invoice", "charge", "paid", "payment"]):
+        intent = "billing_note"
+        category = "Billing Note"
+    elif any(x in low for x in ["field log", "we did", "installed", "cleaned", "replaced", "poured", "formed", "fixed"]):
+        intent = "field_log"
+        category = "Field Log"
+    elif any(x in low for x in ["material", "materials", "need", "pickup", "pick up", "pipe", "union", "cement", "rebar", "concrete", "fitting"]):
+        intent = "material_needed"
+        category = "Material Needed"
+    elif any(x in low for x in ["remind", "follow up", "call", "text", "email"]):
+        intent = "follow_up"
+        category = "Follow Up"
+    elif any(x in low for x in ["what am i forgetting", "what matters", "what next", "what do i do"]):
+        intent = "briefing"
+        category = "Briefing"
+    elif any(x in low for x in ["problem", "issue", "broken", "leak", "buzzing", "not working", "error"]):
+        intent = "problem_found"
+        category = "Problem Found"
+
+    if any(x in low for x in ["urgent", "asap", "today", "right now", "gas", "electrical", "danger"]):
+        priority = "High"
+
+    title = raw[:90] if raw else "Jarvis Note"
+    if len(raw) > 90:
+        title += "..."
+
+    return {
+        "intent": intent,
+        "category": category,
+        "priority": priority,
+        "title": title,
+        "body": raw,
+    }
+
+
+def _jb_db_exec(sql, params=()):
+    try:
+        f = globals().get("exec_sql")
+        if callable(f):
+            return f(sql, params)
+    except Exception as exc:
+        print("Jarvis DB exec skipped:", exc)
+    return None
+
+
+def _jb_db_rows(sql, params=()):
+    try:
+        f = globals().get("rows")
+        if callable(f):
+            return f(sql, params) or []
+    except Exception as exc:
+        print("Jarvis DB rows skipped:", exc)
+    return []
+
+
+def _jb_db_schema():
+    # Best-effort only. If DB helper or placeholder style does not match, Jarvis still works from local storage.
+    try:
+        _jb_db_exec("""
+            CREATE TABLE IF NOT EXISTS jarvis_memory (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                created_at TEXT DEFAULT '',
+                created_by TEXT DEFAULT '',
+                user_role TEXT DEFAULT '',
+                intent TEXT DEFAULT '',
+                category TEXT DEFAULT '',
+                priority TEXT DEFAULT 'Normal',
+                title TEXT DEFAULT '',
+                body TEXT DEFAULT '',
+                status TEXT DEFAULT 'Open'
+            )
+        """)
+        _jb_db_exec("""
+            CREATE TABLE IF NOT EXISTS jarvis_command_log (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                created_at TEXT DEFAULT '',
+                created_by TEXT DEFAULT '',
+                user_role TEXT DEFAULT '',
+                command_text TEXT DEFAULT '',
+                intent TEXT DEFAULT '',
+                reply TEXT DEFAULT ''
+            )
+        """)
+    except Exception as exc:
+        print("Jarvis schema skipped:", exc)
+
+
+def _jb_save_memory(request, text, reply):
+    user = _jb_user(request)
+    classified = _jb_classify(text)
+
+    item = {
+        "created_at": _jb_now(),
+        "created_by": _jb_name(user),
+        "user_role": _jb_role(user),
+        "intent": classified["intent"],
+        "category": classified["category"],
+        "priority": classified["priority"],
+        "title": classified["title"],
+        "body": classified["body"],
+        "status": "Open",
+        "reply": reply,
+    }
+
+    _jb_write_jsonl("jarvis_memory.jsonl", item)
+    _jb_write_jsonl("jarvis_command_log.jsonl", {
+        "created_at": item["created_at"],
+        "created_by": item["created_by"],
+        "user_role": item["user_role"],
+        "command_text": text,
+        "intent": classified["intent"],
+        "reply": reply,
+    })
+
+    try:
+        _jb_db_schema()
+        _jb_db_exec("""
+            INSERT INTO jarvis_memory
+            (created_at, created_by, user_role, intent, category, priority, title, body, status)
+            VALUES (?,?,?,?,?,?,?,?,?)
+        """, (
+            item["created_at"], item["created_by"], item["user_role"], item["intent"],
+            item["category"], item["priority"], item["title"], item["body"], item["status"]
+        ))
+        _jb_db_exec("""
+            INSERT INTO jarvis_command_log
+            (created_at, created_by, user_role, command_text, intent, reply)
+            VALUES (?,?,?,?,?,?)
+        """, (
+            item["created_at"], item["created_by"], item["user_role"], text, item["intent"], reply
+        ))
+    except Exception as exc:
+        print("Jarvis DB save skipped:", exc)
+
+    return item
+
+
+def _jb_recent_memory(limit=12):
+    db_items = []
+    try:
+        db_items = _jb_db_rows("SELECT * FROM jarvis_memory ORDER BY id DESC LIMIT ?", (limit,))
+    except Exception:
+        db_items = []
+
+    if db_items:
+        out = []
+        for r in db_items:
+            try:
+                out.append(dict(r))
+            except Exception:
+                out.append(r)
+        return out
+
+    return _jb_read_jsonl("jarvis_memory.jsonl", limit)
+
+
+def _jb_reply_for(text):
+    classified = _jb_classify(text)
+    intent = classified["intent"]
+
+    if intent == "billing_note":
+        return "I saved that as a billing note so it does not disappear before it becomes money."
+    if intent == "field_log":
+        return "I saved that as a field log memory. Next we will wire this directly into the field log table."
+    if intent == "material_needed":
+        return "I saved that as a material-needed item."
+    if intent == "follow_up":
+        return "I saved that as a follow-up item."
+    if intent == "problem_found":
+        return "I saved that as a problem found. That protects the job history."
+    if intent == "briefing":
+        count = len(_jb_recent_memory(50))
+        return f"Jarvis memory is active. I can see {count} saved item(s). Keep feeding me what you do, what needs billed, and what cannot be forgotten."
+    return "I saved that to Jarvis memory."
+
+
+def _jb_esc(value):
+    return _jb_html.escape(str(value or ""))
+
+
 @app.get("/jarvis-brain/install-check")
-def jarvis_brain_install_check_stable():
+def jarvis_brain_install_check_level2():
+    _jb_db_schema()
     return JSONResponse({
         "ok": True,
-        "message": "Jarvis Brain route is installed and running.",
-        "mode": "emergency_stable",
+        "message": "Jarvis Brain is installed and running.",
+        "version": JARVIS_BRAIN_VERSION,
+        "storage_folder": _jb_storage_dir(),
+        "memory_items_seen": len(_jb_recent_memory(100)),
     })
 
 
 @app.get("/jarvis-brain", response_class=HTMLResponse)
-def jarvis_brain_stable_page(request: Request):
-    html = """
+def jarvis_brain_level2_page(request: Request):
+    user = _jb_user(request)
+    name = _jb_name(user).split()[0]
+    role = _jb_role(user)
+    recent = _jb_recent_memory(12)
+
+    cards = ""
+    if recent:
+        for item in recent:
+            cards += f"""
+            <div class="memory-card">
+              <div class="memory-top">
+                <b>{_jb_esc(item.get('category'))}</b>
+                <span>{_jb_esc(item.get('created_at'))}</span>
+              </div>
+              <div class="memory-title">{_jb_esc(item.get('title'))}</div>
+              <div class="memory-body">{_jb_esc(item.get('body'))}</div>
+              <div class="memory-meta">Priority: {_jb_esc(item.get('priority'))} ? Status: {_jb_esc(item.get('status'))}</div>
+            </div>
+            """
+    else:
+        cards = "<p>No Jarvis memory saved yet. Send a command to start building the brain.</p>"
+
+    html = f"""
 <!doctype html>
 <html>
 <head>
@@ -3631,43 +3926,51 @@ def jarvis_brain_stable_page(request: Request):
   <title>Jarvis Brain</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
-    body {
+    body {{
       margin:0;
       font-family: Arial, sans-serif;
       background:#070a0f;
       color:#f5efe3;
-    }
-    .wrap {
-      max-width:1100px;
+    }}
+    .wrap {{
+      max-width:1150px;
       margin:0 auto;
       padding:28px;
-    }
-    .hero {
+    }}
+    .hero {{
       background:linear-gradient(135deg,#111722,#05070b);
       border:1px solid #5d421d;
       border-radius:22px;
       padding:26px;
       box-shadow:0 20px 60px rgba(0,0,0,.45);
-    }
-    h1 {
+    }}
+    h1 {{
       margin:0 0 8px;
       font-size:34px;
       letter-spacing:.08em;
-    }
-    .sub {
+    }}
+    .sub {{
       color:#d9b56d;
       margin-bottom:22px;
-    }
-    .card {
+    }}
+    .grid {{
+      display:grid;
+      grid-template-columns:1.1fr .9fr;
+      gap:18px;
+    }}
+    @media(max-width:850px) {{
+      .grid {{ grid-template-columns:1fr; }}
+    }}
+    .card {{
       background:#101722;
       border:1px solid #2d2113;
       border-radius:18px;
       padding:20px;
       margin-top:18px;
-    }
-    textarea {
+    }}
+    textarea {{
       width:100%;
-      min-height:130px;
+      min-height:150px;
       box-sizing:border-box;
       border-radius:14px;
       border:1px solid #6b4b1f;
@@ -3675,8 +3978,8 @@ def jarvis_brain_stable_page(request: Request):
       color:#fff;
       padding:14px;
       font-size:16px;
-    }
-    button {
+    }}
+    button {{
       margin-top:12px;
       padding:13px 18px;
       border:0;
@@ -3685,100 +3988,143 @@ def jarvis_brain_stable_page(request: Request):
       color:#111;
       font-weight:900;
       cursor:pointer;
-    }
-    .reply {
+    }}
+    .reply {{
       margin-top:14px;
       padding:14px;
       border-radius:12px;
       background:#05070b;
       border:1px solid #2d2113;
       min-height:24px;
-    }
-    .chips {
+    }}
+    .chips {{
       display:flex;
       flex-wrap:wrap;
       gap:10px;
       margin-top:12px;
-    }
-    .chip {
+    }}
+    .chip {{
       border:1px solid #6b4b1f;
       border-radius:999px;
       padding:10px 12px;
       background:#070a0f;
       color:#f5efe3;
       cursor:pointer;
-    }
-    a { color:#d9a64a; }
+    }}
+    .memory-card {{
+      background:#05070b;
+      border:1px solid #2d2113;
+      border-radius:14px;
+      padding:14px;
+      margin:10px 0;
+    }}
+    .memory-top {{
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      color:#d9b56d;
+      font-size:13px;
+    }}
+    .memory-title {{
+      font-weight:900;
+      margin-top:8px;
+    }}
+    .memory-body {{
+      margin-top:8px;
+      color:#e8dcc7;
+      line-height:1.4;
+    }}
+    .memory-meta {{
+      margin-top:10px;
+      color:#a99572;
+      font-size:13px;
+    }}
+    a {{ color:#d9a64a; }}
   </style>
 </head>
 <body>
   <div class="wrap">
     <div class="hero">
       <h1>J.A.R.V.I.S. BRAIN</h1>
-      <div class="sub">Emergency stable mode is running. The app is alive. Now we rebuild smarter.</div>
+      <div class="sub">Good to go, { _jb_esc(name) }. Level 2 memory is active. Role: { _jb_esc(role) }.</div>
 
-      <div class="card">
-        <h2>Command Jarvis</h2>
-        <textarea id="cmd" placeholder="Jarvis, what am I forgetting?"></textarea>
-        <br>
-        <button onclick="sendCmd()">Send to Jarvis</button>
-        <div class="reply" id="reply">Waiting for command.</div>
+      <div class="grid">
+        <div class="card">
+          <h2>Command Jarvis</h2>
+          <textarea id="cmd" placeholder="Jarvis, add this to billing: customer approved extra pump time."></textarea>
+          <br>
+          <button onclick="sendCmd()">Send to Jarvis</button>
+          <div class="reply" id="reply">Waiting for command.</div>
 
-        <div class="chips">
-          <button class="chip" onclick="fillCmd('Jarvis, what am I forgetting?')">What am I forgetting?</button>
-          <button class="chip" onclick="fillCmd('Jarvis, add this to billing: ')">Billing note</button>
-          <button class="chip" onclick="fillCmd('Jarvis, field log: ')">Field log</button>
-          <button class="chip" onclick="fillCmd('Jarvis, material needed: ')">Material needed</button>
+          <div class="chips">
+            <button class="chip" onclick="fillCmd('Jarvis, what am I forgetting?')">What am I forgetting?</button>
+            <button class="chip" onclick="fillCmd('Jarvis, add this to billing: ')">Billing note</button>
+            <button class="chip" onclick="fillCmd('Jarvis, field log: ')">Field log</button>
+            <button class="chip" onclick="fillCmd('Jarvis, material needed: ')">Material needed</button>
+            <button class="chip" onclick="fillCmd('Jarvis, remind me to follow up with ')">Follow up</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Status</h2>
+          <p><b>Jarvis route:</b> Working</p>
+          <p><b>Memory:</b> Active</p>
+          <p><b>Saved items:</b> {len(recent)}</p>
+          <p><b>Version:</b> {JARVIS_BRAIN_VERSION}</p>
+          <p>
+            <a href="/jarvis-brain/install-check">Install Check</a>
+            |
+            <a href="/jarvis-brain/export.json">Export Memory</a>
+            |
+            <a href="/jarvis">Old Jarvis</a>
+            |
+            <a href="/">Home</a>
+          </p>
         </div>
       </div>
 
       <div class="card">
-        <h2>Status</h2>
-        <p><b>Jarvis route:</b> Working</p>
-        <p><b>Mode:</b> Emergency stable</p>
-        <p><b>Next:</b> Once this page opens, we add memory/database actions back one at a time without breaking the app.</p>
-        <p>
-          <a href="/jarvis-brain/install-check">Install Check</a>
-          |
-          <a href="/jarvis">Old Jarvis</a>
-          |
-          <a href="/">Home</a>
-        </p>
+        <h2>Recent Jarvis Memory</h2>
+        {cards}
       </div>
     </div>
   </div>
 
 <script>
-function fillCmd(t){
+function fillCmd(t){{
   document.getElementById("cmd").value = t;
   document.getElementById("cmd").focus();
-}
+}}
 
-async function sendCmd(){
+async function sendCmd(){{
   const box = document.getElementById("cmd");
   const reply = document.getElementById("reply");
   const text = box.value.trim();
 
-  if(!text){
+  if(!text){{
     reply.innerText = "Tell me what needs handled.";
     return;
-  }
+  }}
 
-  reply.innerText = "Thinking...";
+  reply.innerText = "Saving...";
 
-  try {
-    const res = await fetch("/jarvis-brain/command", {
+  try {{
+    const res = await fetch("/jarvis-brain/command", {{
       method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({text:text})
-    });
+      headers:{{"Content-Type":"application/json"}},
+      body:JSON.stringify({{text:text}})
+    }});
 
     const data = await res.json();
     reply.innerText = data.reply || JSON.stringify(data);
-  } catch(err) {
+
+    if(data.ok){{
+      setTimeout(() => window.location.reload(), 800);
+    }}
+  }} catch(err) {{
     reply.innerText = "Jarvis command failed: " + err;
-  }
-}
+  }}
+}}
 </script>
 </body>
 </html>
@@ -3787,38 +4133,43 @@ async function sendCmd(){
 
 
 @app.post("/jarvis-brain/command")
-async def jarvis_brain_stable_command(request: Request):
+async def jarvis_brain_level2_command(request: Request):
     try:
         payload = await request.json()
     except Exception:
         payload = {}
 
     text = str(payload.get("text") or "").strip()
-    low = text.lower()
 
     if not text:
-        reply = "Tell me what needs handled."
-    elif "billing" in low or "bill" in low or "invoice" in low:
-        reply = "I heard a billing note. In stable mode I am not saving to the database yet, but the command route is working."
-    elif "field log" in low or "we did" in low or "installed" in low or "cleaned" in low:
-        reply = "I heard a field log. The command route is working. Next step is wiring this back into field_logs safely."
-    elif "material" in low or "need" in low or "pickup" in low:
-        reply = "I heard a material-needed note. The command route is working."
-    elif "forgetting" in low or "what matters" in low or "what next" in low:
-        reply = "The app is stable again. Next we reconnect jobs, memory, crew clock, photos, and billing notes one piece at a time."
-    else:
-        reply = "I heard you. Jarvis Brain is running in emergency stable mode."
+        return JSONResponse({
+            "ok": False,
+            "reply": "Tell me what needs handled.",
+        })
+
+    reply = _jb_reply_for(text)
+    item = _jb_save_memory(request, text, reply)
 
     return JSONResponse({
         "ok": True,
-        "mode": "emergency_stable",
+        "version": JARVIS_BRAIN_VERSION,
         "reply": reply,
-        "received": text,
+        "item": item,
+    })
+
+
+@app.get("/jarvis-brain/export.json")
+def jarvis_brain_level2_export():
+    return JSONResponse({
+        "ok": True,
+        "version": JARVIS_BRAIN_VERSION,
+        "memory": _jb_read_jsonl("jarvis_memory.jsonl", 500),
+        "command_log": _jb_read_jsonl("jarvis_command_log.jsonl", 500),
     })
 
 
 @app.get("/brain", response_class=HTMLResponse)
-def brain_alias_stable(request: Request):
+def brain_alias_level2(request: Request):
     return RedirectResponse("/jarvis-brain", status_code=303)
 
 # ============================================================
