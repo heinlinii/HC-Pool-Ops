@@ -6510,3 +6510,535 @@ def jarvis_brain_level9_employee_alias(request: Request):
 # END JARVIS BRAIN LEVEL 9 CREW FIELD FLOW
 # ============================================================
 
+
+# ============================================================
+# JARVIS BRAIN LEVEL 10 ROLE FRONT DOOR + CLIENT FLOW
+# Adds /jarvis-brain/start and /jarvis-brain/client.
+# Does not replace Levels 7, 8, or 9.
+# ============================================================
+
+import os as _j10_os
+import json as _j10_json
+import html as _j10_html
+from datetime import datetime as _j10_datetime, date as _j10_date
+
+try:
+    from fastapi import Request
+except Exception:
+    pass
+
+try:
+    from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
+except Exception:
+    pass
+
+JARVIS_ROLE_FRONT_DOOR_VERSION = "level-10-role-frontdoor-client-flow-2026-07-04"
+
+
+def _j10_now():
+    return _j10_datetime.now().isoformat(timespec="seconds")
+
+
+def _j10_today():
+    return _j10_date.today().isoformat()
+
+
+def _j10_storage_dir():
+    path = _j10_os.path.join(_j10_os.getcwd(), "jarvis_storage")
+    _j10_os.makedirs(path, exist_ok=True)
+    return path
+
+
+def _j10_file(name):
+    return _j10_os.path.join(_j10_storage_dir(), name)
+
+
+def _j10_esc(value):
+    return _j10_html.escape(str(value or ""))
+
+
+def _j10_write_jsonl(name, item):
+    item = dict(item or {})
+    item.setdefault("created_at", _j10_now())
+    with open(_j10_file(name), "a", encoding="utf-8") as f:
+        f.write(_j10_json.dumps(item, ensure_ascii=False) + "\n")
+
+
+def _j10_read_jsonl_all(name):
+    path = _j10_file(name)
+    if not _j10_os.path.exists(path):
+        return []
+    items = []
+    with open(path, "r", encoding="utf-8") as f:
+        for line in f:
+            try:
+                items.append(_j10_json.loads(line.strip()))
+            except Exception:
+                pass
+    return items
+
+
+def _j10_user(request):
+    try:
+        f = globals().get("current_user")
+        if callable(f):
+            u = f(request)
+            if u:
+                return u
+    except Exception:
+        pass
+
+    try:
+        if hasattr(request, "session"):
+            return request.session.get("user") or {}
+    except Exception:
+        pass
+
+    return {}
+
+
+def _j10_name(user):
+    return str((user or {}).get("name") or (user or {}).get("username") or (user or {}).get("email") or "Client").strip()
+
+
+def _j10_email(user):
+    return str((user or {}).get("email") or "").strip()
+
+
+def _j10_role(user):
+    role = str((user or {}).get("role") or "admin").lower().strip()
+    if role == "employee":
+        role = "crew"
+    return role
+
+
+def _j10_rows(sql, params=()):
+    try:
+        f = globals().get("rows")
+        if callable(f):
+            return f(sql, params) or []
+    except Exception:
+        pass
+    return []
+
+
+def _j10_exec(sql, params=()):
+    try:
+        f = globals().get("exec_sql")
+        if callable(f):
+            return f(sql, params)
+    except Exception:
+        pass
+    return None
+
+
+def _j10_columns(table):
+    try:
+        f = globals().get("table_columns")
+        if callable(f):
+            return list(f(table) or [])
+    except Exception:
+        pass
+    return []
+
+
+def _j10_table_exists(table):
+    return bool(_j10_columns(table))
+
+
+def _j10_insert_existing(table, data):
+    cols = _j10_columns(table)
+    if not cols:
+        return False
+
+    final = {}
+    for k, v in data.items():
+        if k in cols:
+            final[k] = v
+
+    if not final:
+        return False
+
+    names = list(final.keys())
+    placeholders = ",".join(["?"] * len(names))
+    sql = f"INSERT INTO {table} ({','.join(names)}) VALUES ({placeholders})"
+    _j10_exec(sql, tuple(final[k] for k in names))
+    return True
+
+
+def _j10_client_filter_conditions(table, user):
+    cols = _j10_columns(table)
+    name = _j10_name(user)
+    email = _j10_email(user)
+
+    where = []
+    params = []
+
+    if "client" in cols and name:
+        where.append("CAST(client AS TEXT) LIKE ?")
+        params.append(f"%{name}%")
+
+    if "client_name" in cols and name:
+        where.append("CAST(client_name AS TEXT) LIKE ?")
+        params.append(f"%{name}%")
+
+    if "name" in cols and name and table == "poolops2_clients":
+        where.append("CAST(name AS TEXT) LIKE ?")
+        params.append(f"%{name}%")
+
+    if "email" in cols and email:
+        where.append("CAST(email AS TEXT) LIKE ?")
+        params.append(f"%{email}%")
+
+    if "client_email" in cols and email:
+        where.append("CAST(client_email AS TEXT) LIKE ?")
+        params.append(f"%{email}%")
+
+    if not where:
+        return "", ()
+
+    return " OR ".join(where), tuple(params)
+
+
+def _j10_client_jobs(user):
+    if not _j10_table_exists("poolops2_jobs"):
+        return []
+
+    where, params = _j10_client_filter_conditions("poolops2_jobs", user)
+    if where:
+        return _j10_rows(f"SELECT * FROM poolops2_jobs WHERE {where} ORDER BY id DESC LIMIT 12", params)
+
+    return []
+
+
+def _j10_client_properties(user):
+    if not _j10_table_exists("poolops2_properties"):
+        return []
+
+    where, params = _j10_client_filter_conditions("poolops2_properties", user)
+    if where:
+        return _j10_rows(f"SELECT * FROM poolops2_properties WHERE {where} ORDER BY id DESC LIMIT 12", params)
+
+    return []
+
+
+def _j10_client_photos(user):
+    if not _j10_table_exists("poolops2_photo_logs"):
+        return []
+
+    where, params = _j10_client_filter_conditions("poolops2_photo_logs", user)
+    if where:
+        return _j10_rows(f"SELECT * FROM poolops2_photo_logs WHERE {where} ORDER BY id DESC LIMIT 12", params)
+
+    return []
+
+
+def _j10_client_requests(user):
+    name = _j10_name(user).lower()
+    email = _j10_email(user).lower()
+
+    items = _j10_read_jsonl_all("jarvis_client_requests.jsonl")
+    items.reverse()
+
+    if not name and not email:
+        return items[:20]
+
+    out = []
+    for item in items:
+        item_name = str(item.get("client_name") or "").lower()
+        item_email = str(item.get("client_email") or "").lower()
+        if (name and name in item_name) or (email and email == item_email):
+            out.append(item)
+
+    return out[:20]
+
+
+def _j10_save_client_request(request, message, request_type="Project Question"):
+    user = _j10_user(request)
+    client_name = _j10_name(user)
+    client_email = _j10_email(user)
+
+    title = str(message or "").strip()[:90] or "Client Request"
+    if len(str(message or "")) > 90:
+        title += "..."
+
+    item = {
+        "created_at": _j10_now(),
+        "source": "Client Jarvis",
+        "category": "Client Request",
+        "request_type": request_type or "Project Question",
+        "title": title,
+        "body": str(message or "").strip(),
+        "client_name": client_name,
+        "client_email": client_email,
+        "status": "Open",
+        "priority": "Normal",
+    }
+
+    _j10_write_jsonl("jarvis_client_requests.jsonl", item)
+
+    memory_item = {
+        "created_at": item["created_at"],
+        "created_by": client_name,
+        "user_role": _j10_role(user),
+        "intent": "client_request",
+        "category": "Client Request",
+        "priority": "Normal",
+        "title": title,
+        "body": item["body"],
+        "status": "Open",
+        "reply": "Client request saved.",
+        "client": client_name,
+        "client_email": client_email,
+        "source": "Client Jarvis",
+    }
+
+    _j10_write_jsonl("jarvis_memory.jsonl", memory_item)
+
+    office_saved = _j10_insert_existing("invisible_office_items", {
+        "source": "Client Jarvis",
+        "category": "Client Request",
+        "title": title,
+        "body": item["body"],
+        "client": client_name,
+        "priority": "Normal",
+        "status": "Open",
+        "created_by": client_name,
+        "created_at": item["created_at"],
+    })
+
+    item["invisible_saved"] = bool(office_saved)
+    return item
+
+
+def _j10_render_row(title, detail="", href=""):
+    link = ""
+    if href:
+        link = f"<p><a href='{_j10_esc(href)}'>Open</a></p>"
+
+    return f"""
+    <div class="item">
+      <div class="item-title">{_j10_esc(title)}</div>
+      <div class="item-detail">{_j10_esc(detail)}</div>
+      {link}
+    </div>
+    """
+
+
+def _j10_render_job(job):
+    title = job.get("property") or job.get("client") or job.get("address") or f"Job #{job.get('id')}"
+    detail = job.get("job_type") or job.get("status") or job.get("notes") or ""
+    return _j10_render_row(title, detail)
+
+
+def _j10_render_property(prop):
+    title = prop.get("property_name") or prop.get("address") or prop.get("client") or f"Property #{prop.get('id')}"
+    detail = prop.get("address") or prop.get("equipment_notes") or prop.get("notes") or ""
+    return _j10_render_row(title, detail)
+
+
+def _j10_render_request(item):
+    title = item.get("title") or "Client Request"
+    detail = f"{item.get('request_type') or 'Request'} ? {item.get('created_at') or ''} ? {item.get('status') or 'Open'}"
+    body = item.get("body") or ""
+
+    return f"""
+    <div class="item">
+      <div class="item-title">{_j10_esc(title)}</div>
+      <div class="item-detail">{_j10_esc(detail)}</div>
+      <p>{_j10_esc(body)}</p>
+    </div>
+    """
+
+
+@app.get("/jarvis-brain/start")
+def jarvis_brain_level10_role_front_door(request: Request):
+    user = _j10_user(request)
+    role = _j10_role(user)
+
+    if role == "client":
+        return RedirectResponse("/jarvis-brain/client", status_code=303)
+
+    if role == "crew":
+        return RedirectResponse("/jarvis-brain/crew", status_code=303)
+
+    return RedirectResponse("/jarvis-brain", status_code=303)
+
+
+@app.get("/jarvis-start")
+def jarvis_brain_level10_start_alias(request: Request):
+    return RedirectResponse("/jarvis-brain/start", status_code=303)
+
+
+@app.get("/jarvis-brain/client", response_class=HTMLResponse)
+def jarvis_brain_level10_client_page(request: Request):
+    user = _j10_user(request)
+    name = _j10_name(user).split()[0]
+    role = _j10_role(user)
+
+    jobs = _j10_client_jobs(user)
+    properties = _j10_client_properties(user)
+    photos = _j10_client_photos(user)
+    requests = _j10_client_requests(user)
+
+    jobs_html = "".join([_j10_render_job(x) for x in jobs[:8]]) or "<p>No project jobs are visible to this login yet.</p>"
+    props_html = "".join([_j10_render_property(x) for x in properties[:8]]) or "<p>No properties are visible to this login yet.</p>"
+    requests_html = "".join([_j10_render_request(x) for x in requests[:8]]) or "<p>No client requests saved yet.</p>"
+
+    photo_html = ""
+    for p in photos[:8]:
+        title = p.get("title") or p.get("filename") or p.get("caption") or "Photo"
+        detail = p.get("created_at") or p.get("date") or p.get("client") or ""
+        url = p.get("url") or p.get("image_url") or p.get("public_url") or ""
+        photo_html += _j10_render_row(title, detail, url)
+    if not photo_html:
+        photo_html = "<p>No approved photo records are visible to this login yet.</p>"
+
+    html = f"""
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Client Jarvis</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {{ margin:0; font-family:Arial,sans-serif; background:#070a0f; color:#f5efe3; }}
+    .wrap {{ max-width:1100px; margin:0 auto; padding:24px; }}
+    .hero {{ background:linear-gradient(135deg,#111722,#05070b); border:1px solid #5d421d; border-radius:22px; padding:24px; box-shadow:0 20px 60px rgba(0,0,0,.45); }}
+    h1 {{ margin:0 0 8px; font-size:34px; letter-spacing:.08em; }}
+    .sub {{ color:#d9b56d; margin-bottom:18px; }}
+    .grid {{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }}
+    @media(max-width:850px) {{ .grid {{ grid-template-columns:1fr; }} }}
+    .card {{ background:#101722; border:1px solid #2d2113; border-radius:18px; padding:18px; margin-top:16px; }}
+    textarea, select {{ width:100%; box-sizing:border-box; border-radius:14px; border:1px solid #6b4b1f; background:#05070b; color:#fff; padding:14px; font-size:16px; }}
+    textarea {{ min-height:125px; }}
+    button {{ margin-top:10px; padding:12px 16px; border:0; border-radius:12px; background:#b8873a; color:#111; font-weight:900; cursor:pointer; }}
+    .item {{ background:#05070b; border:1px solid #2d2113; border-radius:14px; padding:13px; margin:10px 0; }}
+    .item-title {{ font-weight:900; color:#f5efe3; }}
+    .item-detail {{ color:#d9b56d; font-size:13px; margin-top:6px; }}
+    a {{ color:#d9a64a; }}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero">
+    <h1>CLIENT J.A.R.V.I.S.</h1>
+    <div class="sub">Welcome, {_j10_esc(name)}. This page is client-safe. Role: {_j10_esc(role)}.</div>
+
+    <div class="grid">
+      <div>
+        <div class="card">
+          <h2>Send Mike a Request</h2>
+          <form method="post" action="/jarvis-brain/client/request">
+            <label>Request Type</label>
+            <select name="request_type">
+              <option>Project Question</option>
+              <option>Service Request</option>
+              <option>Schedule Question</option>
+              <option>Photo / Progress Question</option>
+              <option>Billing Question</option>
+              <option>Warranty / Issue</option>
+            </select>
+            <br><br>
+            <label>Message</label>
+            <textarea name="message" placeholder="Tell Mike what you need..."></textarea>
+            <button type="submit">Send Request</button>
+          </form>
+        </div>
+
+        <div class="card">
+          <h2>Your Requests</h2>
+          {requests_html}
+        </div>
+
+        <div class="card">
+          <h2>Links</h2>
+          <p>
+            <a href="/client-portal">Client Portal</a>
+            |
+            <a href="/jarvis-brain/client.json">Client JSON</a>
+            |
+            <a href="/jarvis-brain/start">Jarvis Start</a>
+            |
+            <a href="/">Home</a>
+          </p>
+        </div>
+      </div>
+
+      <div>
+        <div class="card">
+          <h2>Visible Projects</h2>
+          {jobs_html}
+        </div>
+
+        <div class="card">
+          <h2>Visible Properties</h2>
+          {props_html}
+        </div>
+
+        <div class="card">
+          <h2>Visible Photos</h2>
+          {photo_html}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
+"""
+    return HTMLResponse(html)
+
+
+@app.post("/jarvis-brain/client/request")
+async def jarvis_brain_level10_client_request(request: Request):
+    try:
+        form = await request.form()
+        message = str(form.get("message") or "").strip()
+        request_type = str(form.get("request_type") or "Project Question").strip()
+    except Exception:
+        message = ""
+        request_type = "Project Question"
+
+    if message:
+        _j10_save_client_request(request, message, request_type)
+
+    return RedirectResponse("/jarvis-brain/client", status_code=303)
+
+
+@app.get("/jarvis-brain/client.json")
+def jarvis_brain_level10_client_json(request: Request):
+    user = _j10_user(request)
+
+    return JSONResponse({
+        "ok": True,
+        "version": JARVIS_ROLE_FRONT_DOOR_VERSION,
+        "role": _j10_role(user),
+        "client_name": _j10_name(user),
+        "client_email": _j10_email(user),
+        "jobs": _j10_client_jobs(user),
+        "properties": _j10_client_properties(user),
+        "photos": _j10_client_photos(user),
+        "requests": _j10_client_requests(user),
+        "tables_seen": {
+            "poolops2_jobs": _j10_table_exists("poolops2_jobs"),
+            "poolops2_properties": _j10_table_exists("poolops2_properties"),
+            "poolops2_photo_logs": _j10_table_exists("poolops2_photo_logs"),
+            "invisible_office_items": _j10_table_exists("invisible_office_items"),
+        },
+    })
+
+
+@app.get("/client/jarvis", response_class=HTMLResponse)
+def jarvis_brain_level10_client_alias_one(request: Request):
+    return RedirectResponse("/jarvis-brain/client", status_code=303)
+
+
+@app.get("/client-jarvis", response_class=HTMLResponse)
+def jarvis_brain_level10_client_alias_two(request: Request):
+    return RedirectResponse("/jarvis-brain/client", status_code=303)
+
+# ============================================================
+# END JARVIS BRAIN LEVEL 10 ROLE FRONT DOOR + CLIENT FLOW
+# ============================================================
+
