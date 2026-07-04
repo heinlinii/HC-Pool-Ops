@@ -1,0 +1,129 @@
+/* ============================================================
+   HEINLIN GLOBAL CREST WATERMARK - VISIBLE OVERLAY VERSION
+   This puts the crest over the page as a faint watermark.
+   It does NOT block clicks.
+   ============================================================ */
+
+html,
+body {
+  min-height: 100%;
+  background: #070a0f !important;
+}
+
+/* Main dark base */
+body {
+  position: relative;
+  background:
+    radial-gradient(circle at center, rgba(184,135,58,0.10), rgba(7,10,15,0.96) 65%),
+    #070a0f !important;
+}
+
+/* Faint crest watermark ABOVE cards/pages */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 999990;
+  pointer-events: none;
+
+  background-image: url("/static/heinlin-crest.png?v=watermark3");
+  background-repeat: no-repeat;
+  background-position: center bottom;
+  background-size: min(55vw, 900px) auto;
+  transform: scaleX(1.30);
+  transform-origin: center center;
+
+  opacity: 0.55;
+  mix-blend-mode: screen;
+}
+
+/* Keep important floating controls above the watermark */
+#jarvis-admin-switch-bar,
+#j21-ask,
+#jarvis-universal-ask,
+#j18-panel,
+#j18-toggle,
+#j21-panel,
+#j21-open {
+  z-index: 999999 !important;
+}
+
+/* Slightly soften heavy dark cards so the crest can breathe behind them too */
+.hero,
+.card,
+.tile,
+.ask,
+.panel,
+.login-card,
+.job-item,
+.mem-item,
+.desk-item,
+.memory-card,
+.stat,
+.item,
+.flow-step,
+section,
+main {
+  background-color: rgba(8, 12, 18, 0.86) !important;
+}
+
+/* ============================================================
+   JARVIS TOP BAR - MATCH PAGE STYLE
+   ============================================================ */
+
+#jarvis-admin-switch-bar {
+  background: rgba(248, 250, 253, 0) !important;
+  border-bottom: 1px solid #2d2113 !important;
+  box-shadow: 0 0px 0px rgba(251, 250, 250, 0) !important;
+  color: #99752d !important;
+}
+
+#jarvis-admin-switch-bar .j17-left,
+#jarvis-admin-switch-bar strong {
+  color: #f5efe3 !important;
+  text-shadow: none !important;
+}
+
+#jarvis-admin-switch-bar a {
+  background: #101722 !important;
+  border: 1px solid #2d2113 !important;
+  color: #ceb132 !important;
+  box-shadow: none !important;
+}
+
+#jarvis-admin-switch-bar a:hover {
+  background: #151d2a !important;
+  border-color: #6b4b1f !important;
+  color: #9f7725 !important;
+}
+
+#jarvis-admin-switch-bar a.j17-danger {
+  background: #101722 !important;
+  color: #fefefd !important;
+  border-color: #6b4b1f !important;
+}
+
+#jarvis-admin-switch-bar a.j17-danger:hover {
+  background: #1b2433 !important;
+  color: #f5efe3 !important;
+}
+
+/* ============================================================
+   MAKE RETURN TO ADMIN BUTTON MATCH OTHER TOP BAR BUTTONS
+   ============================================================ */
+
+#jarvis-admin-switch-bar a.j17-danger,
+#jarvis-admin-switch-bar a.j17-danger:visited {
+  background: rgba(16, 23, 34, 0.58) !important;
+  border: 1px solid rgba(107, 75, 31, 0.55) !important;
+  color: #fdd583 !important;
+  box-shadow: none !important;
+  backdrop-filter: blur(3px);
+  opacity: 1 !important;
+}
+
+#jarvis-admin-switch-bar a.j17-danger:hover {
+  background: rgba(21, 29, 42, 0.76) !important;
+  border-color: rgba(217, 181, 109, 0.65) !important;
+  color: #ffffff !important;
+}

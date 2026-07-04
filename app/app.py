@@ -10633,3 +10633,95 @@ def jarvis_easy_control_panel_json(request: Request):
 # END JARVIS EASY CONTROL PANEL
 # ============================================================
 
+
+# ============================================================
+# HEINLIN GLOBAL CREST BACKGROUND
+# Injects /static/jarvis-global-crest.css into every HTML page.
+# Safe visual-only add-on. Does NOT touch login/logout/routing.
+# ============================================================
+
+try:
+    from starlette.responses import Response as _CrestResponse
+except Exception:
+    pass
+
+HEINLIN_GLOBAL_CREST_VERSION = "global-crest-background-2026-07-04"
+
+
+def _crest_should_inject(path):
+    if not path:
+        return False
+
+    if path.startswith(("/static", "/assets", "/api", "/docs", "/openapi")):
+        return False
+
+    if path.endswith((".json", ".png", ".jpg", ".jpeg", ".webp", ".css", ".js", ".ico")):
+        return False
+
+    return True
+
+
+def _crest_link_tag():
+    return '<link rel="stylesheet" href="/static/jarvis-global-crest.css?v=20260704">'
+
+
+@app.middleware("http")
+async def heinlin_global_crest_background_middleware(request, call_next):
+    response = await call_next(request)
+
+    if not _crest_should_inject(request.url.path):
+        return response
+
+    content_type = response.headers.get("content-type", "")
+    if "text/html" not in content_type.lower():
+        return response
+
+    try:
+        body = b""
+        async for chunk in response.body_iterator:
+            body += chunk
+
+        html = body.decode("utf-8", errors="replace")
+        link = _crest_link_tag()
+
+        if "/static/jarvis-global-crest.css" not in html:
+            if "</head>" in html.lower():
+                import re as _crest_re
+                html = _crest_re.sub(r"</head>", link + "\n</head>", html, count=1, flags=_crest_re.I)
+            else:
+                html = link + html
+
+        headers = dict(response.headers)
+        headers.pop("content-length", None)
+
+        return _CrestResponse(
+            content=html,
+            status_code=response.status_code,
+            headers=headers,
+            media_type="text/html",
+        )
+    except Exception as exc:
+        print("Crest background inject skipped:", exc)
+        return response
+
+
+@app.get("/jarvis-brain/crest-check")
+def heinlin_global_crest_check():
+    from pathlib import Path as _Path
+    crest_path = _Path("app/static/heinlin-crest.png")
+    css_path = _Path("app/static/jarvis-global-crest.css")
+
+    return {
+        "ok": True,
+        "version": HEINLIN_GLOBAL_CREST_VERSION,
+        "crest_exists": crest_path.exists(),
+        "crest_expected_path": str(crest_path),
+        "css_exists": css_path.exists(),
+        "css_path": str(css_path),
+        "note": "If crest_exists is false, put your crest image at app/static/heinlin-crest.png",
+    }
+
+# ============================================================
+# END HEINLIN GLOBAL CREST BACKGROUND
+# ============================================================
+
