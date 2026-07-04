@@ -8542,3 +8542,872 @@ def jarvis_brain_level13_today_alias(request: Request):
 # END JARVIS BRAIN LEVEL 13 TODAY OPS BOARD
 # ============================================================
 
+
+# ============================================================
+# JARVIS BRAIN LEVEL 15 LOGIN SESSION BRIDGE
+# Makes admin role-switching set every common session key the app may use.
+# Safe add-on only.
+# ============================================================
+
+import html as _j15_html
+from datetime import datetime as _j15_datetime
+
+try:
+    from fastapi import Request
+except Exception:
+    pass
+
+try:
+    from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
+except Exception:
+    pass
+
+JARVIS_SESSION_BRIDGE_VERSION = "level-15-login-session-bridge-2026-07-04"
+
+
+def _j15_now():
+    return _j15_datetime.now().isoformat(timespec="seconds")
+
+
+def _j15_esc(value):
+    return _j15_html.escape(str(value or ""))
+
+
+def _j15_user(request):
+    try:
+        f = globals().get("current_user")
+        if callable(f):
+            u = f(request)
+            if u:
+                return u
+    except Exception:
+        pass
+
+    try:
+        if hasattr(request, "session"):
+            return request.session.get("user") or {}
+    except Exception:
+        pass
+
+    return {}
+
+
+def _j15_role(user):
+    role = str((user or {}).get("role") or (user or {}).get("login_type") or "admin").lower().strip()
+    if role == "employee":
+        role = "crew"
+    return role
+
+
+def _j15_name(user):
+    return str(
+        (user or {}).get("name")
+        or (user or {}).get("username")
+        or (user or {}).get("email")
+        or "User"
+    ).strip()
+
+
+def _j15_email(user):
+    return str((user or {}).get("email") or "").strip()
+
+
+def _j15_rows(sql, params=()):
+    try:
+        f = globals().get("rows")
+        if callable(f):
+            return f(sql, params) or []
+    except Exception:
+        pass
+    return []
+
+
+def _j15_columns(table):
+    try:
+        f = globals().get("table_columns")
+        if callable(f):
+            return list(f(table) or [])
+    except Exception:
+        pass
+    return []
+
+
+def _j15_find_by_id(table, item_id):
+    cols = _j15_columns(table)
+    if not cols or "id" not in cols:
+        return None
+
+    found = _j15_rows(f"SELECT * FROM {table} WHERE id=? LIMIT 1", (item_id,))
+    return found[0] if found else None
+
+
+def _j15_employees():
+    cols = _j15_columns("poolops2_employees")
+    if not cols:
+        return []
+
+    wanted = [c for c in ["id", "name", "email", "role", "clocked_in"] if c in cols]
+    if not wanted:
+        return []
+
+    order = "ORDER BY name" if "name" in cols else "ORDER BY id DESC" if "id" in cols else ""
+    return _j15_rows(f"SELECT {','.join(wanted)} FROM poolops2_employees {order} LIMIT 300", ())
+
+
+def _j15_clients():
+    cols = _j15_columns("poolops2_clients")
+    if not cols:
+        return []
+
+    wanted = [c for c in ["id", "name", "contact_name", "email", "phone"] if c in cols]
+    if not wanted:
+        return []
+
+    order = "ORDER BY name" if "name" in cols else "ORDER BY id DESC" if "id" in cols else ""
+    return _j15_rows(f"SELECT {','.join(wanted)} FROM poolops2_clients {order} LIMIT 300", ())
+
+
+def _j15_is_real_admin(request):
+    user = _j15_user(request)
+    if _j15_role(user) == "admin":
+        return True
+
+    try:
+        backup = request.session.get("jarvis_real_admin_user")
+        if backup and _j15_role(backup) == "admin":
+            return True
+    except Exception:
+        pass
+
+    return False
+
+
+def _j15_make_target(target_type, target_id="", custom_name="", custom_email=""):
+    target_type = str(target_type or "").lower().strip()
+
+    if target_type == "admin":
+        return {
+            "id": "admin",
+            "user_id": "admin",
+            "name": custom_name or "Mike",
+            "username": custom_name or "Mike",
+            "email": custom_email or "",
+            "role": "admin",
+            "login_type": "admin",
+            "is_admin": True,
+            "switched_by_jarvis": True,
+        }
+
+    if target_type in ("crew", "employee"):
+        row = _j15_find_by_id("poolops2_employees", target_id)
+        if not row:
+            return None
+
+        name = row.get("name") or row.get("email") or f"Employee {target_id}"
+        email = row.get("email") or ""
+
+        return {
+            "id": row.get("id"),
+            "user_id": row.get("id"),
+            "employee_id": row.get("id"),
+            "name": name,
+            "username": name,
+            "email": email,
+            "role": "crew",
+            "login_type": "crew",
+            "is_admin": False,
+            "is_employee": True,
+            "switched_by_jarvis": True,
+        }
+
+    if target_type == "client":
+        row = _j15_find_by_id("poolops2_clients", target_id)
+        if not row:
+            return None
+
+        name = row.get("name") or row.get("contact_name") or row.get("email") or f"Client {target_id}"
+        email = row.get("email") or ""
+
+        return {
+            "id": row.get("id"),
+            "user_id": row.get("id"),
+            "client_id": row.get("id"),
+            "name": name,
+            "username": name,
+            "email": email,
+            "role": "client",
+            "login_type": "client",
+            "is_admin": False,
+            "is_client": True,
+            "switched_by_jarvis": True,
+        }
+
+    if target_type == "custom_crew":
+        name = custom_name or "Crew Test"
+        return {
+            "id": "custom_crew",
+            "user_id": "custom_crew",
+            "employee_id": "custom_crew",
+            "name": name,
+            "username": name,
+            "email": custom_email or "",
+            "role": "crew",
+            "login_type": "crew",
+            "is_admin": False,
+            "is_employee": True,
+            "switched_by_jarvis": True,
+        }
+
+    if target_type == "custom_client":
+        name = custom_name or "Client Test"
+        return {
+            "id": "custom_client",
+            "user_id": "custom_client",
+            "client_id": "custom_client",
+            "name": name,
+            "username": name,
+            "email": custom_email or "",
+            "role": "client",
+            "login_type": "client",
+            "is_admin": False,
+            "is_client": True,
+            "switched_by_jarvis": True,
+        }
+
+    return None
+
+
+def _j15_apply_session_bridge(request, target):
+    if not hasattr(request, "session"):
+        return False
+
+    session = request.session
+    current = _j15_user(request)
+
+    if _j15_role(current) == "admin" and not session.get("jarvis_real_admin_user"):
+        session["jarvis_real_admin_user"] = dict(current)
+
+    role = _j15_role(target)
+    name = _j15_name(target)
+    email = _j15_email(target)
+    uid = target.get("user_id") or target.get("id")
+
+    # Main object used by Jarvis helpers.
+    session["user"] = target
+
+    # Common keys older app routes may check.
+    session["user_id"] = uid
+    session["id"] = uid
+    session["username"] = name
+    session["name"] = name
+    session["email"] = email
+    session["role"] = role
+    session["login_type"] = role
+
+    # Role flags.
+    session["is_admin"] = role == "admin"
+    session["is_employee"] = role == "crew"
+    session["is_crew"] = role == "crew"
+    session["is_client"] = role == "client"
+
+    # Entity-specific ids.
+    if role == "crew":
+        session["employee_id"] = target.get("employee_id") or uid
+        session.pop("client_id", None)
+
+    if role == "client":
+        session["client_id"] = target.get("client_id") or uid
+        session.pop("employee_id", None)
+
+    if role == "admin":
+        session.pop("employee_id", None)
+        session.pop("client_id", None)
+
+    session["jarvis_switched_login"] = {
+        "active": True,
+        "started_at": _j15_now(),
+        "target_role": role,
+        "target_name": name,
+        "target_email": email,
+        "target_id": uid,
+    }
+
+    return True
+
+
+def _j15_return_to_admin(request):
+    if not hasattr(request, "session"):
+        return False
+
+    session = request.session
+    admin = session.get("jarvis_real_admin_user")
+
+    if not admin:
+        return False
+
+    # Restore using the same bridge so all session keys are reset.
+    session["user"] = admin
+    role = _j15_role(admin)
+    name = _j15_name(admin)
+    email = _j15_email(admin)
+    uid = admin.get("user_id") or admin.get("id") or "admin"
+
+    session["user_id"] = uid
+    session["id"] = uid
+    session["username"] = name
+    session["name"] = name
+    session["email"] = email
+    session["role"] = role
+    session["login_type"] = role
+    session["is_admin"] = True
+    session["is_employee"] = False
+    session["is_crew"] = False
+    session["is_client"] = False
+    session.pop("employee_id", None)
+    session.pop("client_id", None)
+    session.pop("jarvis_switched_login", None)
+
+    return True
+
+
+def _j15_status(request):
+    user = _j15_user(request)
+    s = request.session if hasattr(request, "session") else {}
+
+    keys = [
+        "user_id", "id", "username", "name", "email", "role", "login_type",
+        "is_admin", "is_employee", "is_crew", "is_client",
+        "employee_id", "client_id", "jarvis_switched_login"
+    ]
+
+    session_view = {}
+    for k in keys:
+        try:
+            session_view[k] = s.get(k)
+        except Exception:
+            session_view[k] = None
+
+    return {
+        "current_user_object": user,
+        "current_name": _j15_name(user),
+        "current_role": _j15_role(user),
+        "current_email": _j15_email(user),
+        "session_keys": session_view,
+        "has_real_admin_backup": bool(s.get("jarvis_real_admin_user")) if hasattr(request, "session") else False,
+        "is_real_admin": _j15_is_real_admin(request),
+    }
+
+
+def _j15_btn(target_type, target_id, label, detail=""):
+    return f"""
+    <form method="post" action="/jarvis-brain/login-bridge/switch">
+      <input type="hidden" name="target_type" value="{_j15_esc(target_type)}">
+      <input type="hidden" name="target_id" value="{_j15_esc(target_id)}">
+      <button type="submit">
+        {_j15_esc(label)}
+        <span>{_j15_esc(detail)}</span>
+      </button>
+    </form>
+    """
+
+
+@app.get("/jarvis-brain/login-bridge", response_class=HTMLResponse)
+def jarvis_brain_level15_login_bridge_page(request: Request):
+    user = _j15_user(request)
+
+    if not user:
+        return RedirectResponse("/login", status_code=303)
+
+    if not _j15_is_real_admin(request):
+        return HTMLResponse("<h1>Admin only</h1><p><a href='/login'>Login</a></p>", status_code=403)
+
+    status = _j15_status(request)
+    employees = _j15_employees()
+    clients = _j15_clients()
+
+    employee_html = ""
+    for e in employees:
+        label = e.get("name") or e.get("email") or f"Employee {e.get('id')}"
+        detail = e.get("email") or "Crew"
+        employee_html += _j15_btn("crew", e.get("id"), label, detail)
+
+    if not employee_html:
+        employee_html = "<p>No employee rows found.</p>"
+
+    client_html = ""
+    for c in clients:
+        label = c.get("name") or c.get("contact_name") or c.get("email") or f"Client {c.get('id')}"
+        detail = c.get("email") or c.get("phone") or "Client"
+        client_html += _j15_btn("client", c.get("id"), label, detail)
+
+    if not client_html:
+        client_html = "<p>No client rows found.</p>"
+
+    return_admin_html = ""
+    if status["has_real_admin_backup"] or status["current_role"] != "admin":
+        return_admin_html = """
+        <form method="post" action="/jarvis-brain/login-bridge/return-admin">
+          <button class="admin" type="submit">Return to Real Admin <span>Restore Mike/Admin session keys</span></button>
+        </form>
+        """
+
+    html = f"""
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Jarvis Login Bridge</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {{ margin:0; font-family:Arial,sans-serif; background:#070a0f; color:#f5efe3; }}
+    .wrap {{ max-width:1180px; margin:0 auto; padding:26px; }}
+    .hero {{ background:linear-gradient(135deg,#111722,#05070b); border:1px solid #5d421d; border-radius:22px; padding:24px; box-shadow:0 20px 60px rgba(0,0,0,.45); }}
+    h1 {{ margin:0 0 8px; font-size:34px; letter-spacing:.08em; }}
+    .sub {{ color:#d9b56d; margin-bottom:20px; }}
+    .grid {{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }}
+    @media(max-width:900px) {{ .grid {{ grid-template-columns:1fr; }} }}
+    .card {{ background:#101722; border:1px solid #2d2113; border-radius:18px; padding:18px; margin-top:16px; }}
+    button {{ width:100%; text-align:left; margin:7px 0; padding:13px 15px; border:1px solid #6b4b1f; border-radius:14px; background:#05070b; color:#f5efe3; font-weight:900; cursor:pointer; }}
+    button:hover {{ border-color:#b8873a; }}
+    button span {{ display:block; margin-top:4px; color:#d9b56d; font-weight:400; font-size:13px; }}
+    button.admin {{ background:#b8873a; color:#111; }}
+    button.admin span {{ color:#33210d; }}
+    input {{ width:100%; box-sizing:border-box; margin:7px 0; padding:12px; border-radius:12px; border:1px solid #6b4b1f; background:#05070b; color:#fff; }}
+    pre {{ white-space:pre-wrap; background:#05070b; border:1px solid #2d2113; border-radius:14px; padding:12px; overflow:auto; }}
+    a {{ color:#d9a64a; }}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero">
+    <h1>JARVIS LOGIN BRIDGE</h1>
+    <div class="sub">This sets every common session key so the rest of the app can recognize Admin, Crew, and Client mode.</div>
+
+    <div class="card">
+      <h2>Current Session</h2>
+      <p><b>Name:</b> {_j15_esc(status['current_name'])}</p>
+      <p><b>Role:</b> {_j15_esc(status['current_role'])}</p>
+      <p><b>Email:</b> {_j15_esc(status['current_email'])}</p>
+      {return_admin_html}
+      {_j15_btn("admin", "admin", "Switch to Admin", "Mike/Admin view")}
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <h2>Crew / Employee</h2>
+        {employee_html}
+
+        <h3>Custom Crew Test</h3>
+        <form method="post" action="/jarvis-brain/login-bridge/switch">
+          <input type="hidden" name="target_type" value="custom_crew">
+          <input name="custom_name" placeholder="Crew name">
+          <input name="custom_email" placeholder="Crew email optional">
+          <button type="submit">Custom Crew <span>Testing only</span></button>
+        </form>
+      </div>
+
+      <div class="card">
+        <h2>Client</h2>
+        {client_html}
+
+        <h3>Custom Client Test</h3>
+        <form method="post" action="/jarvis-brain/login-bridge/switch">
+          <input type="hidden" name="target_type" value="custom_client">
+          <input name="custom_name" placeholder="Client name">
+          <input name="custom_email" placeholder="Client email optional">
+          <button type="submit">Custom Client <span>Testing only</span></button>
+        </form>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Test After Switching</h2>
+      <p>
+        <a href="/jarvis-brain/start">Smart Start</a> |
+        <a href="/jarvis-brain/launch">Launch Pad</a> |
+        <a href="/jarvis-brain/crew">Crew Flow</a> |
+        <a href="/jarvis-brain/client">Client Jarvis</a> |
+        <a href="/jarvis-brain/login-bridge.json">Bridge JSON</a>
+      </p>
+    </div>
+
+    <div class="card">
+      <h2>Session Debug</h2>
+      <pre>{_j15_esc(status)}</pre>
+    </div>
+  </div>
+</div>
+</body>
+</html>
+"""
+    return HTMLResponse(html)
+
+
+@app.post("/jarvis-brain/login-bridge/switch")
+async def jarvis_brain_level15_login_bridge_switch(request: Request):
+    user = _j15_user(request)
+
+    if not user:
+        return RedirectResponse("/login", status_code=303)
+
+    if not _j15_is_real_admin(request):
+        return HTMLResponse("<h1>Admin only</h1>", status_code=403)
+
+    try:
+        form = await request.form()
+        target_type = str(form.get("target_type") or "").strip()
+        target_id = str(form.get("target_id") or "").strip()
+        custom_name = str(form.get("custom_name") or "").strip()
+        custom_email = str(form.get("custom_email") or "").strip()
+    except Exception:
+        target_type = ""
+        target_id = ""
+        custom_name = ""
+        custom_email = ""
+
+    if target_type == "admin":
+        admin = request.session.get("jarvis_real_admin_user") if hasattr(request, "session") else None
+        target = admin or _j15_make_target("admin", custom_name="Mike")
+    else:
+        target = _j15_make_target(target_type, target_id, custom_name, custom_email)
+
+    if not target:
+        return RedirectResponse("/jarvis-brain/login-bridge", status_code=303)
+
+    _j15_apply_session_bridge(request, target)
+
+    return RedirectResponse("/jarvis-brain/start", status_code=303)
+
+
+@app.post("/jarvis-brain/login-bridge/return-admin")
+def jarvis_brain_level15_return_admin(request: Request):
+    _j15_return_to_admin(request)
+    return RedirectResponse("/jarvis-brain/launch", status_code=303)
+
+
+@app.get("/jarvis-brain/login-bridge.json")
+def jarvis_brain_level15_login_bridge_json(request: Request):
+    return JSONResponse({
+        "ok": True,
+        "version": JARVIS_SESSION_BRIDGE_VERSION,
+        "status": _j15_status(request),
+        "employees_seen": len(_j15_employees()),
+        "clients_seen": len(_j15_clients()),
+        "tables_seen": {
+            "poolops2_employees": bool(_j15_columns("poolops2_employees")),
+            "poolops2_clients": bool(_j15_columns("poolops2_clients")),
+        },
+    })
+
+
+@app.get("/login-bridge", response_class=HTMLResponse)
+def jarvis_brain_level15_login_bridge_alias(request: Request):
+    return RedirectResponse("/jarvis-brain/login-bridge", status_code=303)
+
+
+@app.get("/whoami")
+def jarvis_brain_level15_whoami(request: Request):
+    return JSONResponse({
+        "ok": True,
+        "version": JARVIS_SESSION_BRIDGE_VERSION,
+        "status": _j15_status(request),
+    })
+
+# ============================================================
+# END JARVIS BRAIN LEVEL 15 LOGIN SESSION BRIDGE
+# ============================================================
+
+
+# ============================================================
+# JARVIS BRAIN LEVEL 17 ADMIN SWITCH BAR
+# Adds a permanent top bar to Jarvis pages:
+# Return to Admin | Switch Login | Launch Pad | Today Ops | Mike Brain
+# ============================================================
+
+import html as _j17_html
+
+try:
+    from fastapi.responses import RedirectResponse as _J17RedirectResponse
+except Exception:
+    pass
+
+try:
+    from starlette.responses import Response as _J17Response
+except Exception:
+    pass
+
+JARVIS_ADMIN_BAR_VERSION = "level-17-admin-switch-bar-2026-07-04"
+
+
+def _j17_esc(value):
+    return _j17_html.escape(str(value or ""))
+
+
+def _j17_user(request):
+    try:
+        f = globals().get("current_user")
+        if callable(f):
+            u = f(request)
+            if u:
+                return u
+    except Exception:
+        pass
+
+    try:
+        if hasattr(request, "session"):
+            return request.session.get("user") or {}
+    except Exception:
+        pass
+
+    return {}
+
+
+def _j17_role(user):
+    role = str((user or {}).get("role") or (user or {}).get("login_type") or "guest").lower().strip()
+    if role == "employee":
+        role = "crew"
+    return role
+
+
+def _j17_name(user):
+    return str(
+        (user or {}).get("name")
+        or (user or {}).get("username")
+        or (user or {}).get("email")
+        or "User"
+    ).strip()
+
+
+def _j17_has_admin_backup(request):
+    try:
+        backup = request.session.get("jarvis_real_admin_user")
+        return bool(backup)
+    except Exception:
+        return False
+
+
+def _j17_is_switched(request):
+    try:
+        return bool((request.session.get("jarvis_switched_login") or {}).get("active"))
+    except Exception:
+        return False
+
+
+def _j17_is_jarvis_html_path(path):
+    return (
+        path.startswith("/jarvis-brain")
+        or path in ("/crew/jarvis", "/employee/jarvis", "/client/jarvis", "/client-jarvis", "/jarvis-launch", "/jarvis-today", "/jarvis-help", "/jarvis-status")
+    )
+
+
+def _j17_restore_admin_session(request):
+    if not hasattr(request, "session"):
+        return False
+
+    session = request.session
+    admin = session.get("jarvis_real_admin_user")
+
+    if not admin:
+        return False
+
+    role = "admin"
+    name = (
+        admin.get("name")
+        or admin.get("username")
+        or admin.get("email")
+        or "Mike"
+    )
+    email = admin.get("email") or ""
+    uid = admin.get("user_id") or admin.get("id") or "admin"
+
+    session["user"] = admin
+    session["user_id"] = uid
+    session["id"] = uid
+    session["username"] = name
+    session["name"] = name
+    session["email"] = email
+    session["role"] = role
+    session["login_type"] = role
+    session["is_admin"] = True
+    session["is_employee"] = False
+    session["is_crew"] = False
+    session["is_client"] = False
+    session.pop("employee_id", None)
+    session.pop("client_id", None)
+    session.pop("jarvis_switched_login", None)
+
+    return True
+
+
+def _j17_bar_html(request):
+    user = _j17_user(request)
+    role = _j17_role(user)
+    name = _j17_name(user)
+    switched = _j17_is_switched(request)
+    has_backup = _j17_has_admin_backup(request)
+
+    return_admin = ""
+    if switched or has_backup or role != "admin":
+        return_admin = '<a class="j17-danger" href="/jarvis-brain/return-admin">Return to Admin</a>'
+
+    viewing = f"Viewing as: {role.upper()} / {name}"
+    if switched:
+        viewing += "  ? TEST MODE"
+
+    return f"""
+<div id="jarvis-admin-switch-bar">
+  <div class="j17-left">
+    <strong>{_j17_esc(viewing)}</strong>
+  </div>
+  <div class="j17-right">
+    {return_admin}
+    <a href="/jarvis-brain/login-bridge">Switch Login</a>
+    <a href="/jarvis-brain/launch">Launch Pad</a>
+    <a href="/jarvis-brain/today">Today Ops</a>
+    <a href="/jarvis-brain">Mike Brain</a>
+  </div>
+</div>
+<style>
+  body {{
+    padding-top: 64px !important;
+  }}
+  #jarvis-admin-switch-bar {{
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 999999;
+    min-height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 16px;
+    background: #05070b;
+    border-bottom: 1px solid #b8873a;
+    box-shadow: 0 8px 22px rgba(0,0,0,.45);
+    color: #f5efe3;
+    font-family: Arial, sans-serif;
+  }}
+  #jarvis-admin-switch-bar .j17-left {{
+    font-size: 14px;
+    color: #f5efe3;
+  }}
+  #jarvis-admin-switch-bar .j17-right {{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }}
+  #jarvis-admin-switch-bar a {{
+    display: inline-block;
+    padding: 8px 11px;
+    border-radius: 999px;
+    border: 1px solid #6b4b1f;
+    background: #101722;
+    color: #d9b56d !important;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 800;
+  }}
+  #jarvis-admin-switch-bar a.j17-danger {{
+    background: #b8873a;
+    color: #111 !important;
+    border-color: #d9b56d;
+  }}
+  @media(max-width: 800px) {{
+    body {{
+      padding-top: 112px !important;
+    }}
+    #jarvis-admin-switch-bar {{
+      display: block;
+    }}
+    #jarvis-admin-switch-bar .j17-right {{
+      margin-top: 8px;
+      justify-content: flex-start;
+    }}
+  }}
+</style>
+"""
+
+
+@app.get("/jarvis-brain/return-admin")
+def jarvis_brain_level17_return_admin(request: Request):
+    ok = _j17_restore_admin_session(request)
+    if ok:
+        return _J17RedirectResponse("/jarvis-brain/launch", status_code=303)
+    return _J17RedirectResponse("/logout", status_code=303)
+
+
+@app.post("/jarvis-brain/return-admin")
+def jarvis_brain_level17_return_admin_post(request: Request):
+    ok = _j17_restore_admin_session(request)
+    if ok:
+        return _J17RedirectResponse("/jarvis-brain/launch", status_code=303)
+    return _J17RedirectResponse("/logout", status_code=303)
+
+
+@app.get("/jarvis-brain/switch")
+def jarvis_brain_level17_switch_alias(request: Request):
+    return _J17RedirectResponse("/jarvis-brain/login-bridge", status_code=303)
+
+
+@app.middleware("http")
+async def jarvis_level17_admin_bar_middleware(request, call_next):
+    response = await call_next(request)
+
+    path = request.url.path
+    if not _j17_is_jarvis_html_path(path):
+        return response
+
+    content_type = response.headers.get("content-type", "")
+    if "text/html" not in content_type.lower():
+        return response
+
+    try:
+        body = b""
+        async for chunk in response.body_iterator:
+            body += chunk
+
+        html = body.decode("utf-8", errors="replace")
+
+        if "id=\"jarvis-admin-switch-bar\"" not in html:
+            bar = _j17_bar_html(request)
+
+            if "<body" in html.lower():
+                import re as _j17_re
+                html = _j17_re.sub(r"(<body[^>]*>)", r"\1" + bar, html, count=1, flags=_j17_re.I)
+            else:
+                html = bar + html
+
+        headers = dict(response.headers)
+        headers.pop("content-length", None)
+
+        return _J17Response(
+            content=html,
+            status_code=response.status_code,
+            headers=headers,
+            media_type="text/html",
+        )
+    except Exception as exc:
+        print("Jarvis admin bar inject skipped:", exc)
+        return response
+
+
+@app.get("/jarvis-brain/admin-bar-check")
+def jarvis_brain_level17_admin_bar_check(request: Request):
+    user = _j17_user(request)
+    return {
+        "ok": True,
+        "version": JARVIS_ADMIN_BAR_VERSION,
+        "role": _j17_role(user),
+        "name": _j17_name(user),
+        "is_switched": _j17_is_switched(request),
+        "has_admin_backup": _j17_has_admin_backup(request),
+    }
+
+# ============================================================
+# END JARVIS BRAIN LEVEL 17 ADMIN SWITCH BAR
+# ============================================================
+
