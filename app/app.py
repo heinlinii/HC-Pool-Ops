@@ -5858,3 +5858,655 @@ def jarvis_brain_level8_active_job_alias(request: Request):
 # END JARVIS BRAIN LEVEL 8 ACTIVE JOB CENTER
 # ============================================================
 
+
+# ============================================================
+# JARVIS BRAIN LEVEL 9 CREW FIELD FLOW
+# Adds /jarvis-brain/crew without replacing Level 7 or Level 8.
+# ============================================================
+
+import os as _j9_os
+import json as _j9_json
+import html as _j9_html
+from datetime import datetime as _j9_datetime, date as _j9_date
+
+try:
+    from fastapi import Request
+except Exception:
+    pass
+
+try:
+    from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
+except Exception:
+    pass
+
+JARVIS_CREW_FLOW_VERSION = "level-9-crew-field-flow-2026-07-04"
+
+
+def _j9_now():
+    return _j9_datetime.now().isoformat(timespec="seconds")
+
+
+def _j9_today():
+    return _j9_date.today().isoformat()
+
+
+def _j9_storage_dir():
+    path = _j9_os.path.join(_j9_os.getcwd(), "jarvis_storage")
+    _j9_os.makedirs(path, exist_ok=True)
+    return path
+
+
+def _j9_file(name):
+    return _j9_os.path.join(_j9_storage_dir(), name)
+
+
+def _j9_esc(value):
+    return _j9_html.escape(str(value or ""))
+
+
+def _j9_read_json(name, default=None):
+    path = _j9_file(name)
+    if not _j9_os.path.exists(path):
+        return default
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            return _j9_json.load(f)
+    except Exception:
+        return default
+
+
+def _j9_write_json(name, data):
+    with open(_j9_file(name), "w", encoding="utf-8") as f:
+        _j9_json.dump(data, f, ensure_ascii=False, indent=2)
+
+
+def _j9_read_jsonl_all(name):
+    path = _j9_file(name)
+    if not _j9_os.path.exists(path):
+        return []
+    items = []
+    with open(path, "r", encoding="utf-8") as f:
+        for line in f:
+            try:
+                items.append(_j9_json.loads(line.strip()))
+            except Exception:
+                pass
+    return items
+
+
+def _j9_user(request):
+    try:
+        f = globals().get("current_user")
+        if callable(f):
+            u = f(request)
+            if u:
+                return u
+    except Exception:
+        pass
+
+    try:
+        if hasattr(request, "session"):
+            return request.session.get("user") or {}
+    except Exception:
+        pass
+
+    return {}
+
+
+def _j9_name(user):
+    return str((user or {}).get("name") or (user or {}).get("username") or (user or {}).get("email") or "Crew").strip()
+
+
+def _j9_email(user):
+    return str((user or {}).get("email") or "").strip()
+
+
+def _j9_role(user):
+    role = str((user or {}).get("role") or "admin").lower().strip()
+    if role == "employee":
+        role = "crew"
+    return role
+
+
+def _j9_rows(sql, params=()):
+    try:
+        f = globals().get("rows")
+        if callable(f):
+            return f(sql, params) or []
+    except Exception:
+        pass
+    return []
+
+
+def _j9_exec(sql, params=()):
+    try:
+        f = globals().get("exec_sql")
+        if callable(f):
+            return f(sql, params)
+    except Exception:
+        pass
+    return None
+
+
+def _j9_columns(table):
+    try:
+        f = globals().get("table_columns")
+        if callable(f):
+            return list(f(table) or [])
+    except Exception:
+        pass
+    return []
+
+
+def _j9_table_exists(table):
+    return bool(_j9_columns(table))
+
+
+def _j9_active_context():
+    return _j9_read_json("jarvis_active_context.json", {}) or {}
+
+
+def _j9_today_memory():
+    today = _j9_today()
+    items = _j9_read_jsonl_all("jarvis_memory.jsonl")
+    items.reverse()
+    return [x for x in items if str(x.get("created_at") or "")[:10] == today]
+
+
+def _j9_match_active_item(item, active):
+    if not active:
+        return False
+
+    item_job_id = str(item.get("job_id") or "").strip()
+    active_job_id = str(active.get("job_id") or "").strip()
+
+    if item_job_id and active_job_id and item_job_id == active_job_id:
+        return True
+
+    item_client = str(item.get("client") or "").lower().strip()
+    active_client = str(active.get("client") or "").lower().strip()
+
+    item_address = str(item.get("address") or "").lower().strip()
+    active_address = str(active.get("address") or "").lower().strip()
+
+    if active_client and item_client and active_client == item_client:
+        return True
+
+    if active_address and item_address and active_address == item_address:
+        return True
+
+    return False
+
+
+def _j9_active_job_memory():
+    active = _j9_active_context()
+    items = _j9_read_jsonl_all("jarvis_memory.jsonl")
+    items.reverse()
+
+    if not active:
+        return []
+
+    return [x for x in items if _j9_match_active_item(x, active)]
+
+
+def _j9_employee_status(user):
+    cols = _j9_columns("poolops2_employees")
+    if not cols:
+        return {"table": False, "matched": False, "clocked_in": False, "message": "Employee table not found."}
+
+    name = _j9_name(user)
+    email = _j9_email(user)
+
+    where = []
+    params = []
+
+    if email and "email" in cols:
+        where.append("email=?")
+        params.append(email)
+
+    if name and "name" in cols:
+        where.append("name=?")
+        params.append(name)
+
+    if not where:
+        return {"table": True, "matched": False, "clocked_in": False, "message": "Could not match employee by name or email."}
+
+    try:
+        row = _j9_rows(f"SELECT * FROM poolops2_employees WHERE {' OR '.join(where)} LIMIT 1", tuple(params))
+        emp = row[0] if row else None
+    except Exception:
+        emp = None
+
+    if not emp:
+        return {"table": True, "matched": False, "clocked_in": False, "message": "Employee record not found."}
+
+    clocked = False
+    if "clocked_in" in cols:
+        clocked = str(emp.get("clocked_in") or "").lower() in ("1", "true", "yes", "on")
+
+    return {
+        "table": True,
+        "matched": True,
+        "clocked_in": clocked,
+        "name": emp.get("name") or name,
+        "clocked_in_at": emp.get("clocked_in_at") or "",
+        "last_seen_at": emp.get("last_seen_at") or "",
+        "message": "Clocked in." if clocked else "Not clocked in.",
+    }
+
+
+def _j9_crew_steps(user):
+    active = _j9_active_context()
+    status = _j9_employee_status(user)
+    today = _j9_today_memory()
+    job_items = _j9_active_job_memory()
+
+    field_logs = [x for x in job_items if str(x.get("category") or "") == "Field Log"]
+    billing = [x for x in job_items if str(x.get("category") or "") == "Billing Note"]
+    materials = [x for x in job_items if str(x.get("category") or "") == "Material Needed"]
+    problems = [x for x in job_items if str(x.get("category") or "") == "Problem Found"]
+
+    steps = []
+
+    steps.append({
+        "num": 1,
+        "title": "Set the active job",
+        "status": "done" if active else "needed",
+        "detail": "Tell Jarvis where you are before saving job notes.",
+        "command": "Jarvis, set active job to ",
+    })
+
+    steps.append({
+        "num": 2,
+        "title": "Clock in",
+        "status": "done" if status.get("clocked_in") else "needed",
+        "detail": status.get("message") or "Clock status unknown.",
+        "command": "Jarvis, clock me in",
+    })
+
+    steps.append({
+        "num": 3,
+        "title": "Take arrival photos",
+        "status": "prompt",
+        "detail": "Use Photos page for arrival/progress/completion photos. This protects Mike and the job history.",
+        "href": "/photos",
+    })
+
+    steps.append({
+        "num": 4,
+        "title": "Log the work",
+        "status": "done" if field_logs else "needed",
+        "detail": f"{len(field_logs)} field log item(s) captured for the active job.",
+        "command": "Jarvis, field log: ",
+    })
+
+    steps.append({
+        "num": 5,
+        "title": "Add materials, problems, or billing notes",
+        "status": "prompt",
+        "detail": f"Materials: {len(materials)} ? Problems: {len(problems)} ? Billing: {len(billing)}",
+        "command": "Jarvis, material needed: ",
+    })
+
+    steps.append({
+        "num": 6,
+        "title": "Take completion photos",
+        "status": "prompt",
+        "detail": "Before leaving, take completion photos and anything that protects the story.",
+        "href": "/photos",
+    })
+
+    steps.append({
+        "num": 7,
+        "title": "Clock out",
+        "status": "needed" if status.get("clocked_in") else "prompt",
+        "detail": "Clock out after the field log and photos are handled.",
+        "command": "Jarvis, clock me out",
+    })
+
+    return {
+        "active_job": active,
+        "employee_status": status,
+        "today_items": today[:25],
+        "active_job_items": job_items[:50],
+        "steps": steps,
+    }
+
+
+def _j9_render_step(step):
+    status = str(step.get("status") or "prompt")
+    status_label = {
+        "done": "DONE",
+        "needed": "NEEDED",
+        "prompt": "PROMPT",
+    }.get(status, status.upper())
+
+    action = ""
+    if step.get("command"):
+        action = f"<button class='small' onclick=\"fillCmd('{_j9_esc(step.get('command'))}')\">Use Command</button>"
+    elif step.get("href"):
+        action = f"<a class='buttonlink' href='{_j9_esc(step.get('href'))}'>Open</a>"
+
+    return f"""
+    <div class="flow-step {status}">
+      <div class="step-num">{_j9_esc(step.get('num'))}</div>
+      <div class="step-main">
+        <div class="step-top">
+          <b>{_j9_esc(step.get('title'))}</b>
+          <span>{_j9_esc(status_label)}</span>
+        </div>
+        <div class="step-detail">{_j9_esc(step.get('detail'))}</div>
+        {action}
+      </div>
+    </div>
+    """
+
+
+def _j9_render_memory_item(item):
+    cat = _j9_esc(item.get("category"))
+    created = _j9_esc(item.get("created_at"))
+    body = _j9_esc(item.get("body"))
+    client = _j9_esc(item.get("client"))
+    address = _j9_esc(item.get("address") or item.get("property"))
+
+    context = ""
+    if client or address:
+        context = f"<div class='mem-meta'>Job: {client} ? {address}</div>"
+
+    return f"""
+    <div class="mem-item">
+      <div class="mem-top"><b>{cat}</b><span>{created}</span></div>
+      <div class="mem-body">{body}</div>
+      {context}
+    </div>
+    """
+
+
+@app.get("/jarvis-brain/crew", response_class=HTMLResponse)
+def jarvis_brain_level9_crew_flow(request: Request):
+    user = _j9_user(request)
+    name = _j9_name(user).split()[0]
+    role = _j9_role(user)
+    data = _j9_crew_steps(user)
+    active = data["active_job"]
+    emp = data["employee_status"]
+
+    active_html = "<p>No active job set yet. Say: <b>Jarvis, set active job to Alexander</b>.</p>"
+    if active:
+        active_html = f"""
+        <p><b>{_j9_esc(active.get('title') or active.get('client') or active.get('address'))}</b></p>
+        <p>{_j9_esc(active.get('address'))}</p>
+        <p>Type: {_j9_esc(active.get('job_type'))} ? Status: {_j9_esc(active.get('status'))}</p>
+        """
+
+    steps_html = "".join([_j9_render_step(x) for x in data["steps"]])
+
+    job_memory_html = ""
+    for item in data["active_job_items"][:20]:
+        job_memory_html += _j9_render_memory_item(item)
+    if not job_memory_html:
+        job_memory_html = "<p>No memory tied to the active job yet.</p>"
+
+    today_html = ""
+    for item in data["today_items"][:15]:
+        today_html += _j9_render_memory_item(item)
+    if not today_html:
+        today_html = "<p>No Jarvis items captured today yet.</p>"
+
+    clock_text = "Clocked In" if emp.get("clocked_in") else "Not Clocked In"
+
+    html = f"""
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Jarvis Crew Flow</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {{ margin:0; font-family:Arial,sans-serif; background:#070a0f; color:#f5efe3; }}
+    .wrap {{ max-width:1180px; margin:0 auto; padding:24px; }}
+    .hero {{ background:linear-gradient(135deg,#111722,#05070b); border:1px solid #5d421d; border-radius:22px; padding:24px; box-shadow:0 20px 60px rgba(0,0,0,.45); }}
+    h1 {{ margin:0 0 8px; font-size:34px; letter-spacing:.08em; }}
+    .sub {{ color:#d9b56d; margin-bottom:18px; }}
+    .grid {{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }}
+    @media(max-width:900px) {{ .grid {{ grid-template-columns:1fr; }} }}
+    .stats {{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin:16px 0; }}
+    @media(max-width:700px) {{ .stats {{ grid-template-columns:1fr; }} }}
+    .stat {{ background:#05070b; border:1px solid #2d2113; border-radius:14px; padding:14px; }}
+    .stat b {{ font-size:24px; color:#d9b56d; }}
+    .card {{ background:#101722; border:1px solid #2d2113; border-radius:18px; padding:18px; margin-top:16px; }}
+    textarea {{ width:100%; min-height:120px; box-sizing:border-box; border-radius:14px; border:1px solid #6b4b1f; background:#05070b; color:#fff; padding:14px; font-size:16px; }}
+    button, .buttonlink {{ display:inline-block; margin-top:10px; padding:12px 16px; border:0; border-radius:12px; background:#b8873a; color:#111; font-weight:900; cursor:pointer; text-decoration:none; }}
+    button.small {{ padding:8px 11px; font-size:13px; }}
+    .reply {{ margin-top:12px; padding:13px; border-radius:12px; background:#05070b; border:1px solid #2d2113; min-height:24px; line-height:1.45; }}
+    .chips {{ display:flex; flex-wrap:wrap; gap:9px; margin-top:10px; }}
+    .chip {{ border:1px solid #6b4b1f; border-radius:999px; padding:9px 11px; background:#070a0f; color:#f5efe3; cursor:pointer; }}
+    .flow-step {{ display:flex; gap:12px; background:#05070b; border:1px solid #2d2113; border-radius:14px; padding:13px; margin:10px 0; }}
+    .flow-step.done {{ border-color:#496b2a; }}
+    .flow-step.needed {{ border-color:#8a392f; }}
+    .step-num {{ min-width:38px; height:38px; border-radius:999px; display:flex; align-items:center; justify-content:center; background:#b8873a; color:#111; font-weight:900; }}
+    .step-main {{ flex:1; }}
+    .step-top {{ display:flex; justify-content:space-between; gap:12px; color:#d9b56d; }}
+    .step-detail {{ margin-top:8px; color:#e8dcc7; line-height:1.4; }}
+    .mem-item {{ background:#05070b; border:1px solid #2d2113; border-radius:14px; padding:13px; margin:10px 0; }}
+    .mem-top {{ display:flex; justify-content:space-between; gap:12px; color:#d9b56d; font-size:13px; }}
+    .mem-body {{ margin-top:8px; color:#e8dcc7; line-height:1.4; }}
+    .mem-meta {{ margin-top:8px; color:#a99572; font-size:13px; }}
+    a {{ color:#d9a64a; }}
+    .result {{ padding:10px; border:1px solid #2d2113; border-radius:12px; margin:8px 0; background:#070a0f; }}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero">
+    <h1>J.A.R.V.I.S. CREW FLOW</h1>
+    <div class="sub">Good to go, {_j9_esc(name)}. This page tells the crew what to do next. Role: {_j9_esc(role)}.</div>
+
+    <div class="stats">
+      <div class="stat"><b>{_j9_esc(clock_text)}</b><br>Clock status</div>
+      <div class="stat"><b>{len(data['active_job_items'])}</b><br>Active job notes</div>
+      <div class="stat"><b>{len(data['today_items'])}</b><br>Captured today</div>
+    </div>
+
+    <div class="grid">
+      <div>
+        <div class="card">
+          <h2>Command</h2>
+          <textarea id="cmd" placeholder="Jarvis, field log: "></textarea>
+          <button onclick="sendCmd()">Send</button>
+          <button onclick="startVoice()">?? Voice</button>
+          <button onclick="speakLast()">?? Read Back</button>
+          <div class="reply" id="reply">Waiting for crew command.</div>
+
+          <div class="chips">
+            <button class="chip" onclick="fillCmd('Jarvis, set active job to ')">Set Job</button>
+            <button class="chip" onclick="fillCmd('Jarvis, clock me in')">Clock In</button>
+            <button class="chip" onclick="fillCmd('Jarvis, field log: ')">Field Log</button>
+            <button class="chip" onclick="fillCmd('Jarvis, material needed: ')">Material</button>
+            <button class="chip" onclick="fillCmd('Jarvis, problem found: ')">Problem</button>
+            <button class="chip" onclick="fillCmd('Jarvis, clock me out')">Clock Out</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Active Job</h2>
+          {active_html}
+        </div>
+
+        <div class="card">
+          <h2>Step-by-Step Crew Flow</h2>
+          {steps_html}
+        </div>
+
+        <div class="card">
+          <h2>Links</h2>
+          <p>
+            <a href="/jarvis-brain">Jarvis Brain</a>
+            |
+            <a href="/jarvis-brain/job">Active Job</a>
+            |
+            <a href="/jarvis-brain/desk">Command Desk</a>
+            |
+            <a href="/photos">Photos</a>
+            |
+            <a href="/field-logs">Field Logs</a>
+            |
+            <a href="/">Home</a>
+          </p>
+        </div>
+      </div>
+
+      <div>
+        <div class="card">
+          <h2>Active Job Memory</h2>
+          {job_memory_html}
+        </div>
+
+        <div class="card">
+          <h2>Today?s Captured Items</h2>
+          {today_html}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let lastReply = "";
+
+function fillCmd(t){{
+  document.getElementById("cmd").value = t;
+  document.getElementById("cmd").focus();
+}}
+
+function escapeHtml(str){{
+  return String(str || "").replace(/[&<>"']/g, function(m){{
+    return ({{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}})[m];
+  }});
+}}
+
+function speak(text){{
+  if(!("speechSynthesis" in window)){{ return; }}
+  window.speechSynthesis.cancel();
+  const msg = new SpeechSynthesisUtterance(text);
+  msg.rate = 1;
+  msg.pitch = 1;
+  window.speechSynthesis.speak(msg);
+}}
+
+function speakLast(){{
+  const text = lastReply || document.getElementById("reply").innerText || "Nothing to read back yet.";
+  speak(text);
+}}
+
+async function sendCmd(){{
+  const box = document.getElementById("cmd");
+  const reply = document.getElementById("reply");
+  const text = box.value.trim();
+
+  if(!text){{
+    reply.innerText = "Tell me what needs handled.";
+    lastReply = reply.innerText;
+    return;
+  }}
+
+  reply.innerText = "Handling it...";
+  lastReply = reply.innerText;
+
+  try {{
+    const res = await fetch("/jarvis-brain/command", {{
+      method:"POST",
+      headers:{{"Content-Type":"application/json"}},
+      body:JSON.stringify({{text:text}})
+    }});
+
+    const data = await res.json();
+    let html = escapeHtml(data.reply || JSON.stringify(data));
+    lastReply = data.reply || JSON.stringify(data);
+
+    if(data.links && data.links.length){{
+      html += "<br><br><b>Matches:</b>";
+      data.links.forEach(function(x){{
+        html += '<div class="result"><b>' + escapeHtml(x.kind) + '</b>: ';
+        html += '<a href="' + escapeHtml(x.url) + '">' + escapeHtml(x.title) + '</a>';
+        if(x.detail){{ html += '<br><small>' + escapeHtml(x.detail) + '</small>'; }}
+        html += '</div>';
+      }});
+    }}
+
+    reply.innerHTML = html;
+    speak(lastReply);
+
+    if(data.ok && (!data.links || !data.links.length)){{
+      setTimeout(() => window.location.reload(), 1200);
+    }}
+  }} catch(err) {{
+    reply.innerText = "Jarvis command failed: " + err;
+    lastReply = reply.innerText;
+    speak(lastReply);
+  }}
+}}
+
+function startVoice(){{
+  const reply = document.getElementById("reply");
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SR){{
+    reply.innerText = "Voice is not available in this browser. Use Chrome or Edge.";
+    lastReply = reply.innerText;
+    speakLast();
+    return;
+  }}
+
+  const rec = new SR();
+  rec.lang = "en-US";
+  rec.interimResults = false;
+  rec.maxAlternatives = 1;
+
+  reply.innerText = "Listening...";
+  lastReply = reply.innerText;
+  rec.onresult = function(event){{
+    const text = event.results[0][0].transcript;
+    document.getElementById("cmd").value = text;
+    sendCmd();
+  }};
+  rec.onerror = function(event){{
+    reply.innerText = "Voice error: " + event.error;
+    lastReply = reply.innerText;
+  }};
+  rec.start();
+}}
+</script>
+</body>
+</html>
+"""
+    return HTMLResponse(html)
+
+
+@app.get("/jarvis-brain/crew.json")
+def jarvis_brain_level9_crew_json(request: Request):
+    user = _j9_user(request)
+    return JSONResponse({
+        "ok": True,
+        "version": JARVIS_CREW_FLOW_VERSION,
+        "crew_flow": _j9_crew_steps(user),
+        "tables_seen": {
+            "poolops2_employees": _j9_table_exists("poolops2_employees"),
+            "field_logs": _j9_table_exists("field_logs"),
+            "poolops2_jobs": _j9_table_exists("poolops2_jobs"),
+        },
+    })
+
+
+@app.get("/crew/jarvis", response_class=HTMLResponse)
+def jarvis_brain_level9_crew_alias(request: Request):
+    return RedirectResponse("/jarvis-brain/crew", status_code=303)
+
+
+@app.get("/employee/jarvis", response_class=HTMLResponse)
+def jarvis_brain_level9_employee_alias(request: Request):
+    return RedirectResponse("/jarvis-brain/crew", status_code=303)
+
+# ============================================================
+# END JARVIS BRAIN LEVEL 9 CREW FIELD FLOW
+# ============================================================
+
