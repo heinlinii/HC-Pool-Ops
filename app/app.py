@@ -5317,3 +5317,544 @@ def brain_alias_level7(request: Request):
 # END JARVIS BRAIN LAYER
 # ============================================================
 
+
+# ============================================================
+# JARVIS BRAIN LEVEL 8 ACTIVE JOB CENTER
+# Adds /jarvis-brain/job without replacing Level 7.
+# ============================================================
+
+import os as _j8_os
+import json as _j8_json
+import html as _j8_html
+from datetime import datetime as _j8_datetime, date as _j8_date
+
+try:
+    from fastapi import Request
+except Exception:
+    pass
+
+try:
+    from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
+except Exception:
+    pass
+
+JARVIS_JOB_CENTER_VERSION = "level-8-active-job-center-2026-07-04"
+
+
+def _j8_now():
+    return _j8_datetime.now().isoformat(timespec="seconds")
+
+
+def _j8_today():
+    return _j8_date.today().isoformat()
+
+
+def _j8_storage_dir():
+    path = _j8_os.path.join(_j8_os.getcwd(), "jarvis_storage")
+    _j8_os.makedirs(path, exist_ok=True)
+    return path
+
+
+def _j8_file(name):
+    return _j8_os.path.join(_j8_storage_dir(), name)
+
+
+def _j8_esc(value):
+    return _j8_html.escape(str(value or ""))
+
+
+def _j8_read_json(name, default=None):
+    path = _j8_file(name)
+    if not _j8_os.path.exists(path):
+        return default
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            return _j8_json.load(f)
+    except Exception:
+        return default
+
+
+def _j8_write_json(name, data):
+    with open(_j8_file(name), "w", encoding="utf-8") as f:
+        _j8_json.dump(data, f, ensure_ascii=False, indent=2)
+
+
+def _j8_read_jsonl_all(name):
+    path = _j8_file(name)
+    if not _j8_os.path.exists(path):
+        return []
+    items = []
+    with open(path, "r", encoding="utf-8") as f:
+        for line in f:
+            try:
+                items.append(_j8_json.loads(line.strip()))
+            except Exception:
+                pass
+    return items
+
+
+def _j8_user(request):
+    try:
+        f = globals().get("current_user")
+        if callable(f):
+            u = f(request)
+            if u:
+                return u
+    except Exception:
+        pass
+
+    try:
+        if hasattr(request, "session"):
+            return request.session.get("user") or {}
+    except Exception:
+        pass
+
+    return {}
+
+
+def _j8_name(user):
+    return str((user or {}).get("name") or (user or {}).get("username") or (user or {}).get("email") or "Mike").strip()
+
+
+def _j8_role(user):
+    role = str((user or {}).get("role") or "admin").lower().strip()
+    if role == "employee":
+        role = "crew"
+    return role
+
+
+def _j8_active_context():
+    return _j8_read_json("jarvis_active_context.json", {}) or {}
+
+
+def _j8_clear_active_context():
+    _j8_write_json("jarvis_active_context.json", {})
+    return True
+
+
+def _j8_match_active_item(item, active):
+    if not active:
+        return False
+
+    item_job_id = str(item.get("job_id") or "").strip()
+    active_job_id = str(active.get("job_id") or "").strip()
+
+    if item_job_id and active_job_id and item_job_id == active_job_id:
+        return True
+
+    item_client = str(item.get("client") or "").lower().strip()
+    active_client = str(active.get("client") or "").lower().strip()
+
+    item_address = str(item.get("address") or "").lower().strip()
+    active_address = str(active.get("address") or "").lower().strip()
+
+    item_property = str(item.get("property") or "").lower().strip()
+    active_property = str(active.get("property") or "").lower().strip()
+
+    if active_client and item_client and active_client == item_client:
+        return True
+
+    if active_address and item_address and active_address == item_address:
+        return True
+
+    if active_property and item_property and active_property == item_property:
+        return True
+
+    return False
+
+
+def _j8_active_job_items():
+    active = _j8_active_context()
+    items = _j8_read_jsonl_all("jarvis_memory.jsonl")
+    items.reverse()
+
+    if not active:
+        return []
+
+    return [x for x in items if _j8_match_active_item(x, active)]
+
+
+def _j8_group_items(items):
+    groups = {
+        "Billing Note": [],
+        "Material Needed": [],
+        "Follow Up": [],
+        "Problem Found": [],
+        "Field Log": [],
+        "General Note": [],
+        "Other": [],
+    }
+
+    for item in items:
+        cat = str(item.get("category") or "General Note").strip()
+        if cat not in groups:
+            cat = "Other"
+        groups[cat].append(item)
+
+    return groups
+
+
+def _j8_status(item):
+    return str(item.get("status") or "Open").strip()
+
+
+def _j8_is_open(item):
+    return _j8_status(item).lower() not in ("done", "closed", "complete", "completed")
+
+
+def _j8_render_item(item):
+    cat = _j8_esc(item.get("category"))
+    created = _j8_esc(item.get("created_at"))
+    title = _j8_esc(item.get("title"))
+    body = _j8_esc(item.get("body"))
+    priority = _j8_esc(item.get("priority") or "Normal")
+    status = _j8_esc(_j8_status(item))
+
+    return f"""
+    <div class="job-item">
+      <div class="job-top">
+        <b>{cat}</b>
+        <span>{created}</span>
+      </div>
+      <div class="job-title">{title}</div>
+      <div class="job-body">{body}</div>
+      <div class="job-meta">Priority: {priority} ? Status: {status}</div>
+    </div>
+    """
+
+
+def _j8_job_summary(active, items):
+    groups = _j8_group_items(items)
+    open_items = [x for x in items if _j8_is_open(x)]
+
+    summary = {
+        "active_job": active,
+        "total_items": len(items),
+        "open_items": len(open_items),
+        "billing_notes": len(groups.get("Billing Note", [])),
+        "materials": len(groups.get("Material Needed", [])),
+        "followups": len(groups.get("Follow Up", [])),
+        "problems": len(groups.get("Problem Found", [])),
+        "field_logs": len(groups.get("Field Log", [])),
+        "general": len(groups.get("General Note", [])),
+    }
+
+    next_actions = []
+
+    if summary["billing_notes"]:
+        next_actions.append(f"Review {summary['billing_notes']} billing note(s) for this job.")
+    if summary["problems"]:
+        next_actions.append(f"Handle {summary['problems']} problem item(s) for this job.")
+    if summary["materials"]:
+        next_actions.append(f"Check {summary['materials']} material-needed item(s) before going back.")
+    if summary["followups"]:
+        next_actions.append(f"Make {summary['followups']} follow-up item(s) for this job.")
+    if summary["field_logs"]:
+        next_actions.append(f"Review {summary['field_logs']} field log item(s) for job history.")
+
+    if not next_actions:
+        next_actions.append("No job-specific Jarvis memory yet. Start by adding a field log, billing note, material item, or follow-up.")
+
+    summary["next_actions"] = next_actions
+    return summary
+
+
+@app.get("/jarvis-brain/job", response_class=HTMLResponse)
+def jarvis_brain_level8_active_job_center(request: Request):
+    user = _j8_user(request)
+    name = _j8_name(user).split()[0]
+    role = _j8_role(user)
+
+    active = _j8_active_context()
+    items = _j8_active_job_items()
+    groups = _j8_group_items(items)
+    summary = _j8_job_summary(active, items)
+
+    if not active:
+        active_html = """
+        <div class="card">
+          <h2>No Active Job Set</h2>
+          <p>Go back to Jarvis Brain and say:</p>
+          <p><b>Jarvis, set active job to Alexander</b></p>
+          <p>Then come back here.</p>
+          <p><a href="/jarvis-brain">Open Jarvis Brain</a></p>
+        </div>
+        """
+    else:
+        active_html = f"""
+        <div class="card">
+          <h2>Active Job</h2>
+          <p><b>{_j8_esc(active.get('title'))}</b></p>
+          <p>{_j8_esc(active.get('client'))}</p>
+          <p>{_j8_esc(active.get('address'))}</p>
+          <p>Type: {_j8_esc(active.get('job_type'))} ? Status: {_j8_esc(active.get('status'))}</p>
+          <form method="post" action="/jarvis-brain/job/clear">
+            <button type="submit">Clear Active Job</button>
+          </form>
+        </div>
+        """
+
+    action_html = "".join([f"<li>{_j8_esc(x)}</li>" for x in summary["next_actions"]])
+
+    grouped_html = ""
+    for group_name, group_items in groups.items():
+        if not group_items:
+            continue
+        grouped_html += f"""
+        <div class="card">
+          <h2>{_j8_esc(group_name)} <span>{len(group_items)}</span></h2>
+          {''.join(_j8_render_item(x) for x in group_items[:30])}
+        </div>
+        """
+
+    if not grouped_html:
+        grouped_html = """
+        <div class="card">
+          <h2>No Job Memory Yet</h2>
+          <p>Use the command box to start capturing this job.</p>
+        </div>
+        """
+
+    active_label = active.get("title") or active.get("client") or active.get("address") or "this job"
+
+    html = f"""
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Jarvis Active Job</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {{ margin:0; font-family:Arial,sans-serif; background:#070a0f; color:#f5efe3; }}
+    .wrap {{ max-width:1220px; margin:0 auto; padding:26px; }}
+    .hero {{ background:linear-gradient(135deg,#111722,#05070b); border:1px solid #5d421d; border-radius:22px; padding:24px; box-shadow:0 20px 60px rgba(0,0,0,.45); }}
+    h1 {{ margin:0 0 8px; font-size:34px; letter-spacing:.08em; }}
+    .sub {{ color:#d9b56d; margin-bottom:20px; }}
+    .stats {{ display:grid; grid-template-columns:repeat(6,1fr); gap:10px; margin:16px 0; }}
+    @media(max-width:950px) {{ .stats {{ grid-template-columns:repeat(2,1fr); }} }}
+    .stat {{ background:#05070b; border:1px solid #2d2113; border-radius:14px; padding:14px; }}
+    .stat b {{ font-size:28px; color:#d9b56d; }}
+    .grid {{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }}
+    @media(max-width:950px) {{ .grid {{ grid-template-columns:1fr; }} }}
+    .card {{ background:#101722; border:1px solid #2d2113; border-radius:18px; padding:18px; margin-top:16px; }}
+    .card h2 {{ display:flex; justify-content:space-between; align-items:center; gap:10px; }}
+    textarea {{ width:100%; min-height:125px; box-sizing:border-box; border-radius:14px; border:1px solid #6b4b1f; background:#05070b; color:#fff; padding:14px; font-size:16px; }}
+    button {{ margin-top:10px; padding:12px 16px; border:0; border-radius:12px; background:#b8873a; color:#111; font-weight:900; cursor:pointer; }}
+    .reply {{ margin-top:12px; padding:13px; border-radius:12px; background:#05070b; border:1px solid #2d2113; min-height:24px; line-height:1.45; }}
+    .chips {{ display:flex; flex-wrap:wrap; gap:9px; margin-top:10px; }}
+    .chip {{ border:1px solid #6b4b1f; border-radius:999px; padding:9px 11px; background:#070a0f; color:#f5efe3; cursor:pointer; }}
+    .job-item {{ background:#05070b; border:1px solid #2d2113; border-radius:14px; padding:13px; margin:10px 0; }}
+    .job-top {{ display:flex; justify-content:space-between; gap:12px; color:#d9b56d; font-size:13px; }}
+    .job-title {{ font-weight:900; margin-top:8px; }}
+    .job-body {{ margin-top:8px; color:#e8dcc7; line-height:1.4; }}
+    .job-meta {{ margin-top:9px; color:#a99572; font-size:13px; }}
+    a {{ color:#d9a64a; }}
+    li {{ margin-bottom:10px; }}
+    .result {{ padding:10px; border:1px solid #2d2113; border-radius:12px; margin:8px 0; background:#070a0f; }}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero">
+    <h1>J.A.R.V.I.S. ACTIVE JOB</h1>
+    <div class="sub">Good to go, {_j8_esc(name)}. This is the job brain for {_j8_esc(active_label)}. Role: {_j8_esc(role)}.</div>
+
+    <div class="stats">
+      <div class="stat"><b>{summary['total_items']}</b><br>Total items</div>
+      <div class="stat"><b>{summary['open_items']}</b><br>Open</div>
+      <div class="stat"><b>{summary['billing_notes']}</b><br>Billing</div>
+      <div class="stat"><b>{summary['materials']}</b><br>Materials</div>
+      <div class="stat"><b>{summary['problems']}</b><br>Problems</div>
+      <div class="stat"><b>{summary['field_logs']}</b><br>Field Logs</div>
+    </div>
+
+    <div class="grid">
+      <div>
+        {active_html}
+
+        <div class="card">
+          <h2>Command This Job</h2>
+          <textarea id="cmd" placeholder="Jarvis, field log: "></textarea>
+          <button onclick="sendCmd()">Send</button>
+          <button onclick="startVoice()">?? Voice</button>
+          <button onclick="speakLast()">?? Read Back</button>
+          <div class="reply" id="reply">Waiting for job command.</div>
+
+          <div class="chips">
+            <button class="chip" onclick="fillCmd('Jarvis, field log: ')">Field Log</button>
+            <button class="chip" onclick="fillCmd('Jarvis, add this to billing: ')">Billing</button>
+            <button class="chip" onclick="fillCmd('Jarvis, material needed: ')">Material</button>
+            <button class="chip" onclick="fillCmd('Jarvis, problem found: ')">Problem</button>
+            <button class="chip" onclick="fillCmd('Jarvis, remind me to follow up with ')">Follow Up</button>
+            <button class="chip" onclick="fillCmd('Jarvis, what did I do today?')">Today Summary</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Next For This Job</h2>
+          <ul>{action_html}</ul>
+        </div>
+
+        <div class="card">
+          <h2>Links</h2>
+          <p>
+            <a href="/jarvis-brain">Jarvis Brain</a>
+            |
+            <a href="/jarvis-brain/desk">Command Desk</a>
+            |
+            <a href="/jarvis-brain/job.json">Job JSON</a>
+            |
+            <a href="/invisible-office">Invisible Office</a>
+            |
+            <a href="/">Home</a>
+          </p>
+        </div>
+      </div>
+
+      <div>
+        {grouped_html}
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let lastReply = "";
+
+function fillCmd(t){{
+  document.getElementById("cmd").value = t;
+  document.getElementById("cmd").focus();
+}}
+
+function escapeHtml(str){{
+  return String(str || "").replace(/[&<>"']/g, function(m){{
+    return ({{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}})[m];
+  }});
+}}
+
+function speak(text){{
+  if(!("speechSynthesis" in window)){{ return; }}
+  window.speechSynthesis.cancel();
+  const msg = new SpeechSynthesisUtterance(text);
+  msg.rate = 1;
+  msg.pitch = 1;
+  window.speechSynthesis.speak(msg);
+}}
+
+function speakLast(){{
+  const text = lastReply || document.getElementById("reply").innerText || "Nothing to read back yet.";
+  speak(text);
+}}
+
+async function sendCmd(){{
+  const box = document.getElementById("cmd");
+  const reply = document.getElementById("reply");
+  const text = box.value.trim();
+
+  if(!text){{
+    reply.innerText = "Tell me what needs handled.";
+    lastReply = reply.innerText;
+    return;
+  }}
+
+  reply.innerText = "Handling it...";
+  lastReply = reply.innerText;
+
+  try {{
+    const res = await fetch("/jarvis-brain/command", {{
+      method:"POST",
+      headers:{{"Content-Type":"application/json"}},
+      body:JSON.stringify({{text:text}})
+    }});
+
+    const data = await res.json();
+    let html = escapeHtml(data.reply || JSON.stringify(data));
+    lastReply = data.reply || JSON.stringify(data);
+
+    if(data.links && data.links.length){{
+      html += "<br><br><b>Matches:</b>";
+      data.links.forEach(function(x){{
+        html += '<div class="result"><b>' + escapeHtml(x.kind) + '</b>: ';
+        html += '<a href="' + escapeHtml(x.url) + '">' + escapeHtml(x.title) + '</a>';
+        if(x.detail){{ html += '<br><small>' + escapeHtml(x.detail) + '</small>'; }}
+        html += '</div>';
+      }});
+    }}
+
+    reply.innerHTML = html;
+    speak(lastReply);
+
+    if(data.ok && (!data.links || !data.links.length)){{
+      setTimeout(() => window.location.reload(), 1200);
+    }}
+  }} catch(err) {{
+    reply.innerText = "Jarvis command failed: " + err;
+    lastReply = reply.innerText;
+    speak(lastReply);
+  }}
+}}
+
+function startVoice(){{
+  const reply = document.getElementById("reply");
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SR){{
+    reply.innerText = "Voice is not available in this browser. Use Chrome or Edge.";
+    lastReply = reply.innerText;
+    speakLast();
+    return;
+  }}
+
+  const rec = new SR();
+  rec.lang = "en-US";
+  rec.interimResults = false;
+  rec.maxAlternatives = 1;
+
+  reply.innerText = "Listening...";
+  lastReply = reply.innerText;
+  rec.onresult = function(event){{
+    const text = event.results[0][0].transcript;
+    document.getElementById("cmd").value = text;
+    sendCmd();
+  }};
+  rec.onerror = function(event){{
+    reply.innerText = "Voice error: " + event.error;
+    lastReply = reply.innerText;
+  }};
+  rec.start();
+}}
+</script>
+</body>
+</html>
+"""
+    return HTMLResponse(html)
+
+
+@app.post("/jarvis-brain/job/clear")
+def jarvis_brain_level8_clear_active_job():
+    _j8_clear_active_context()
+    return RedirectResponse("/jarvis-brain/job", status_code=303)
+
+
+@app.get("/jarvis-brain/job.json")
+def jarvis_brain_level8_active_job_json():
+    active = _j8_active_context()
+    items = _j8_active_job_items()
+    summary = _j8_job_summary(active, items)
+
+    return JSONResponse({
+        "ok": True,
+        "version": JARVIS_JOB_CENTER_VERSION,
+        "active_context": active,
+        "summary": summary,
+        "items": items[:500],
+    })
+
+
+@app.get("/jarvis-brain/active-job", response_class=HTMLResponse)
+def jarvis_brain_level8_active_job_alias(request: Request):
+    return RedirectResponse("/jarvis-brain/job", status_code=303)
+
+# ============================================================
+# END JARVIS BRAIN LEVEL 8 ACTIVE JOB CENTER
+# ============================================================
+
