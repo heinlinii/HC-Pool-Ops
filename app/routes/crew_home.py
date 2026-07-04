@@ -365,35 +365,86 @@ def crew_home(request: Request):
             "secondary_label": "View Today’s Jobs",
             "secondary_href": "#today-jobs",
         }
-    elif not gps_active_today:
+
+    elif not gps_active_today and not truthy(progress.get("gps_done")):
         next_move = {
             "step": "Step 2",
             "title": "Start GPS Tracking",
             "message": "You are clocked in. Now start GPS so Mike can see stops and time spent.",
             "primary_label": "Start GPS",
+            "primary_progress_field": "gps_done",
             "primary_href": "/gps?autostart=1",
             "secondary_label": "GPS Stops",
             "secondary_href": "/gps/stops",
         }
-    elif first_job:
+
+    elif first_job and not truthy(progress.get("first_job_opened")):
         next_move = {
             "step": "Step 3",
             "title": "Open Today’s First Job",
-            "message": "GPS has started. Open the first job and get before photos.",
+            "message": "GPS has started. Open the first job and see what needs done.",
             "primary_label": "Open First Job",
+            "primary_progress_field": "first_job_opened",
             "primary_href": first_job_href,
-            "secondary_label": "Upload Photos",
+            "secondary_label": "View Today’s Jobs",
+            "secondary_href": "#today-jobs",
+        }
+
+    elif not truthy(progress.get("before_photos_done")):
+        next_move = {
+            "step": "Step 4",
+            "title": "Upload Before Photos",
+            "message": "Before work starts, get photos. They protect the company and help Mike remember what happened.",
+            "primary_label": "Upload Photos",
+            "primary_progress_field": "before_photos_done",
+            "primary_href": "/photos",
+            "secondary_label": "Skip For Now",
+            "secondary_href": "#talk-to-jarvis",
+        }
+
+    elif not truthy(progress.get("work_done_reported")):
+        next_move = {
+            "step": "Step 5",
+            "title": "Tell Jarvis What Got Done",
+            "message": "Say what got finished at the job so Mike does not have to chase it down later.",
+            "primary_label": "Report Work Done",
+            "primary_href": "#talk-to-jarvis",
+            "secondary_label": "Upload More Photos",
             "secondary_href": "/photos",
         }
+
+    elif not truthy(progress.get("problems_reported")) and not truthy(progress.get("materials_reported")):
+        next_move = {
+            "step": "Step 6",
+            "title": "Report Problems or Materials",
+            "message": "If anything was broken, leaking, missing, or needed for tomorrow, tell Jarvis now.",
+            "primary_label": "Tell Jarvis",
+            "primary_href": "#talk-to-jarvis",
+            "secondary_label": "No Problems / No Materials",
+            "secondary_progress_field": "problems_reported",
+            "secondary_href": "/crew-home",
+        }
+
+    elif not truthy(progress.get("end_day_done")) and not truthy(progress.get("clocked_out_done")):
+        next_move = {
+            "step": "Step 7",
+            "title": "End-Day Report + Clock Out",
+            "message": "Before leaving, Jarvis will ask what got done, what still needs looked at, problems, materials, and tomorrow.",
+            "primary_label": "Clock Out",
+            "primary_command": "Clock me out",
+            "secondary_label": "View GPS Stops",
+            "secondary_href": "/gps/stops",
+        }
+
     else:
         next_move = {
-            "step": "Step 3",
-            "title": "Tell Jarvis What You’re Doing",
-            "message": "No assigned job was found for today. Tell Jarvis what you are working on.",
-            "primary_label": "Add Field Note",
-            "primary_href": "#talk-to-jarvis",
-            "secondary_label": "Open Schedule",
-            "secondary_href": "/schedule/day",
+            "step": "Done",
+            "title": "Day Is Wrapped Up",
+            "message": "The field checklist is complete. Good work.",
+            "primary_label": "View GPS Stops",
+            "primary_href": "/gps/stops",
+            "secondary_label": "Back to Crew Home",
+            "secondary_href": "/crew-home",
         }
 
         checklist = [

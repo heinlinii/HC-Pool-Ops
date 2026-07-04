@@ -138,11 +138,26 @@
             <input type="hidden" name="command" value="{{ next_move.primary_command }}">
             <button class="btn primary" type="submit">{{ next_move.primary_label }}</button>
           </form>
+
+        {% elif next_move.primary_progress_field and next_move.primary_href %}
+          <form method="post" action="/crew-home/progress-go">
+            <input type="hidden" name="field" value="{{ next_move.primary_progress_field }}">
+            <input type="hidden" name="href" value="{{ next_move.primary_href }}">
+            <button class="btn primary" type="submit">{{ next_move.primary_label }}</button>
+          </form>
+
         {% elif next_move.primary_href %}
           <a class="btn primary" href="{{ next_move.primary_href }}">{{ next_move.primary_label }}</a>
         {% endif %}
 
-        {% if next_move.secondary_href %}
+        {% if next_move.secondary_progress_field and next_move.secondary_href %}
+          <form method="post" action="/crew-home/progress-go">
+            <input type="hidden" name="field" value="{{ next_move.secondary_progress_field }}">
+            <input type="hidden" name="href" value="{{ next_move.secondary_href }}">
+            <button class="btn" type="submit">{{ next_move.secondary_label }}</button>
+          </form>
+
+        {% elif next_move.secondary_href %}
           <a class="btn" href="{{ next_move.secondary_href }}">{{ next_move.secondary_label }}</a>
         {% endif %}
       </div>
