@@ -10149,3 +10149,89 @@ def jarvis_brain_level19_home_json(request: Request):
 # END JARVIS BRAIN LEVEL 19 CLEAN HOME BUTTONS
 # ============================================================
 
+
+# ============================================================
+# JARVIS BRAIN LEVEL 20 FRONT DOOR CLEANUP
+# Makes Jarvis Home the easy front door.
+# ============================================================
+
+try:
+    from fastapi.responses import RedirectResponse as _J20RedirectResponse, JSONResponse as _J20JSONResponse
+except Exception:
+    pass
+
+JARVIS_FRONT_DOOR_VERSION = "level-20-front-door-cleanup-2026-07-04"
+
+
+def _j20_user(request):
+    try:
+        f = globals().get("current_user")
+        if callable(f):
+            u = f(request)
+            if u:
+                return u
+    except Exception:
+        pass
+
+    try:
+        if hasattr(request, "session"):
+            return request.session.get("user") or {}
+    except Exception:
+        pass
+
+    return {}
+
+
+def _j20_role(user):
+    role = str((user or {}).get("role") or (user or {}).get("login_type") or "guest").lower().strip()
+    if role == "employee":
+        role = "crew"
+    return role
+
+
+def _j20_has_user(request):
+    user = _j20_user(request)
+    return bool(user)
+
+
+def _j20_front_door_for(request):
+    if not _j20_has_user(request):
+        return "/login"
+
+    # Everybody gets the clean home page first.
+    # From there, big buttons take them to Crew Flow or Client View.
+    return "/jarvis-brain/home"
+
+
+@app.middleware("http")
+async def jarvis_level20_front_door_middleware(request, call_next):
+    path = request.url.path
+
+    # Make the old confusing entry points land on the clean button page.
+    if path in (
+        "/jarvis",
+        "/jarvis-home",
+        "/jarvis-brain/front-door",
+        "/jarvis-brain/launch",
+        "/jarvis-brain/start",
+    ):
+        return _J20RedirectResponse(_j20_front_door_for(request), status_code=303)
+
+    return await call_next(request)
+
+
+@app.get("/jarvis-brain/front-door-check")
+def jarvis_brain_level20_front_door_check(request: Request):
+    user = _j20_user(request)
+    return _J20JSONResponse({
+        "ok": True,
+        "version": JARVIS_FRONT_DOOR_VERSION,
+        "role": _j20_role(user),
+        "front_door": _j20_front_door_for(request),
+        "message": "Jarvis front door cleanup is installed. Old Jarvis/launch/start routes now point to the clean home buttons.",
+    })
+
+# ============================================================
+# END JARVIS BRAIN LEVEL 20 FRONT DOOR CLEANUP
+# ============================================================
+
