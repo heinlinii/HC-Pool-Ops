@@ -305,6 +305,128 @@ def crew_home(request: Request):
 
     employee = get_or_create_employee_for_user(user)
     jobs = todays_jobs_for_crew(user, employee)
+    clocked_in = employee.get("clocked_in")
+
+    def truthy(value):
+        return str(value).lower() in ("1", "true", "yes", "on", "t")
+
+    gps_points_today = 0
+
+    try:
+        today = date.today().isoformat()
+        gps_rows = h["rows"](
+            """
+            SELECT *
+            FROM employee_location_points
+            WHERE CAST(created_at AS TEXT) LIKE ?
+              AND (
+                employee_id=?
+                OR lower(COALESCE(employee_name, ''))=lower(?)
+              )
+            ORDER BY id DESC
+            LIMIT 5
+            """,
+            (
+                f"{today}%",
+                employee.get("id"),
+                employee.get("name") or "",
+            ),
+        )
+        gps_points_today = len(gps_rows or [])
+    except Exception:
+        gps_points_today = 0
+
+    is_clocked_in = truthy(clocked_in)
+    gps_active_today = gps_points_today > 0
+
+    first_job = jobs[0] if jobs else None
+
+    first_job_href = "/schedule/day"
+
+    if first_job:
+        if first_job.get("job_id"):
+            first_job_href = f"/jobs/{first_job.get('job_id')}"
+        elif first_job.get("id"):
+            first_job_href = "/schedule/day"
+
+    if not is_clocked_in:
+        next_move = {
+            "step": "Step 1",
+            "title": "Clock In",
+            "message": "You are not clocked in yet. Start the day here.",
+            "primary_label": "Clock In",
+            "primary_command": "Clock me in",
+            "secondary_label": "View Today’s Jobs",
+            "secondary_href": "#today-jobs",
+        }
+    elif not gps_active_today:
+        next_move = {
+            "step": "Step 2",
+            "title": "Start GPS Tracking",
+            "message": "You are clocked in. Now start GPS so Mike can see stops and time spent.",
+            "primary_label": "Start GPS",
+            "primary_href": "/gps?autostart=1",
+            "secondary_label": "GPS Stops",
+            "secondary_href": "/gps/stops",
+        }
+    elif first_job:
+        next_move = {
+            "step": "Step 3",
+            "title": "Open Today’s First Job",
+            "message": "GPS has started. Open the first job and get before photos.",
+            "primary_label": "Open First Job",
+            "primary_href": first_job_href,
+            "secondary_label": "Upload Photos",
+            "secondary_href": "/photos",
+        }
+    else:
+        next_move = {
+            "step": "Step 3",
+            "title": "Tell Jarvis What You’re Doing",
+            "message": "No assigned job was found for today. Tell Jarvis what you are working on.",
+            "primary_label": "Add Field Note",
+            "primary_href": "#talk-to-jarvis",
+            "secondary_label": "Open Schedule",
+            "secondary_href": "/schedule/day",
+        }
+
+    checklist = [
+        {
+            "label": "Clock in",
+            "done": is_clocked_in,
+            "hint": "Start the work day.",
+        },
+        {
+            "label": "Start GPS tracking",
+            "done": gps_active_today,
+            "hint": "Keep the tracker page open while working.",
+        },
+        {
+            "label": "Open today’s first job",
+            "done": False,
+            "hint": "Review where you are going and what needs done.",
+        },
+        {
+            "label": "Upload before photos",
+            "done": False,
+            "hint": "Photos protect the company and help Mike remember what happened.",
+        },
+        {
+            "label": "Tell Jarvis what got done",
+            "done": False,
+            "hint": "Say: Finished plumbing at Johnson.",
+        },
+        {
+            "label": "Report problems or materials",
+            "done": False,
+            "hint": "Say: Need two check valves. Problem at Smith liner leak.",
+        },
+        {
+            "label": "End-day report + clock out",
+            "done": False,
+            "hint": "Jarvis will ask what got done before clocking out.",
+        },
+    ]
 
     return h["templates"].TemplateResponse(
         "crew_home.html",
@@ -312,8 +434,12 @@ def crew_home(request: Request):
             request,
             employee=employee,
             employee_name=employee.get("name") or user.get("name") or user.get("username") or "Crew",
-            clocked_in=employee.get("clocked_in"),
+            clocked_in=clocked_in,
             clocked_in_at=employee.get("clocked_in_at"),
+            gps_active_today=gps_active_today,
+            gps_points_today=gps_points_today,
+            next_move=next_move,
+            checklist=checklist,
             jobs=jobs,
         ),
     )

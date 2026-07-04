@@ -43,7 +43,29 @@
     border: 1px solid rgba(255,255,255,.1);
   }
 
-  .crew-job {
+  .next-move {
+    padding: 22px;
+    border-radius: 24px;
+    background:
+      radial-gradient(circle at top right, rgba(190, 145, 65, .26), transparent 32%),
+      rgba(255,255,255,.055);
+    border: 1px solid rgba(255,255,255,.14);
+  }
+
+  .next-move h2 {
+    font-size: clamp(1.8rem, 4vw, 3rem);
+    margin: 4px 0 8px;
+  }
+
+  .next-step-label {
+    opacity: .75;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    font-size: .82rem;
+  }
+
+  .crew-job,
+  .check-row {
     padding: 14px;
     border-radius: 18px;
     background: rgba(255,255,255,.045);
@@ -56,6 +78,27 @@
     grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
     gap: 10px;
   }
+
+  .check-row {
+    display: grid;
+    grid-template-columns: 34px 1fr;
+    gap: 10px;
+    align-items: start;
+  }
+
+  .check-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 999px;
+    display: grid;
+    place-items: center;
+    background: rgba(255,255,255,.08);
+    border: 1px solid rgba(255,255,255,.12);
+  }
+
+  .check-icon.done {
+    background: rgba(190,145,65,.26);
+  }
 </style>
 
 <div class="crew-shell">
@@ -64,8 +107,7 @@
     <h1>Morning {{ employee_name }}.</h1>
 
     <p>
-      Tell Jarvis what you need from the field. Clock in, start GPS, open today’s jobs,
-      upload photos, report problems, request materials, or say what got done.
+      Jarvis will walk you through the day. Do the next move, then tell Jarvis what happened.
     </p>
 
     <div class="crew-status">
@@ -74,11 +116,60 @@
       {% else %}
         <span class="crew-pill">Not Clocked In</span>
       {% endif %}
+
+      {% if gps_active_today %}
+        <span class="crew-pill">GPS Has Points Today</span>
+      {% else %}
+        <span class="crew-pill">GPS Not Started Today</span>
+      {% endif %}
     </div>
   </section>
 
-  <section class="card" style="margin-top:18px;">
-    <h2>Talk to Jarvis</h2>
+  {% if next_move %}
+  <section class="card">
+    <div class="next-move">
+      <div class="next-step-label">{{ next_move.step }}</div>
+      <h2>{{ next_move.title }}</h2>
+      <p>{{ next_move.message }}</p>
+
+      <div class="inline-form" style="margin-top:16px;">
+        {% if next_move.primary_command %}
+          <form method="post" action="/crew-home/ask">
+            <input type="hidden" name="command" value="{{ next_move.primary_command }}">
+            <button class="btn primary" type="submit">{{ next_move.primary_label }}</button>
+          </form>
+        {% elif next_move.primary_href %}
+          <a class="btn primary" href="{{ next_move.primary_href }}">{{ next_move.primary_label }}</a>
+        {% endif %}
+
+        {% if next_move.secondary_href %}
+          <a class="btn" href="{{ next_move.secondary_href }}">{{ next_move.secondary_label }}</a>
+        {% endif %}
+      </div>
+    </div>
+  </section>
+  {% endif %}
+
+  <section class="card">
+    <h2>Today’s Field Checklist</h2>
+    <p class="muted">Jarvis will keep this simple: start the day, track the day, document the work, report what matters.</p>
+
+    {% for step in checklist %}
+      <div class="check-row">
+        <div class="check-icon {% if step.done %}done{% endif %}">
+          {% if step.done %}✓{% else %}{{ loop.index }}{% endif %}
+        </div>
+
+        <div>
+          <strong>{{ step.label }}</strong>
+          <p class="muted">{{ step.hint }}</p>
+        </div>
+      </div>
+    {% endfor %}
+  </section>
+
+  <section class="card" id="talk-to-jarvis">
+    <h2>Tell Jarvis What Happened</h2>
 
     <form method="post" action="/crew-home/ask" class="stack">
       <textarea
@@ -165,36 +256,51 @@ Clock me out"
           <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
             {% if job.job_id %}
               <a class="btn" href="/jobs/{{ job.job_id }}">Open Job</a>
-            {% elif job.id %}
-              <a class="btn" href="/schedule">Open Schedule</a>
+            {% else %}
+              <a class="btn" href="/schedule/day">Open Schedule</a>
             {% endif %}
 
-            <a class="btn" href="/photos">Photos</a>
+            <a class="btn" href="/photos">Before / After Photos</a>
+
+            <form method="post" action="/crew-home/ask">
+              <input type="hidden" name="command" value="Finished work at {{ job.title or job.name or job.job_name or job.client_name or 'today job' }}">
+              <button class="btn" type="submit">Work Done</button>
+            </form>
+
+            <form method="post" action="/crew-home/ask">
+              <input type="hidden" name="command" value="Problem found at {{ job.title or job.name or job.job_name or job.client_name or 'today job' }}">
+              <button class="btn" type="submit">Problem</button>
+            </form>
+
+            <form method="post" action="/crew-home/ask">
+              <input type="hidden" name="command" value="Materials needed at {{ job.title or job.name or job.job_name or job.client_name or 'today job' }}">
+              <button class="btn" type="submit">Materials</button>
+            </form>
           </div>
         </div>
       {% endfor %}
     {% else %}
-      <p class="muted">No jobs found for today. Check schedule or ask Jarvis.</p>
+      <p class="muted">No jobs found for today. Check schedule or tell Jarvis what you are working on.</p>
       <a class="btn" href="/schedule/day">Open Daily Schedule</a>
     {% endif %}
   </section>
 
   <section class="card">
-    <h2>What you can say</h2>
+    <h2>What Jarvis Wants From Crew</h2>
 
     <div class="crew-job">
-      <strong>Clock / GPS</strong>
-      <p class="muted">“Clock me in” • “Start tracking me” • “Show my stops” • “Clock me out”</p>
+      <strong>At every job</strong>
+      <p class="muted">Before photos. Work done. Problems. Materials. Finished photos.</p>
     </div>
 
     <div class="crew-job">
-      <strong>Job updates</strong>
-      <p class="muted">“Finished plumbing at Johnson” • “Need two check valves” • “Problem at Smith liner leak”</p>
+      <strong>Say it simple</strong>
+      <p class="muted">“Finished plumbing at Johnson.” “Need two check valves.” “Problem at Smith liner leak.”</p>
     </div>
 
     <div class="crew-job">
-      <strong>Field tools</strong>
-      <p class="muted">“Open map” • “Open weather” • “Upload photos” • “Show my jobs”</p>
+      <strong>End of day</strong>
+      <p class="muted">Hit Clock Out. Jarvis will ask what got done, what still needs looked at, problems, materials, and tomorrow.</p>
     </div>
   </section>
 
