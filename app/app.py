@@ -9807,3 +9807,345 @@ def jarvis_brain_level18_ask_box_check():
 # END JARVIS BRAIN LEVEL 18 UNIVERSAL ASK BOX
 # ============================================================
 
+
+# ============================================================
+# JARVIS BRAIN LEVEL 19 CLEAN HOME BUTTONS
+# Adds /jarvis-brain/home as the obvious home page.
+# ============================================================
+
+import os as _j19_os
+import json as _j19_json
+import html as _j19_html
+from datetime import datetime as _j19_datetime
+
+try:
+    from fastapi import Request
+except Exception:
+    pass
+
+try:
+    from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
+except Exception:
+    pass
+
+JARVIS_CLEAN_HOME_VERSION = "level-19-clean-home-buttons-2026-07-04"
+
+
+def _j19_now():
+    return _j19_datetime.now().isoformat(timespec="seconds")
+
+
+def _j19_esc(value):
+    return _j19_html.escape(str(value or ""))
+
+
+def _j19_storage_dir():
+    path = _j19_os.path.join(_j19_os.getcwd(), "jarvis_storage")
+    _j19_os.makedirs(path, exist_ok=True)
+    return path
+
+
+def _j19_file(name):
+    return _j19_os.path.join(_j19_storage_dir(), name)
+
+
+def _j19_read_jsonl_all(name):
+    path = _j19_file(name)
+    if not _j19_os.path.exists(path):
+        return []
+
+    items = []
+    with open(path, "r", encoding="utf-8") as f:
+        for line in f:
+            try:
+                items.append(_j19_json.loads(line.strip()))
+            except Exception:
+                pass
+    return items
+
+
+def _j19_read_json(name, default=None):
+    path = _j19_file(name)
+    if not _j19_os.path.exists(path):
+        return default
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            return _j19_json.load(f)
+    except Exception:
+        return default
+
+
+def _j19_user(request):
+    try:
+        f = globals().get("current_user")
+        if callable(f):
+            u = f(request)
+            if u:
+                return u
+    except Exception:
+        pass
+
+    try:
+        if hasattr(request, "session"):
+            return request.session.get("user") or {}
+    except Exception:
+        pass
+
+    return {}
+
+
+def _j19_role(user):
+    role = str((user or {}).get("role") or (user or {}).get("login_type") or "guest").lower().strip()
+    if role == "employee":
+        role = "crew"
+    return role
+
+
+def _j19_name(user):
+    return str(
+        (user or {}).get("name")
+        or (user or {}).get("username")
+        or (user or {}).get("email")
+        or "Mike"
+    ).strip()
+
+
+def _j19_has_admin_backup(request):
+    try:
+        return bool(request.session.get("jarvis_real_admin_user"))
+    except Exception:
+        return False
+
+
+def _j19_is_switched(request):
+    try:
+        return bool((request.session.get("jarvis_switched_login") or {}).get("active"))
+    except Exception:
+        return False
+
+
+def _j19_columns(table):
+    try:
+        f = globals().get("table_columns")
+        if callable(f):
+            return list(f(table) or [])
+    except Exception:
+        pass
+    return []
+
+
+def _j19_rows(sql, params=()):
+    try:
+        f = globals().get("rows")
+        if callable(f):
+            return f(sql, params) or []
+    except Exception:
+        pass
+    return []
+
+
+def _j19_table_count(table):
+    cols = _j19_columns(table)
+    if not cols:
+        return None
+
+    try:
+        r = _j19_rows(f"SELECT COUNT(*) AS c FROM {table}", ())
+        if r:
+            first = r[0]
+            return first.get("c") if hasattr(first, "get") else list(first)[0]
+    except Exception:
+        pass
+
+    return None
+
+
+def _j19_memory_counts():
+    items = _j19_read_jsonl_all("jarvis_memory.jsonl")
+    open_items = []
+    for item in items:
+        status = str(item.get("status") or "Open").lower()
+        if status not in ("done", "closed", "complete", "completed"):
+            open_items.append(item)
+
+    counts = {
+        "total": len(items),
+        "open": len(open_items),
+        "billing": 0,
+        "materials": 0,
+        "problems": 0,
+        "followups": 0,
+        "field_logs": 0,
+        "client_requests": 0,
+    }
+
+    for item in open_items:
+        cat = str(item.get("category") or "")
+        if cat == "Billing Note":
+            counts["billing"] += 1
+        elif cat == "Material Needed":
+            counts["materials"] += 1
+        elif cat == "Problem Found":
+            counts["problems"] += 1
+        elif cat == "Follow Up":
+            counts["followups"] += 1
+        elif cat == "Field Log":
+            counts["field_logs"] += 1
+        elif cat == "Client Request":
+            counts["client_requests"] += 1
+
+    return counts
+
+
+def _j19_active_context():
+    return _j19_read_json("jarvis_active_context.json", {}) or {}
+
+
+def _j19_card(title, desc, href, tag="", danger=False):
+    danger_class = " danger" if danger else ""
+    return f"""
+    <a class="tile{danger_class}" href="{_j19_esc(href)}">
+      <div class="tag">{_j19_esc(tag)}</div>
+      <h2>{_j19_esc(title)}</h2>
+      <p>{_j19_esc(desc)}</p>
+    </a>
+    """
+
+
+@app.get("/jarvis-brain/home", response_class=HTMLResponse)
+def jarvis_brain_level19_clean_home(request: Request):
+    user = _j19_user(request)
+    role = _j19_role(user)
+    name = _j19_name(user)
+    switched = _j19_is_switched(request)
+    has_backup = _j19_has_admin_backup(request)
+    counts = _j19_memory_counts()
+    active = _j19_active_context()
+
+    return_admin_tile = ""
+    if switched or has_backup or role != "admin":
+        return_admin_tile = _j19_card(
+            "Return to Admin",
+            "Go back to Mike/Admin session immediately.",
+            "/jarvis-brain/return-admin",
+            "Admin",
+            True,
+        )
+
+    active_text = "No active job set."
+    if active:
+        active_text = f"{active.get('title') or active.get('client') or active.get('address')} ? {active.get('address') or ''}"
+
+    tiles = ""
+    tiles += return_admin_tile
+    tiles += _j19_card("Switch Login", "Admin testing panel for Crew and Client views.", "/jarvis-brain/login-bridge", "Switch")
+    tiles += _j19_card("Today Ops", "The page you should open first every morning.", "/jarvis-brain/today", "Daily")
+    tiles += _j19_card("Mike Brain", "Main Jarvis command center.", "/jarvis-brain", "Brain")
+    tiles += _j19_card("Command Desk", "Open brain queue: billing, materials, follow-ups, problems.", "/jarvis-brain/desk", "Queue")
+    tiles += _j19_card("Active Job", active_text, "/jarvis-brain/job", "Job")
+    tiles += _j19_card("Crew Flow", "Step-by-step crew workflow.", "/jarvis-brain/crew", "Crew")
+    tiles += _j19_card("Client View", "Client-safe Jarvis page.", "/jarvis-brain/client", "Client")
+    tiles += _j19_card("Help", "Command cheat sheet.", "/jarvis-brain/help", "Help")
+    tiles += _j19_card("System Check", "Routes, tables, storage, and status.", "/jarvis-brain/system", "Status")
+    tiles += _j19_card("Logout", "Fully log out of the app.", "/logout", "Exit", True)
+
+    jobs_count = _j19_table_count("poolops2_jobs")
+    clients_count = _j19_table_count("poolops2_clients")
+    props_count = _j19_table_count("poolops2_properties")
+    office_count = _j19_table_count("invisible_office_items")
+    logs_count = _j19_table_count("field_logs")
+
+    mode_text = f"{role.upper()} / {name}"
+    if switched:
+        mode_text += " ? TEST MODE"
+
+    html = f"""
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Jarvis Home</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {{ margin:0; font-family:Arial,sans-serif; background:#070a0f; color:#f5efe3; }}
+    .wrap {{ max-width:1240px; margin:0 auto; padding:26px; }}
+    .hero {{ background:linear-gradient(135deg,#111722,#05070b); border:1px solid #5d421d; border-radius:22px; padding:24px; box-shadow:0 20px 60px rgba(0,0,0,.45); }}
+    h1 {{ margin:0 0 8px; font-size:38px; letter-spacing:.08em; }}
+    .sub {{ color:#d9b56d; margin-bottom:20px; font-size:18px; }}
+    .stats {{ display:grid; grid-template-columns:repeat(6,1fr); gap:10px; margin:16px 0; }}
+    @media(max-width:950px) {{ .stats {{ grid-template-columns:repeat(2,1fr); }} }}
+    .stat {{ background:#05070b; border:1px solid #2d2113; border-radius:14px; padding:14px; }}
+    .stat b {{ font-size:28px; color:#d9b56d; }}
+    .tiles {{ display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:14px; margin-top:18px; }}
+    .tile {{ display:block; text-decoration:none; color:#f5efe3; background:#101722; border:1px solid #2d2113; border-radius:18px; padding:18px; min-height:140px; }}
+    .tile:hover {{ border-color:#b8873a; transform:translateY(-1px); }}
+    .tile.danger {{ border-color:#b8873a; background:#1a1308; }}
+    .tile h2 {{ margin:8px 0; font-size:24px; }}
+    .tile p {{ color:#e8dcc7; line-height:1.4; }}
+    .tag {{ display:inline-block; padding:6px 10px; border:1px solid #6b4b1f; border-radius:999px; color:#d9b56d; font-size:12px; }}
+    .card {{ background:#101722; border:1px solid #2d2113; border-radius:18px; padding:18px; margin-top:16px; }}
+    a {{ color:#d9a64a; }}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero">
+    <h1>J.A.R.V.I.S. HOME</h1>
+    <div class="sub">Good to go. Viewing as: {_j19_esc(mode_text)}.</div>
+
+    <div class="stats">
+      <div class="stat"><b>{counts['open']}</b><br>Open brain items</div>
+      <div class="stat"><b>{counts['billing']}</b><br>Billing</div>
+      <div class="stat"><b>{counts['materials']}</b><br>Materials</div>
+      <div class="stat"><b>{counts['problems']}</b><br>Problems</div>
+      <div class="stat"><b>{counts['field_logs']}</b><br>Field logs</div>
+      <div class="stat"><b>{counts['client_requests']}</b><br>Client requests</div>
+    </div>
+
+    <div class="card">
+      <h2>Active Job</h2>
+      <p>{_j19_esc(active_text)}</p>
+      <p>Jobs: {_j19_esc(jobs_count)} ? Clients: {_j19_esc(clients_count)} ? Properties: {_j19_esc(props_count)} ? Invisible Office: {_j19_esc(office_count)} ? Field Logs: {_j19_esc(logs_count)}</p>
+    </div>
+
+    <div class="tiles">
+      {tiles}
+    </div>
+  </div>
+</div>
+</body>
+</html>
+"""
+    return HTMLResponse(html)
+
+
+@app.get("/jarvis-home", response_class=HTMLResponse)
+def jarvis_brain_level19_home_alias(request: Request):
+    return RedirectResponse("/jarvis-brain/home", status_code=303)
+
+
+@app.get("/jarvis-brain/home.json")
+def jarvis_brain_level19_home_json(request: Request):
+    user = _j19_user(request)
+    return JSONResponse({
+        "ok": True,
+        "version": JARVIS_CLEAN_HOME_VERSION,
+        "role": _j19_role(user),
+        "name": _j19_name(user),
+        "is_switched": _j19_is_switched(request),
+        "has_admin_backup": _j19_has_admin_backup(request),
+        "memory_counts": _j19_memory_counts(),
+        "active_context": _j19_active_context(),
+        "tables": {
+            "jobs": _j19_table_count("poolops2_jobs"),
+            "clients": _j19_table_count("poolops2_clients"),
+            "properties": _j19_table_count("poolops2_properties"),
+            "invisible_office": _j19_table_count("invisible_office_items"),
+            "field_logs": _j19_table_count("field_logs"),
+        },
+    })
+
+# ============================================================
+# END JARVIS BRAIN LEVEL 19 CLEAN HOME BUTTONS
+# ============================================================
+
