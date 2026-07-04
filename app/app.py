@@ -4553,3 +4553,575 @@ def brain_alias_level5(request: Request):
 # END JARVIS BRAIN LAYER
 # ============================================================
 
+
+# ============================================================
+# JARVIS BRAIN LEVEL 6 COMMAND DESK
+# Adds /jarvis-brain/desk without replacing Level 5.
+# ============================================================
+
+import os as _j6_os
+import json as _j6_json
+import html as _j6_html
+import hashlib as _j6_hashlib
+from datetime import datetime as _j6_datetime, date as _j6_date
+
+try:
+    from fastapi import Request
+except Exception:
+    pass
+
+try:
+    from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
+except Exception:
+    pass
+
+JARVIS_DESK_VERSION = "level-6-command-desk-2026-07-04"
+
+
+def _j6_now():
+    return _j6_datetime.now().isoformat(timespec="seconds")
+
+
+def _j6_today():
+    return _j6_date.today().isoformat()
+
+
+def _j6_storage_dir():
+    path = _j6_os.path.join(_j6_os.getcwd(), "jarvis_storage")
+    _j6_os.makedirs(path, exist_ok=True)
+    return path
+
+
+def _j6_file(name):
+    return _j6_os.path.join(_j6_storage_dir(), name)
+
+
+def _j6_esc(value):
+    return _j6_html.escape(str(value or ""))
+
+
+def _j6_read_jsonl_all(name):
+    path = _j6_file(name)
+    if not _j6_os.path.exists(path):
+        return []
+    items = []
+    with open(path, "r", encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                items.append(_j6_json.loads(line))
+            except Exception:
+                pass
+    return items
+
+
+def _j6_write_jsonl_all(name, items):
+    path = _j6_file(name)
+    with open(path, "w", encoding="utf-8") as f:
+        for item in items:
+            f.write(_j6_json.dumps(item, ensure_ascii=False) + "\n")
+
+
+def _j6_item_id(item):
+    base = "|".join([
+        str(item.get("created_at") or ""),
+        str(item.get("category") or ""),
+        str(item.get("title") or ""),
+        str(item.get("body") or ""),
+    ])
+    return _j6_hashlib.sha1(base.encode("utf-8", errors="ignore")).hexdigest()[:16]
+
+
+def _j6_status(item):
+    return str(item.get("status") or "Open").strip()
+
+
+def _j6_is_open(item):
+    return _j6_status(item).lower() not in ("done", "closed", "complete", "completed")
+
+
+def _j6_mark_done(item_id):
+    items = _j6_read_jsonl_all("jarvis_memory.jsonl")
+    changed = False
+
+    for item in items:
+        if _j6_item_id(item) == item_id:
+            item["status"] = "Done"
+            item["completed_at"] = _j6_now()
+            changed = True
+            break
+
+    if changed:
+        _j6_write_jsonl_all("jarvis_memory.jsonl", items)
+
+    return changed
+
+
+def _j6_user(request):
+    try:
+        f = globals().get("current_user")
+        if callable(f):
+            u = f(request)
+            if u:
+                return u
+    except Exception:
+        pass
+
+    try:
+        if hasattr(request, "session"):
+            return request.session.get("user") or {}
+    except Exception:
+        pass
+
+    return {}
+
+
+def _j6_name(user):
+    return str((user or {}).get("name") or (user or {}).get("username") or (user or {}).get("email") or "Mike").strip()
+
+
+def _j6_role(user):
+    role = str((user or {}).get("role") or "admin").lower().strip()
+    if role == "employee":
+        role = "crew"
+    return role
+
+
+def _j6_rows(sql, params=()):
+    try:
+        f = globals().get("rows")
+        if callable(f):
+            return f(sql, params) or []
+    except Exception:
+        pass
+    return []
+
+
+def _j6_columns(table):
+    try:
+        f = globals().get("table_columns")
+        if callable(f):
+            return list(f(table) or [])
+    except Exception:
+        pass
+    return []
+
+
+def _j6_table_count(table):
+    cols = _j6_columns(table)
+    if not cols:
+        return None
+    try:
+        r = _j6_rows(f"SELECT COUNT(*) AS c FROM {table}", ())
+        if r:
+            return r[0].get("c") if hasattr(r[0], "get") else list(r[0])[0]
+    except Exception:
+        pass
+    return None
+
+
+def _j6_group_items(items):
+    groups = {
+        "Billing Note": [],
+        "Material Needed": [],
+        "Follow Up": [],
+        "Problem Found": [],
+        "Field Log": [],
+        "General Note": [],
+        "Other": [],
+    }
+
+    for item in items:
+        cat = str(item.get("category") or "General Note").strip()
+        if cat not in groups:
+            cat = "Other"
+        groups[cat].append(item)
+
+    return groups
+
+
+def _j6_today_items(items):
+    today = _j6_today()
+    return [x for x in items if str(x.get("created_at") or "")[:10] == today]
+
+
+def _j6_render_item(item):
+    item_id = _j6_item_id(item)
+    cat = _j6_esc(item.get("category"))
+    created = _j6_esc(item.get("created_at"))
+    title = _j6_esc(item.get("title"))
+    body = _j6_esc(item.get("body"))
+    priority = _j6_esc(item.get("priority") or "Normal")
+    status = _j6_esc(_j6_status(item))
+
+    return f"""
+    <div class="desk-item">
+      <div class="desk-top">
+        <b>{cat}</b>
+        <span>{created}</span>
+      </div>
+      <div class="desk-title">{title}</div>
+      <div class="desk-body">{body}</div>
+      <div class="desk-meta">Priority: {priority} ? Status: {status}</div>
+      <form method="post" action="/jarvis-brain/desk/done">
+        <input type="hidden" name="item_id" value="{item_id}">
+        <button class="small" type="submit">Mark Done</button>
+      </form>
+    </div>
+    """
+
+
+def _j6_next_actions(open_items):
+    billing = [x for x in open_items if str(x.get("category") or "") == "Billing Note"]
+    materials = [x for x in open_items if str(x.get("category") or "") == "Material Needed"]
+    followups = [x for x in open_items if str(x.get("category") or "") == "Follow Up"]
+    problems = [x for x in open_items if str(x.get("category") or "") == "Problem Found"]
+    fields = [x for x in open_items if str(x.get("category") or "") == "Field Log"]
+
+    actions = []
+
+    if billing:
+        actions.append(f"Review {len(billing)} billing note(s) before they disappear.")
+    if problems:
+        actions.append(f"Handle {len(problems)} problem item(s) before they become bigger problems.")
+    if materials:
+        actions.append(f"Check {len(materials)} material-needed item(s) before the next job run.")
+    if followups:
+        actions.append(f"Make {len(followups)} follow-up call/text/email item(s).")
+    if fields:
+        actions.append(f"Review {len(fields)} field log item(s) and make sure the job history is protected.")
+
+    if not actions:
+        actions.append("No open Jarvis memory is screaming right now. Keep feeding me job notes, billing notes, and field logs.")
+
+    return actions
+
+
+@app.get("/jarvis-brain/desk", response_class=HTMLResponse)
+def jarvis_brain_level6_command_desk(request: Request):
+    user = _j6_user(request)
+    name = _j6_name(user).split()[0]
+    role = _j6_role(user)
+
+    all_items = _j6_read_jsonl_all("jarvis_memory.jsonl")
+    all_items.reverse()
+
+    open_items = [x for x in all_items if _j6_is_open(x)]
+    done_items = [x for x in all_items if not _j6_is_open(x)]
+    today_items = _j6_today_items(all_items)
+    groups = _j6_group_items(open_items)
+    next_actions = _j6_next_actions(open_items)
+
+    group_html = ""
+    for group_name, items in groups.items():
+        if not items:
+            continue
+        group_html += f"""
+        <div class="card">
+          <h2>{_j6_esc(group_name)} <span>{len(items)}</span></h2>
+          {''.join(_j6_render_item(x) for x in items[:20])}
+        </div>
+        """
+
+    if not group_html:
+        group_html = """
+        <div class="card">
+          <h2>Open Memory</h2>
+          <p>No open Jarvis memory right now.</p>
+        </div>
+        """
+
+    today_html = ""
+    for item in today_items[:12]:
+        today_html += _j6_render_item(item)
+    if not today_html:
+        today_html = "<p>No Jarvis items captured today yet.</p>"
+
+    reports = _j6_read_jsonl_all("jarvis_daily_reports.jsonl")
+    reports.reverse()
+    report_html = ""
+    for report in reports[:5]:
+        report_html += f"""
+        <div class="desk-item">
+          <div class="desk-top"><b>Daily Closeout</b><span>{_j6_esc(report.get('created_at'))}</span></div>
+          <div class="desk-body">{_j6_esc(report.get('summary'))}</div>
+        </div>
+        """
+    if not report_html:
+        report_html = "<p>No daily closeout reports saved yet. Say: Jarvis, end my day.</p>"
+
+    actions_html = "".join([f"<li>{_j6_esc(x)}</li>" for x in next_actions])
+
+    jobs_count = _j6_table_count("poolops2_jobs")
+    office_count = _j6_table_count("invisible_office_items")
+    logs_count = _j6_table_count("field_logs")
+
+    html = f"""
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Jarvis Command Desk</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {{ margin:0; font-family:Arial,sans-serif; background:#070a0f; color:#f5efe3; }}
+    .wrap {{ max-width:1250px; margin:0 auto; padding:26px; }}
+    .hero {{ background:linear-gradient(135deg,#111722,#05070b); border:1px solid #5d421d; border-radius:22px; padding:24px; box-shadow:0 20px 60px rgba(0,0,0,.45); }}
+    h1 {{ margin:0 0 8px; font-size:34px; letter-spacing:.08em; }}
+    .sub {{ color:#d9b56d; margin-bottom:20px; }}
+    .stats {{ display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin:16px 0; }}
+    @media(max-width:800px) {{ .stats {{ grid-template-columns:repeat(2,1fr); }} }}
+    .stat {{ background:#05070b; border:1px solid #2d2113; border-radius:14px; padding:14px; }}
+    .stat b {{ font-size:28px; color:#d9b56d; }}
+    .grid {{ display:grid; grid-template-columns:1.05fr .95fr; gap:16px; }}
+    @media(max-width:950px) {{ .grid {{ grid-template-columns:1fr; }} }}
+    .card {{ background:#101722; border:1px solid #2d2113; border-radius:18px; padding:18px; margin-top:16px; }}
+    .card h2 {{ display:flex; justify-content:space-between; align-items:center; gap:10px; }}
+    textarea {{ width:100%; min-height:120px; box-sizing:border-box; border-radius:14px; border:1px solid #6b4b1f; background:#05070b; color:#fff; padding:14px; font-size:16px; }}
+    button {{ margin-top:10px; padding:12px 16px; border:0; border-radius:12px; background:#b8873a; color:#111; font-weight:900; cursor:pointer; }}
+    button.small {{ padding:8px 11px; font-size:13px; }}
+    .reply {{ margin-top:12px; padding:13px; border-radius:12px; background:#05070b; border:1px solid #2d2113; min-height:24px; line-height:1.45; }}
+    .chips {{ display:flex; flex-wrap:wrap; gap:9px; margin-top:10px; }}
+    .chip {{ border:1px solid #6b4b1f; border-radius:999px; padding:9px 11px; background:#070a0f; color:#f5efe3; cursor:pointer; }}
+    .desk-item {{ background:#05070b; border:1px solid #2d2113; border-radius:14px; padding:13px; margin:10px 0; }}
+    .desk-top {{ display:flex; justify-content:space-between; gap:12px; color:#d9b56d; font-size:13px; }}
+    .desk-title {{ font-weight:900; margin-top:8px; }}
+    .desk-body {{ margin-top:8px; color:#e8dcc7; line-height:1.4; }}
+    .desk-meta {{ margin-top:9px; color:#a99572; font-size:13px; }}
+    a {{ color:#d9a64a; }}
+    li {{ margin-bottom:10px; }}
+    .result {{ padding:10px; border:1px solid #2d2113; border-radius:12px; margin:8px 0; background:#070a0f; }}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero">
+    <h1>J.A.R.V.I.S. COMMAND DESK</h1>
+    <div class="sub">Good to go, {_j6_esc(name)}. This is the office brain queue. Role: {_j6_esc(role)}.</div>
+
+    <div class="stats">
+      <div class="stat"><b>{len(open_items)}</b><br>Open Jarvis items</div>
+      <div class="stat"><b>{len(today_items)}</b><br>Captured today</div>
+      <div class="stat"><b>{len(done_items)}</b><br>Completed</div>
+      <div class="stat"><b>{len(all_items)}</b><br>Total memory</div>
+    </div>
+
+    <div class="grid">
+      <div>
+        <div class="card">
+          <h2>Command</h2>
+          <textarea id="cmd" placeholder="Jarvis, add this to billing: "></textarea>
+          <br>
+          <button onclick="sendCmd()">Send</button>
+          <button onclick="startVoice()">?? Voice</button>
+          <button onclick="speakLast()">?? Read Back</button>
+          <div class="reply" id="reply">Waiting for command.</div>
+
+          <div class="chips">
+            <button class="chip" onclick="fillCmd('Jarvis, start my day')">Start Day</button>
+            <button class="chip" onclick="fillCmd('Jarvis, end my day')">End Day</button>
+            <button class="chip" onclick="fillCmd('Jarvis, what did I do today?')">Today Summary</button>
+            <button class="chip" onclick="fillCmd('Jarvis, find ')">Find</button>
+            <button class="chip" onclick="fillCmd('Jarvis, add this to billing: ')">Billing</button>
+            <button class="chip" onclick="fillCmd('Jarvis, field log: ')">Field Log</button>
+            <button class="chip" onclick="fillCmd('Jarvis, material needed: ')">Material</button>
+            <button class="chip" onclick="fillCmd('Jarvis, remind me to follow up with ')">Follow Up</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>What Jarvis Thinks Is Next</h2>
+          <ul>{actions_html}</ul>
+        </div>
+
+        <div class="card">
+          <h2>Today?s Captured Items</h2>
+          {today_html}
+        </div>
+
+        <div class="card">
+          <h2>Daily Closeouts</h2>
+          {report_html}
+        </div>
+      </div>
+
+      <div>
+        <div class="card">
+          <h2>System Links</h2>
+          <p>
+            <a href="/jarvis-brain">Jarvis Brain</a>
+            |
+            <a href="/jarvis-brain/install-check">Install Check</a>
+            |
+            <a href="/jarvis-brain/export.json">Export</a>
+            |
+            <a href="/invisible-office">Invisible Office</a>
+            |
+            <a href="/">Home</a>
+          </p>
+          <p><b>Jobs table:</b> {_j6_esc(jobs_count)}</p>
+          <p><b>Invisible Office rows:</b> {_j6_esc(office_count)}</p>
+          <p><b>Field Log rows:</b> {_j6_esc(logs_count)}</p>
+        </div>
+
+        {group_html}
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let lastReply = "";
+
+function fillCmd(t){{
+  document.getElementById("cmd").value = t;
+  document.getElementById("cmd").focus();
+}}
+
+function escapeHtml(str){{
+  return String(str || "").replace(/[&<>"']/g, function(m){{
+    return ({{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}})[m];
+  }});
+}}
+
+function speak(text){{
+  if(!("speechSynthesis" in window)){{ return; }}
+  window.speechSynthesis.cancel();
+  const msg = new SpeechSynthesisUtterance(text);
+  msg.rate = 1;
+  msg.pitch = 1;
+  window.speechSynthesis.speak(msg);
+}}
+
+function speakLast(){{
+  const text = lastReply || document.getElementById("reply").innerText || "Nothing to read back yet.";
+  speak(text);
+}}
+
+async function sendCmd(){{
+  const box = document.getElementById("cmd");
+  const reply = document.getElementById("reply");
+  const text = box.value.trim();
+
+  if(!text){{
+    reply.innerText = "Tell me what needs handled.";
+    lastReply = reply.innerText;
+    return;
+  }}
+
+  reply.innerText = "Handling it...";
+  lastReply = reply.innerText;
+
+  try {{
+    const res = await fetch("/jarvis-brain/command", {{
+      method:"POST",
+      headers:{{"Content-Type":"application/json"}},
+      body:JSON.stringify({{text:text}})
+    }});
+
+    const data = await res.json();
+    let html = escapeHtml(data.reply || JSON.stringify(data));
+    lastReply = data.reply || JSON.stringify(data);
+
+    if(data.links && data.links.length){{
+      html += "<br><br><b>Matches:</b>";
+      data.links.forEach(function(x){{
+        html += '<div class="result"><b>' + escapeHtml(x.kind) + '</b>: ';
+        html += '<a href="' + escapeHtml(x.url) + '">' + escapeHtml(x.title) + '</a>';
+        if(x.detail){{ html += '<br><small>' + escapeHtml(x.detail) + '</small>'; }}
+        html += '</div>';
+      }});
+    }}
+
+    reply.innerHTML = html;
+    speak(lastReply);
+
+    if(data.ok && (!data.links || !data.links.length)){{
+      setTimeout(() => window.location.reload(), 1200);
+    }}
+  }} catch(err) {{
+    reply.innerText = "Jarvis command failed: " + err;
+    lastReply = reply.innerText;
+    speak(lastReply);
+  }}
+}}
+
+function startVoice(){{
+  const reply = document.getElementById("reply");
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SR){{
+    reply.innerText = "Voice is not available in this browser. Use Chrome or Edge.";
+    lastReply = reply.innerText;
+    speakLast();
+    return;
+  }}
+
+  const rec = new SR();
+  rec.lang = "en-US";
+  rec.interimResults = false;
+  rec.maxAlternatives = 1;
+
+  reply.innerText = "Listening...";
+  lastReply = reply.innerText;
+  rec.onresult = function(event){{
+    const text = event.results[0][0].transcript;
+    document.getElementById("cmd").value = text;
+    sendCmd();
+  }};
+  rec.onerror = function(event){{
+    reply.innerText = "Voice error: " + event.error;
+    lastReply = reply.innerText;
+  }};
+  rec.start();
+}}
+</script>
+</body>
+</html>
+"""
+    return HTMLResponse(html)
+
+
+@app.post("/jarvis-brain/desk/done")
+async def jarvis_brain_level6_mark_done(request: Request):
+    try:
+        form = await request.form()
+        item_id = str(form.get("item_id") or "").strip()
+    except Exception:
+        item_id = ""
+
+    if item_id:
+        _j6_mark_done(item_id)
+
+    return RedirectResponse("/jarvis-brain/desk", status_code=303)
+
+
+@app.get("/jarvis-brain/desk.json")
+def jarvis_brain_level6_desk_json():
+    all_items = _j6_read_jsonl_all("jarvis_memory.jsonl")
+    all_items.reverse()
+    open_items = [x for x in all_items if _j6_is_open(x)]
+    done_items = [x for x in all_items if not _j6_is_open(x)]
+    today_items = _j6_today_items(all_items)
+
+    return JSONResponse({
+        "ok": True,
+        "version": JARVIS_DESK_VERSION,
+        "open_count": len(open_items),
+        "done_count": len(done_items),
+        "today_count": len(today_items),
+        "next_actions": _j6_next_actions(open_items),
+        "open_items": open_items[:200],
+        "today_items": today_items[:100],
+    })
+
+
+@app.get("/jarvis-brain/command-desk", response_class=HTMLResponse)
+def jarvis_brain_level6_command_desk_alias(request: Request):
+    return RedirectResponse("/jarvis-brain/desk", status_code=303)
+
+# ============================================================
+# END JARVIS BRAIN LEVEL 6 COMMAND DESK
+# ============================================================
+
