@@ -10148,3 +10148,488 @@ def jarvis_brain_level19_home_json(request: Request):
 # ============================================================
 # END JARVIS BRAIN LEVEL 19 CLEAN HOME BUTTONS
 # ============================================================
+
+
+# ============================================================
+# JARVIS EASY CONTROL PANEL
+# Big obvious buttons. Safe add-on only.
+# Does NOT touch login, logout, or front-door redirects.
+# ============================================================
+
+import html as _jcp_html
+import json as _jcp_json
+from datetime import datetime as _jcp_datetime
+
+try:
+    from fastapi import Request
+except Exception:
+    pass
+
+try:
+    from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
+except Exception:
+    pass
+
+JARVIS_CONTROL_PANEL_VERSION = "easy-control-panel-2026-07-04"
+
+
+def _jcp_now():
+    return _jcp_datetime.now().isoformat(timespec="seconds")
+
+
+def _jcp_esc(value):
+    return _jcp_html.escape(str(value or ""))
+
+
+def _jcp_user(request):
+    try:
+        f = globals().get("current_user")
+        if callable(f):
+            u = f(request)
+            if u:
+                return u
+    except Exception:
+        pass
+
+    try:
+        if hasattr(request, "session"):
+            return request.session.get("user") or {}
+    except Exception:
+        pass
+
+    return {}
+
+
+def _jcp_role(user):
+    role = str((user or {}).get("role") or (user or {}).get("login_type") or "guest").lower().strip()
+    if role == "employee":
+        role = "crew"
+    return role
+
+
+def _jcp_name(user):
+    return str(
+        (user or {}).get("name")
+        or (user or {}).get("username")
+        or (user or {}).get("email")
+        or "User"
+    ).strip()
+
+
+def _jcp_has_admin_backup(request):
+    try:
+        return bool(request.session.get("jarvis_real_admin_user"))
+    except Exception:
+        return False
+
+
+def _jcp_is_switched(request):
+    try:
+        return bool((request.session.get("jarvis_switched_login") or {}).get("active"))
+    except Exception:
+        return False
+
+
+def _jcp_restore_admin(request):
+    if not hasattr(request, "session"):
+        return False
+
+    session = request.session
+    admin = session.get("jarvis_real_admin_user")
+
+    if not admin:
+        return False
+
+    name = admin.get("name") or admin.get("username") or admin.get("email") or "Mike"
+    email = admin.get("email") or ""
+    uid = admin.get("user_id") or admin.get("id") or "admin"
+
+    session["user"] = admin
+    session["user_id"] = uid
+    session["id"] = uid
+    session["username"] = name
+    session["name"] = name
+    session["email"] = email
+    session["role"] = "admin"
+    session["login_type"] = "admin"
+    session["is_admin"] = True
+    session["is_employee"] = False
+    session["is_crew"] = False
+    session["is_client"] = False
+    session.pop("employee_id", None)
+    session.pop("client_id", None)
+    session.pop("jarvis_switched_login", None)
+
+    return True
+
+
+def _jcp_card(title, desc, href, tag="", danger=False):
+    danger_class = " danger" if danger else ""
+    return f"""
+    <a class="tile{danger_class}" href="{_jcp_esc(href)}">
+      <div class="tag">{_jcp_esc(tag)}</div>
+      <h2>{_jcp_esc(title)}</h2>
+      <p>{_jcp_esc(desc)}</p>
+    </a>
+    """
+
+
+@app.get("/jarvis-brain/control-panel", response_class=HTMLResponse)
+def jarvis_easy_control_panel(request: Request):
+    user = _jcp_user(request)
+
+    if not user:
+        return RedirectResponse("/login", status_code=303)
+
+    role = _jcp_role(user)
+    name = _jcp_name(user)
+    switched = _jcp_is_switched(request)
+    has_admin_backup = _jcp_has_admin_backup(request)
+
+    mode = f"{role.upper()} / {name}"
+    if switched:
+        mode += " ? TEST MODE"
+
+    return_admin_tile = ""
+    if switched or has_admin_backup or role != "admin":
+        return_admin_tile = _jcp_card(
+            "RETURN TO ADMIN",
+            "Get back to Mike/Admin immediately.",
+            "/jarvis-brain/control-panel/return-admin",
+            "Admin",
+            True,
+        )
+
+    tiles = ""
+    tiles += return_admin_tile
+    tiles += _jcp_card("Switch Login", "Switch between Admin, Crew, and Client views.", "/jarvis-brain/login-bridge", "Switch")
+    tiles += _jcp_card("Today Ops", "Daily board: billing, materials, jobs, crew, problems.", "/jarvis-brain/today", "Daily")
+    tiles += _jcp_card("Ask / Mike Brain", "Main Jarvis command center.", "/jarvis-brain", "Brain")
+    tiles += _jcp_card("Command Desk", "Open Jarvis queue and mark items done.", "/jarvis-brain/desk", "Queue")
+    tiles += _jcp_card("Active Job", "Job-specific Jarvis memory.", "/jarvis-brain/job", "Job")
+    tiles += _jcp_card("Crew Flow", "Step-by-step crew page.", "/jarvis-brain/crew", "Crew")
+    tiles += _jcp_card("Client View", "Client-safe Jarvis page.", "/jarvis-brain/client", "Client")
+    tiles += _jcp_card("Help", "Jarvis command cheat sheet.", "/jarvis-brain/help", "Help")
+    tiles += _jcp_card("System Check", "Check routes, tables, and storage.", "/jarvis-brain/system", "Status")
+    tiles += _jcp_card("Logout", "Fully log out.", "/logout", "Exit", True)
+
+    html = f"""
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Jarvis Control Panel</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {{
+      margin:0;
+      font-family:Arial,sans-serif;
+      background:#070a0f;
+      color:#f5efe3;
+    }}
+    .wrap {{
+      max-width:1250px;
+      margin:0 auto;
+      padding:26px;
+    }}
+    .hero {{
+      background:linear-gradient(135deg,#111722,#05070b);
+      border:1px solid #5d421d;
+      border-radius:22px;
+      padding:24px;
+      box-shadow:0 20px 60px rgba(0,0,0,.45);
+    }}
+    h1 {{
+      margin:0 0 8px;
+      font-size:38px;
+      letter-spacing:.08em;
+    }}
+    .sub {{
+      color:#d9b56d;
+      margin-bottom:20px;
+      font-size:18px;
+    }}
+    .ask {{
+      background:#101722;
+      border:1px solid #2d2113;
+      border-radius:18px;
+      padding:18px;
+      margin-top:16px;
+    }}
+    textarea {{
+      width:100%;
+      min-height:115px;
+      box-sizing:border-box;
+      border-radius:14px;
+      border:1px solid #6b4b1f;
+      background:#05070b;
+      color:#fff;
+      padding:14px;
+      font-size:16px;
+    }}
+    button {{
+      margin-top:10px;
+      padding:13px 18px;
+      border:0;
+      border-radius:12px;
+      background:#b8873a;
+      color:#111;
+      font-weight:900;
+      cursor:pointer;
+    }}
+    .reply {{
+      margin-top:12px;
+      padding:13px;
+      border-radius:12px;
+      background:#05070b;
+      border:1px solid #2d2113;
+      min-height:24px;
+      line-height:1.45;
+    }}
+    .chips {{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      margin-top:10px;
+    }}
+    .chips button {{
+      border:1px solid #6b4b1f;
+      border-radius:999px;
+      background:#05070b;
+      color:#f5efe3;
+      padding:9px 11px;
+      margin:0;
+    }}
+    .tiles {{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+      gap:14px;
+      margin-top:18px;
+    }}
+    .tile {{
+      display:block;
+      text-decoration:none;
+      color:#f5efe3;
+      background:#101722;
+      border:1px solid #2d2113;
+      border-radius:18px;
+      padding:18px;
+      min-height:140px;
+    }}
+    .tile:hover {{
+      border-color:#b8873a;
+      transform:translateY(-1px);
+    }}
+    .tile.danger {{
+      border-color:#b8873a;
+      background:#1a1308;
+    }}
+    .tile h2 {{
+      margin:8px 0;
+      font-size:24px;
+    }}
+    .tile p {{
+      color:#e8dcc7;
+      line-height:1.4;
+    }}
+    .tag {{
+      display:inline-block;
+      padding:6px 10px;
+      border:1px solid #6b4b1f;
+      border-radius:999px;
+      color:#d9b56d;
+      font-size:12px;
+    }}
+    .result {{
+      background:#05070b;
+      border:1px solid #2d2113;
+      border-radius:12px;
+      padding:10px;
+      margin-top:10px;
+    }}
+    .result b {{
+      color:#d9b56d;
+    }}
+    .result a {{
+      color:#d9a64a;
+    }}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero">
+    <h1>J.A.R.V.I.S. CONTROL PANEL</h1>
+    <div class="sub">Viewing as: {_jcp_esc(mode)}</div>
+
+    <div class="ask">
+      <h2>Ask Jarvis Right Here</h2>
+      <textarea id="cmd" placeholder="Jarvis, what am I forgetting?"></textarea>
+      <br>
+      <button onclick="sendJarvis()">Ask Jarvis</button>
+      <button onclick="startVoice()">?? Voice</button>
+      <button onclick="readBack()">?? Read Back</button>
+
+      <div class="chips">
+        <button onclick="fillCmd('Jarvis, what am I forgetting?')">Forgetting?</button>
+        <button onclick="fillCmd('Jarvis, what is my active job?')">Active Job</button>
+        <button onclick="fillCmd('Jarvis, find ')">Find</button>
+        <button onclick="fillCmd('Jarvis, add this to billing: ')">Billing</button>
+        <button onclick="fillCmd('Jarvis, field log: ')">Field Log</button>
+        <button onclick="fillCmd('Jarvis, material needed: ')">Material</button>
+      </div>
+
+      <div class="reply" id="reply">Ready.</div>
+    </div>
+
+    <div class="tiles">
+      {tiles}
+    </div>
+  </div>
+</div>
+
+<script>
+let lastReply = "Ready.";
+
+function fillCmd(t) {{
+  document.getElementById("cmd").value = t;
+  document.getElementById("cmd").focus();
+}}
+
+function esc(str) {{
+  return String(str || "").replace(/[&<>"']/g, function(m) {{
+    return ({{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}})[m];
+  }});
+}}
+
+function render(data) {{
+  let html = esc(data.reply || JSON.stringify(data));
+  const cards = data.links || data.cards || [];
+
+  if(cards && cards.length) {{
+    html += "<br><br>";
+    cards.forEach(function(x) {{
+      html += '<div class="result">';
+      html += '<b>' + esc(x.kind || "Answer") + '</b><br>';
+      if(x.url && x.url !== "#") {{
+        html += '<a href="' + esc(x.url) + '">' + esc(x.title || "") + '</a>';
+      }} else {{
+        html += '<strong>' + esc(x.title || "") + '</strong>';
+      }}
+      if(x.detail) {{
+        html += '<div>' + esc(x.detail) + '</div>';
+      }}
+      html += '</div>';
+    }});
+  }}
+
+  return html;
+}}
+
+async function sendJarvis() {{
+  const box = document.getElementById("cmd");
+  const reply = document.getElementById("reply");
+  const text = box.value.trim();
+
+  if(!text) {{
+    reply.innerText = "Tell me what needs handled.";
+    lastReply = reply.innerText;
+    return;
+  }}
+
+  reply.innerText = "Handling it...";
+  lastReply = reply.innerText;
+
+  try {{
+    const res = await fetch("/jarvis-brain/command", {{
+      method:"POST",
+      headers:{{"Content-Type":"application/json"}},
+      body:JSON.stringify({{text:text}})
+    }});
+
+    const data = await res.json();
+    reply.innerHTML = render(data);
+    lastReply = data.reply || JSON.stringify(data);
+    readBack(false);
+  }} catch(err) {{
+    reply.innerText = "Jarvis failed: " + err;
+    lastReply = reply.innerText;
+    readBack(false);
+  }}
+}}
+
+function readBack() {{
+  if(!("speechSynthesis" in window)) return;
+  window.speechSynthesis.cancel();
+  const msg = new SpeechSynthesisUtterance(lastReply || "Nothing to read back yet.");
+  msg.rate = 1;
+  msg.pitch = 1;
+  window.speechSynthesis.speak(msg);
+}}
+
+function startVoice() {{
+  const reply = document.getElementById("reply");
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+  if(!SR) {{
+    reply.innerText = "Voice is not available in this browser. Use Chrome or Edge.";
+    lastReply = reply.innerText;
+    return;
+  }}
+
+  const rec = new SR();
+  rec.lang = "en-US";
+  rec.interimResults = false;
+  rec.maxAlternatives = 1;
+
+  reply.innerText = "Listening...";
+  lastReply = reply.innerText;
+
+  rec.onresult = function(event) {{
+    const text = event.results[0][0].transcript;
+    document.getElementById("cmd").value = text;
+    sendJarvis();
+  }};
+
+  rec.onerror = function(event) {{
+    reply.innerText = "Voice error: " + event.error;
+    lastReply = reply.innerText;
+  }};
+
+  rec.start();
+}}
+</script>
+</body>
+</html>
+"""
+    return HTMLResponse(html)
+
+
+@app.get("/jarvis-control", response_class=HTMLResponse)
+def jarvis_easy_control_panel_alias(request: Request):
+    return RedirectResponse("/jarvis-brain/control-panel", status_code=303)
+
+
+@app.get("/jarvis-brain/control-panel/return-admin")
+def jarvis_easy_control_panel_return_admin(request: Request):
+    ok = _jcp_restore_admin(request)
+    if ok:
+        return RedirectResponse("/jarvis-brain/control-panel", status_code=303)
+    return RedirectResponse("/logout", status_code=303)
+
+
+@app.get("/jarvis-brain/control-panel.json")
+def jarvis_easy_control_panel_json(request: Request):
+    user = _jcp_user(request)
+    return JSONResponse({
+        "ok": True,
+        "version": JARVIS_CONTROL_PANEL_VERSION,
+        "role": _jcp_role(user),
+        "name": _jcp_name(user),
+        "is_switched": _jcp_is_switched(request),
+        "has_admin_backup": _jcp_has_admin_backup(request),
+    })
+
+# ============================================================
+# END JARVIS EASY CONTROL PANEL
+# ============================================================
+
