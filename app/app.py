@@ -9411,3 +9411,399 @@ def jarvis_brain_level17_admin_bar_check(request: Request):
 # END JARVIS BRAIN LEVEL 17 ADMIN SWITCH BAR
 # ============================================================
 
+
+# ============================================================
+# JARVIS BRAIN LEVEL 18 UNIVERSAL ASK BOX
+# Adds a floating Ask Jarvis box to Jarvis pages.
+# This lets Mike ask questions without leaving the current page.
+# ============================================================
+
+try:
+    from starlette.responses import Response as _J18Response
+except Exception:
+    pass
+
+JARVIS_UNIVERSAL_ASK_VERSION = "level-18-universal-ask-box-2026-07-04"
+
+
+def _j18_is_jarvis_html_path(path):
+    return (
+        path.startswith("/jarvis-brain")
+        or path in (
+            "/crew/jarvis",
+            "/employee/jarvis",
+            "/client/jarvis",
+            "/client-jarvis",
+            "/jarvis-launch",
+            "/jarvis-today",
+            "/jarvis-help",
+            "/jarvis-status",
+        )
+    )
+
+
+def _j18_widget_html():
+    return r"""
+<div id="jarvis-universal-ask">
+  <button id="j18-toggle" type="button" onclick="j18Toggle()">Ask Jarvis</button>
+
+  <div id="j18-panel">
+    <div id="j18-head">
+      <strong>Ask Jarvis</strong>
+      <button type="button" onclick="j18Toggle()">?</button>
+    </div>
+
+    <textarea id="j18-text" placeholder="Ask right here. Example: Jarvis, what am I forgetting?"></textarea>
+
+    <div id="j18-buttons">
+      <button type="button" onclick="j18Send()">Send</button>
+      <button type="button" onclick="j18Voice()">?? Voice</button>
+      <button type="button" onclick="j18Speak()">?? Read</button>
+    </div>
+
+    <div id="j18-quick">
+      <button type="button" onclick="j18Fill('Jarvis, what am I forgetting?')">Forgetting?</button>
+      <button type="button" onclick="j18Fill('Jarvis, what is my active job?')">Active Job</button>
+      <button type="button" onclick="j18Fill('Jarvis, find ')">Find</button>
+      <button type="button" onclick="j18Fill('Jarvis, add this to billing: ')">Billing</button>
+      <button type="button" onclick="j18Fill('Jarvis, field log: ')">Field Log</button>
+      <button type="button" onclick="j18Fill('Jarvis, material needed: ')">Material</button>
+    </div>
+
+    <div id="j18-reply">I?m ready.</div>
+  </div>
+</div>
+
+<style>
+  #jarvis-universal-ask {
+    position: fixed;
+    right: 18px;
+    bottom: 18px;
+    z-index: 999998;
+    font-family: Arial, sans-serif;
+  }
+
+  #j18-toggle {
+    border: 1px solid #d9b56d;
+    background: #b8873a;
+    color: #111;
+    border-radius: 999px;
+    padding: 14px 18px;
+    font-weight: 900;
+    box-shadow: 0 10px 30px rgba(0,0,0,.45);
+    cursor: pointer;
+  }
+
+  #j18-panel {
+    display: none;
+    width: min(520px, calc(100vw - 30px));
+    max-height: min(720px, calc(100vh - 120px));
+    overflow: auto;
+    background: #05070b;
+    color: #f5efe3;
+    border: 1px solid #b8873a;
+    border-radius: 20px;
+    box-shadow: 0 20px 70px rgba(0,0,0,.65);
+    padding: 14px;
+  }
+
+  #j18-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: #d9b56d;
+    margin-bottom: 10px;
+  }
+
+  #j18-head button {
+    background: #101722;
+    color: #d9b56d;
+    border: 1px solid #6b4b1f;
+    border-radius: 10px;
+    padding: 6px 10px;
+    cursor: pointer;
+  }
+
+  #j18-text {
+    width: 100%;
+    min-height: 115px;
+    box-sizing: border-box;
+    border-radius: 14px;
+    border: 1px solid #6b4b1f;
+    background: #101722;
+    color: #fff;
+    padding: 12px;
+    font-size: 15px;
+  }
+
+  #j18-buttons, #j18-quick {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  #j18-buttons button, #j18-quick button {
+    border: 1px solid #6b4b1f;
+    border-radius: 999px;
+    background: #101722;
+    color: #f5efe3;
+    padding: 9px 11px;
+    cursor: pointer;
+    font-weight: 800;
+  }
+
+  #j18-buttons button:first-child {
+    background: #b8873a;
+    color: #111;
+  }
+
+  #j18-reply {
+    margin-top: 12px;
+    background: #101722;
+    border: 1px solid #2d2113;
+    border-radius: 14px;
+    padding: 12px;
+    line-height: 1.45;
+    white-space: normal;
+  }
+
+  .j18-card {
+    margin-top: 10px;
+    padding: 10px;
+    border: 1px solid #2d2113;
+    border-radius: 12px;
+    background: #05070b;
+  }
+
+  .j18-card b {
+    color: #d9b56d;
+  }
+
+  .j18-card a {
+    color: #d9a64a !important;
+  }
+
+  @media(max-width: 700px) {
+    #jarvis-universal-ask {
+      left: 10px;
+      right: 10px;
+      bottom: 10px;
+    }
+
+    #j18-toggle {
+      width: 100%;
+    }
+
+    #j18-panel {
+      width: 100%;
+      box-sizing: border-box;
+    }
+  }
+</style>
+
+<script>
+(function(){
+  if(window.j18Loaded){ return; }
+  window.j18Loaded = true;
+  window.j18LastReply = "I?m ready.";
+})();
+
+function j18Toggle(){
+  const panel = document.getElementById("j18-panel");
+  const toggle = document.getElementById("j18-toggle");
+  if(!panel || !toggle){ return; }
+
+  const open = panel.style.display === "block";
+  panel.style.display = open ? "none" : "block";
+  toggle.style.display = open ? "inline-block" : "none";
+
+  if(!open){
+    setTimeout(function(){
+      const box = document.getElementById("j18-text");
+      if(box){ box.focus(); }
+    }, 100);
+  }
+}
+
+function j18Fill(text){
+  const box = document.getElementById("j18-text");
+  if(box){
+    box.value = text;
+    box.focus();
+  }
+}
+
+function j18Esc(str){
+  return String(str || "").replace(/[&<>"']/g, function(m){
+    return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'})[m];
+  });
+}
+
+function j18Render(data){
+  let html = j18Esc(data.reply || JSON.stringify(data));
+
+  const cards = data.links || data.cards || [];
+  if(cards && cards.length){
+    html += "<br><br>";
+    cards.forEach(function(x){
+      const kind = j18Esc(x.kind || "Answer");
+      const title = j18Esc(x.title || "");
+      const detail = j18Esc(x.detail || "");
+      const url = j18Esc(x.url || "#");
+
+      html += '<div class="j18-card">';
+      html += '<b>' + kind + '</b><br>';
+
+      if(url && url !== "#"){
+        html += '<a href="' + url + '">' + title + '</a>';
+      } else {
+        html += '<strong>' + title + '</strong>';
+      }
+
+      if(detail){
+        html += '<div>' + detail + '</div>';
+      }
+
+      html += '</div>';
+    });
+  }
+
+  return html;
+}
+
+async function j18Send(){
+  const box = document.getElementById("j18-text");
+  const reply = document.getElementById("j18-reply");
+  const text = (box && box.value ? box.value : "").trim();
+
+  if(!text){
+    reply.innerText = "Tell me what needs handled.";
+    window.j18LastReply = reply.innerText;
+    return;
+  }
+
+  reply.innerText = "Handling it...";
+  window.j18LastReply = reply.innerText;
+
+  try {
+    const res = await fetch("/jarvis-brain/command", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({text: text})
+    });
+
+    const data = await res.json();
+    reply.innerHTML = j18Render(data);
+    window.j18LastReply = data.reply || JSON.stringify(data);
+
+    j18Speak(false);
+  } catch(err) {
+    reply.innerText = "Jarvis failed: " + err;
+    window.j18LastReply = reply.innerText;
+    j18Speak(false);
+  }
+}
+
+function j18Speak(force){
+  const text = window.j18LastReply || "Nothing to read back yet.";
+  if(!("speechSynthesis" in window)){ return; }
+
+  window.speechSynthesis.cancel();
+  const msg = new SpeechSynthesisUtterance(text);
+  msg.rate = 1;
+  msg.pitch = 1;
+  window.speechSynthesis.speak(msg);
+}
+
+function j18Voice(){
+  const reply = document.getElementById("j18-reply");
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+  if(!SR){
+    reply.innerText = "Voice is not available in this browser. Use Chrome or Edge.";
+    window.j18LastReply = reply.innerText;
+    j18Speak(false);
+    return;
+  }
+
+  const rec = new SR();
+  rec.lang = "en-US";
+  rec.interimResults = false;
+  rec.maxAlternatives = 1;
+
+  reply.innerText = "Listening...";
+  window.j18LastReply = reply.innerText;
+
+  rec.onresult = function(event){
+    const text = event.results[0][0].transcript;
+    const box = document.getElementById("j18-text");
+    if(box){ box.value = text; }
+    j18Send();
+  };
+
+  rec.onerror = function(event){
+    reply.innerText = "Voice error: " + event.error;
+    window.j18LastReply = reply.innerText;
+  };
+
+  rec.start();
+}
+</script>
+"""
+
+
+@app.middleware("http")
+async def jarvis_level18_universal_ask_box_middleware(request, call_next):
+    response = await call_next(request)
+
+    path = request.url.path
+    if not _j18_is_jarvis_html_path(path):
+        return response
+
+    content_type = response.headers.get("content-type", "")
+    if "text/html" not in content_type.lower():
+        return response
+
+    try:
+        body = b""
+        async for chunk in response.body_iterator:
+            body += chunk
+
+        html = body.decode("utf-8", errors="replace")
+
+        if "id=\"jarvis-universal-ask\"" not in html:
+            widget = _j18_widget_html()
+
+            if "</body>" in html.lower():
+                import re as _j18_re
+                html = _j18_re.sub(r"</body>", widget + "</body>", html, count=1, flags=_j18_re.I)
+            else:
+                html += widget
+
+        headers = dict(response.headers)
+        headers.pop("content-length", None)
+
+        return _J18Response(
+            content=html,
+            status_code=response.status_code,
+            headers=headers,
+            media_type="text/html",
+        )
+    except Exception as exc:
+        print("Jarvis universal ask box skipped:", exc)
+        return response
+
+
+@app.get("/jarvis-brain/ask-box-check")
+def jarvis_brain_level18_ask_box_check():
+    return {
+        "ok": True,
+        "version": JARVIS_UNIVERSAL_ASK_VERSION,
+        "message": "Universal Ask Jarvis box is installed on Jarvis pages.",
+    }
+
+# ============================================================
+# END JARVIS BRAIN LEVEL 18 UNIVERSAL ASK BOX
+# ============================================================
+
