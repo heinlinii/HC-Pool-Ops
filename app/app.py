@@ -281,7 +281,7 @@ def ensure_schema():
                 note TEXT DEFAULT '',
                 created_at TEXT DEFAULT ''
             )""")
-          
+
             c.execute("""CREATE TABLE IF NOT EXISTS invisible_office_items (
                 id SERIAL PRIMARY KEY,
                 source TEXT DEFAULT 'manual',
@@ -2487,7 +2487,7 @@ def employee_profile_save(request: Request, name: str = Form(""), phone: str = F
     u.update({"name": name, "username": username})
     request.session["user"] = u
     return RedirectResponse("/employee", status_code=303)
-    
+
 
 @app.post("/employee/clock")
 def employee_clock(request: Request, action: str = Form("in"), lat: str = Form(""), lng: str = Form("")):
@@ -3309,8 +3309,6 @@ app.include_router(account_management.router)
 from app.routes import jarvis_command
 app.include_router(jarvis_command.router)
 
-from app.routes import jarvis_brain
-app.include_router(jarvis_brain.router)
 
 from app.routes import crew_home
 app.include_router(crew_home.router)
@@ -3596,4 +3594,234 @@ def invisible_office_search(request: Request, q: str = ""):
         "title": "Invisible Office"
     })
 
- 
+
+# ============================================================
+# JARVIS BRAIN LAYER - HEINLIN FIELD OPS
+# EMERGENCY STABLE VERSION
+# Purpose: get /jarvis-brain working without crashing the app.
+# ============================================================
+
+try:
+    from fastapi import Request
+except Exception:
+    pass
+
+try:
+    from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
+except Exception:
+    pass
+
+
+@app.get("/jarvis-brain/install-check")
+def jarvis_brain_install_check_stable():
+    return JSONResponse({
+        "ok": True,
+        "message": "Jarvis Brain route is installed and running.",
+        "mode": "emergency_stable",
+    })
+
+
+@app.get("/jarvis-brain", response_class=HTMLResponse)
+def jarvis_brain_stable_page(request: Request):
+    html = """
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Jarvis Brain</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {
+      margin:0;
+      font-family: Arial, sans-serif;
+      background:#070a0f;
+      color:#f5efe3;
+    }
+    .wrap {
+      max-width:1100px;
+      margin:0 auto;
+      padding:28px;
+    }
+    .hero {
+      background:linear-gradient(135deg,#111722,#05070b);
+      border:1px solid #5d421d;
+      border-radius:22px;
+      padding:26px;
+      box-shadow:0 20px 60px rgba(0,0,0,.45);
+    }
+    h1 {
+      margin:0 0 8px;
+      font-size:34px;
+      letter-spacing:.08em;
+    }
+    .sub {
+      color:#d9b56d;
+      margin-bottom:22px;
+    }
+    .card {
+      background:#101722;
+      border:1px solid #2d2113;
+      border-radius:18px;
+      padding:20px;
+      margin-top:18px;
+    }
+    textarea {
+      width:100%;
+      min-height:130px;
+      box-sizing:border-box;
+      border-radius:14px;
+      border:1px solid #6b4b1f;
+      background:#05070b;
+      color:#fff;
+      padding:14px;
+      font-size:16px;
+    }
+    button {
+      margin-top:12px;
+      padding:13px 18px;
+      border:0;
+      border-radius:12px;
+      background:#b8873a;
+      color:#111;
+      font-weight:900;
+      cursor:pointer;
+    }
+    .reply {
+      margin-top:14px;
+      padding:14px;
+      border-radius:12px;
+      background:#05070b;
+      border:1px solid #2d2113;
+      min-height:24px;
+    }
+    .chips {
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      margin-top:12px;
+    }
+    .chip {
+      border:1px solid #6b4b1f;
+      border-radius:999px;
+      padding:10px 12px;
+      background:#070a0f;
+      color:#f5efe3;
+      cursor:pointer;
+    }
+    a { color:#d9a64a; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="hero">
+      <h1>J.A.R.V.I.S. BRAIN</h1>
+      <div class="sub">Emergency stable mode is running. The app is alive. Now we rebuild smarter.</div>
+
+      <div class="card">
+        <h2>Command Jarvis</h2>
+        <textarea id="cmd" placeholder="Jarvis, what am I forgetting?"></textarea>
+        <br>
+        <button onclick="sendCmd()">Send to Jarvis</button>
+        <div class="reply" id="reply">Waiting for command.</div>
+
+        <div class="chips">
+          <button class="chip" onclick="fillCmd('Jarvis, what am I forgetting?')">What am I forgetting?</button>
+          <button class="chip" onclick="fillCmd('Jarvis, add this to billing: ')">Billing note</button>
+          <button class="chip" onclick="fillCmd('Jarvis, field log: ')">Field log</button>
+          <button class="chip" onclick="fillCmd('Jarvis, material needed: ')">Material needed</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Status</h2>
+        <p><b>Jarvis route:</b> Working</p>
+        <p><b>Mode:</b> Emergency stable</p>
+        <p><b>Next:</b> Once this page opens, we add memory/database actions back one at a time without breaking the app.</p>
+        <p>
+          <a href="/jarvis-brain/install-check">Install Check</a>
+          |
+          <a href="/jarvis">Old Jarvis</a>
+          |
+          <a href="/">Home</a>
+        </p>
+      </div>
+    </div>
+  </div>
+
+<script>
+function fillCmd(t){
+  document.getElementById("cmd").value = t;
+  document.getElementById("cmd").focus();
+}
+
+async function sendCmd(){
+  const box = document.getElementById("cmd");
+  const reply = document.getElementById("reply");
+  const text = box.value.trim();
+
+  if(!text){
+    reply.innerText = "Tell me what needs handled.";
+    return;
+  }
+
+  reply.innerText = "Thinking...";
+
+  try {
+    const res = await fetch("/jarvis-brain/command", {
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({text:text})
+    });
+
+    const data = await res.json();
+    reply.innerText = data.reply || JSON.stringify(data);
+  } catch(err) {
+    reply.innerText = "Jarvis command failed: " + err;
+  }
+}
+</script>
+</body>
+</html>
+"""
+    return HTMLResponse(html)
+
+
+@app.post("/jarvis-brain/command")
+async def jarvis_brain_stable_command(request: Request):
+    try:
+        payload = await request.json()
+    except Exception:
+        payload = {}
+
+    text = str(payload.get("text") or "").strip()
+    low = text.lower()
+
+    if not text:
+        reply = "Tell me what needs handled."
+    elif "billing" in low or "bill" in low or "invoice" in low:
+        reply = "I heard a billing note. In stable mode I am not saving to the database yet, but the command route is working."
+    elif "field log" in low or "we did" in low or "installed" in low or "cleaned" in low:
+        reply = "I heard a field log. The command route is working. Next step is wiring this back into field_logs safely."
+    elif "material" in low or "need" in low or "pickup" in low:
+        reply = "I heard a material-needed note. The command route is working."
+    elif "forgetting" in low or "what matters" in low or "what next" in low:
+        reply = "The app is stable again. Next we reconnect jobs, memory, crew clock, photos, and billing notes one piece at a time."
+    else:
+        reply = "I heard you. Jarvis Brain is running in emergency stable mode."
+
+    return JSONResponse({
+        "ok": True,
+        "mode": "emergency_stable",
+        "reply": reply,
+        "received": text,
+    })
+
+
+@app.get("/brain", response_class=HTMLResponse)
+def brain_alias_stable(request: Request):
+    return RedirectResponse("/jarvis-brain", status_code=303)
+
+# ============================================================
+# END JARVIS BRAIN LAYER
+# ============================================================
+
