@@ -7969,3 +7969,576 @@ def jarvis_brain_level12_status_alias(request: Request):
 # END JARVIS BRAIN LEVEL 12 HELP + SYSTEM CHECK
 # ============================================================
 
+
+# ============================================================
+# JARVIS BRAIN LEVEL 13 TODAY OPS BOARD
+# Adds /jarvis-brain/today.
+# Safe add-on only.
+# ============================================================
+
+import os as _j13_os
+import json as _j13_json
+import html as _j13_html
+from datetime import datetime as _j13_datetime, date as _j13_date
+
+try:
+    from fastapi import Request
+except Exception:
+    pass
+
+try:
+    from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
+except Exception:
+    pass
+
+JARVIS_TODAY_VERSION = "level-13-today-ops-board-2026-07-04"
+
+
+def _j13_now():
+    return _j13_datetime.now().isoformat(timespec="seconds")
+
+
+def _j13_today():
+    return _j13_date.today().isoformat()
+
+
+def _j13_storage_dir():
+    path = _j13_os.path.join(_j13_os.getcwd(), "jarvis_storage")
+    _j13_os.makedirs(path, exist_ok=True)
+    return path
+
+
+def _j13_file(name):
+    return _j13_os.path.join(_j13_storage_dir(), name)
+
+
+def _j13_esc(value):
+    return _j13_html.escape(str(value or ""))
+
+
+def _j13_read_json(name, default=None):
+    path = _j13_file(name)
+    if not _j13_os.path.exists(path):
+        return default
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            return _j13_json.load(f)
+    except Exception:
+        return default
+
+
+def _j13_read_jsonl_all(name):
+    path = _j13_file(name)
+    if not _j13_os.path.exists(path):
+        return []
+    items = []
+    with open(path, "r", encoding="utf-8") as f:
+        for line in f:
+            try:
+                items.append(_j13_json.loads(line.strip()))
+            except Exception:
+                pass
+    return items
+
+
+def _j13_user(request):
+    try:
+        f = globals().get("current_user")
+        if callable(f):
+            u = f(request)
+            if u:
+                return u
+    except Exception:
+        pass
+
+    try:
+        if hasattr(request, "session"):
+            return request.session.get("user") or {}
+    except Exception:
+        pass
+
+    return {}
+
+
+def _j13_name(user):
+    return str((user or {}).get("name") or (user or {}).get("username") or (user or {}).get("email") or "Mike").strip()
+
+
+def _j13_role(user):
+    role = str((user or {}).get("role") or "admin").lower().strip()
+    if role == "employee":
+        role = "crew"
+    return role
+
+
+def _j13_rows(sql, params=()):
+    try:
+        f = globals().get("rows")
+        if callable(f):
+            return f(sql, params) or []
+    except Exception:
+        pass
+    return []
+
+
+def _j13_columns(table):
+    try:
+        f = globals().get("table_columns")
+        if callable(f):
+            return list(f(table) or [])
+    except Exception:
+        pass
+    return []
+
+
+def _j13_table_exists(table):
+    return bool(_j13_columns(table))
+
+
+def _j13_active_context():
+    return _j13_read_json("jarvis_active_context.json", {}) or {}
+
+
+def _j13_all_memory():
+    items = _j13_read_jsonl_all("jarvis_memory.jsonl")
+    items.reverse()
+    return items
+
+
+def _j13_is_open(item):
+    status = str(item.get("status") or "Open").lower().strip()
+    return status not in ("done", "closed", "complete", "completed")
+
+
+def _j13_category(items, category):
+    return [x for x in items if str(x.get("category") or "") == category and _j13_is_open(x)]
+
+
+def _j13_today_memory(items):
+    today = _j13_today()
+    return [x for x in items if str(x.get("created_at") or "")[:10] == today]
+
+
+def _j13_job_date(job):
+    for key in ["scheduled_start", "schedule_date", "date", "start_date", "created_at"]:
+        val = (job or {}).get(key)
+        if val:
+            return str(val)[:10]
+    return ""
+
+
+def _j13_job_status(job):
+    return str((job or {}).get("status") or "").lower().strip()
+
+
+def _j13_all_jobs(limit=250):
+    if not _j13_table_exists("poolops2_jobs"):
+        return []
+    return _j13_rows("SELECT * FROM poolops2_jobs ORDER BY id DESC LIMIT ?", (limit,))
+
+
+def _j13_jobs_today_and_overdue():
+    today = _j13_today()
+    jobs = _j13_all_jobs()
+    today_jobs = []
+    overdue_jobs = []
+
+    for j in jobs:
+        ds = _j13_job_date(j)
+        status = _j13_job_status(j)
+
+        if ds == today:
+            today_jobs.append(j)
+
+        if ds and ds < today and status not in ("complete", "completed", "done", "closed", "cancelled"):
+            overdue_jobs.append(j)
+
+    return today_jobs[:20], overdue_jobs[:20], len(jobs)
+
+
+def _j13_crew_status():
+    cols = _j13_columns("poolops2_employees")
+    if not cols:
+        return []
+
+    select_cols = ["name", "email", "clocked_in", "clocked_in_at", "last_seen_at"]
+    have = [c for c in select_cols if c in cols]
+    if not have:
+        return []
+
+    order = "ORDER BY name" if "name" in cols else ""
+    rows = _j13_rows(f"SELECT {','.join(have)} FROM poolops2_employees {order} LIMIT 50", ())
+
+    out = []
+    for r in rows:
+        clocked = str(r.get("clocked_in") or "").lower() in ("1", "true", "yes", "on")
+        out.append({
+            "name": r.get("name") or r.get("email") or "Employee",
+            "clocked_in": clocked,
+            "clocked_in_at": r.get("clocked_in_at") or "",
+            "last_seen_at": r.get("last_seen_at") or "",
+        })
+
+    return out
+
+
+def _j13_client_requests():
+    items = _j13_read_jsonl_all("jarvis_client_requests.jsonl")
+    items.reverse()
+    return [x for x in items if _j13_is_open(x)][:25]
+
+
+def _j13_ops_payload():
+    memory = _j13_all_memory()
+    today_memory = _j13_today_memory(memory)
+    today_jobs, overdue_jobs, total_jobs = _j13_jobs_today_and_overdue()
+
+    payload = {
+        "ok": True,
+        "version": JARVIS_TODAY_VERSION,
+        "today": _j13_today(),
+        "active_context": _j13_active_context(),
+        "counts": {
+            "memory_total": len(memory),
+            "memory_today": len(today_memory),
+            "open_billing": len(_j13_category(memory, "Billing Note")),
+            "open_materials": len(_j13_category(memory, "Material Needed")),
+            "open_followups": len(_j13_category(memory, "Follow Up")),
+            "open_problems": len(_j13_category(memory, "Problem Found")),
+            "open_field_logs": len(_j13_category(memory, "Field Log")),
+            "client_requests": len(_j13_client_requests()),
+            "today_jobs": len(today_jobs),
+            "overdue_jobs": len(overdue_jobs),
+            "total_jobs_seen": total_jobs,
+        },
+        "today_memory": today_memory[:50],
+        "billing": _j13_category(memory, "Billing Note")[:25],
+        "materials": _j13_category(memory, "Material Needed")[:25],
+        "followups": _j13_category(memory, "Follow Up")[:25],
+        "problems": _j13_category(memory, "Problem Found")[:25],
+        "field_logs": _j13_category(memory, "Field Log")[:25],
+        "client_requests": _j13_client_requests(),
+        "today_jobs": today_jobs,
+        "overdue_jobs": overdue_jobs,
+        "crew": _j13_crew_status(),
+        "tables_seen": {
+            "poolops2_jobs": _j13_table_exists("poolops2_jobs"),
+            "poolops2_employees": _j13_table_exists("poolops2_employees"),
+            "invisible_office_items": _j13_table_exists("invisible_office_items"),
+            "field_logs": _j13_table_exists("field_logs"),
+        },
+    }
+    return payload
+
+
+def _j13_render_item(item):
+    title = item.get("title") or item.get("body") or "Item"
+    body = item.get("body") or ""
+    created = item.get("created_at") or ""
+    client = item.get("client") or item.get("client_name") or ""
+    address = item.get("address") or item.get("property") or ""
+
+    context = ""
+    if client or address:
+        context = f"<div class='meta'>Job: {_j13_esc(client)} ? {_j13_esc(address)}</div>"
+
+    return f"""
+    <div class="item">
+      <div class="top"><b>{_j13_esc(title)}</b><span>{_j13_esc(created)}</span></div>
+      <div class="body">{_j13_esc(body)}</div>
+      {context}
+    </div>
+    """
+
+
+def _j13_render_job(job):
+    title = job.get("client") or job.get("property") or job.get("address") or f"Job #{job.get('id')}"
+    detail = job.get("job_type") or job.get("status") or ""
+    date = _j13_job_date(job)
+
+    return f"""
+    <div class="item">
+      <div class="top"><b>{_j13_esc(title)}</b><span>{_j13_esc(date)}</span></div>
+      <div class="body">{_j13_esc(detail)}</div>
+      <div class="meta">{_j13_esc(job.get('address') or '')}</div>
+    </div>
+    """
+
+
+def _j13_render_crew(row):
+    status = "CLOCKED IN" if row.get("clocked_in") else "OUT"
+    cls = "good" if row.get("clocked_in") else "muted"
+
+    return f"""
+    <div class="item">
+      <div class="top"><b>{_j13_esc(row.get('name'))}</b><span class="{cls}">{_j13_esc(status)}</span></div>
+      <div class="body">Clocked in at: {_j13_esc(row.get('clocked_in_at'))}</div>
+      <div class="meta">Last seen: {_j13_esc(row.get('last_seen_at'))}</div>
+    </div>
+    """
+
+
+def _j13_section(title, items, renderer=_j13_render_item, empty="Nothing here right now."):
+    if not items:
+        body = f"<p>{_j13_esc(empty)}</p>"
+    else:
+        body = "".join([renderer(x) for x in items[:10]])
+
+    return f"""
+    <div class="card">
+      <h2>{_j13_esc(title)} <span>{len(items)}</span></h2>
+      {body}
+    </div>
+    """
+
+
+@app.get("/jarvis-brain/today", response_class=HTMLResponse)
+def jarvis_brain_level13_today_ops(request: Request):
+    user = _j13_user(request)
+    name = _j13_name(user).split()[0]
+    role = _j13_role(user)
+    data = _j13_ops_payload()
+    c = data["counts"]
+    active = data["active_context"]
+
+    active_html = "<p>No active job set. Say: <b>Jarvis, set active job to Alexander</b>.</p>"
+    if active:
+        active_html = f"""
+        <p><b>{_j13_esc(active.get('title') or active.get('client') or active.get('address'))}</b></p>
+        <p>{_j13_esc(active.get('address'))}</p>
+        <p>Type: {_j13_esc(active.get('job_type'))} ? Status: {_j13_esc(active.get('status'))}</p>
+        """
+
+    sections = ""
+    sections += _j13_section("Today?s Captured Items", data["today_memory"])
+    sections += _j13_section("Billing Notes", data["billing"])
+    sections += _j13_section("Materials Needed", data["materials"])
+    sections += _j13_section("Problems", data["problems"])
+    sections += _j13_section("Follow Ups", data["followups"])
+    sections += _j13_section("Client Requests", data["client_requests"])
+    sections += _j13_section("Today?s Jobs", data["today_jobs"], _j13_render_job, "No jobs scheduled today from the table I can read.")
+    sections += _j13_section("Overdue Jobs", data["overdue_jobs"], _j13_render_job, "No overdue jobs found.")
+    sections += _j13_section("Crew Clock Status", data["crew"], _j13_render_crew, "No crew clock data found.")
+
+    html = f"""
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Jarvis Today Ops</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {{ margin:0; font-family:Arial,sans-serif; background:#070a0f; color:#f5efe3; }}
+    .wrap {{ max-width:1250px; margin:0 auto; padding:26px; }}
+    .hero {{ background:linear-gradient(135deg,#111722,#05070b); border:1px solid #5d421d; border-radius:22px; padding:24px; box-shadow:0 20px 60px rgba(0,0,0,.45); }}
+    h1 {{ margin:0 0 8px; font-size:36px; letter-spacing:.08em; }}
+    .sub {{ color:#d9b56d; margin-bottom:18px; }}
+    .stats {{ display:grid; grid-template-columns:repeat(5,1fr); gap:10px; margin:16px 0; }}
+    @media(max-width:950px) {{ .stats {{ grid-template-columns:repeat(2,1fr); }} }}
+    .stat {{ background:#05070b; border:1px solid #2d2113; border-radius:14px; padding:14px; }}
+    .stat b {{ font-size:28px; color:#d9b56d; }}
+    .grid {{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }}
+    @media(max-width:950px) {{ .grid {{ grid-template-columns:1fr; }} }}
+    .card {{ background:#101722; border:1px solid #2d2113; border-radius:18px; padding:18px; margin-top:16px; }}
+    .card h2 {{ display:flex; justify-content:space-between; gap:10px; }}
+    textarea {{ width:100%; min-height:120px; box-sizing:border-box; border-radius:14px; border:1px solid #6b4b1f; background:#05070b; color:#fff; padding:14px; font-size:16px; }}
+    button {{ margin-top:10px; padding:12px 16px; border:0; border-radius:12px; background:#b8873a; color:#111; font-weight:900; cursor:pointer; }}
+    .chips {{ display:flex; flex-wrap:wrap; gap:9px; margin-top:10px; }}
+    .chip {{ border:1px solid #6b4b1f; border-radius:999px; padding:9px 11px; background:#070a0f; color:#f5efe3; cursor:pointer; }}
+    .reply {{ margin-top:12px; padding:13px; border-radius:12px; background:#05070b; border:1px solid #2d2113; min-height:24px; line-height:1.45; }}
+    .item {{ background:#05070b; border:1px solid #2d2113; border-radius:14px; padding:13px; margin:10px 0; }}
+    .top {{ display:flex; justify-content:space-between; gap:12px; color:#d9b56d; font-size:13px; }}
+    .body {{ margin-top:8px; color:#e8dcc7; line-height:1.4; }}
+    .meta {{ margin-top:8px; color:#a99572; font-size:13px; }}
+    .good {{ color:#a8e063; font-weight:900; }}
+    .muted {{ color:#a99572; }}
+    a {{ color:#d9a64a; }}
+    .result {{ padding:10px; border:1px solid #2d2113; border-radius:12px; margin:8px 0; background:#070a0f; }}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero">
+    <h1>J.A.R.V.I.S. TODAY OPS</h1>
+    <div class="sub">Good to go, {_j13_esc(name)}. This is today?s command board. Role: {_j13_esc(role)}. Date: {_j13_esc(data['today'])}.</div>
+
+    <div class="stats">
+      <div class="stat"><b>{c['memory_today']}</b><br>Captured today</div>
+      <div class="stat"><b>{c['open_billing']}</b><br>Billing</div>
+      <div class="stat"><b>{c['open_materials']}</b><br>Materials</div>
+      <div class="stat"><b>{c['open_problems']}</b><br>Problems</div>
+      <div class="stat"><b>{c['client_requests']}</b><br>Client requests</div>
+    </div>
+
+    <div class="grid">
+      <div>
+        <div class="card">
+          <h2>Command</h2>
+          <textarea id="cmd" placeholder="Jarvis, start my day"></textarea>
+          <button onclick="sendCmd()">Send</button>
+          <button onclick="startVoice()">?? Voice</button>
+          <button onclick="speakLast()">?? Read Back</button>
+          <div class="reply" id="reply">Waiting for command.</div>
+
+          <div class="chips">
+            <button class="chip" onclick="fillCmd('Jarvis, start my day')">Start Day</button>
+            <button class="chip" onclick="fillCmd('Jarvis, set active job to ')">Set Job</button>
+            <button class="chip" onclick="fillCmd('Jarvis, add this to billing: ')">Billing</button>
+            <button class="chip" onclick="fillCmd('Jarvis, field log: ')">Field Log</button>
+            <button class="chip" onclick="fillCmd('Jarvis, material needed: ')">Material</button>
+            <button class="chip" onclick="fillCmd('Jarvis, end my day')">End Day</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Active Job</h2>
+          {active_html}
+          <p>
+            <a href="/jarvis-brain/job">Active Job Center</a> |
+            <a href="/jarvis-brain/desk">Command Desk</a> |
+            <a href="/jarvis-brain/launch">Launch Pad</a> |
+            <a href="/jarvis-brain/today.json">Today JSON</a>
+          </p>
+        </div>
+
+        {_j13_section("Today?s Captured Items", data["today_memory"])}
+        {_j13_section("Billing Notes", data["billing"])}
+        {_j13_section("Materials Needed", data["materials"])}
+        {_j13_section("Problems", data["problems"])}
+      </div>
+
+      <div>
+        {_j13_section("Client Requests", data["client_requests"])}
+        {_j13_section("Follow Ups", data["followups"])}
+        {_j13_section("Today?s Jobs", data["today_jobs"], _j13_render_job, "No jobs scheduled today from the table I can read.")}
+        {_j13_section("Overdue Jobs", data["overdue_jobs"], _j13_render_job, "No overdue jobs found.")}
+        {_j13_section("Crew Clock Status", data["crew"], _j13_render_crew, "No crew clock data found.")}
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let lastReply = "";
+
+function fillCmd(t){{
+  document.getElementById("cmd").value = t;
+  document.getElementById("cmd").focus();
+}}
+
+function escapeHtml(str){{
+  return String(str || "").replace(/[&<>"']/g, function(m){{
+    return ({{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}})[m];
+  }});
+}}
+
+function speak(text){{
+  if(!("speechSynthesis" in window)){{ return; }}
+  window.speechSynthesis.cancel();
+  const msg = new SpeechSynthesisUtterance(text);
+  msg.rate = 1;
+  msg.pitch = 1;
+  window.speechSynthesis.speak(msg);
+}}
+
+function speakLast(){{
+  const text = lastReply || document.getElementById("reply").innerText || "Nothing to read back yet.";
+  speak(text);
+}}
+
+async function sendCmd(){{
+  const box = document.getElementById("cmd");
+  const reply = document.getElementById("reply");
+  const text = box.value.trim();
+
+  if(!text){{
+    reply.innerText = "Tell me what needs handled.";
+    lastReply = reply.innerText;
+    return;
+  }}
+
+  reply.innerText = "Handling it...";
+  lastReply = reply.innerText;
+
+  try {{
+    const res = await fetch("/jarvis-brain/command", {{
+      method:"POST",
+      headers:{{"Content-Type":"application/json"}},
+      body:JSON.stringify({{text:text}})
+    }});
+
+    const data = await res.json();
+    let html = escapeHtml(data.reply || JSON.stringify(data));
+    lastReply = data.reply || JSON.stringify(data);
+
+    if(data.links && data.links.length){{
+      html += "<br><br><b>Matches:</b>";
+      data.links.forEach(function(x){{
+        html += '<div class="result"><b>' + escapeHtml(x.kind) + '</b>: ';
+        html += '<a href="' + escapeHtml(x.url) + '">' + escapeHtml(x.title) + '</a>';
+        if(x.detail){{ html += '<br><small>' + escapeHtml(x.detail) + '</small>'; }}
+        html += '</div>';
+      }});
+    }}
+
+    reply.innerHTML = html;
+    speak(lastReply);
+
+    if(data.ok && (!data.links || !data.links.length)){{
+      setTimeout(() => window.location.reload(), 1200);
+    }}
+  }} catch(err) {{
+    reply.innerText = "Jarvis command failed: " + err;
+    lastReply = reply.innerText;
+    speak(lastReply);
+  }}
+}}
+
+function startVoice(){{
+  const reply = document.getElementById("reply");
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SR){{
+    reply.innerText = "Voice is not available in this browser. Use Chrome or Edge.";
+    lastReply = reply.innerText;
+    speakLast();
+    return;
+  }}
+
+  const rec = new SR();
+  rec.lang = "en-US";
+  rec.interimResults = false;
+  rec.maxAlternatives = 1;
+
+  reply.innerText = "Listening...";
+  lastReply = reply.innerText;
+  rec.onresult = function(event){{
+    const text = event.results[0][0].transcript;
+    document.getElementById("cmd").value = text;
+    sendCmd();
+  }};
+  rec.onerror = function(event){{
+    reply.innerText = "Voice error: " + event.error;
+    lastReply = reply.innerText;
+  }};
+  rec.start();
+}}
+</script>
+</body>
+</html>
+"""
+    return HTMLResponse(html)
+
+
+@app.get("/jarvis-brain/today.json")
+def jarvis_brain_level13_today_json():
+    return JSONResponse(_j13_ops_payload())
+
+
+@app.get("/jarvis-today", response_class=HTMLResponse)
+def jarvis_brain_level13_today_alias(request: Request):
+    return RedirectResponse("/jarvis-brain/today", status_code=303)
+
+# ============================================================
+# END JARVIS BRAIN LEVEL 13 TODAY OPS BOARD
+# ============================================================
+
