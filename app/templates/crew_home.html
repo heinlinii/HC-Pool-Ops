@@ -161,9 +161,16 @@
         </div>
 
         <div>
-          <strong>{{ step.label }}</strong>
-          <p class="muted">{{ step.hint }}</p>
-        </div>
+  <strong>{{ step.label }}</strong>
+  <p class="muted">{{ step.hint }}</p>
+
+  {% if not step.done %}
+    <form method="post" action="/crew-home/progress" style="margin-top:8px;">
+      <input type="hidden" name="field" value="{{ step.field }}">
+      <button class="btn" type="submit">Mark This Done</button>
+    </form>
+  {% endif %}
+</div>
       </div>
     {% endfor %}
   </section>

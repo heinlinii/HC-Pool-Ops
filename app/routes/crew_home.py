@@ -127,6 +127,11 @@ def clock_employee(user, action):
         ),
     )
 
+    if clocked:
+        set_crew_progress(employee, "clocked_in_done", True)
+    else:
+        set_crew_progress(employee, "clocked_out_done", True)
+
     return employee, now
 
 
@@ -305,6 +310,7 @@ def crew_home(request: Request):
 
     employee = get_or_create_employee_for_user(user)
     jobs = todays_jobs_for_crew(user, employee)
+    progress = crew_progress(employee)
     clocked_in = employee.get("clocked_in")
 
     def truthy(value):
@@ -390,40 +396,53 @@ def crew_home(request: Request):
             "secondary_href": "/schedule/day",
         }
 
-    checklist = [
+        checklist = [
         {
             "label": "Clock in",
-            "done": is_clocked_in,
+            "field": "clocked_in_done",
+            "done": is_clocked_in or truthy(progress.get("clocked_in_done")),
             "hint": "Start the work day.",
         },
         {
             "label": "Start GPS tracking",
-            "done": gps_active_today,
+            "field": "gps_done",
+            "done": gps_active_today or truthy(progress.get("gps_done")),
             "hint": "Keep the tracker page open while working.",
         },
         {
             "label": "Open today’s first job",
-            "done": False,
+            "field": "first_job_opened",
+            "done": truthy(progress.get("first_job_opened")),
             "hint": "Review where you are going and what needs done.",
         },
         {
             "label": "Upload before photos",
-            "done": False,
+            "field": "before_photos_done",
+            "done": truthy(progress.get("before_photos_done")),
             "hint": "Photos protect the company and help Mike remember what happened.",
         },
         {
             "label": "Tell Jarvis what got done",
-            "done": False,
+            "field": "work_done_reported",
+            "done": truthy(progress.get("work_done_reported")),
             "hint": "Say: Finished plumbing at Johnson.",
         },
         {
-            "label": "Report problems or materials",
-            "done": False,
-            "hint": "Say: Need two check valves. Problem at Smith liner leak.",
+            "label": "Report problems",
+            "field": "problems_reported",
+            "done": truthy(progress.get("problems_reported")),
+            "hint": "Say: Problem at Smith liner leak.",
+        },
+        {
+            "label": "Report materials needed",
+            "field": "materials_reported",
+            "done": truthy(progress.get("materials_reported")),
+            "hint": "Say: Need two check valves.",
         },
         {
             "label": "End-day report + clock out",
-            "done": False,
+            "field": "end_day_done",
+            "done": truthy(progress.get("end_day_done")) or truthy(progress.get("clocked_out_done")),
             "hint": "Jarvis will ask what got done before clocking out.",
         },
     ]
@@ -469,7 +488,9 @@ def crew_home_ask(
         return RedirectResponse("/crew-home", status_code=303)
 
     if wants_clock_in(text):
-        employee, timestamp = clock_employee(user, "in")
+        set_crew_progress(employee, "end_day_done", True)
+        employee, timestamp = clock_employee(user, "out") 
+
 
         return h["templates"].TemplateResponse(
             "crew_action_done.html",
@@ -483,47 +504,137 @@ def crew_home_ask(
                 secondary_href="/crew-home",
             ),
         )
+    
+def ensure_crew_progress_schema():
+    h = _helpers()
 
-    if wants_clock_out(text):
-        employee, timestamp = clock_employee(user, "out")
-
-        return h["templates"].TemplateResponse(
-            "crew_action_done.html",
-            h["ctx"](
-                request,
-                title="You’re Clocked Out",
-                message=f"{employee.get('name') or 'Crew'} is clocked out at {timestamp}.",
-                primary_label="View GPS Stops",
-                primary_href="/gps/stops",
-                secondary_label="Back to Crew Home",
-                secondary_href="/crew-home",
-            ),
+    if h["USE_POSTGRES"]:
+        h["exec_sql"](
+            """
+            CREATE TABLE IF NOT EXISTS crew_day_progress (
+                id SERIAL PRIMARY KEY,
+                employee_id INTEGER,
+                work_day TEXT,
+                clocked_in_done BOOLEAN DEFAULT FALSE,
+                gps_done BOOLEAN DEFAULT FALSE,
+                first_job_opened BOOLEAN DEFAULT FALSE,
+                before_photos_done BOOLEAN DEFAULT FALSE,
+                work_done_reported BOOLEAN DEFAULT FALSE,
+                problems_reported BOOLEAN DEFAULT FALSE,
+                materials_reported BOOLEAN DEFAULT FALSE,
+                end_day_done BOOLEAN DEFAULT FALSE,
+                clocked_out_done BOOLEAN DEFAULT FALSE,
+                updated_at TEXT DEFAULT ''
+            )
+            """
+        )
+    else:
+        h["exec_sql"](
+            """
+            CREATE TABLE IF NOT EXISTS crew_day_progress (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                employee_id INTEGER,
+                work_day TEXT,
+                clocked_in_done INTEGER DEFAULT 0,
+                gps_done INTEGER DEFAULT 0,
+                first_job_opened INTEGER DEFAULT 0,
+                before_photos_done INTEGER DEFAULT 0,
+                work_done_reported INTEGER DEFAULT 0,
+                problems_reported INTEGER DEFAULT 0,
+                materials_reported INTEGER DEFAULT 0,
+                end_day_done INTEGER DEFAULT 0,
+                clocked_out_done INTEGER DEFAULT 0,
+                updated_at TEXT DEFAULT ''
+            )
+            """
         )
 
-    if wants_tracking(text):
-        return RedirectResponse("/gps?autostart=1", status_code=303)
 
-    nav_href = wants_nav(text)
+def truthy(value):
+    return str(value).lower() in ("1", "true", "yes", "on", "t")
 
-    if nav_href:
-        return RedirectResponse(nav_href, status_code=303)
 
-    preview = classify_crew_note(text)
+def crew_progress(employee):
+    h = _helpers()
+    ensure_crew_progress_schema()
 
-    if priority.strip():
-        preview["priority"] = priority.strip()
+    today = date.today().isoformat()
+    employee_id = employee.get("id")
 
-    return h["templates"].TemplateResponse(
-        "crew_note_preview.html",
-        h["ctx"](
-            request,
-            raw_message=text,
-            preview=preview,
-            client=client,
-            property=property,
-            due_date=due_date,
+    progress = h["one"](
+        """
+        SELECT *
+        FROM crew_day_progress
+        WHERE employee_id=? AND work_day=?
+        ORDER BY id DESC
+        LIMIT 1
+        """,
+        (employee_id, today),
+    )
+
+    if progress:
+        return progress
+
+    h["exec_sql"](
+        """
+        INSERT INTO crew_day_progress
+        (employee_id, work_day, updated_at)
+        VALUES (?,?,?)
+        """,
+        (
+            employee_id,
+            today,
+            datetime.now().isoformat(timespec="minutes"),
         ),
     )
+
+    return h["one"](
+        """
+        SELECT *
+        FROM crew_day_progress
+        WHERE employee_id=? AND work_day=?
+        ORDER BY id DESC
+        LIMIT 1
+        """,
+        (employee_id, today),
+    )
+
+
+def set_crew_progress(employee, field, value=True):
+    h = _helpers()
+    ensure_crew_progress_schema()
+
+    allowed = {
+        "clocked_in_done",
+        "gps_done",
+        "first_job_opened",
+        "before_photos_done",
+        "work_done_reported",
+        "problems_reported",
+        "materials_reported",
+        "end_day_done",
+        "clocked_out_done",
+    }
+
+    if field not in allowed:
+        return
+
+    progress = crew_progress(employee)
+
+    h["exec_sql"](
+        f"""
+        UPDATE crew_day_progress
+        SET {field}=?,
+            updated_at=?
+        WHERE id=?
+        """,
+        (
+            True if value else False,
+            datetime.now().isoformat(timespec="minutes"),
+            progress.get("id"),
+        ),
+    )
+    return None
 
 
 @router.post("/crew-home/file")
@@ -563,4 +674,59 @@ def crew_home_file(
             priority=priority,
         )
 
+        if category == "Work Done":
+            set_crew_progress(employee, "work_done_reported", True)
+
+        if category == "Problem Found":
+            set_crew_progress(employee, "problems_reported", True)
+
+        if category == "Material Needed":
+            set_crew_progress(employee, "materials_reported", True)
+
+        if category == "Photo Note":
+            set_crew_progress(employee, "before_photos_done", True) 
+
     return RedirectResponse("/crew-home", status_code=303)
+
+@router.post("/crew-home/progress")
+def crew_home_progress(
+    request: Request,
+    field: str = Form(""),
+):
+    h = _helpers()
+    user = h["require_login"](request)
+
+    if not user:
+        return h["login_redirect"]()
+
+    if not allowed_crew_user(user):
+        return h["admin_redirect"](user)
+
+    employee = get_or_create_employee_for_user(user)
+    set_crew_progress(employee, field, True)
+
+    return RedirectResponse("/crew-home", status_code=303)
+
+
+@router.post("/crew-home/progress-go")
+def crew_home_progress_go(
+    request: Request,
+    field: str = Form(""),
+    href: str = Form("/crew-home"),
+):
+    h = _helpers()
+    user = h["require_login"](request)
+
+    if not user:
+        return h["login_redirect"]()
+
+    if not allowed_crew_user(user):
+        return h["admin_redirect"](user)
+
+    employee = get_or_create_employee_for_user(user)
+    set_crew_progress(employee, field, True)
+
+    if not href.startswith("/"):
+        href = "/crew-home"
+
+    return RedirectResponse(href, status_code=303)
