@@ -7042,3 +7042,442 @@ def jarvis_brain_level10_client_alias_two(request: Request):
 # END JARVIS BRAIN LEVEL 10 ROLE FRONT DOOR + CLIENT FLOW
 # ============================================================
 
+
+# ============================================================
+# JARVIS BRAIN LEVEL 11 LAUNCH PAD
+# Adds /jarvis-brain/launch and smarter /jarvis redirect.
+# Does not replace Levels 7, 8, 9, or 10.
+# ============================================================
+
+import os as _j11_os
+import json as _j11_json
+import html as _j11_html
+from datetime import datetime as _j11_datetime
+
+try:
+    from fastapi import Request
+except Exception:
+    pass
+
+try:
+    from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
+except Exception:
+    pass
+
+JARVIS_LAUNCH_VERSION = "level-11-launch-pad-2026-07-04"
+
+
+def _j11_now():
+    return _j11_datetime.now().isoformat(timespec="seconds")
+
+
+def _j11_storage_dir():
+    path = _j11_os.path.join(_j11_os.getcwd(), "jarvis_storage")
+    _j11_os.makedirs(path, exist_ok=True)
+    return path
+
+
+def _j11_file(name):
+    return _j11_os.path.join(_j11_storage_dir(), name)
+
+
+def _j11_read_json(name, default=None):
+    path = _j11_file(name)
+    if not _j11_os.path.exists(path):
+        return default
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            return _j11_json.load(f)
+    except Exception:
+        return default
+
+
+def _j11_read_jsonl_all(name):
+    path = _j11_file(name)
+    if not _j11_os.path.exists(path):
+        return []
+    items = []
+    with open(path, "r", encoding="utf-8") as f:
+        for line in f:
+            try:
+                items.append(_j11_json.loads(line.strip()))
+            except Exception:
+                pass
+    return items
+
+
+def _j11_esc(value):
+    return _j11_html.escape(str(value or ""))
+
+
+def _j11_user(request):
+    try:
+        f = globals().get("current_user")
+        if callable(f):
+            u = f(request)
+            if u:
+                return u
+    except Exception:
+        pass
+
+    try:
+        if hasattr(request, "session"):
+            return request.session.get("user") or {}
+    except Exception:
+        pass
+
+    return {}
+
+
+def _j11_name(user):
+    return str((user or {}).get("name") or (user or {}).get("username") or (user or {}).get("email") or "Mike").strip()
+
+
+def _j11_role(user):
+    role = str((user or {}).get("role") or "admin").lower().strip()
+    if role == "employee":
+        role = "crew"
+    return role
+
+
+def _j11_columns(table):
+    try:
+        f = globals().get("table_columns")
+        if callable(f):
+            return list(f(table) or [])
+    except Exception:
+        pass
+    return []
+
+
+def _j11_rows(sql, params=()):
+    try:
+        f = globals().get("rows")
+        if callable(f):
+            return f(sql, params) or []
+    except Exception:
+        pass
+    return []
+
+
+def _j11_table_count(table):
+    cols = _j11_columns(table)
+    if not cols:
+        return None
+    try:
+        r = _j11_rows(f"SELECT COUNT(*) AS c FROM {table}", ())
+        if r:
+            first = r[0]
+            return first.get("c") if hasattr(first, "get") else list(first)[0]
+    except Exception:
+        pass
+    return None
+
+
+def _j11_active_context():
+    return _j11_read_json("jarvis_active_context.json", {}) or {}
+
+
+def _j11_memory_counts():
+    items = _j11_read_jsonl_all("jarvis_memory.jsonl")
+    open_items = []
+    for item in items:
+        status = str(item.get("status") or "Open").lower()
+        if status not in ("done", "closed", "complete", "completed"):
+            open_items.append(item)
+
+    counts = {
+        "total": len(items),
+        "open": len(open_items),
+        "billing": 0,
+        "materials": 0,
+        "followups": 0,
+        "problems": 0,
+        "field_logs": 0,
+        "client_requests": 0,
+    }
+
+    for item in open_items:
+        cat = str(item.get("category") or "")
+        if cat == "Billing Note":
+            counts["billing"] += 1
+        elif cat == "Material Needed":
+            counts["materials"] += 1
+        elif cat == "Follow Up":
+            counts["followups"] += 1
+        elif cat == "Problem Found":
+            counts["problems"] += 1
+        elif cat == "Field Log":
+            counts["field_logs"] += 1
+        elif cat == "Client Request":
+            counts["client_requests"] += 1
+
+    return counts
+
+
+def _j11_cards_for_role(role):
+    base = []
+
+    if role == "client":
+        return [
+            {
+                "title": "Client Jarvis",
+                "desc": "View visible project info and send Mike a request.",
+                "href": "/jarvis-brain/client",
+                "tag": "Client Safe",
+            },
+            {
+                "title": "Client Portal",
+                "desc": "Open the standard client portal.",
+                "href": "/client-portal",
+                "tag": "Portal",
+            },
+            {
+                "title": "Jarvis Start",
+                "desc": "Smart role front door.",
+                "href": "/jarvis-brain/start",
+                "tag": "Start",
+            },
+        ]
+
+    if role == "crew":
+        return [
+            {
+                "title": "Crew Flow",
+                "desc": "Step-by-step field workflow: set job, clock in, photos, logs, materials, clock out.",
+                "href": "/jarvis-brain/crew",
+                "tag": "Crew",
+            },
+            {
+                "title": "Active Job",
+                "desc": "The job brain for the current active job.",
+                "href": "/jarvis-brain/job",
+                "tag": "Job",
+            },
+            {
+                "title": "Photos",
+                "desc": "Upload arrival, progress, and completion photos.",
+                "href": "/photos",
+                "tag": "Protect",
+            },
+            {
+                "title": "Field Logs",
+                "desc": "Open field log page.",
+                "href": "/field-logs",
+                "tag": "Logs",
+            },
+            {
+                "title": "Jarvis Brain",
+                "desc": "Main command page.",
+                "href": "/jarvis-brain",
+                "tag": "Brain",
+            },
+        ]
+
+    return [
+        {
+            "title": "Mike Brain",
+            "desc": "Main Jarvis command center: voice, search, memory, active job, briefing.",
+            "href": "/jarvis-brain",
+            "tag": "Admin",
+        },
+        {
+            "title": "Command Desk",
+            "desc": "Open billing, material, follow-up, problem, field-log, and client request queue.",
+            "href": "/jarvis-brain/desk",
+            "tag": "Queue",
+        },
+        {
+            "title": "Active Job",
+            "desc": "Job-specific brain for the active job.",
+            "href": "/jarvis-brain/job",
+            "tag": "Job",
+        },
+        {
+            "title": "Crew Flow",
+            "desc": "See exactly what the crew page looks like and how they are prompted.",
+            "href": "/jarvis-brain/crew",
+            "tag": "Crew",
+        },
+        {
+            "title": "Client Jarvis",
+            "desc": "Client-safe request and project page.",
+            "href": "/jarvis-brain/client",
+            "tag": "Client",
+        },
+        {
+            "title": "Invisible Office",
+            "desc": "Office queue where Jarvis files billing notes, follow-ups, problems, and closeouts.",
+            "href": "/invisible-office",
+            "tag": "Office",
+        },
+        {
+            "title": "Photos",
+            "desc": "Arrival, progress, completion, and job protection photos.",
+            "href": "/photos",
+            "tag": "Photos",
+        },
+        {
+            "title": "Field Logs",
+            "desc": "Work completed, problems, materials, next steps.",
+            "href": "/field-logs",
+            "tag": "Logs",
+        },
+        {
+            "title": "Jobs",
+            "desc": "Open your jobs list.",
+            "href": "/jobs",
+            "tag": "Jobs",
+        },
+        {
+            "title": "Schedule",
+            "desc": "Open schedule/calendar.",
+            "href": "/schedule",
+            "tag": "Calendar",
+        },
+    ]
+
+
+@app.middleware("http")
+async def jarvis_level11_launch_takeover(request, call_next):
+    # This newer middleware makes the old /jarvis entry go to the role-aware front door.
+    if request.url.path == "/jarvis":
+        return RedirectResponse("/jarvis-brain/start", status_code=303)
+    return await call_next(request)
+
+
+@app.get("/jarvis-brain/launch", response_class=HTMLResponse)
+def jarvis_brain_level11_launch_pad(request: Request):
+    user = _j11_user(request)
+    name = _j11_name(user).split()[0]
+    role = _j11_role(user)
+    active = _j11_active_context()
+    counts = _j11_memory_counts()
+    cards = _j11_cards_for_role(role)
+
+    card_html = ""
+    for card in cards:
+        card_html += f"""
+        <a class="tile" href="{_j11_esc(card.get('href'))}">
+          <div class="tag">{_j11_esc(card.get('tag'))}</div>
+          <h2>{_j11_esc(card.get('title'))}</h2>
+          <p>{_j11_esc(card.get('desc'))}</p>
+        </a>
+        """
+
+    active_html = "<p>No active job set.</p>"
+    if active:
+        active_html = f"""
+        <p><b>{_j11_esc(active.get('title') or active.get('client') or active.get('address'))}</b></p>
+        <p>{_j11_esc(active.get('address'))}</p>
+        <p>Status: {_j11_esc(active.get('status'))} ? Type: {_j11_esc(active.get('job_type'))}</p>
+        """
+
+    jobs_count = _j11_table_count("poolops2_jobs")
+    clients_count = _j11_table_count("poolops2_clients")
+    props_count = _j11_table_count("poolops2_properties")
+    office_count = _j11_table_count("invisible_office_items")
+    logs_count = _j11_table_count("field_logs")
+
+    html = f"""
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Jarvis Launch Pad</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {{ margin:0; font-family:Arial,sans-serif; background:#070a0f; color:#f5efe3; }}
+    .wrap {{ max-width:1220px; margin:0 auto; padding:26px; }}
+    .hero {{ background:linear-gradient(135deg,#111722,#05070b); border:1px solid #5d421d; border-radius:22px; padding:24px; box-shadow:0 20px 60px rgba(0,0,0,.45); }}
+    h1 {{ margin:0 0 8px; font-size:36px; letter-spacing:.08em; }}
+    .sub {{ color:#d9b56d; margin-bottom:20px; }}
+    .stats {{ display:grid; grid-template-columns:repeat(6,1fr); gap:10px; margin:16px 0; }}
+    @media(max-width:950px) {{ .stats {{ grid-template-columns:repeat(2,1fr); }} }}
+    .stat {{ background:#05070b; border:1px solid #2d2113; border-radius:14px; padding:14px; }}
+    .stat b {{ font-size:26px; color:#d9b56d; }}
+    .grid {{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }}
+    @media(max-width:900px) {{ .grid {{ grid-template-columns:1fr; }} }}
+    .tiles {{ display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:14px; margin-top:16px; }}
+    .tile {{ display:block; text-decoration:none; color:#f5efe3; background:#101722; border:1px solid #2d2113; border-radius:18px; padding:18px; min-height:130px; }}
+    .tile:hover {{ border-color:#b8873a; transform:translateY(-1px); }}
+    .tile h2 {{ margin:8px 0; }}
+    .tile p {{ color:#e8dcc7; line-height:1.4; }}
+    .tag {{ display:inline-block; padding:6px 10px; border:1px solid #6b4b1f; border-radius:999px; color:#d9b56d; font-size:12px; }}
+    .card {{ background:#101722; border:1px solid #2d2113; border-radius:18px; padding:18px; margin-top:16px; }}
+    a {{ color:#d9a64a; }}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero">
+    <h1>J.A.R.V.I.S. LAUNCH PAD</h1>
+    <div class="sub">Good to go, {_j11_esc(name)}. This is the clean front door. Role: {_j11_esc(role)}.</div>
+
+    <div class="stats">
+      <div class="stat"><b>{counts['open']}</b><br>Open brain items</div>
+      <div class="stat"><b>{counts['billing']}</b><br>Billing</div>
+      <div class="stat"><b>{counts['materials']}</b><br>Materials</div>
+      <div class="stat"><b>{counts['problems']}</b><br>Problems</div>
+      <div class="stat"><b>{counts['field_logs']}</b><br>Field logs</div>
+      <div class="stat"><b>{counts['client_requests']}</b><br>Client requests</div>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <h2>Active Job</h2>
+        {active_html}
+        <p><a href="/jarvis-brain/job">Open Active Job Center</a></p>
+      </div>
+
+      <div class="card">
+        <h2>System Snapshot</h2>
+        <p>Jobs: {_j11_esc(jobs_count)} ? Clients: {_j11_esc(clients_count)} ? Properties: {_j11_esc(props_count)}</p>
+        <p>Invisible Office: {_j11_esc(office_count)} ? Field Logs: {_j11_esc(logs_count)}</p>
+        <p>Version: {_j11_esc(JARVIS_LAUNCH_VERSION)}</p>
+      </div>
+    </div>
+
+    <div class="tiles">
+      {card_html}
+    </div>
+  </div>
+</div>
+</body>
+</html>
+"""
+    return HTMLResponse(html)
+
+
+@app.get("/jarvis-launch", response_class=HTMLResponse)
+def jarvis_brain_level11_launch_alias(request: Request):
+    return RedirectResponse("/jarvis-brain/launch", status_code=303)
+
+
+@app.get("/jarvis-brain/launch.json")
+def jarvis_brain_level11_launch_json(request: Request):
+    user = _j11_user(request)
+    role = _j11_role(user)
+
+    return JSONResponse({
+        "ok": True,
+        "version": JARVIS_LAUNCH_VERSION,
+        "role": role,
+        "name": _j11_name(user),
+        "active_context": _j11_active_context(),
+        "memory_counts": _j11_memory_counts(),
+        "tables": {
+            "jobs": _j11_table_count("poolops2_jobs"),
+            "clients": _j11_table_count("poolops2_clients"),
+            "properties": _j11_table_count("poolops2_properties"),
+            "invisible_office": _j11_table_count("invisible_office_items"),
+            "field_logs": _j11_table_count("field_logs"),
+        },
+        "cards": _j11_cards_for_role(role),
+    })
+
+
+# ============================================================
+# END JARVIS BRAIN LEVEL 11 LAUNCH PAD
+# ============================================================
+
