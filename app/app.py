@@ -3597,14 +3597,14 @@ def invisible_office_search(request: Request, q: str = ""):
 
 # ============================================================
 # JARVIS BRAIN LAYER - HEINLIN FIELD OPS
-# LEVEL 4 VOICE + SEARCH + CLOCK VERSION
+# LEVEL 5 MIKE BRAIN + DAILY CLOSEOUT VERSION
 # ============================================================
 
-import os as _j4_os
-import re as _j4_re
-import json as _j4_json
-import html as _j4_html
-from datetime import datetime as _j4_datetime, date as _j4_date
+import os as _j5_os
+import re as _j5_re
+import json as _j5_json
+import html as _j5_html
+from datetime import datetime as _j5_datetime, date as _j5_date
 
 try:
     from fastapi import Request
@@ -3616,51 +3616,51 @@ try:
 except Exception:
     pass
 
-JARVIS_BRAIN_VERSION = "level-4-voice-search-clock-2026-07-04"
+JARVIS_BRAIN_VERSION = "level-5-mike-brain-closeout-2026-07-04"
 JARVIS_TAKEOVER = True
 
 
-def _j4_now():
-    return _j4_datetime.now().isoformat(timespec="seconds")
+def _j5_now():
+    return _j5_datetime.now().isoformat(timespec="seconds")
 
 
-def _j4_today():
-    return _j4_date.today().isoformat()
+def _j5_today():
+    return _j5_date.today().isoformat()
 
 
-def _j4_storage_dir():
-    path = _j4_os.path.join(_j4_os.getcwd(), "jarvis_storage")
-    _j4_os.makedirs(path, exist_ok=True)
+def _j5_storage_dir():
+    path = _j5_os.path.join(_j5_os.getcwd(), "jarvis_storage")
+    _j5_os.makedirs(path, exist_ok=True)
     return path
 
 
-def _j4_file(name):
-    return _j4_os.path.join(_j4_storage_dir(), name)
+def _j5_file(name):
+    return _j5_os.path.join(_j5_storage_dir(), name)
 
 
-def _j4_write_jsonl(name, item):
+def _j5_write_jsonl(name, item):
     item = dict(item or {})
-    item.setdefault("created_at", _j4_now())
-    with open(_j4_file(name), "a", encoding="utf-8") as f:
-        f.write(_j4_json.dumps(item, ensure_ascii=False) + "\n")
+    item.setdefault("created_at", _j5_now())
+    with open(_j5_file(name), "a", encoding="utf-8") as f:
+        f.write(_j5_json.dumps(item, ensure_ascii=False) + "\n")
 
 
-def _j4_read_jsonl(name, limit=25):
-    path = _j4_file(name)
-    if not _j4_os.path.exists(path):
+def _j5_read_jsonl(name, limit=25):
+    path = _j5_file(name)
+    if not _j5_os.path.exists(path):
         return []
     items = []
     with open(path, "r", encoding="utf-8") as f:
         for line in f:
             try:
-                items.append(_j4_json.loads(line.strip()))
+                items.append(_j5_json.loads(line.strip()))
             except Exception:
                 pass
     items.reverse()
     return items[:limit]
 
 
-def _j4_user(request):
+def _j5_user(request):
     try:
         f = globals().get("current_user")
         if callable(f):
@@ -3677,26 +3677,26 @@ def _j4_user(request):
     return {}
 
 
-def _j4_name(user):
+def _j5_name(user):
     return str((user or {}).get("name") or (user or {}).get("username") or (user or {}).get("email") or "Mike").strip()
 
 
-def _j4_email(user):
+def _j5_email(user):
     return str((user or {}).get("email") or "").strip()
 
 
-def _j4_role(user):
+def _j5_role(user):
     role = str((user or {}).get("role") or "admin").lower().strip()
     if role == "employee":
         role = "crew"
     return role
 
 
-def _j4_esc(value):
-    return _j4_html.escape(str(value or ""))
+def _j5_esc(value):
+    return _j5_html.escape(str(value or ""))
 
 
-def _j4_rows(sql, params=()):
+def _j5_rows(sql, params=()):
     try:
         f = globals().get("rows")
         if callable(f):
@@ -3706,7 +3706,7 @@ def _j4_rows(sql, params=()):
     return []
 
 
-def _j4_exec(sql, params=()):
+def _j5_exec(sql, params=()):
     try:
         f = globals().get("exec_sql")
         if callable(f):
@@ -3716,7 +3716,7 @@ def _j4_exec(sql, params=()):
     return None
 
 
-def _j4_columns(table):
+def _j5_columns(table):
     try:
         f = globals().get("table_columns")
         if callable(f):
@@ -3726,12 +3726,12 @@ def _j4_columns(table):
     return []
 
 
-def _j4_table_exists(table):
-    return bool(_j4_columns(table))
+def _j5_table_exists(table):
+    return bool(_j5_columns(table))
 
 
-def _j4_insert_existing(table, data):
-    cols = _j4_columns(table)
+def _j5_insert_existing(table, data):
+    cols = _j5_columns(table)
     if not cols:
         return False
 
@@ -3746,12 +3746,12 @@ def _j4_insert_existing(table, data):
     names = list(final.keys())
     placeholders = ",".join(["?"] * len(names))
     sql = f"INSERT INTO {table} ({','.join(names)}) VALUES ({placeholders})"
-    _j4_exec(sql, tuple(final[k] for k in names))
+    _j5_exec(sql, tuple(final[k] for k in names))
     return True
 
 
-def _j4_update_existing(table, updates, where_sql, where_params):
-    cols = _j4_columns(table)
+def _j5_update_existing(table, updates, where_sql, where_params):
+    cols = _j5_columns(table)
     if not cols:
         return False
 
@@ -3766,11 +3766,11 @@ def _j4_update_existing(table, updates, where_sql, where_params):
     names = list(final.keys())
     set_sql = ", ".join([f"{k}=?" for k in names])
     params = tuple(final[k] for k in names) + tuple(where_params or ())
-    _j4_exec(f"UPDATE {table} SET {set_sql} WHERE {where_sql}", params)
+    _j5_exec(f"UPDATE {table} SET {set_sql} WHERE {where_sql}", params)
     return True
 
 
-def _j4_classify(text):
+def _j5_classify(text):
     raw = str(text or "").strip()
     low = raw.lower()
 
@@ -3778,13 +3778,22 @@ def _j4_classify(text):
     category = "General Note"
     priority = "Normal"
 
-    if any(x in low for x in ["clock me in", "clock in", "start gps", "start my day"]):
+    if any(x in low for x in ["clock me in", "clock in", "start gps"]):
         intent = "clock_in"
         category = "Time Clock"
-    elif any(x in low for x in ["clock me out", "clock out", "end my day"]):
+    elif any(x in low for x in ["clock me out", "clock out"]):
         intent = "clock_out"
         category = "Time Clock"
-    elif _j4_re.search(r"\b(find|search|look up|show me)\b", low):
+    elif any(x in low for x in ["end my day", "daily closeout", "close out my day", "wrap up my day"]):
+        intent = "daily_closeout"
+        category = "Daily Closeout"
+    elif any(x in low for x in ["start my day", "morning briefing", "daily briefing"]):
+        intent = "start_day"
+        category = "Daily Briefing"
+    elif any(x in low for x in ["what did i do today", "today summary", "summarize today"]):
+        intent = "today_summary"
+        category = "Today Summary"
+    elif _j5_re.search(r"\b(find|search|look up|show me)\b", low):
         intent = "search"
         category = "Search"
     elif any(x in low for x in ["billing", "bill", "invoice", "charge", "paid", "payment"]):
@@ -3822,13 +3831,13 @@ def _j4_classify(text):
     }
 
 
-def _j4_all_jobs(limit=250):
-    if not _j4_table_exists("poolops2_jobs"):
+def _j5_all_jobs(limit=250):
+    if not _j5_table_exists("poolops2_jobs"):
         return []
-    return _j4_rows("SELECT * FROM poolops2_jobs ORDER BY id DESC LIMIT ?", (limit,))
+    return _j5_rows("SELECT * FROM poolops2_jobs ORDER BY id DESC LIMIT ?", (limit,))
 
 
-def _j4_job_date(job):
+def _j5_job_date(job):
     for key in ["scheduled_start", "schedule_date", "date", "start_date", "created_at"]:
         val = (job or {}).get(key)
         if val:
@@ -3836,25 +3845,26 @@ def _j4_job_date(job):
     return ""
 
 
-def _j4_job_status(job):
+def _j5_job_status(job):
     return str((job or {}).get("status") or "").lower().strip()
 
 
-def _j4_dashboard_stats():
-    today = _j4_today()
-    jobs = _j4_all_jobs()
+def _j5_dashboard_stats():
+    today = _j5_today()
+    jobs = _j5_all_jobs()
     today_jobs = []
     overdue_jobs = []
 
     for j in jobs:
-        ds = _j4_job_date(j)
-        status = _j4_job_status(j)
+        ds = _j5_job_date(j)
+        status = _j5_job_status(j)
         if ds == today:
             today_jobs.append(j)
         if ds and ds < today and status not in ("complete", "completed", "done", "closed", "cancelled"):
             overdue_jobs.append(j)
 
-    memory = _j4_read_jsonl("jarvis_memory.jsonl", 100)
+    memory = _j5_read_jsonl("jarvis_memory.jsonl", 300)
+    todays_memory = [m for m in memory if str(m.get("created_at") or "")[:10] == today]
 
     return {
         "today": today,
@@ -3864,12 +3874,14 @@ def _j4_dashboard_stats():
         "today_jobs_count": len(today_jobs),
         "overdue_jobs_count": len(overdue_jobs),
         "memory_count": len(memory),
+        "todays_memory_count": len(todays_memory),
+        "todays_memory": todays_memory[:50],
     }
 
 
-def _j4_next_steps(user):
-    role = _j4_role(user)
-    stats = _j4_dashboard_stats()
+def _j5_next_steps(user):
+    role = _j5_role(user)
+    stats = _j5_dashboard_stats()
     steps = []
 
     if role == "client":
@@ -3897,30 +3909,30 @@ def _j4_next_steps(user):
         steps.append("No jobs are scheduled for today in the table I can read.")
     steps.append("Use billing notes immediately when something becomes money.")
     steps.append("Use field logs before the day disappears.")
-    steps.append("Use search: Jarvis, find Alexander, Smith, heater, concrete, etc.")
+    steps.append("End the day with: Jarvis, end my day.")
     return steps
 
 
-def _j4_log_command(request, text, reply, intent):
-    user = _j4_user(request)
-    _j4_write_jsonl("jarvis_command_log.jsonl", {
-        "created_at": _j4_now(),
-        "created_by": _j4_name(user),
-        "user_role": _j4_role(user),
+def _j5_log_command(request, text, reply, intent):
+    user = _j5_user(request)
+    _j5_write_jsonl("jarvis_command_log.jsonl", {
+        "created_at": _j5_now(),
+        "created_by": _j5_name(user),
+        "user_role": _j5_role(user),
         "command_text": text,
         "intent": intent,
         "reply": reply,
     })
 
 
-def _j4_action_save(request, text, reply):
-    user = _j4_user(request)
-    c = _j4_classify(text)
+def _j5_action_save(request, text, reply):
+    user = _j5_user(request)
+    c = _j5_classify(text)
 
     item = {
-        "created_at": _j4_now(),
-        "created_by": _j4_name(user),
-        "user_role": _j4_role(user),
+        "created_at": _j5_now(),
+        "created_by": _j5_name(user),
+        "user_role": _j5_role(user),
         "intent": c["intent"],
         "category": c["category"],
         "priority": c["priority"],
@@ -3930,14 +3942,14 @@ def _j4_action_save(request, text, reply):
         "reply": reply,
     }
 
-    _j4_write_jsonl("jarvis_memory.jsonl", item)
-    _j4_log_command(request, text, reply, c["intent"])
+    _j5_write_jsonl("jarvis_memory.jsonl", item)
+    _j5_log_command(request, text, reply, c["intent"])
 
     invisible_saved = False
     field_log_saved = False
 
     if c["intent"] in ("billing_note", "material_needed", "follow_up", "problem_found", "memory"):
-        invisible_saved = _j4_insert_existing("invisible_office_items", {
+        invisible_saved = _j5_insert_existing("invisible_office_items", {
             "source": "Jarvis Brain",
             "category": c["category"],
             "title": c["title"],
@@ -3949,9 +3961,9 @@ def _j4_action_save(request, text, reply):
         })
 
     if c["intent"] == "field_log":
-        field_log_saved = _j4_insert_existing("field_logs", {
+        field_log_saved = _j5_insert_existing("field_logs", {
             "employee_name": item["created_by"],
-            "date": _j4_today(),
+            "date": _j5_today(),
             "work_completed": c["body"],
             "issues": "",
             "next_steps": "",
@@ -3962,7 +3974,7 @@ def _j4_action_save(request, text, reply):
             "created_at": item["created_at"],
         })
 
-        invisible_saved = _j4_insert_existing("invisible_office_items", {
+        invisible_saved = _j5_insert_existing("invisible_office_items", {
             "source": "Jarvis Brain",
             "category": "Field Log",
             "title": c["title"],
@@ -3978,35 +3990,16 @@ def _j4_action_save(request, text, reply):
     return item
 
 
-def _j4_reply_for(text):
-    c = _j4_classify(text)
-    stats = _j4_dashboard_stats()
-
-    if c["intent"] == "billing_note":
-        return "I saved that as a billing note and tried to file it into the Invisible Office."
-    if c["intent"] == "field_log":
-        return "I saved that as a field log memory and tried to file it into Field Logs."
-    if c["intent"] == "material_needed":
-        return "I saved that as a material-needed item and tried to file it into the Invisible Office."
-    if c["intent"] == "follow_up":
-        return "I saved that as a follow-up item."
-    if c["intent"] == "problem_found":
-        return "I saved that as a problem found. That protects the job history."
-    if c["intent"] == "briefing":
-        return f"Here is what I can see: {stats['today_jobs_count']} job(s) today, {stats['overdue_jobs_count']} overdue job(s), and {stats['memory_count']} Jarvis memory item(s)."
-    return "I saved that to Jarvis memory."
-
-
-def _j4_clock(request, direction):
-    user = _j4_user(request)
-    cols = _j4_columns("poolops2_employees")
+def _j5_clock(request, direction):
+    user = _j5_user(request)
+    cols = _j5_columns("poolops2_employees")
     if not cols:
         return False, "I could not find the employee table."
 
-    name = _j4_name(user)
-    email = _j4_email(user)
+    name = _j5_name(user)
+    email = _j5_email(user)
     active = direction == "in"
-    now = _j4_now()
+    now = _j5_now()
 
     updates = {
         "clocked_in": 1 if active else 0,
@@ -4027,27 +4020,27 @@ def _j4_clock(request, direction):
         possible_params.append(name)
 
     if not possible_where:
-        _j4_log_command(request, f"clock {direction}", "Clock table exists, but I could not match your employee record.", "clock_" + direction)
+        _j5_log_command(request, f"clock {direction}", "Clock table exists, but I could not match your employee record.", "clock_" + direction)
         return False, "Clock table exists, but I could not match your employee record by name or email."
 
-    ok = _j4_update_existing("poolops2_employees", updates, " OR ".join(possible_where), tuple(possible_params))
+    ok = _j5_update_existing("poolops2_employees", updates, " OR ".join(possible_where), tuple(possible_params))
     reply = "You are clocked in." if active else "You are clocked out."
     if not ok:
         reply = "I saw the clock command, but your employee table does not have the clock columns I expected."
 
-    _j4_log_command(request, f"clock {direction}", reply, "clock_" + direction)
+    _j5_log_command(request, f"clock {direction}", reply, "clock_" + direction)
     return ok, reply
 
 
-def _j4_clean_search_query(text):
+def _j5_clean_search_query(text):
     q = str(text or "").strip()
-    q = _j4_re.sub(r"^jarvis[,\s]*", "", q, flags=_j4_re.I).strip()
-    q = _j4_re.sub(r"^(find|search|look up|show me)\s+", "", q, flags=_j4_re.I).strip()
+    q = _j5_re.sub(r"^jarvis[,\s]*", "", q, flags=_j5_re.I).strip()
+    q = _j5_re.sub(r"^(find|search|look up|show me)\s+", "", q, flags=_j5_re.I).strip()
     return q
 
 
-def _j4_search(text):
-    q = _j4_clean_search_query(text)
+def _j5_search(text):
+    q = _j5_clean_search_query(text)
     if not q:
         return []
 
@@ -4063,14 +4056,14 @@ def _j4_search(text):
     ]
 
     for table, url, kind, candidates in table_sets:
-        cols = _j4_columns(table)
+        cols = _j5_columns(table)
         have = [c for c in candidates if c in cols]
         if not have:
             continue
 
         where = " OR ".join([f"CAST({c} AS TEXT) LIKE ?" for c in have])
         order = "ORDER BY id DESC" if "id" in cols else ""
-        rows = _j4_rows(f"SELECT * FROM {table} WHERE {where} {order} LIMIT 8", tuple([like] * len(have)))
+        rows = _j5_rows(f"SELECT * FROM {table} WHERE {where} {order} LIMIT 8", tuple([like] * len(have)))
 
         for r in rows:
             title = (
@@ -4094,7 +4087,7 @@ def _j4_search(text):
                 "url": link,
             })
 
-    for item in _j4_read_jsonl("jarvis_memory.jsonl", 100):
+    for item in _j5_read_jsonl("jarvis_memory.jsonl", 200):
         body = str(item.get("body") or "")
         title = str(item.get("title") or "")
         if q.lower() in body.lower() or q.lower() in title.lower():
@@ -4108,50 +4101,121 @@ def _j4_search(text):
     return results[:12]
 
 
+def _j5_today_memory():
+    today = _j5_today()
+    return [m for m in _j5_read_jsonl("jarvis_memory.jsonl", 500) if str(m.get("created_at") or "")[:10] == today]
+
+
+def _j5_daily_report(request):
+    user = _j5_user(request)
+    stats = _j5_dashboard_stats()
+    items = _j5_today_memory()
+
+    categories = {}
+    for item in items:
+        cat = str(item.get("category") or "General Note")
+        categories[cat] = categories.get(cat, 0) + 1
+
+    lines = []
+    lines.append(f"Daily closeout for {_j5_today()}.")
+    lines.append(f"Jarvis captured {len(items)} item(s) today.")
+    lines.append(f"Jobs today: {stats['today_jobs_count']}. Overdue jobs still visible: {stats['overdue_jobs_count']}.")
+
+    if categories:
+        pieces = [f"{k}: {v}" for k, v in sorted(categories.items())]
+        lines.append("Breakdown: " + "; ".join(pieces) + ".")
+
+    money_items = [x for x in items if str(x.get("category") or "").lower() == "billing note"]
+    field_items = [x for x in items if str(x.get("category") or "").lower() == "field log"]
+    material_items = [x for x in items if str(x.get("category") or "").lower() == "material needed"]
+
+    if money_items:
+        lines.append(f"Money watch: {len(money_items)} billing note(s) need reviewed.")
+    if field_items:
+        lines.append(f"Field history: {len(field_items)} field log item(s) captured.")
+    if material_items:
+        lines.append(f"Materials: {len(material_items)} material-needed item(s) captured.")
+
+    if not items:
+        lines.append("No Jarvis memory was captured today. That means tomorrow I need to prompt harder.")
+
+    report = {
+        "created_at": _j5_now(),
+        "created_by": _j5_name(user),
+        "date": _j5_today(),
+        "summary": " ".join(lines),
+        "stats": stats,
+        "category_counts": categories,
+        "items": items[:100],
+    }
+
+    _j5_write_jsonl("jarvis_daily_reports.jsonl", report)
+
+    _j5_insert_existing("invisible_office_items", {
+        "source": "Jarvis Brain",
+        "category": "Daily Closeout",
+        "title": f"Daily Closeout - {_j5_today()}",
+        "body": report["summary"],
+        "priority": "Normal",
+        "status": "Open",
+        "created_by": _j5_name(user),
+        "created_at": report["created_at"],
+    })
+
+    _j5_log_command(request, "Jarvis, end my day", report["summary"], "daily_closeout")
+    return report
+
+
+def _j5_start_day_reply(user):
+    stats = _j5_dashboard_stats()
+    steps = _j5_next_steps(user)
+    return "Morning briefing: " + f"I can see {stats['today_jobs_count']} job(s) today, {stats['overdue_jobs_count']} overdue job(s), and {stats['memory_count']} total Jarvis memory item(s). " + " ".join(steps[:4])
+
+
 @app.middleware("http")
-async def jarvis_level4_takeover(request, call_next):
+async def jarvis_level5_takeover(request, call_next):
     if JARVIS_TAKEOVER and request.url.path == "/jarvis":
         return RedirectResponse("/jarvis-brain", status_code=303)
     return await call_next(request)
 
 
 @app.get("/jarvis-brain/install-check")
-def jarvis_brain_install_check_level4():
-    stats = _j4_dashboard_stats()
+def jarvis_brain_install_check_level5():
+    stats = _j5_dashboard_stats()
     return JSONResponse({
         "ok": True,
-        "message": "Jarvis Brain Level 4 is installed and running.",
+        "message": "Jarvis Brain Level 5 is installed and running.",
         "version": JARVIS_BRAIN_VERSION,
-        "storage_folder": _j4_storage_dir(),
+        "storage_folder": _j5_storage_dir(),
         "tables_seen": {
-            "poolops2_jobs": _j4_table_exists("poolops2_jobs"),
-            "poolops2_clients": _j4_table_exists("poolops2_clients"),
-            "poolops2_properties": _j4_table_exists("poolops2_properties"),
-            "poolops2_employees": _j4_table_exists("poolops2_employees"),
-            "invisible_office_items": _j4_table_exists("invisible_office_items"),
-            "field_logs": _j4_table_exists("field_logs"),
+            "poolops2_jobs": _j5_table_exists("poolops2_jobs"),
+            "poolops2_clients": _j5_table_exists("poolops2_clients"),
+            "poolops2_properties": _j5_table_exists("poolops2_properties"),
+            "poolops2_employees": _j5_table_exists("poolops2_employees"),
+            "invisible_office_items": _j5_table_exists("invisible_office_items"),
+            "field_logs": _j5_table_exists("field_logs"),
         },
         "stats": stats,
     })
 
 
 @app.get("/jarvis-brain", response_class=HTMLResponse)
-def jarvis_brain_level4_page(request: Request):
-    user = _j4_user(request)
-    name = _j4_name(user).split()[0]
-    role = _j4_role(user)
-    recent = _j4_read_jsonl("jarvis_memory.jsonl", 12)
-    stats = _j4_dashboard_stats()
+def jarvis_brain_level5_page(request: Request):
+    user = _j5_user(request)
+    name = _j5_name(user).split()[0]
+    role = _j5_role(user)
+    recent = _j5_read_jsonl("jarvis_memory.jsonl", 12)
+    stats = _j5_dashboard_stats()
 
     memory_cards = ""
     if recent:
         for item in recent:
             memory_cards += f"""
             <div class="memory-card">
-              <div class="memory-top"><b>{_j4_esc(item.get('category'))}</b><span>{_j4_esc(item.get('created_at'))}</span></div>
-              <div class="memory-title">{_j4_esc(item.get('title'))}</div>
-              <div class="memory-body">{_j4_esc(item.get('body'))}</div>
-              <div class="memory-meta">Priority: {_j4_esc(item.get('priority'))} ? Invisible Office: {_j4_esc(item.get('invisible_saved'))} ? Field Log: {_j4_esc(item.get('field_log_saved'))}</div>
+              <div class="memory-top"><b>{_j5_esc(item.get('category'))}</b><span>{_j5_esc(item.get('created_at'))}</span></div>
+              <div class="memory-title">{_j5_esc(item.get('title'))}</div>
+              <div class="memory-body">{_j5_esc(item.get('body'))}</div>
+              <div class="memory-meta">Priority: {_j5_esc(item.get('priority'))} ? Invisible Office: {_j5_esc(item.get('invisible_saved'))} ? Field Log: {_j5_esc(item.get('field_log_saved'))}</div>
             </div>
             """
     else:
@@ -4161,11 +4225,11 @@ def jarvis_brain_level4_page(request: Request):
     for job in stats["today_jobs"]:
         title = job.get("client") or job.get("property") or job.get("address") or f"Job #{job.get('id')}"
         detail = job.get("job_type") or job.get("status") or ""
-        job_cards += f"<li><b>{_j4_esc(title)}</b><br><span>{_j4_esc(detail)}</span></li>"
+        job_cards += f"<li><b>{_j5_esc(title)}</b><br><span>{_j5_esc(detail)}</span></li>"
     if not job_cards:
         job_cards = "<li>No jobs found for today from the table I can read.</li>"
 
-    next_steps = "".join([f"<li>{_j4_esc(x)}</li>" for x in _j4_next_steps(user)])
+    next_steps = "".join([f"<li>{_j5_esc(x)}</li>" for x in _j5_next_steps(user)])
 
     template = """
 <!doctype html>
@@ -4188,7 +4252,8 @@ def jarvis_brain_level4_page(request: Request):
     .reply { margin-top:14px; padding:14px; border-radius:12px; background:#05070b; border:1px solid #2d2113; min-height:24px; line-height:1.45; }
     .chips { display:flex; flex-wrap:wrap; gap:10px; margin-top:12px; }
     .chip { border:1px solid #6b4b1f; border-radius:999px; padding:10px 12px; background:#070a0f; color:#f5efe3; cursor:pointer; }
-    .stats { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+    .stats { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
+    @media(max-width:700px) { .stats { grid-template-columns:repeat(2,1fr); } }
     .stat { background:#05070b; border:1px solid #2d2113; border-radius:14px; padding:14px; }
     .stat b { font-size:28px; color:#d9b56d; }
     .memory-card { background:#05070b; border:1px solid #2d2113; border-radius:14px; padding:14px; margin:10px 0; }
@@ -4205,25 +4270,29 @@ def jarvis_brain_level4_page(request: Request):
   <div class="wrap">
     <div class="hero">
       <h1>J.A.R.V.I.S. BRAIN</h1>
-      <div class="sub">Good to go, __NAME__. Level 4 voice/search/clock is active. Role: __ROLE__.</div>
+      <div class="sub">Good to go, __NAME__. Level 5 Mike Brain is active. Role: __ROLE__.</div>
 
       <div class="stats">
         <div class="stat"><b>__TODAY_COUNT__</b><br>Jobs today</div>
         <div class="stat"><b>__OVERDUE_COUNT__</b><br>Overdue jobs</div>
-        <div class="stat"><b>__MEMORY_COUNT__</b><br>Memory items</div>
+        <div class="stat"><b>__TODAY_MEMORY__</b><br>Captured today</div>
+        <div class="stat"><b>__MEMORY_COUNT__</b><br>Total memory</div>
       </div>
 
       <div class="grid">
         <div class="card">
           <h2>Command Jarvis</h2>
-          <textarea id="cmd" placeholder="Jarvis, find Alexander."></textarea>
+          <textarea id="cmd" placeholder="Jarvis, end my day."></textarea>
           <br>
-          <button onclick="sendCmd()">Send to Jarvis</button>
+          <button onclick="sendCmd()">Send</button>
           <button onclick="startVoice()">?? Voice</button>
+          <button onclick="speakLast()">?? Read Back</button>
           <div class="reply" id="reply">Waiting for command.</div>
 
           <div class="chips">
-            <button class="chip" onclick="fillCmd('Jarvis, what am I forgetting?')">What am I forgetting?</button>
+            <button class="chip" onclick="fillCmd('Jarvis, start my day')">Start My Day</button>
+            <button class="chip" onclick="fillCmd('Jarvis, end my day')">End My Day</button>
+            <button class="chip" onclick="fillCmd('Jarvis, what did I do today?')">Today Summary</button>
             <button class="chip" onclick="fillCmd('Jarvis, find ')">Find</button>
             <button class="chip" onclick="fillCmd('Jarvis, clock me in')">Clock In</button>
             <button class="chip" onclick="fillCmd('Jarvis, clock me out')">Clock Out</button>
@@ -4243,6 +4312,8 @@ def jarvis_brain_level4_page(request: Request):
             |
             <a href="/jarvis-brain/export.json">Export</a>
             |
+            <a href="/jarvis-brain/daily-report.json">Daily Reports</a>
+            |
             <a href="/invisible-office">Invisible Office</a>
             |
             <a href="/">Home</a>
@@ -4258,6 +4329,8 @@ def jarvis_brain_level4_page(request: Request):
   </div>
 
 <script>
+let lastReply = "";
+
 function fillCmd(t){
   document.getElementById("cmd").value = t;
   document.getElementById("cmd").focus();
@@ -4269,6 +4342,20 @@ function escapeHtml(str){
   });
 }
 
+function speak(text){
+  if(!("speechSynthesis" in window)){ return; }
+  window.speechSynthesis.cancel();
+  const msg = new SpeechSynthesisUtterance(text);
+  msg.rate = 1;
+  msg.pitch = 1;
+  window.speechSynthesis.speak(msg);
+}
+
+function speakLast(){
+  const text = lastReply || document.getElementById("reply").innerText || "Nothing to read back yet.";
+  speak(text);
+}
+
 async function sendCmd(){
   const box = document.getElementById("cmd");
   const reply = document.getElementById("reply");
@@ -4276,10 +4363,12 @@ async function sendCmd(){
 
   if(!text){
     reply.innerText = "Tell me what needs handled.";
+    lastReply = reply.innerText;
     return;
   }
 
   reply.innerText = "Handling it...";
+  lastReply = reply.innerText;
 
   try {
     const res = await fetch("/jarvis-brain/command", {
@@ -4290,6 +4379,7 @@ async function sendCmd(){
 
     const data = await res.json();
     let html = escapeHtml(data.reply || JSON.stringify(data));
+    lastReply = data.reply || JSON.stringify(data);
 
     if(data.links && data.links.length){
       html += "<br><br><b>Matches:</b>";
@@ -4302,12 +4392,15 @@ async function sendCmd(){
     }
 
     reply.innerHTML = html;
+    speak(lastReply);
 
     if(data.ok && (!data.links || !data.links.length)){
-      setTimeout(() => window.location.reload(), 900);
+      setTimeout(() => window.location.reload(), 1200);
     }
   } catch(err) {
     reply.innerText = "Jarvis command failed: " + err;
+    lastReply = reply.innerText;
+    speak(lastReply);
   }
 }
 
@@ -4316,6 +4409,8 @@ function startVoice(){
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if(!SR){
     reply.innerText = "Voice is not available in this browser. Use Chrome or Edge.";
+    lastReply = reply.innerText;
+    speakLast();
     return;
   }
 
@@ -4325,6 +4420,7 @@ function startVoice(){
   rec.maxAlternatives = 1;
 
   reply.innerText = "Listening...";
+  lastReply = reply.innerText;
   rec.onresult = function(event){
     const text = event.results[0][0].transcript;
     document.getElementById("cmd").value = text;
@@ -4332,6 +4428,7 @@ function startVoice(){
   };
   rec.onerror = function(event){
     reply.innerText = "Voice error: " + event.error;
+    lastReply = reply.innerText;
   };
   rec.start();
 }
@@ -4340,10 +4437,11 @@ function startVoice(){
 </html>
 """
     html = template
-    html = html.replace("__NAME__", _j4_esc(name))
-    html = html.replace("__ROLE__", _j4_esc(role))
+    html = html.replace("__NAME__", _j5_esc(name))
+    html = html.replace("__ROLE__", _j5_esc(role))
     html = html.replace("__TODAY_COUNT__", str(stats["today_jobs_count"]))
     html = html.replace("__OVERDUE_COUNT__", str(stats["overdue_jobs_count"]))
+    html = html.replace("__TODAY_MEMORY__", str(stats["todays_memory_count"]))
     html = html.replace("__MEMORY_COUNT__", str(stats["memory_count"]))
     html = html.replace("__NEXT_STEPS__", next_steps)
     html = html.replace("__JOB_CARDS__", job_cards)
@@ -4352,7 +4450,7 @@ function startVoice(){
 
 
 @app.post("/jarvis-brain/command")
-async def jarvis_brain_level4_command(request: Request):
+async def jarvis_brain_level5_command(request: Request):
     try:
         payload = await request.json()
     except Exception:
@@ -4362,29 +4460,56 @@ async def jarvis_brain_level4_command(request: Request):
     if not text:
         return JSONResponse({"ok": False, "reply": "Tell me what needs handled."})
 
-    c = _j4_classify(text)
+    c = _j5_classify(text)
+    user = _j5_user(request)
 
     if c["intent"] == "clock_in":
-        ok, reply = _j4_clock(request, "in")
+        ok, reply = _j5_clock(request, "in")
         return JSONResponse({"ok": ok, "version": JARVIS_BRAIN_VERSION, "reply": reply})
 
     if c["intent"] == "clock_out":
-        ok, reply = _j4_clock(request, "out")
+        ok, reply = _j5_clock(request, "out")
         return JSONResponse({"ok": ok, "version": JARVIS_BRAIN_VERSION, "reply": reply})
 
     if c["intent"] == "search":
-        links = _j4_search(text)
+        links = _j5_search(text)
         reply = f"I found {len(links)} match(es)." if links else "I searched what I can see, but I did not find a solid match."
-        _j4_log_command(request, text, reply, "search")
+        _j5_log_command(request, text, reply, "search")
         return JSONResponse({"ok": True, "version": JARVIS_BRAIN_VERSION, "reply": reply, "links": links})
 
-    if c["intent"] == "briefing":
-        reply = _j4_reply_for(text)
-        _j4_log_command(request, text, reply, "briefing")
-        return JSONResponse({"ok": True, "version": JARVIS_BRAIN_VERSION, "reply": reply, "stats": _j4_dashboard_stats()})
+    if c["intent"] == "start_day":
+        reply = _j5_start_day_reply(user)
+        _j5_log_command(request, text, reply, "start_day")
+        return JSONResponse({"ok": True, "version": JARVIS_BRAIN_VERSION, "reply": reply, "stats": _j5_dashboard_stats()})
 
-    reply = _j4_reply_for(text)
-    item = _j4_action_save(request, text, reply)
+    if c["intent"] == "daily_closeout":
+        report = _j5_daily_report(request)
+        return JSONResponse({"ok": True, "version": JARVIS_BRAIN_VERSION, "reply": report["summary"], "report": report})
+
+    if c["intent"] == "today_summary":
+        report = _j5_daily_report(request)
+        reply = report["summary"]
+        return JSONResponse({"ok": True, "version": JARVIS_BRAIN_VERSION, "reply": reply, "report": report})
+
+    if c["intent"] == "briefing":
+        reply = _j5_start_day_reply(user)
+        _j5_log_command(request, text, reply, "briefing")
+        return JSONResponse({"ok": True, "version": JARVIS_BRAIN_VERSION, "reply": reply, "stats": _j5_dashboard_stats()})
+
+    if c["intent"] == "billing_note":
+        reply = "I saved that as a billing note and tried to file it into the Invisible Office."
+    elif c["intent"] == "field_log":
+        reply = "I saved that as a field log memory and tried to file it into Field Logs."
+    elif c["intent"] == "material_needed":
+        reply = "I saved that as a material-needed item and tried to file it into the Invisible Office."
+    elif c["intent"] == "follow_up":
+        reply = "I saved that as a follow-up item."
+    elif c["intent"] == "problem_found":
+        reply = "I saved that as a problem found. That protects the job history."
+    else:
+        reply = "I saved that to Jarvis memory."
+
+    item = _j5_action_save(request, text, reply)
 
     if item.get("invisible_saved"):
         reply += " Invisible Office save confirmed."
@@ -4400,18 +4525,28 @@ async def jarvis_brain_level4_command(request: Request):
 
 
 @app.get("/jarvis-brain/export.json")
-def jarvis_brain_level4_export():
+def jarvis_brain_level5_export():
     return JSONResponse({
         "ok": True,
         "version": JARVIS_BRAIN_VERSION,
-        "memory": _j4_read_jsonl("jarvis_memory.jsonl", 500),
-        "command_log": _j4_read_jsonl("jarvis_command_log.jsonl", 500),
-        "stats": _j4_dashboard_stats(),
+        "memory": _j5_read_jsonl("jarvis_memory.jsonl", 500),
+        "command_log": _j5_read_jsonl("jarvis_command_log.jsonl", 500),
+        "daily_reports": _j5_read_jsonl("jarvis_daily_reports.jsonl", 100),
+        "stats": _j5_dashboard_stats(),
+    })
+
+
+@app.get("/jarvis-brain/daily-report.json")
+def jarvis_brain_level5_daily_report():
+    return JSONResponse({
+        "ok": True,
+        "version": JARVIS_BRAIN_VERSION,
+        "daily_reports": _j5_read_jsonl("jarvis_daily_reports.jsonl", 100),
     })
 
 
 @app.get("/brain", response_class=HTMLResponse)
-def brain_alias_level4(request: Request):
+def brain_alias_level5(request: Request):
     return RedirectResponse("/jarvis-brain", status_code=303)
 
 # ============================================================
