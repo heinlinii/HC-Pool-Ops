@@ -7481,3 +7481,491 @@ def jarvis_brain_level11_launch_json(request: Request):
 # END JARVIS BRAIN LEVEL 11 LAUNCH PAD
 # ============================================================
 
+
+# ============================================================
+# JARVIS BRAIN LEVEL 12 HELP + SYSTEM CHECK
+# Adds /jarvis-brain/help and /jarvis-brain/system.
+# Safe add-on only.
+# ============================================================
+
+import os as _j12_os
+import json as _j12_json
+import html as _j12_html
+from datetime import datetime as _j12_datetime
+
+try:
+    from fastapi import Request
+except Exception:
+    pass
+
+try:
+    from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
+except Exception:
+    pass
+
+JARVIS_HELP_SYSTEM_VERSION = "level-12-help-system-check-2026-07-04"
+
+
+def _j12_now():
+    return _j12_datetime.now().isoformat(timespec="seconds")
+
+
+def _j12_storage_dir():
+    path = _j12_os.path.join(_j12_os.getcwd(), "jarvis_storage")
+    _j12_os.makedirs(path, exist_ok=True)
+    return path
+
+
+def _j12_file(name):
+    return _j12_os.path.join(_j12_storage_dir(), name)
+
+
+def _j12_esc(value):
+    return _j12_html.escape(str(value or ""))
+
+
+def _j12_read_jsonl_all(name):
+    path = _j12_file(name)
+    if not _j12_os.path.exists(path):
+        return []
+
+    items = []
+    with open(path, "r", encoding="utf-8") as f:
+        for line in f:
+            try:
+                items.append(_j12_json.loads(line.strip()))
+            except Exception:
+                pass
+    return items
+
+
+def _j12_user(request):
+    try:
+        f = globals().get("current_user")
+        if callable(f):
+            u = f(request)
+            if u:
+                return u
+    except Exception:
+        pass
+
+    try:
+        if hasattr(request, "session"):
+            return request.session.get("user") or {}
+    except Exception:
+        pass
+
+    return {}
+
+
+def _j12_name(user):
+    return str((user or {}).get("name") or (user or {}).get("username") or (user or {}).get("email") or "Mike").strip()
+
+
+def _j12_role(user):
+    role = str((user or {}).get("role") or "admin").lower().strip()
+    if role == "employee":
+        role = "crew"
+    return role
+
+
+def _j12_rows(sql, params=()):
+    try:
+        f = globals().get("rows")
+        if callable(f):
+            return f(sql, params) or []
+    except Exception:
+        pass
+    return []
+
+
+def _j12_columns(table):
+    try:
+        f = globals().get("table_columns")
+        if callable(f):
+            return list(f(table) or [])
+    except Exception:
+        pass
+    return []
+
+
+def _j12_table_count(table):
+    cols = _j12_columns(table)
+    if not cols:
+        return None
+
+    try:
+        r = _j12_rows(f"SELECT COUNT(*) AS c FROM {table}", ())
+        if r:
+            first = r[0]
+            return first.get("c") if hasattr(first, "get") else list(first)[0]
+    except Exception:
+        pass
+
+    return None
+
+
+def _j12_route_methods(path):
+    methods = []
+    try:
+        for route in app.routes:
+            if getattr(route, "path", "") == path:
+                for m in sorted(getattr(route, "methods", []) or []):
+                    if m not in methods:
+                        methods.append(m)
+    except Exception:
+        pass
+    return methods
+
+
+def _j12_route_exists(path):
+    return bool(_j12_route_methods(path))
+
+
+def _j12_storage_counts():
+    files = [
+        "jarvis_memory.jsonl",
+        "jarvis_command_log.jsonl",
+        "jarvis_daily_reports.jsonl",
+        "jarvis_client_requests.jsonl",
+    ]
+
+    out = {}
+    for name in files:
+        out[name] = len(_j12_read_jsonl_all(name))
+
+    ctx_path = _j12_file("jarvis_active_context.json")
+    out["jarvis_active_context.json"] = 1 if _j12_os.path.exists(ctx_path) else 0
+
+    return out
+
+
+def _j12_expected_routes():
+    return [
+        {"path": "/jarvis", "label": "Old Jarvis redirect / smart front door"},
+        {"path": "/jarvis-brain/start", "label": "Role front door"},
+        {"path": "/jarvis-brain/launch", "label": "Launch Pad"},
+        {"path": "/jarvis-brain", "label": "Main Mike Brain"},
+        {"path": "/jarvis-brain/desk", "label": "Command Desk"},
+        {"path": "/jarvis-brain/job", "label": "Active Job Center"},
+        {"path": "/jarvis-brain/crew", "label": "Crew Field Flow"},
+        {"path": "/jarvis-brain/client", "label": "Client Jarvis"},
+        {"path": "/jarvis-brain/help", "label": "Help / command sheet"},
+        {"path": "/jarvis-brain/system", "label": "System check"},
+        {"path": "/jarvis-brain/install-check", "label": "Install check"},
+        {"path": "/jarvis-brain/export.json", "label": "Jarvis export"},
+        {"path": "/jarvis-brain/job.json", "label": "Active job JSON"},
+        {"path": "/jarvis-brain/crew.json", "label": "Crew JSON"},
+        {"path": "/jarvis-brain/client.json", "label": "Client JSON"},
+        {"path": "/jarvis-brain/launch.json", "label": "Launch JSON"},
+    ]
+
+
+def _j12_command_groups(role="admin"):
+    admin = [
+        "Jarvis, start my day",
+        "Jarvis, what am I forgetting?",
+        "Jarvis, set active job to Alexander",
+        "Jarvis, find Alexander",
+        "Jarvis, add this to billing: customer approved extra pump time.",
+        "Jarvis, field log: cleaned heater orifice and tested operation.",
+        "Jarvis, material needed: 2 inch unions and PVC cement.",
+        "Jarvis, problem found: gas valve is buzzing during ignition.",
+        "Jarvis, remind me to follow up with Jamie about crew hours.",
+        "Jarvis, what did I do today?",
+        "Jarvis, end my day",
+    ]
+
+    crew = [
+        "Jarvis, set active job to Alexander",
+        "Jarvis, clock me in",
+        "Jarvis, field log: arrived on site, checked conditions, started layout.",
+        "Jarvis, material needed: drain lid and masonry bit.",
+        "Jarvis, problem found: drain lid is loose and needs secured.",
+        "Jarvis, clock me out",
+    ]
+
+    client = [
+        "Use Client Jarvis to send a Project Question.",
+        "Use Client Jarvis to send a Service Request.",
+        "Use Client Jarvis to ask a Schedule Question.",
+        "Use Client Jarvis to ask a Photo / Progress Question.",
+    ]
+
+    if role == "client":
+        return {"Client": client}
+
+    if role == "crew":
+        return {"Crew": crew, "Useful Search": ["Jarvis, find Alexander", "Jarvis, what next?"]}
+
+    return {
+        "Mike / Admin": admin,
+        "Crew": crew,
+        "Client": client,
+    }
+
+
+def _j12_system_payload(request=None):
+    user = _j12_user(request) if request is not None else {}
+    role = _j12_role(user)
+
+    routes = []
+    for item in _j12_expected_routes():
+        path = item["path"]
+        routes.append({
+            "path": path,
+            "label": item["label"],
+            "exists": _j12_route_exists(path),
+            "methods": _j12_route_methods(path),
+        })
+
+    tables = {
+        "poolops2_jobs": _j12_table_count("poolops2_jobs"),
+        "poolops2_clients": _j12_table_count("poolops2_clients"),
+        "poolops2_properties": _j12_table_count("poolops2_properties"),
+        "poolops2_employees": _j12_table_count("poolops2_employees"),
+        "poolops2_photo_logs": _j12_table_count("poolops2_photo_logs"),
+        "invisible_office_items": _j12_table_count("invisible_office_items"),
+        "field_logs": _j12_table_count("field_logs"),
+    }
+
+    return {
+        "ok": True,
+        "version": JARVIS_HELP_SYSTEM_VERSION,
+        "checked_at": _j12_now(),
+        "user": {
+            "name": _j12_name(user),
+            "role": role,
+        },
+        "routes": routes,
+        "tables": tables,
+        "storage_counts": _j12_storage_counts(),
+        "storage_folder": _j12_storage_dir(),
+    }
+
+
+@app.get("/jarvis-brain/help", response_class=HTMLResponse)
+def jarvis_brain_level12_help(request: Request):
+    user = _j12_user(request)
+    name = _j12_name(user).split()[0]
+    role = _j12_role(user)
+    groups = _j12_command_groups(role)
+
+    groups_html = ""
+    for group_name, commands in groups.items():
+        cmd_html = ""
+        for cmd in commands:
+            safe_cmd = _j12_esc(cmd)
+            cmd_html += f"""
+            <div class="cmd">
+              <code>{safe_cmd}</code>
+              <button onclick="copyText('{safe_cmd}')">Copy</button>
+            </div>
+            """
+
+        groups_html += f"""
+        <div class="card">
+          <h2>{_j12_esc(group_name)}</h2>
+          {cmd_html}
+        </div>
+        """
+
+    html = f"""
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Jarvis Help</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {{ margin:0; font-family:Arial,sans-serif; background:#070a0f; color:#f5efe3; }}
+    .wrap {{ max-width:1120px; margin:0 auto; padding:26px; }}
+    .hero {{ background:linear-gradient(135deg,#111722,#05070b); border:1px solid #5d421d; border-radius:22px; padding:24px; box-shadow:0 20px 60px rgba(0,0,0,.45); }}
+    h1 {{ margin:0 0 8px; font-size:34px; letter-spacing:.08em; }}
+    .sub {{ color:#d9b56d; margin-bottom:20px; }}
+    .grid {{ display:grid; grid-template-columns:repeat(auto-fit,minmax(290px,1fr)); gap:16px; }}
+    .card {{ background:#101722; border:1px solid #2d2113; border-radius:18px; padding:18px; margin-top:16px; }}
+    .cmd {{ display:flex; align-items:center; justify-content:space-between; gap:10px; background:#05070b; border:1px solid #2d2113; border-radius:12px; padding:12px; margin:10px 0; }}
+    code {{ color:#f5efe3; white-space:normal; }}
+    button {{ padding:9px 12px; border:0; border-radius:10px; background:#b8873a; color:#111; font-weight:900; cursor:pointer; }}
+    a {{ color:#d9a64a; }}
+    .links a {{ display:inline-block; margin:6px 10px 6px 0; }}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero">
+    <h1>J.A.R.V.I.S. HELP</h1>
+    <div class="sub">Good to go, {_j12_esc(name)}. These are the commands worth remembering. Role: {_j12_esc(role)}.</div>
+
+    <div class="card links">
+      <h2>Main Pages</h2>
+      <a href="/jarvis-brain/launch">Launch Pad</a>
+      <a href="/jarvis-brain/start">Role Start</a>
+      <a href="/jarvis-brain">Mike Brain</a>
+      <a href="/jarvis-brain/desk">Command Desk</a>
+      <a href="/jarvis-brain/job">Active Job</a>
+      <a href="/jarvis-brain/crew">Crew Flow</a>
+      <a href="/jarvis-brain/client">Client Jarvis</a>
+      <a href="/jarvis-brain/system">System Check</a>
+    </div>
+
+    <div class="grid">
+      {groups_html}
+    </div>
+  </div>
+</div>
+
+<script>
+function copyText(text){{
+  navigator.clipboard.writeText(text).then(function(){{
+    alert("Copied: " + text);
+  }}).catch(function(){{
+    alert(text);
+  }});
+}}
+</script>
+</body>
+</html>
+"""
+    return HTMLResponse(html)
+
+
+@app.get("/jarvis-brain/system", response_class=HTMLResponse)
+def jarvis_brain_level12_system(request: Request):
+    data = _j12_system_payload(request)
+    user = data["user"]
+
+    route_html = ""
+    for r in data["routes"]:
+        status = "OK" if r["exists"] else "MISSING"
+        cls = "ok" if r["exists"] else "bad"
+        methods = ", ".join(r["methods"]) if r["methods"] else "-"
+        route_html += f"""
+        <tr>
+          <td><span class="{cls}">{status}</span></td>
+          <td><a href="{_j12_esc(r['path'])}">{_j12_esc(r['path'])}</a></td>
+          <td>{_j12_esc(r['label'])}</td>
+          <td>{_j12_esc(methods)}</td>
+        </tr>
+        """
+
+    table_html = ""
+    for name, count in data["tables"].items():
+        value = "not found" if count is None else str(count)
+        cls = "bad" if count is None else "ok"
+        table_html += f"""
+        <tr>
+          <td>{_j12_esc(name)}</td>
+          <td><span class="{cls}">{_j12_esc(value)}</span></td>
+        </tr>
+        """
+
+    storage_html = ""
+    for name, count in data["storage_counts"].items():
+        storage_html += f"""
+        <tr>
+          <td>{_j12_esc(name)}</td>
+          <td>{_j12_esc(count)}</td>
+        </tr>
+        """
+
+    html = f"""
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Jarvis System Check</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {{ margin:0; font-family:Arial,sans-serif; background:#070a0f; color:#f5efe3; }}
+    .wrap {{ max-width:1220px; margin:0 auto; padding:26px; }}
+    .hero {{ background:linear-gradient(135deg,#111722,#05070b); border:1px solid #5d421d; border-radius:22px; padding:24px; box-shadow:0 20px 60px rgba(0,0,0,.45); }}
+    h1 {{ margin:0 0 8px; font-size:34px; letter-spacing:.08em; }}
+    .sub {{ color:#d9b56d; margin-bottom:20px; }}
+    .grid {{ display:grid; grid-template-columns:1.2fr .8fr; gap:16px; }}
+    @media(max-width:900px) {{ .grid {{ grid-template-columns:1fr; }} }}
+    .card {{ background:#101722; border:1px solid #2d2113; border-radius:18px; padding:18px; margin-top:16px; overflow:auto; }}
+    table {{ width:100%; border-collapse:collapse; }}
+    td, th {{ border-bottom:1px solid #2d2113; padding:10px; text-align:left; vertical-align:top; }}
+    .ok {{ color:#a8e063; font-weight:900; }}
+    .bad {{ color:#ff7c6b; font-weight:900; }}
+    a {{ color:#d9a64a; }}
+    code {{ color:#d9b56d; }}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero">
+    <h1>J.A.R.V.I.S. SYSTEM CHECK</h1>
+    <div class="sub">Checked at {_j12_esc(data['checked_at'])}. User: {_j12_esc(user['name'])}. Role: {_j12_esc(user['role'])}.</div>
+
+    <div class="card">
+      <h2>Smoke Test Links</h2>
+      <p>
+        <a href="/jarvis-brain/launch">Launch</a> |
+        <a href="/jarvis-brain/start">Start</a> |
+        <a href="/jarvis-brain">Brain</a> |
+        <a href="/jarvis-brain/desk">Desk</a> |
+        <a href="/jarvis-brain/job">Job</a> |
+        <a href="/jarvis-brain/crew">Crew</a> |
+        <a href="/jarvis-brain/client">Client</a> |
+        <a href="/jarvis-brain/help">Help</a> |
+        <a href="/jarvis-brain/system.json">System JSON</a>
+      </p>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <h2>Routes</h2>
+        <table>
+          <tr><th>Status</th><th>Path</th><th>Purpose</th><th>Methods</th></tr>
+          {route_html}
+        </table>
+      </div>
+
+      <div>
+        <div class="card">
+          <h2>Tables</h2>
+          <table>
+            <tr><th>Table</th><th>Count</th></tr>
+            {table_html}
+          </table>
+        </div>
+
+        <div class="card">
+          <h2>Jarvis Storage</h2>
+          <p><code>{_j12_esc(data['storage_folder'])}</code></p>
+          <table>
+            <tr><th>File</th><th>Items</th></tr>
+            {storage_html}
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
+"""
+    return HTMLResponse(html)
+
+
+@app.get("/jarvis-brain/system.json")
+def jarvis_brain_level12_system_json(request: Request):
+    return JSONResponse(_j12_system_payload(request))
+
+
+@app.get("/jarvis-help", response_class=HTMLResponse)
+def jarvis_brain_level12_help_alias(request: Request):
+    return RedirectResponse("/jarvis-brain/help", status_code=303)
+
+
+@app.get("/jarvis-status", response_class=HTMLResponse)
+def jarvis_brain_level12_status_alias(request: Request):
+    return RedirectResponse("/jarvis-brain/system", status_code=303)
+
+# ============================================================
+# END JARVIS BRAIN LEVEL 12 HELP + SYSTEM CHECK
+# ============================================================
+
