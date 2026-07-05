@@ -134,11 +134,11 @@ main {
 
   @media (max-width: 600px) {
   body::after {
-    opacity: 0.50 !important;
-    background-image: url("/static/heinlin-crest.png?v=mobilefill3") !important;
+    opacity: 0.20 !important;
+    background-image: url("/static/heinlin-crest.png") !important;
     background-size: 60vw 80vh !important;
     background-position: center center !important;
     background-repeat: no-repeat !important;
-    filter: brightness(1.0) contrast(0) !important;
+    filter: brightness(1.5) contrast(0) !important;
   }
 } 
