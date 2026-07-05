@@ -132,12 +132,13 @@ main {
    Put this at the VERY BOTTOM of jarvis-global-crest.css
    ============================================================ */
 
-@media (max-width: 700px) {
+  @media (max-width: 700px) {
   body::after {
-    opacity: 0.12 !important;
-    background-image: url("/static/heinlin-crest.png?v=mobilefill2") !important;
-    background-size: auto 100vh !important;
+    opacity: 0.16 !important;
+    background-image: url("/static/heinlin-crest.png?v=mobilefill3") !important;
+    background-size: contain !important;
     background-position: center center !important;
     background-repeat: no-repeat !important;
+    filter: brightness(1.25) contrast(1.05) !important;
   }
-}
+} 
