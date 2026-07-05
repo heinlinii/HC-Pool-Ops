@@ -10652,6 +10652,11 @@ def _crest_should_inject(path):
     if not path:
         return False
 
+    # Login already has its own full background image.
+    # Do not stack the global crest watermark on top of it.
+    if path in ("/login", "/login/", "/logout", "/logout/"):
+        return False
+
     if path.startswith(("/static", "/assets", "/api", "/docs", "/openapi")):
         return False
 
