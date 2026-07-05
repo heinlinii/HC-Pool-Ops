@@ -127,3 +127,17 @@ main {
   border-color: rgba(217, 181, 109, 0.65) !important;
   color: #ffffff !important;
 }
+/* ============================================================
+   MOBILE CREST FULL SCREEN OVERRIDE
+   Put this at the VERY BOTTOM of jarvis-global-crest.css
+   ============================================================ */
+
+@media (max-width: 700px) {
+  body::after {
+    opacity: 0.12 !important;
+    background-image: url("/static/heinlin-crest.png?v=mobilefill2") !important;
+    background-size: auto 100vh !important;
+    background-position: center center !important;
+    background-repeat: no-repeat !important;
+  }
+}
