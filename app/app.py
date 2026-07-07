@@ -10730,3 +10730,146 @@ def heinlin_global_crest_check():
 # END HEINLIN GLOBAL CREST BACKGROUND
 # ============================================================
 
+
+# ============================================================
+# JARVIS QUESTION INTERCEPT FIX
+# Makes questions answer inline instead of saving as job memory.
+# ============================================================
+
+import json as _jq_json
+import re as _jq_re
+
+try:
+    from fastapi.responses import JSONResponse as _JQJSONResponse
+except Exception:
+    pass
+
+
+def _jq_card(kind, title, detail="", url="#"):
+    return {
+        "kind": kind,
+        "title": title,
+        "detail": detail,
+        "url": url,
+    }
+
+
+def _jq_is_question(text):
+    low = str(text or "").lower().strip()
+
+    if "?" in low:
+        return True
+
+    question_starts = (
+        "jarvis what",
+        "jarvis why",
+        "jarvis how",
+        "jarvis when",
+        "jarvis where",
+        "jarvis who",
+        "what ",
+        "why ",
+        "how ",
+        "when ",
+        "where ",
+        "who ",
+        "can you",
+        "can i",
+        "do i",
+        "does",
+        "is there",
+        "are there",
+        "tell me",
+        "explain",
+    )
+
+    return low.startswith(question_starts)
+
+
+def _jq_answer(text):
+    low = str(text or "").lower().strip()
+
+    if "what" in low and ("cannot do" in low or "can't do" in low or "cant do" in low):
+        return {
+            "reply": (
+                "Right now, I can answer inside Jarvis, save notes, save billing notes, save material notes, "
+                "save field logs, track active job context, show job/client/property/search matches, help switch views, "
+                "and summarize what I can see. What I still cannot fully do yet is directly edit every part of the app "
+                "like a human clicking buttons, create invoices in QuickBooks, send texts/emails automatically, approve photos, "
+                "control external systems, or make real admin changes unless that action has been specifically wired into the app."
+            ),
+            "links": [
+                _jq_card("Can Do", "Save job memory", "Billing notes, materials, field logs, problems, follow-ups, active job context."),
+                _jq_card("Can Do", "Answer inline", "Questions should now answer here instead of being filed as a note."),
+                _jq_card("Not Fully Wired Yet", "True app control", "Jarvis still needs specific action routes before it can edit every app record safely."),
+                _jq_card("Not Fully Wired Yet", "Outside systems", "QuickBooks, texts, email, Pentair, and other external systems need integrations before Jarvis can act there."),
+            ],
+        }
+
+    if "active job" in low:
+        return {
+            "reply": "Your active job is the job shown on the current Jarvis page. Use ?Jarvis, set active job to Alexander? to change it.",
+            "links": [
+                _jq_card("Active Job", "Change active job", "Say: Jarvis, set active job to [client name or address]."),
+                _jq_card("Open", "Active Job Center", "Open the active job page.", "/jarvis-brain/job"),
+            ],
+        }
+
+    if "switch login" in low or "switch logins" in low or "return to admin" in low:
+        return {
+            "reply": "Use the Login Bridge to switch between Admin, Crew, and Client. Use Return to Admin to get back to Mike/Admin.",
+            "links": [
+                _jq_card("Switch Login", "Login Bridge", "Switch between Admin, Crew, and Client.", "/jarvis-brain/login-bridge"),
+                _jq_card("Return", "Return to Admin", "Go back to Mike/Admin.", "/jarvis-brain/return-admin"),
+            ],
+        }
+
+    if "what am i forgetting" in low or "what matters" in low:
+        return {
+            "reply": "Check open billing notes, materials, problems, follow-ups, overdue jobs, and client requests. Those are the things most likely to bite you.",
+            "links": [
+                _jq_card("Open", "Today Ops", "Daily command board.", "/jarvis-brain/today"),
+                _jq_card("Open", "Command Desk", "Open Jarvis queue.", "/jarvis-brain/desk"),
+            ],
+        }
+
+    return {
+        "reply": (
+            "I heard that as a question, not a job note. I can answer it here now. "
+            "If you want me to save something, start with billing note, field log, material needed, problem found, or remind me."
+        ),
+        "links": [
+            _jq_card("Tip", "Ask questions normally", "Example: Jarvis, what am I forgetting?"),
+            _jq_card("Tip", "Save notes intentionally", "Example: Jarvis, field log: cleaned heater and tested operation."),
+        ],
+    }
+
+
+@app.middleware("http")
+async def jarvis_question_intercept_middleware(request, call_next):
+    if request.url.path != "/jarvis-brain/command" or request.method.upper() != "POST":
+        return await call_next(request)
+
+    try:
+        body = await request.body()
+        payload = _jq_json.loads(body.decode("utf-8") or "{}")
+    except Exception:
+        payload = {}
+
+    text = str(payload.get("text") or payload.get("message") or "").strip()
+
+    if text and _jq_is_question(text):
+        answer = _jq_answer(text)
+        return _JQJSONResponse({
+            "ok": True,
+            "inline_answer_mode": True,
+            "reply": answer["reply"],
+            "links": answer.get("links", []),
+        })
+
+    return await call_next(request)
+
+# ============================================================
+# END JARVIS QUESTION INTERCEPT FIX
+# ============================================================
+
