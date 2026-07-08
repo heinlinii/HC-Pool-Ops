@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request, Form, UploadFile, File
+from fastapi import FastAPI, Request, Form, UploadFile, File, HTTPException
 from fastapi.responses import RedirectResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -26,6 +26,7 @@ import csv
 import io
 import re
 import html
+import logging
 try:
     import psycopg
     from psycopg.rows import dict_row
@@ -1181,6 +1182,34 @@ def ai_systems(request: Request):
         ctx(request)
     )
 
+FIELDY_WEBHOOK_TOKEN = os.getenv("FIELDY_WEBHOOK_TOKEN", "")
+
+@app.get("/integrations/fieldy/health")
+def fieldy_health():
+    return {
+        "ok": True,
+        "integration": "fieldy",
+        "message": "Fieldy webhook receiver is alive"
+    }
+
+
+@app.post("/integrations/fieldy/webhook")
+async def fieldy_webhook(request: Request, token: str = ""):
+    if not FIELDY_WEBHOOK_TOKEN:
+        raise HTTPException(status_code=500, detail="FIELDY_WEBHOOK_TOKEN is not set")
+
+    if token != FIELDY_WEBHOOK_TOKEN:
+        raise HTTPException(status_code=401, detail="Unauthorized Fieldy webhook")
+
+    payload = await request.json()
+
+    logging.warning("FIELDY WEBHOOK RECEIVED:")
+    logging.warning(json.dumps(payload, indent=2)[:10000])
+
+    return {
+        "ok": True,
+        "received": True
+    }
 
 @app.post("/assistant-live/send")
 def assistant_live_send(
