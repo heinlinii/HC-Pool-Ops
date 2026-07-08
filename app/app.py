@@ -86,7 +86,35 @@ DEFAULT_THEME = {
     "map_image": "/static/uploads/maria.jpg",
 }
 
+FIELDY_WEBHOOK_TOKEN = os.getenv("FIELDY_WEBHOOK_TOKEN", "")
 
+
+@app.get("/integrations/fieldy/health")
+def fieldy_health():
+    return {
+        "ok": True,
+        "integration": "fieldy",
+        "message": "Fieldy webhook receiver is alive"
+    }
+
+
+@app.post("/integrations/fieldy/webhook")
+async def fieldy_webhook(request: Request, token: str = ""):
+    if not FIELDY_WEBHOOK_TOKEN:
+        raise HTTPException(status_code=500, detail="FIELDY_WEBHOOK_TOKEN is not set")
+
+    if token != FIELDY_WEBHOOK_TOKEN:
+        raise HTTPException(status_code=401, detail="Unauthorized Fieldy webhook")
+
+    payload = await request.json()
+
+    logging.warning("FIELDY WEBHOOK RECEIVED:")
+    logging.warning(json.dumps(payload, indent=2)[:10000])
+
+    return {
+        "ok": True,
+        "received": True
+    }
 
 DATABASE_URL = os.environ.get("DATABASE_URL", "").strip()
 USE_POSTGRES = bool(DATABASE_URL and DATABASE_URL.startswith(("postgres://", "postgresql://")))
