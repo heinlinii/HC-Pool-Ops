@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+
+{% block title %}Fieldy Inbox{% endblock %}
+
+{% block content %}
+<div class="page-wrap">
+  <div class="page-header">
+    <div>
+      <h1>Fieldy Inbox</h1>
+      <p class="muted">Your latest Fieldy conversations, notes, summaries, and quotes.</p>
+    </div>
+
+    <div class="actions">
+      <a class="btn" href="/jarvis">Back to Jarvis</a>
+      <a class="btn" href="/fieldy?days=1">1 Day</a>
+      <a class="btn" href="/fieldy?days=3">3 Days</a>
+      <a class="btn" href="/fieldy?days=7">7 Days</a>
+    </div>
+  </div>
+
+  {% if notes %}
+    <div class="fieldy-grid">
+      {% for note in notes %}
+        <div class="fieldy-card">
+          <div class="fieldy-meta">
+            <span>{{ note.get("startTime", "") }}</span>
+            <span>{{ note.get("type", "") }}</span>
+          </div>
+
+          <h2>{{ note.get("title") or "Untitled Fieldy Note" }}</h2>
+
+          {% if note.get("summary") %}
+            <p class="summary">{{ note.get("summary") }}</p>
+          {% else %}
+            <p class="muted">No summary available yet.</p>
+          {% endif %}
+
+          {% if note.get("keywords") %}
+            <div class="chips">
+              {% for keyword in note.get("keywords", []) %}
+                <span>{{ keyword }}</span>
+              {% endfor %}
+            </div>
+          {% endif %}
+
+          {% if note.get("quotes") %}
+            <div class="quotes">
+              <h3>Captured Quotes</h3>
+              {% for q in note.get("quotes", []) %}
+                <blockquote>
+                  {{ q.get("text", "") }}
+                </blockquote>
+              {% endfor %}
+            </div>
+          {% endif %}
+
+          <div class="fieldy-actions">
+            <button type="button" disabled>Send to Job</button>
+            <button type="button" disabled>Create Task</button>
+            <button type="button" disabled>Add to Daily Log</button>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-card">
+      <h2>No Fieldy notes found</h2>
+      <p>Try changing the range to 7 days or record a new Fieldy note.</p>
+    </div>
+  {% endif %}
+</div>
+
+<style>
+  .page-wrap {
+    padding: 24px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .page-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 18px;
+    align-items: flex-start;
+    margin-bottom: 22px;
+  }
+
+  .page-header h1 {
+    margin: 0;
+    font-size: 34px;
+  }
+
+  .muted {
+    color: #9ca3af;
+  }
+
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .btn,
+  .fieldy-actions button {
+    border: 1px solid rgba(255,255,255,.18);
+    background: rgba(255,255,255,.08);
+    color: inherit;
+    text-decoration: none;
+    padding: 10px 14px;
+    border-radius: 12px;
+    cursor: pointer;
+  }
+
+  .fieldy-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 18px;
+  }
+
+  .fieldy-card,
+  .empty-card {
+    border: 1px solid rgba(255,255,255,.14);
+    background: rgba(10, 10, 10, .72);
+    border-radius: 18px;
+    padding: 18px;
+    box-shadow: 0 10px 30px rgba(0,0,0,.25);
+  }
+
+  .fieldy-meta {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    color: #9ca3af;
+    font-size: 13px;
+    margin-bottom: 8px;
+  }
+
+  .fieldy-card h2 {
+    margin: 0 0 12px;
+    font-size: 22px;
+  }
+
+  .summary {
+    line-height: 1.55;
+  }
+
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 14px;
+  }
+
+  .chips span {
+    font-size: 12px;
+    padding: 6px 9px;
+    border-radius: 999px;
+    background: rgba(255,255,255,.10);
+    color: #e5e7eb;
+  }
+
+  .quotes {
+    margin-top: 16px;
+  }
+
+  .quotes h3 {
+    font-size: 15px;
+    margin-bottom: 8px;
+  }
+
+  blockquote {
+    margin: 8px 0;
+    padding-left: 12px;
+    border-left: 3px solid rgba(255,255,255,.25);
+    color: #d1d5db;
+  }
+
+  .fieldy-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 16px;
+  }
+
+  .fieldy-actions button {
+    opacity: .55;
+    cursor: not-allowed;
+  }
+
+  @media (max-width: 700px) {
+    .page-header {
+      flex-direction: column;
+    }
+
+    .page-wrap {
+      padding: 14px;
+    }
+  }
+</style>
+{% endblock %}

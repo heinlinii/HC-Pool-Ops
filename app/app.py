@@ -144,6 +144,55 @@ def fieldy_recent(token: str = ""):
         "data": data,
     }
 
+    @app.get("/fieldy", response_class=HTMLResponse)
+def fieldy_inbox(request: Request, days: int = 3):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+
+    if not FIELDY_API_KEY:
+        raise HTTPException(status_code=500, detail="FIELDY_API_KEY is not set")
+
+    end_time = datetime.now(timezone.utc)
+    start_time = end_time - timedelta(days=days)
+
+    params = urllib.parse.urlencode({
+        "startTime": start_time.isoformat().replace("+00:00", "Z"),
+        "endTime": end_time.isoformat().replace("+00:00", "Z"),
+        "pageSize": 25,
+    })
+
+    url = f"https://api.fieldy.ai/api/public/v2/conversations?{params}"
+
+    req = urllib.request.Request(
+        url,
+        headers={
+            "Authorization": f"Bearer {FIELDY_API_KEY}",
+            "Accept": "application/json",
+        },
+        method="GET",
+    )
+
+    try:
+        with urllib.request.urlopen(req, timeout=20) as response:
+            raw = response.read().decode("utf-8")
+            data = json.loads(raw)
+    except Exception as e:
+        logging.exception("Fieldy inbox request failed")
+        raise HTTPException(status_code=500, detail=f"Fieldy API error: {str(e)}")
+
+    notes = data.get("items", [])
+
+    return templates.TemplateResponse(
+        "fieldy_inbox.html",
+        ctx(
+            request,
+            user=u,
+            notes=notes,
+            days=days,
+        )
+    )
+
 FIELDY_WEBHOOK_TOKEN = os.getenv("FIELDY_WEBHOOK_TOKEN", "")
 
 
