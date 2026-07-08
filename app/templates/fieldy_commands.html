@@ -1,0 +1,238 @@
+{% extends "base.html" %}
+
+{% block title %}Jarvis Fieldy Commands{% endblock %}
+
+{% block content %}
+<div class="page-wrap">
+  <div class="page-header">
+    <div>
+      <div class="kicker">FIELDY → JARVIS</div>
+      <h1>Jarvis Commands</h1>
+      <p class="muted">
+        These are Fieldy notes where you said “Jarvis.” Review them before saving to jobs, logs, tasks, or follow-ups.
+      </p>
+    </div>
+
+    <div class="actions">
+      <a class="btn" href="/jarvis">Back to Jarvis</a>
+      <a class="btn" href="/fieldy">Fieldy Inbox</a>
+      <a class="btn" href="/fieldy/commands?days=1">1 Day</a>
+      <a class="btn" href="/fieldy/commands?days=3">3 Days</a>
+      <a class="btn" href="/fieldy/commands?days=7">7 Days</a>
+    </div>
+  </div>
+
+  {% if commands %}
+    <div class="command-grid">
+      {% for c in commands %}
+        <div class="command-card">
+          <div class="command-top">
+            <span class="badge">{{ c.type }}</span>
+            <span class="muted small">{{ c.start_time }}</span>
+          </div>
+
+          <h2>{{ c.title }}</h2>
+
+          {% if c.customer_guess %}
+            <div class="field-row">
+              <strong>Customer guess:</strong>
+              <span>{{ c.customer_guess }}</span>
+            </div>
+          {% endif %}
+
+          <div class="field-row">
+            <strong>Captured work:</strong>
+            <span>{{ c.work_guess }}</span>
+          </div>
+
+          <div class="raw-box">
+            <strong>Original:</strong>
+            <p>{{ c.raw }}</p>
+          </div>
+
+          <div class="command-actions">
+            <button type="button" disabled>Save to Job</button>
+            <button type="button" disabled>Add to Daily Log</button>
+            <button type="button" disabled>Create Task</button>
+            <button type="button" disabled>Ignore</button>
+          </div>
+
+          <p class="muted tiny">
+            Buttons are staged for the next build. Right now this page proves Jarvis can find your spoken commands.
+          </p>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-card">
+      <h2>No Jarvis commands found</h2>
+      <p>
+        Try recording a Fieldy note that starts with:
+      </p>
+      <pre>Jarvis, I’m at Scheller’s house doing the pool opening.</pre>
+      <p class="muted">
+        Then refresh this page after Fieldy syncs.
+      </p>
+    </div>
+  {% endif %}
+</div>
+
+<style>
+  .page-wrap {
+    padding: 24px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .page-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 18px;
+    align-items: flex-start;
+    margin-bottom: 22px;
+  }
+
+  .kicker {
+    font-size: 12px;
+    letter-spacing: .16em;
+    color: #d6b36a;
+    font-weight: 900;
+    margin-bottom: 8px;
+  }
+
+  .page-header h1 {
+    margin: 0;
+    font-size: 36px;
+  }
+
+  .muted {
+    color: #9ca3af;
+  }
+
+  .small {
+    font-size: 13px;
+  }
+
+  .tiny {
+    font-size: 12px;
+    margin-top: 12px;
+  }
+
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .btn,
+  .command-actions button {
+    border: 1px solid rgba(255,255,255,.18);
+    background: rgba(255,255,255,.08);
+    color: inherit;
+    text-decoration: none;
+    padding: 10px 14px;
+    border-radius: 12px;
+    cursor: pointer;
+  }
+
+  .command-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    gap: 18px;
+  }
+
+  .command-card,
+  .empty-card {
+    border: 1px solid rgba(214,179,106,.28);
+    background:
+      radial-gradient(circle at top left, rgba(214,179,106,.12), transparent 40%),
+      rgba(10, 10, 10, .78);
+    border-radius: 18px;
+    padding: 18px;
+    box-shadow: 0 10px 30px rgba(0,0,0,.25);
+  }
+
+  .command-top {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: 6px 10px;
+    background: rgba(214,179,106,.16);
+    color: #f5d68a;
+    font-size: 12px;
+    font-weight: 900;
+    letter-spacing: .06em;
+  }
+
+  .command-card h2 {
+    margin: 0 0 14px;
+    font-size: 22px;
+  }
+
+  .field-row {
+    display: grid;
+    grid-template-columns: 130px 1fr;
+    gap: 10px;
+    margin: 10px 0;
+    line-height: 1.45;
+  }
+
+  .raw-box {
+    margin-top: 14px;
+    padding: 12px;
+    border-radius: 14px;
+    background: rgba(255,255,255,.06);
+    border: 1px solid rgba(255,255,255,.10);
+  }
+
+  .raw-box p {
+    margin: 8px 0 0;
+    color: #d1d5db;
+    line-height: 1.5;
+  }
+
+  .command-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 16px;
+  }
+
+  .command-actions button {
+    opacity: .55;
+    cursor: not-allowed;
+  }
+
+  pre {
+    white-space: pre-wrap;
+    background: rgba(255,255,255,.08);
+    border: 1px solid rgba(255,255,255,.12);
+    border-radius: 14px;
+    padding: 12px;
+    color: #f5d68a;
+  }
+
+  @media (max-width: 700px) {
+    .page-header {
+      flex-direction: column;
+    }
+
+    .page-wrap {
+      padding: 14px;
+    }
+
+    .field-row {
+      grid-template-columns: 1fr;
+      gap: 4px;
+    }
+  }
+</style>
+{% endblock %}

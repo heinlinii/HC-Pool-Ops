@@ -144,6 +144,171 @@ def fieldy_recent(token: str = ""):
         "data": data,
     }
 
+    def fetch_fieldy_notes(days: int = 3, page_size: int = 50):
+    if not FIELDY_API_KEY:
+        raise HTTPException(status_code=500, detail="FIELDY_API_KEY is not set")
+
+    end_time = datetime.now(timezone.utc)
+    start_time = end_time - timedelta(days=days)
+
+    params = urllib.parse.urlencode({
+        "startTime": start_time.isoformat().replace("+00:00", "Z"),
+        "endTime": end_time.isoformat().replace("+00:00", "Z"),
+        "pageSize": page_size,
+    })
+
+    url = f"https://api.fieldy.ai/api/public/v2/conversations?{params}"
+
+    req = urllib.request.Request(
+        url,
+        headers={
+            "Authorization": f"Bearer {FIELDY_API_KEY}",
+            "Accept": "application/json",
+        },
+        method="GET",
+    )
+
+    try:
+        with urllib.request.urlopen(req, timeout=20) as response:
+            raw = response.read().decode("utf-8")
+            data = json.loads(raw)
+    except Exception as e:
+        logging.exception("Fieldy fetch failed")
+        raise HTTPException(status_code=500, detail=f"Fieldy API error: {str(e)}")
+
+    return data.get("items", [])
+
+
+def extract_jarvis_commands_from_note(note):
+    commands = []
+
+    note_id = note.get("id", "")
+    title = note.get("title") or "Untitled Fieldy Note"
+    summary = note.get("summary") or ""
+    content = note.get("content") or ""
+    start_time = note.get("startTime") or ""
+    quotes = note.get("quotes") or []
+
+    text_blocks = []
+
+    if summary:
+        text_blocks.append(summary)
+
+    if content:
+        text_blocks.append(content)
+
+    for q in quotes:
+        q_text = q.get("text", "")
+        if q_text:
+            text_blocks.append(q_text)
+
+    combined = "\n".join(text_blocks)
+
+    if "jarvis" not in combined.lower():
+        return commands
+
+    # Finds phrases like:
+    # Jarvis, I'm at Scheller's house doing the opening.
+    # Jarvis add this to today's log: cleaned filter and checked heater.
+    pattern = re.compile(
+        r"(jarvis[\s,:\-]+.*?)(?=(?:\n|\. |\? |! |$))",
+        re.IGNORECASE | re.DOTALL
+    )
+
+    matches = pattern.findall(combined)
+
+    for raw in matches:
+        cleaned = " ".join(raw.replace("\n", " ").split()).strip()
+
+        if not cleaned:
+            continue
+
+        lower = cleaned.lower()
+
+        command_type = "General Note"
+        customer_guess = ""
+        work_guess = cleaned
+
+        if "remind me" in lower:
+            command_type = "Reminder"
+        elif "follow up" in lower or "call" in lower or "text" in lower:
+            command_type = "Follow Up"
+        elif "material" in lower or "materials" in lower or "order" in lower:
+            command_type = "Material List"
+        elif "today's log" in lower or "todays log" in lower or "daily log" in lower:
+            command_type = "Daily Log"
+        elif "i'm at" in lower or "im at" in lower or "i am at" in lower:
+            command_type = "Job Log"
+        elif "customer note" in lower:
+            command_type = "Customer Note"
+
+        # Simple customer guess from:
+        # "I'm at Scheller's house..."
+        customer_patterns = [
+            r"i[' ]?m at ([A-Za-z0-9 .'\-]+?)(?:'s)? house",
+            r"im at ([A-Za-z0-9 .'\-]+?)(?:'s)? house",
+            r"i am at ([A-Za-z0-9 .'\-]+?)(?:'s)? house",
+            r"at ([A-Za-z0-9 .'\-]+?)(?:'s)? house",
+            r"for ([A-Za-z0-9 .'\-]+?)(?:'s)? job",
+        ]
+
+        for cp in customer_patterns:
+            m = re.search(cp, cleaned, re.IGNORECASE)
+            if m:
+                customer_guess = m.group(1).strip(" .'")
+                break
+
+        # Simple work guess from:
+        # "doing opening work"
+        work_patterns = [
+            r"doing (.+)",
+            r"working on (.+)",
+            r"here to (.+)",
+            r"add this to today'?s log[:\- ]+(.+)",
+            r"customer note[:\- ]+(.+)",
+        ]
+
+        for wp in work_patterns:
+            m = re.search(wp, cleaned, re.IGNORECASE)
+            if m:
+                work_guess = m.group(1).strip()
+                break
+
+        commands.append({
+            "note_id": note_id,
+            "title": title,
+            "start_time": start_time,
+            "type": command_type,
+            "customer_guess": customer_guess,
+            "work_guess": work_guess,
+            "raw": cleaned,
+        })
+
+    return commands
+
+
+@app.get("/fieldy/commands", response_class=HTMLResponse)
+def fieldy_commands(request: Request, days: int = 3):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+
+    notes = fetch_fieldy_notes(days=days, page_size=75)
+
+    commands = []
+    for note in notes:
+        commands.extend(extract_jarvis_commands_from_note(note))
+
+    return templates.TemplateResponse(
+        "fieldy_commands.html",
+        ctx(
+            request,
+            user=u,
+            commands=commands,
+            days=days,
+        )
+    )
+
 @app.get("/fieldy", response_class=HTMLResponse)
 def fieldy_inbox(request: Request, days: int = 3):
     u = require_login(request)
