@@ -4,7 +4,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
 from pathlib import Path
-from datetime import datetime, date, timedelta
+from datetime import datetime, date, timedelta, timezone
 from app.routes import pool_monitoring, timeclock
 from app.routes.auth import (
     current_user,
@@ -27,6 +27,8 @@ import io
 import re
 import html
 import logging
+import urllib.request
+import urllib.parse
 try:
     import psycopg
     from psycopg.rows import dict_row
@@ -114,6 +116,50 @@ async def fieldy_webhook(request: Request, token: str = ""):
     return {
         "ok": True,
         "received": True
+    }
+
+FIELDY_API_KEY = os.getenv("FIELDY_API_KEY", "")
+
+
+@app.get("/integrations/fieldy/recent")
+def fieldy_recent(token: str = ""):
+    if token != os.getenv("FIELDY_WEBHOOK_TOKEN", ""):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+    if not FIELDY_API_KEY:
+        raise HTTPException(status_code=500, detail="FIELDY_API_KEY is not set")
+
+    end_time = datetime.now(timezone.utc)
+    start_time = end_time - timedelta(days=3)
+
+    params = urllib.parse.urlencode({
+        "startTime": start_time.isoformat().replace("+00:00", "Z"),
+        "endTime": end_time.isoformat().replace("+00:00", "Z"),
+        "pageSize": 10,
+    })
+
+    url = f"https://api.fieldy.ai/api/public/v2/conversations?{params}"
+
+    req = urllib.request.Request(
+        url,
+        headers={
+            "Authorization": f"Bearer {FIELDY_API_KEY}",
+            "Accept": "application/json",
+        },
+        method="GET",
+    )
+
+    try:
+        with urllib.request.urlopen(req, timeout=20) as response:
+            raw = response.read().decode("utf-8")
+            data = json.loads(raw)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Fieldy API error: {str(e)}")
+
+    return {
+        "ok": True,
+        "source": "fieldy",
+        "data": data,
     }
 
 DATABASE_URL = os.environ.get("DATABASE_URL", "").strip()
