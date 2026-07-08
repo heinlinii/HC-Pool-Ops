@@ -144,7 +144,7 @@ def fieldy_recent(token: str = ""):
         "data": data,
     }
 
-    @app.get("/fieldy", response_class=HTMLResponse)
+@app.get("/fieldy", response_class=HTMLResponse)
 def fieldy_inbox(request: Request, days: int = 3):
     u = require_login(request)
     if not u:
@@ -194,15 +194,6 @@ def fieldy_inbox(request: Request, days: int = 3):
     )
 
 FIELDY_WEBHOOK_TOKEN = os.getenv("FIELDY_WEBHOOK_TOKEN", "")
-
-
-@app.get("/integrations/fieldy/health")
-def fieldy_health():
-    return {
-        "ok": True,
-        "integration": "fieldy",
-        "message": "Fieldy webhook receiver is alive"
-    }
 
 
 @app.post("/integrations/fieldy/webhook")
