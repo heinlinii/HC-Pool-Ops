@@ -99,7 +99,7 @@
   <section class="card" style="margin-top:18px;">
     <h2>Talk to Jarvis</h2>
 
-    <form method="post" action="/jarvis/ask" class="stack">
+    <form method="post" action="/jarvis/action" class="stack">
       <textarea
         class="jarvis-command-box"
         name="command"
@@ -222,6 +222,27 @@ Need to look at liner leak on Oak Street"
       {% endif %}
     </div>
   </section>
+
+  {% if recent_actions is defined and recent_actions %}
+<section class="card">
+  <h2>Recent Jarvis Commands</h2>
+
+  <div class="jarvis-options">
+    {% for action in recent_actions %}
+      <div class="jarvis-option-line">
+        <strong>{{ action.command }}</strong>
+        <span class="jarvis-small">
+          {{ action.intent }} • {{ action.status }} • {{ action.created_at }}
+        </span>
+
+        {% if action.response %}
+          <p style="white-space:pre-wrap;margin-top:8px;">{{ action.response }}</p>
+        {% endif %}
+      </div>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
 
   {% if brain_buckets is defined %}
   <section class="card">
