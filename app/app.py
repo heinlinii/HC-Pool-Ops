@@ -4,7 +4,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
 from pathlib import Path
-from datetime import datetime, date, timedelta, timezone
+from datetime import datetime, date, timedelta, timedelta, timezone
 from app.routes import pool_monitoring, timeclock
 from app.routes.auth import (
     current_user,
@@ -87,6 +87,62 @@ DEFAULT_THEME = {
     "field_log_image": "/static/uploads/fountain.jpg",
     "map_image": "/static/uploads/maria.jpg",
 }
+
+FIELDY_API_KEY = os.getenv("FIELDY_API_KEY", "")
+FIELDY_PRIVATE_TOKEN = os.getenv("FIELDY_WEBHOOK_TOKEN", "")
+
+
+@app.get("/integrations/fieldy/health")
+def fieldy_health():
+    return {
+        "ok": True,
+        "integration": "fieldy",
+        "message": "Fieldy integration is alive"
+    }
+
+
+@app.get("/integrations/fieldy/recent")
+def fieldy_recent(token: str = ""):
+    if token != FIELDY_PRIVATE_TOKEN:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+    if not FIELDY_API_KEY:
+        raise HTTPException(status_code=500, detail="FIELDY_API_KEY is not set")
+
+    end_time = datetime.now(timezone.utc)
+    start_time = end_time - timedelta(days=3)
+
+    params = urllib.parse.urlencode({
+        "startTime": start_time.isoformat().replace("+00:00", "Z"),
+        "endTime": end_time.isoformat().replace("+00:00", "Z"),
+        "pageSize": 10,
+    })
+
+    url = f"https://api.fieldy.ai/api/public/v2/conversations?{params}"
+
+    req = urllib.request.Request(
+        url,
+        headers={
+            "Authorization": f"Bearer {FIELDY_API_KEY}",
+            "Accept": "application/json",
+        },
+        method="GET",
+    )
+
+    try:
+        with urllib.request.urlopen(req, timeout=20) as response:
+            raw = response.read().decode("utf-8")
+            data = json.loads(raw)
+    except Exception as e:
+        logging.exception("Fieldy API request failed")
+        raise HTTPException(status_code=500, detail=f"Fieldy API error: {str(e)}")
+
+    return {
+        "ok": True,
+        "source": "fieldy",
+        "range": "last_3_days",
+        "data": data,
+    }
 
 FIELDY_WEBHOOK_TOKEN = os.getenv("FIELDY_WEBHOOK_TOKEN", "")
 
