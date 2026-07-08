@@ -144,7 +144,8 @@ def fieldy_recent(token: str = ""):
         "data": data,
     }
 
-    def fetch_fieldy_notes(days: int = 3, page_size: int = 50):
+
+def fetch_fieldy_notes(days: int = 3, page_size: int = 50):
     if not FIELDY_API_KEY:
         raise HTTPException(status_code=500, detail="FIELDY_API_KEY is not set")
 
