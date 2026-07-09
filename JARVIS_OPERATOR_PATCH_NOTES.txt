@@ -1,0 +1,58 @@
+Heinlin Field Ops - Jarvis Operator Patch
+
+What changed:
+1. Added a final Jarvis billing/action intercept layer to app/app.py.
+   - Billing commands sent through /jarvis-brain/command are intercepted before they become Invisible Office notes.
+   - Examples handled:
+     - Send Traylor a bill for what he owes
+     - Send Koch a bill for what they owe
+     - Send Scheller everything he owes
+     - Email Scheller his statement
+     - Who owes me money?
+   - Customer names are extracted from the command and no longer default to the active job.
+   - The app searches poolops2_clients and poolops2_invoices.
+   - It creates a jarvis_actions queue item with statement data in data_json.
+   - It returns statement preview links.
+
+2. Added billing preview routes:
+   - /jarvis-billing/customer/{customer_name}
+   - /jarvis-billing/action/{action_id}
+   - /jarvis-billing/system.json
+
+3. Hardened app/templates/gps_tracker.html.
+   - GPS sends to /gps/ping-json first, then falls back to /gps/ping.
+   - Saves a point immediately on clock in and clock out.
+   - Adds 60-second forced keepalive pings.
+   - Prevents duplicate tracker starts.
+   - Saves a final point on page hide/unload when possible.
+
+QuickBooks note:
+- This version works from the imported QuickBooks invoice CSV table already in the app: poolops2_invoices.
+- Live QuickBooks sending still requires credentials/environment variables:
+  QUICKBOOKS_CLIENT_ID
+  QUICKBOOKS_CLIENT_SECRET
+  QUICKBOOKS_REDIRECT_URI
+  QUICKBOOKS_REALM_ID
+- Until those are set and OAuth is approved, Jarvis prepares billing actions and statement previews instead of sending live emails/invoices.
+
+How to install:
+1. Unzip this patch over your current working project folder.
+2. Do NOT delete .git.
+3. Do NOT replace the whole project with a stripped folder.
+4. Run:
+   git add app/app.py app/templates/gps_tracker.html JARVIS_OPERATOR_PATCH_NOTES.txt
+   git commit -m "Install Jarvis operator billing and GPS patch"
+   git push
+
+Test commands after deploy:
+- Send Traylor a bill for what he owes
+- Send Koch a bill for what they owe
+- Send Scheller everything he owes
+- Who owes me money?
+
+GPS test:
+- Open /gps
+- Clock In
+- Allow location permissions
+- Leave the page open while traveling
+- Check /gps/day and /gps/stops

@@ -73,13 +73,16 @@ let gpsWatchId = null;
 let lastSentAt = 0;
 let lastPosition = null;
 let forcePingTimer = null;
+let gpsStarted = false;
 
 function statusText(message) {
-  document.getElementById("gps-status").textContent = message;
+  const el = document.getElementById("gps-status");
+  if (el) el.textContent = message;
 }
 
 function lastText(message) {
-  document.getElementById("gps-last").textContent = message;
+  const el = document.getElementById("gps-last");
+  if (el) el.textContent = message;
 }
 
 function clockWithGps(action) {
@@ -98,21 +101,28 @@ function clockWithGps(action) {
     function(position) {
       document.getElementById(latId).value = position.coords.latitude;
       document.getElementById(lngId).value = position.coords.longitude;
-      document.getElementById(formId).submit();
+
+      // Save a point immediately so the stop log has a starting point.
+      sendPoint(position, true, action === "in" ? "Clock in" : "Clock out").finally(function() {
+        if (action === "out") {
+          stopTracking();
+        } else {
+          localStorage.setItem("hfo_gps_tracking", "1");
+        }
+        document.getElementById(formId).submit();
+      });
     },
     function(error) {
       statusText("GPS unavailable for clock. Saving clock without location.");
+      if (action === "out") stopTracking();
       document.getElementById(formId).submit();
     },
-    {
-      enableHighAccuracy: true,
-      maximumAge: 10000,
-      timeout: 15000
-    }
+    { enableHighAccuracy: true, maximumAge: 10000, timeout: 15000 }
   );
 }
 
-async function sendPoint(position, forced=false) {
+async function sendPoint(position, forced=false, note="GPS tracker page") {
+  if (!position || !position.coords) return;
   const now = Date.now();
 
   if (!forced && now - lastSentAt < 30000) {
@@ -123,85 +133,113 @@ async function sendPoint(position, forced=false) {
   lastPosition = position;
 
   const c = position.coords;
-
-  const form = new FormData();
-  form.append("latitude", c.latitude);
-  form.append("longitude", c.longitude);
-  form.append("accuracy", c.accuracy || 0);
-  form.append("speed", c.speed || 0);
-  form.append("heading", c.heading || 0);
-  form.append("source", "admin_gps_tracker");
-  form.append("note", "GPS tracker page");
+  const payload = {
+    latitude: c.latitude,
+    longitude: c.longitude,
+    accuracy: c.accuracy || 0,
+    speed: c.speed || 0,
+    heading: c.heading || 0,
+    source: "hfo_gps_tracker_hardened",
+    note: note || "GPS tracker page"
+  };
 
   try {
-    const res = await fetch("/gps/ping", {
+    // JSON endpoint is more reliable with fetch from modern mobile browsers.
+    let res = await fetch("/gps/ping-json", {
       method: "POST",
-      body: form
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(payload),
+      keepalive: true
     });
 
-    const data = await res.json();
+    let data = await res.json();
 
-    if (data.ok) {
-      statusText("GPS tracking is ON.");
-      lastText(
-        "Last saved: " +
-        new Date().toLocaleTimeString() +
-        " • Lat " + c.latitude.toFixed(6) +
-        " • Lng " + c.longitude.toFixed(6) +
-        " • Accuracy " + Math.round(c.accuracy || 0) + "m"
-      );
-    } else {
-      statusText("GPS save failed: " + (data.error || "Unknown error"));
+    if (!data.ok) {
+      throw new Error(data.error || "JSON ping failed");
     }
+
+    statusText("GPS tracking is ON.");
+    lastText(
+      "Last saved: " +
+      new Date().toLocaleTimeString() +
+      " • Lat " + Number(c.latitude).toFixed(6) +
+      " • Lng " + Number(c.longitude).toFixed(6) +
+      " • Accuracy " + Math.round(c.accuracy || 0) + "m"
+    );
   } catch (err) {
-    statusText("GPS save failed. Check connection.");
+    // Fall back to old FormData endpoint so older code still works.
+    try {
+      const form = new FormData();
+      form.append("latitude", payload.latitude);
+      form.append("longitude", payload.longitude);
+      form.append("accuracy", payload.accuracy);
+      form.append("speed", payload.speed);
+      form.append("heading", payload.heading);
+      form.append("source", payload.source + "_fallback");
+      form.append("note", payload.note);
+
+      const res2 = await fetch("/gps/ping", { method: "POST", body: form, keepalive: true });
+      const data2 = await res2.json();
+      if (data2.ok) {
+        statusText("GPS tracking is ON.");
+        lastText("Last saved: " + new Date().toLocaleTimeString());
+        return;
+      }
+      statusText("GPS save failed: " + (data2.error || "Unknown error"));
+    } catch (err2) {
+      statusText("GPS save failed. Keep this page open and check connection.");
+    }
   }
 }
 
 function startTracking() {
+  if (gpsStarted) {
+    statusText("GPS tracking is already ON.");
+    return;
+  }
+
   if (!navigator.geolocation) {
     statusText("This device/browser does not support GPS.");
     return;
   }
 
+  gpsStarted = true;
+  localStorage.setItem("hfo_gps_tracking", "1");
   statusText("Requesting GPS permission...");
 
   navigator.geolocation.getCurrentPosition(function(position) {
-    sendPoint(position, true);
+    sendPoint(position, true, "GPS tracker started");
   }, function(error) {
     statusText("Waiting for GPS lock: " + error.message);
   }, { enableHighAccuracy: true, maximumAge: 5000, timeout: 20000 });
 
-  localStorage.setItem("hfo_gps_tracking", "1");
-
   gpsWatchId = navigator.geolocation.watchPosition(
     function(position) {
-      sendPoint(position);
+      sendPoint(position, false, "GPS watch point");
     },
     function(error) {
-      statusText("GPS error: " + error.message);
+      statusText("GPS error: " + error.message + ". Keep this page open and location permission allowed.");
     },
-    {
-      enableHighAccuracy: true,
-      maximumAge: 15000,
-      timeout: 20000
-    }
+    { enableHighAccuracy: true, maximumAge: 15000, timeout: 20000 }
   );
 
-  if (forcePingTimer) {
-    clearInterval(forcePingTimer);
-  }
-
+  if (forcePingTimer) clearInterval(forcePingTimer);
   forcePingTimer = setInterval(function() {
     if (lastPosition) {
-      sendPoint(lastPosition, true);
+      sendPoint(lastPosition, true, "Forced keepalive ping");
+    } else {
+      navigator.geolocation.getCurrentPosition(function(position) {
+        sendPoint(position, true, "Forced fresh keepalive ping");
+      }, function(){}, { enableHighAccuracy: true, maximumAge: 30000, timeout: 10000 });
     }
-  }, 120000);
+  }, 60000);
 
   statusText("Tracking started. Waiting for first GPS point...");
 }
 
 function stopTracking() {
+  gpsStarted = false;
+
   if (gpsWatchId !== null) {
     navigator.geolocation.clearWatch(gpsWatchId);
     gpsWatchId = null;
@@ -215,6 +253,19 @@ function stopTracking() {
   localStorage.removeItem("hfo_gps_tracking");
   statusText("GPS tracking stopped.");
 }
+
+// Save one last point when the page is hidden or unloaded.
+document.addEventListener("visibilitychange", function() {
+  if (document.visibilityState === "hidden" && lastPosition && localStorage.getItem("hfo_gps_tracking") === "1") {
+    sendPoint(lastPosition, true, "Page hidden keepalive");
+  }
+});
+
+window.addEventListener("beforeunload", function() {
+  if (lastPosition && localStorage.getItem("hfo_gps_tracking") === "1") {
+    sendPoint(lastPosition, true, "Page unload keepalive");
+  }
+});
 
 window.addEventListener("load", function() {
   if (localStorage.getItem("hfo_gps_tracking") === "1") {
