@@ -223,7 +223,7 @@ Need to look at liner leak on Oak Street"
     </div>
   </section>
 
-  {% if recent_actions is defined and recent_actions %}
+ {% if recent_actions is defined and recent_actions %}
 <section class="card">
   <h2>Recent Jarvis Memory</h2>
 
@@ -231,12 +231,19 @@ Need to look at liner leak on Oak Street"
     {% for action in recent_actions %}
       <div class="jarvis-option-line">
         <strong>{{ action.command }}</strong>
+
         <span class="jarvis-small">
           {{ action.intent }} • {{ action.status }} • {{ action.created_at }}
         </span>
 
         {% if action.response %}
           <p style="white-space:pre-wrap;margin-top:8px;">{{ action.response }}</p>
+        {% endif %}
+
+        {% if action.status != "Done" %}
+          <form method="post" action="/jarvis/action/{{ action.id }}/done" style="margin-top:10px;">
+            <button class="btn primary" type="submit">Mark Done</button>
+          </form>
         {% endif %}
       </div>
     {% endfor %}

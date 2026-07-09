@@ -5288,6 +5288,22 @@ def jarvis_brain_install_check_level7():
         "stats": stats,
     })
 
+@app.post("/jarvis/action/{action_id}/done")
+def jarvis_action_done(request: Request, action_id: int):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+
+    exec_sql(
+        "UPDATE jarvis_actions SET status=?, completed_at=? WHERE id=?",
+        (
+            "Done",
+            datetime.now().strftime("%Y-%m-%d %I:%M %p"),
+            action_id
+        )
+    )
+
+    return RedirectResponse("/jarvis", status_code=303)
 
 @app.get("/jarvis-brain", response_class=HTMLResponse)
 def jarvis_brain_level7_page(request: Request):
