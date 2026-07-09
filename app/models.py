@@ -239,3 +239,26 @@ class FieldLog(Base):
     photo_count = Column(Integer, default=0)
 
     created_at = Column(DateTime, default=datetime.utcnow)
+
+   class JarvisAction(Base):
+    __tablename__ = "jarvis_actions"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    command = Column(Text, nullable=False)
+    intent = Column(String, default="unknown")
+
+    client = Column(String, default="")
+    property = Column(String, default="")
+    job_id = Column(Integer, nullable=True)
+
+    status = Column(String, default="New")
+    result = Column(Text, default="")
+    error = Column(Text, default="")
+
+    needs_approval = Column(Boolean, default=True)
+    approved = Column(Boolean, default=False)
+
+    created_by = Column(String, default="")
+    created_at = Column(DateTime, default=datetime.utcnow)
+    completed_at = Column(DateTime, nullable=True) 

@@ -1,10 +1,10 @@
-from fastapi import FastAPI, Request, Form, UploadFile, File, HTTPException
+from fastapi import FastAPI, Request, Form, UploadFile, File
 from fastapi.responses import RedirectResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
 from pathlib import Path
-from datetime import datetime, date, timedelta, timedelta, timezone
+from datetime import datetime, date, timedelta
 from app.routes import pool_monitoring, timeclock
 from app.routes.auth import (
     current_user,
@@ -26,9 +26,6 @@ import csv
 import io
 import re
 import html
-import logging
-import urllib.request
-import urllib.parse
 try:
     import psycopg
     from psycopg.rows import dict_row
@@ -88,341 +85,7 @@ DEFAULT_THEME = {
     "map_image": "/static/uploads/maria.jpg",
 }
 
-FIELDY_API_KEY = os.getenv("FIELDY_API_KEY", "")
-FIELDY_PRIVATE_TOKEN = os.getenv("FIELDY_WEBHOOK_TOKEN", "")
 
-
-@app.get("/integrations/fieldy/health")
-def fieldy_health():
-    return {
-        "ok": True,
-        "integration": "fieldy",
-        "message": "Fieldy integration is alive"
-    }
-
-
-@app.get("/integrations/fieldy/recent")
-def fieldy_recent(token: str = ""):
-    if token != FIELDY_PRIVATE_TOKEN:
-        raise HTTPException(status_code=401, detail="Unauthorized")
-
-    if not FIELDY_API_KEY:
-        raise HTTPException(status_code=500, detail="FIELDY_API_KEY is not set")
-
-    end_time = datetime.now(timezone.utc)
-    start_time = end_time - timedelta(days=3)
-
-    params = urllib.parse.urlencode({
-        "startTime": start_time.isoformat().replace("+00:00", "Z"),
-        "endTime": end_time.isoformat().replace("+00:00", "Z"),
-        "pageSize": 10,
-    })
-
-    url = f"https://api.fieldy.ai/api/public/v2/conversations?{params}"
-
-    req = urllib.request.Request(
-        url,
-        headers={
-            "Authorization": f"Bearer {FIELDY_API_KEY}",
-            "Accept": "application/json",
-        },
-        method="GET",
-    )
-
-    try:
-        with urllib.request.urlopen(req, timeout=20) as response:
-            raw = response.read().decode("utf-8")
-            data = json.loads(raw)
-    except Exception as e:
-        logging.exception("Fieldy API request failed")
-        raise HTTPException(status_code=500, detail=f"Fieldy API error: {str(e)}")
-
-    return {
-        "ok": True,
-        "source": "fieldy",
-        "range": "last_3_days",
-        "data": data,
-    }
-
-
-def fetch_fieldy_notes(days: int = 3, page_size: int = 50):
-    if not FIELDY_API_KEY:
-        raise HTTPException(status_code=500, detail="FIELDY_API_KEY is not set")
-
-    end_time = datetime.now(timezone.utc)
-    start_time = end_time - timedelta(days=days)
-
-    params = urllib.parse.urlencode({
-        "startTime": start_time.isoformat().replace("+00:00", "Z"),
-        "endTime": end_time.isoformat().replace("+00:00", "Z"),
-        "pageSize": page_size,
-    })
-
-    url = f"https://api.fieldy.ai/api/public/v2/conversations?{params}"
-
-    req = urllib.request.Request(
-        url,
-        headers={
-            "Authorization": f"Bearer {FIELDY_API_KEY}",
-            "Accept": "application/json",
-        },
-        method="GET",
-    )
-
-    try:
-        with urllib.request.urlopen(req, timeout=20) as response:
-            raw = response.read().decode("utf-8")
-            data = json.loads(raw)
-    except Exception as e:
-        logging.exception("Fieldy fetch failed")
-        raise HTTPException(status_code=500, detail=f"Fieldy API error: {str(e)}")
-
-    return data.get("items", [])
-
-
-def extract_jarvis_commands_from_note(note):
-    commands = []
-
-    note_id = note.get("id", "")
-    title = note.get("title") or "Untitled Fieldy Note"
-    summary = note.get("summary") or ""
-    content = note.get("content") or ""
-    start_time = note.get("startTime") or ""
-    quotes = note.get("quotes") or []
-
-    text_blocks = []
-
-    if summary:
-        text_blocks.append(summary)
-
-    if content:
-        text_blocks.append(content)
-
-    for q in quotes:
-        q_text = q.get("text", "")
-        if q_text:
-            text_blocks.append(q_text)
-
-    combined = "\n".join(text_blocks)
-
-    if "jarvis" not in combined.lower():
-        return commands
-
-    # Finds phrases like:
-    # Jarvis, I'm at Scheller's house doing the opening.
-    # Jarvis add this to today's log: cleaned filter and checked heater.
-    pattern = re.compile(
-        r"(jarvis[\s,:\-]+.*?)(?=(?:\n|\. |\? |! |$))",
-        re.IGNORECASE | re.DOTALL
-    )
-
-    matches = pattern.findall(combined)
-
-    for raw in matches:
-        cleaned = " ".join(raw.replace("\n", " ").split()).strip()
-
-        if not cleaned:
-            continue
-
-        lower = cleaned.lower()
-
-        command_type = "General Note"
-        customer_guess = ""
-        work_guess = cleaned
-
-        if "remind me" in lower:
-            command_type = "Reminder"
-        elif "follow up" in lower or "call" in lower or "text" in lower:
-            command_type = "Follow Up"
-        elif "material" in lower or "materials" in lower or "order" in lower:
-            command_type = "Material List"
-        elif "today's log" in lower or "todays log" in lower or "daily log" in lower:
-            command_type = "Daily Log"
-        elif "i'm at" in lower or "im at" in lower or "i am at" in lower:
-            command_type = "Job Log"
-        elif "customer note" in lower:
-            command_type = "Customer Note"
-
-        # Simple customer guess from:
-        # "I'm at Scheller's house..."
-        customer_patterns = [
-            r"i[' ]?m at ([A-Za-z0-9 .'\-]+?)(?:'s)? house",
-            r"im at ([A-Za-z0-9 .'\-]+?)(?:'s)? house",
-            r"i am at ([A-Za-z0-9 .'\-]+?)(?:'s)? house",
-            r"at ([A-Za-z0-9 .'\-]+?)(?:'s)? house",
-            r"for ([A-Za-z0-9 .'\-]+?)(?:'s)? job",
-        ]
-
-        for cp in customer_patterns:
-            m = re.search(cp, cleaned, re.IGNORECASE)
-            if m:
-                customer_guess = m.group(1).strip(" .'")
-                break
-
-        # Simple work guess from:
-        # "doing opening work"
-        work_patterns = [
-            r"doing (.+)",
-            r"working on (.+)",
-            r"here to (.+)",
-            r"add this to today'?s log[:\- ]+(.+)",
-            r"customer note[:\- ]+(.+)",
-        ]
-
-        for wp in work_patterns:
-            m = re.search(wp, cleaned, re.IGNORECASE)
-            if m:
-                work_guess = m.group(1).strip()
-                break
-
-        commands.append({
-            "note_id": note_id,
-            "title": title,
-            "start_time": start_time,
-            "type": command_type,
-            "customer_guess": customer_guess,
-            "work_guess": work_guess,
-            "raw": cleaned,
-        })
-
-    return commands
-
-
-@app.get("/fieldy/commands", response_class=HTMLResponse)
-def fieldy_commands(request: Request, days: int = 3):
-    u = require_login(request)
-    if not u:
-        return login_redirect()
-
-    notes = fetch_fieldy_notes(days=days, page_size=75)
-
-    commands = []
-    for note in notes:
-        commands.extend(extract_jarvis_commands_from_note(note))
-
-    return templates.TemplateResponse(
-        "fieldy_commands.html",
-        ctx(
-            request,
-            user=u,
-            commands=commands,
-            days=days,
-        )
-    )
-
-@app.get("/fieldy", response_class=HTMLResponse)
-def fieldy_inbox(request: Request, days: int = 3):
-    u = require_login(request)
-    if not u:
-        return login_redirect()
-
-    if not FIELDY_API_KEY:
-        raise HTTPException(status_code=500, detail="FIELDY_API_KEY is not set")
-
-    end_time = datetime.now(timezone.utc)
-    start_time = end_time - timedelta(days=days)
-
-    params = urllib.parse.urlencode({
-        "startTime": start_time.isoformat().replace("+00:00", "Z"),
-        "endTime": end_time.isoformat().replace("+00:00", "Z"),
-        "pageSize": 25,
-    })
-
-    url = f"https://api.fieldy.ai/api/public/v2/conversations?{params}"
-
-    req = urllib.request.Request(
-        url,
-        headers={
-            "Authorization": f"Bearer {FIELDY_API_KEY}",
-            "Accept": "application/json",
-        },
-        method="GET",
-    )
-
-    try:
-        with urllib.request.urlopen(req, timeout=20) as response:
-            raw = response.read().decode("utf-8")
-            data = json.loads(raw)
-    except Exception as e:
-        logging.exception("Fieldy inbox request failed")
-        raise HTTPException(status_code=500, detail=f"Fieldy API error: {str(e)}")
-
-    notes = data.get("items", [])
-
-    return templates.TemplateResponse(
-        "fieldy_inbox.html",
-        ctx(
-            request,
-            user=u,
-            notes=notes,
-            days=days,
-        )
-    )
-
-FIELDY_WEBHOOK_TOKEN = os.getenv("FIELDY_WEBHOOK_TOKEN", "")
-
-
-@app.post("/integrations/fieldy/webhook")
-async def fieldy_webhook(request: Request, token: str = ""):
-    if not FIELDY_WEBHOOK_TOKEN:
-        raise HTTPException(status_code=500, detail="FIELDY_WEBHOOK_TOKEN is not set")
-
-    if token != FIELDY_WEBHOOK_TOKEN:
-        raise HTTPException(status_code=401, detail="Unauthorized Fieldy webhook")
-
-    payload = await request.json()
-
-    logging.warning("FIELDY WEBHOOK RECEIVED:")
-    logging.warning(json.dumps(payload, indent=2)[:10000])
-
-    return {
-        "ok": True,
-        "received": True
-    }
-
-FIELDY_API_KEY = os.getenv("FIELDY_API_KEY", "")
-
-
-@app.get("/integrations/fieldy/recent")
-def fieldy_recent(token: str = ""):
-    if token != os.getenv("FIELDY_WEBHOOK_TOKEN", ""):
-        raise HTTPException(status_code=401, detail="Unauthorized")
-
-    if not FIELDY_API_KEY:
-        raise HTTPException(status_code=500, detail="FIELDY_API_KEY is not set")
-
-    end_time = datetime.now(timezone.utc)
-    start_time = end_time - timedelta(days=3)
-
-    params = urllib.parse.urlencode({
-        "startTime": start_time.isoformat().replace("+00:00", "Z"),
-        "endTime": end_time.isoformat().replace("+00:00", "Z"),
-        "pageSize": 10,
-    })
-
-    url = f"https://api.fieldy.ai/api/public/v2/conversations?{params}"
-
-    req = urllib.request.Request(
-        url,
-        headers={
-            "Authorization": f"Bearer {FIELDY_API_KEY}",
-            "Accept": "application/json",
-        },
-        method="GET",
-    )
-
-    try:
-        with urllib.request.urlopen(req, timeout=20) as response:
-            raw = response.read().decode("utf-8")
-            data = json.loads(raw)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Fieldy API error: {str(e)}")
-
-    return {
-        "ok": True,
-        "source": "fieldy",
-        "data": data,
-    }
 
 DATABASE_URL = os.environ.get("DATABASE_URL", "").strip()
 USE_POSTGRES = bool(DATABASE_URL and DATABASE_URL.startswith(("postgres://", "postgresql://")))
@@ -529,22 +192,6 @@ def ensure_schema():
                 password TEXT NOT NULL,
                 role TEXT DEFAULT 'admin',
                 name TEXT DEFAULT ''
-            )""")
-            c.execute("""CREATE TABLE IF NOT EXISTS jarvis_actions (
-                id SERIAL PRIMARY KEY,
-                command TEXT NOT NULL,
-                intent TEXT DEFAULT 'unknown',
-                client TEXT DEFAULT '',
-                property TEXT DEFAULT '',
-                status TEXT DEFAULT 'New',
-                response TEXT DEFAULT '',
-                error TEXT DEFAULT '',
-                approval_required BOOLEAN DEFAULT true,
-                approved BOOLEAN DEFAULT false,
-                data_json TEXT DEFAULT '',
-                created_by TEXT DEFAULT '',
-                created_at TEXT DEFAULT '',
-                completed_at TEXT DEFAULT ''
             )""")
             c.execute("""CREATE TABLE IF NOT EXISTS poolops2_clients (
                 id SERIAL PRIMARY KEY,
@@ -664,22 +311,6 @@ def ensure_schema():
                 password TEXT NOT NULL,
                 role TEXT DEFAULT 'admin',
                 name TEXT DEFAULT ''
-            )""")
-            c.execute("""CREATE TABLE IF NOT EXISTS jarvis_actions (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                command TEXT NOT NULL,
-                intent TEXT DEFAULT 'unknown',
-                client TEXT DEFAULT '',
-                property TEXT DEFAULT '',
-                status TEXT DEFAULT 'New',
-                response TEXT DEFAULT '',
-                error TEXT DEFAULT '',
-                approval_required INTEGER DEFAULT 1,
-                approved INTEGER DEFAULT 0,
-                data_json TEXT DEFAULT '',
-                created_by TEXT DEFAULT '',
-                created_at TEXT DEFAULT '',
-                completed_at TEXT DEFAULT ''
             )""")
             c.execute("""CREATE TABLE IF NOT EXISTS poolops2_clients (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -1550,34 +1181,6 @@ def ai_systems(request: Request):
         ctx(request)
     )
 
-FIELDY_WEBHOOK_TOKEN = os.getenv("FIELDY_WEBHOOK_TOKEN", "")
-
-@app.get("/integrations/fieldy/health")
-def fieldy_health():
-    return {
-        "ok": True,
-        "integration": "fieldy",
-        "message": "Fieldy webhook receiver is alive"
-    }
-
-
-@app.post("/integrations/fieldy/webhook")
-async def fieldy_webhook(request: Request, token: str = ""):
-    if not FIELDY_WEBHOOK_TOKEN:
-        raise HTTPException(status_code=500, detail="FIELDY_WEBHOOK_TOKEN is not set")
-
-    if token != FIELDY_WEBHOOK_TOKEN:
-        raise HTTPException(status_code=401, detail="Unauthorized Fieldy webhook")
-
-    payload = await request.json()
-
-    logging.warning("FIELDY WEBHOOK RECEIVED:")
-    logging.warning(json.dumps(payload, indent=2)[:10000])
-
-    return {
-        "ok": True,
-        "received": True
-    }
 
 @app.post("/assistant-live/send")
 def assistant_live_send(
@@ -4757,7 +4360,6 @@ def _j7_update_existing(table, updates, where_sql, where_params):
     return True
 
 
-
 def _j7_classify(text):
     raw = str(text or "").strip()
     low = raw.lower()
@@ -4765,14 +4367,6 @@ def _j7_classify(text):
     intent = "memory"
     category = "General Note"
     priority = "Normal"
-
-    billing_words = [
-        "billing", "bill", "invoice", "invoices", "charge", "paid", "payment",
-        "owe", "owes", "owed", "balance", "statement", "quickbooks", "qbo",
-        "accounts receivable", "past due", "overdue", "send everything", "everything he owes",
-        "everything she owes", "everything they owe", "all he owes", "all she owes", "all they owe",
-    ]
-    send_words = ["send", "email", "text", "forward"]
 
     if any(x in low for x in ["clock me in", "clock in", "start gps"]):
         intent = "clock_in"
@@ -4795,10 +4389,7 @@ def _j7_classify(text):
     elif _j7_re.search(r"\b(find|search|look up|show me)\b", low):
         intent = "search"
         category = "Search"
-    elif any(x in low for x in billing_words) and any(x in low for x in send_words):
-        intent = "send_billing_statement"
-        category = "Billing Note"
-    elif any(x in low for x in billing_words):
+    elif any(x in low for x in ["billing", "bill", "invoice", "charge", "paid", "payment"]):
         intent = "billing_note"
         category = "Billing Note"
     elif any(x in low for x in ["field log", "we did", "installed", "cleaned", "replaced", "poured", "formed", "fixed", "dug", "plumbed"]):
@@ -4817,7 +4408,7 @@ def _j7_classify(text):
         intent = "problem_found"
         category = "Problem Found"
 
-    if any(x in low for x in ["urgent", "asap", "today", "right now", "gas", "electrical", "danger", "overdue", "past due"]):
+    if any(x in low for x in ["urgent", "asap", "today", "right now", "gas", "electrical", "danger"]):
         priority = "High"
 
     title = raw[:90] if raw else "Jarvis Note"
@@ -4831,6 +4422,7 @@ def _j7_classify(text):
         "title": title,
         "body": raw,
     }
+
 
 def _j7_all_jobs(limit=300):
     if not _j7_table_exists("poolops2_jobs"):
@@ -5079,7 +4671,7 @@ def _j7_action_save(request, text, reply):
         "property": item["property"] or item["address"],
     }
 
-    if c["intent"] in ("send_billing_statement", "billing_note", "material_needed", "follow_up", "problem_found", "memory"):
+    if c["intent"] in ("billing_note", "material_needed", "follow_up", "problem_found", "memory"):
         invisible_saved = _j7_insert_existing("invisible_office_items", office_data)
 
     if c["intent"] == "field_log":
@@ -5101,35 +4693,8 @@ def _j7_action_save(request, text, reply):
 
         invisible_saved = _j7_insert_existing("invisible_office_items", dict(office_data, category="Field Log")) or invisible_saved
 
-    action_saved = False
-    if c["intent"] in ("send_billing_statement", "billing_note"):
-        try:
-            action_saved = _j7_insert_existing("jarvis_actions", {
-                "command": c["body"],
-                "intent": c["intent"],
-                "client": item.get("client") or jarvis_extract_customer(c["body"]),
-                "property": item.get("property") or item.get("address") or "",
-                "status": "New",
-                "response": reply,
-                "approval_required": True if USE_POSTGRES else 1,
-                "approved": False if USE_POSTGRES else 0,
-                "data_json": _j7_json.dumps({
-                    "source": "jarvis_brain",
-                    "job_id": item.get("job_id"),
-                    "client": item.get("client") or jarvis_extract_customer(c["body"]),
-                    "property": item.get("property") or item.get("address") or "",
-                    "priority": item.get("priority"),
-                    "future_action": "quickbooks_statement_or_invoice_email",
-                }),
-                "created_by": item.get("created_by"),
-                "created_at": item.get("created_at"),
-            })
-        except Exception:
-            action_saved = False
-
     item["invisible_saved"] = bool(invisible_saved)
     item["field_log_saved"] = bool(field_log_saved)
-    item["jarvis_action_saved"] = bool(action_saved)
     return item
 
 
@@ -5358,161 +4923,6 @@ def jarvis_brain_install_check_level7():
         "stats": stats,
     })
 
-
-def jarvis_extract_customer(command: str):
-    """Best-effort customer/name extraction for plain English Jarvis commands."""
-    import re
-
-    text = (command or "").strip()
-    if not text:
-        return ""
-
-    cleaned = re.sub(r"^jarvis[,:\-\s]+", "", text, flags=re.I).strip()
-
-    patterns = [
-        r"send\s+(.+?)\s+(?:everything|all)\s+(?:he|she|they|this customer)?\s*(?:owes|owe|owed)",
-        r"send\s+(.+?)\s+(?:a\s+)?statement",
-        r"send\s+(.+?)\s+(?:their|his|her)?\s*invoices?",
-        r"email\s+(.+?)\s+(?:a\s+)?statement",
-        r"email\s+(.+?)\s+(?:their|his|her)?\s*invoices?",
-        r"bill\s+(.+?)(?:\s+for\s+|$)",
-        r"invoice\s+(.+?)(?:\s+for\s+|$)",
-        r"how\s+much\s+does\s+(.+?)\s+owe",
-        r"what\s+does\s+(.+?)\s+owe",
-        r"who\s+owes\s+(.+?)$",
-    ]
-
-    for pattern in patterns:
-        match = re.search(pattern, cleaned, flags=re.I)
-        if match:
-            name = match.group(1).strip(" .'\"?!.:")
-            stop_words = {"me", "the", "customer", "client", "everything", "all"}
-            if name and name.lower() not in stop_words:
-                return name.title()
-
-    # Fallback for "Scheller owes..." or "Scheller invoice..."
-    match = re.match(r"([A-Za-z][A-Za-z0-9 .'\-]{1,60})\s+(?:owes|invoice|statement|balance|paid|payment)\b", cleaned, flags=re.I)
-    if match:
-        return match.group(1).strip(" .'\"?!.:").title()
-
-    return ""
-
-
-def jarvis_detect_intent(command: str):
-    """Rule-based Jarvis intent detector for the old /jarvis/action form."""
-    text = (command or "").lower().strip()
-
-    billing_words = [
-        "owe", "owes", "owed", "balance", "statement", "invoice", "invoices",
-        "bill", "billing", "paid", "payment", "quickbooks", "qbo", "accounts receivable",
-        "past due", "overdue", "send everything", "everything he owes", "everything she owes",
-        "everything they owe", "all he owes", "all she owes", "all they owe",
-    ]
-    send_words = ["send", "email", "text", "forward"]
-
-    if any(w in text for w in billing_words):
-        if any(w in text for w in send_words):
-            return "send_billing_statement"
-        return "billing_lookup"
-
-    if any(w in text for w in ["estimate", "quote", "change order"]):
-        return "estimate"
-
-    if any(w in text for w in ["schedule", "calendar", "tomorrow", "next week", "appointment"]):
-        return "schedule"
-
-    if any(w in text for w in ["material", "materials", "pickup", "pick up", "order", "need", "pipe", "fitting", "cement"]):
-        return "material_needed"
-
-    if any(w in text for w in ["call", "text", "email", "follow up", "remind"]):
-        return "follow_up"
-
-    if any(w in text for w in ["job", "site", "house", "property", "i'm at", "im at", "working on"]):
-        return "job"
-
-    if any(w in text for w in ["note", "remember", "log", "field log", "we did", "finished", "completed"]):
-        return "field_log"
-
-    return "general"
-
-
-@app.post("/jarvis/action")
-def jarvis_action(request: Request, command: str = Form(""), client: str = Form(""), property: str = Form(""), due_date: str = Form(""), priority: str = Form("")):
-    u = require_login(request)
-    if not u:
-        return login_redirect()
-
-    command = (command or "").strip()
-    if not command:
-        return RedirectResponse("/jarvis", status_code=303)
-
-    intent = jarvis_detect_intent(command)
-    detected_client = (client or "").strip() or jarvis_extract_customer(command)
-    detected_property = (property or "").strip()
-
-    created_by = u.get("name") or u.get("username") or "Unknown"
-    created_at = datetime.now().strftime("%Y-%m-%d %I:%M %p")
-
-    responses = {
-        "send_billing_statement": "I saved this as a billing action. Once QuickBooks/Gmail are connected, this is the kind of command that will generate the statement/invoices and send one clean email.",
-        "billing_lookup": "I saved this as a billing lookup.",
-        "estimate": "I saved this as an estimate/change-order item.",
-        "schedule": "I saved this as a scheduling item.",
-        "material_needed": "I saved this as a material-needed item.",
-        "follow_up": "I saved this as a follow-up item.",
-        "job": "I saved this as a job item.",
-        "field_log": "I saved this as a field log item.",
-        "general": "I saved this Jarvis command.",
-    }
-    response = responses.get(intent, responses["general"])
-
-    data = {
-        "client": detected_client,
-        "property": detected_property,
-        "due_date": due_date,
-        "priority": priority or "Normal",
-        "source": "legacy_command_center",
-    }
-
-    exec_sql(
-        """
-        INSERT INTO jarvis_actions
-        (command, intent, client, property, status, response, approval_required, approved, data_json, created_by, created_at)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?)
-        """,
-        (
-            command,
-            intent,
-            detected_client,
-            detected_property,
-            "New",
-            response,
-            True if USE_POSTGRES else 1,
-            False if USE_POSTGRES else 0,
-            json.dumps(data),
-            created_by,
-            created_at,
-        )
-    )
-
-    return RedirectResponse("/jarvis", status_code=303)
-
-@app.post("/jarvis/action/{action_id}/done")
-def jarvis_action_done(request: Request, action_id: int):
-    u = require_login(request)
-    if not u:
-        return login_redirect()
-
-    exec_sql(
-        "UPDATE jarvis_actions SET status=?, completed_at=? WHERE id=?",
-        (
-            "Done",
-            datetime.now().strftime("%Y-%m-%d %I:%M %p"),
-            action_id
-        )
-    )
-
-    return RedirectResponse("/jarvis", status_code=303)
 
 @app.get("/jarvis-brain", response_class=HTMLResponse)
 def jarvis_brain_level7_page(request: Request):
@@ -5838,10 +5248,7 @@ async def jarvis_brain_level7_command(request: Request):
         _j7_log_command(request, text, reply, "briefing")
         return JSONResponse({"ok": True, "version": JARVIS_BRAIN_VERSION, "reply": reply, "stats": _j7_dashboard_stats()})
 
-    if c["intent"] == "send_billing_statement":
-        who = jarvis_extract_customer(text)
-        reply = "I saved that as a QuickBooks billing action" + (f" for {who}" if who else "") + ". Once QuickBooks and Gmail are connected, this will become: generate one statement/invoice packet, email it, and log it."
-    elif c["intent"] == "billing_note":
+    if c["intent"] == "billing_note":
         reply = "I saved that as a billing note and tied it to the active or matched job if I could."
     elif c["intent"] == "field_log":
         reply = "I saved that as a field log and tied it to the active or matched job if I could."
@@ -5862,8 +5269,6 @@ async def jarvis_brain_level7_command(request: Request):
         reply += " Invisible Office save confirmed."
     if item.get("field_log_saved"):
         reply += " Field Log save confirmed."
-    if item.get("jarvis_action_saved"):
-        reply += " Jarvis action queue save confirmed."
 
     return JSONResponse({
         "ok": True,
@@ -11323,148 +10728,5 @@ def heinlin_global_crest_check():
 
 # ============================================================
 # END HEINLIN GLOBAL CREST BACKGROUND
-# ============================================================
-
-
-# ============================================================
-# JARVIS QUESTION INTERCEPT FIX
-# Makes questions answer inline instead of saving as job memory.
-# ============================================================
-
-import json as _jq_json
-import re as _jq_re
-
-try:
-    from fastapi.responses import JSONResponse as _JQJSONResponse
-except Exception:
-    pass
-
-
-def _jq_card(kind, title, detail="", url="#"):
-    return {
-        "kind": kind,
-        "title": title,
-        "detail": detail,
-        "url": url,
-    }
-
-
-def _jq_is_question(text):
-    low = str(text or "").lower().strip()
-
-    if "?" in low:
-        return True
-
-    question_starts = (
-        "jarvis what",
-        "jarvis why",
-        "jarvis how",
-        "jarvis when",
-        "jarvis where",
-        "jarvis who",
-        "what ",
-        "why ",
-        "how ",
-        "when ",
-        "where ",
-        "who ",
-        "can you",
-        "can i",
-        "do i",
-        "does",
-        "is there",
-        "are there",
-        "tell me",
-        "explain",
-    )
-
-    return low.startswith(question_starts)
-
-
-def _jq_answer(text):
-    low = str(text or "").lower().strip()
-
-    if "what" in low and ("cannot do" in low or "can't do" in low or "cant do" in low):
-        return {
-            "reply": (
-                "Right now, I can answer inside Jarvis, save notes, save billing notes, save material notes, "
-                "save field logs, track active job context, show job/client/property/search matches, help switch views, "
-                "and summarize what I can see. What I still cannot fully do yet is directly edit every part of the app "
-                "like a human clicking buttons, create invoices in QuickBooks, send texts/emails automatically, approve photos, "
-                "control external systems, or make real admin changes unless that action has been specifically wired into the app."
-            ),
-            "links": [
-                _jq_card("Can Do", "Save job memory", "Billing notes, materials, field logs, problems, follow-ups, active job context."),
-                _jq_card("Can Do", "Answer inline", "Questions should now answer here instead of being filed as a note."),
-                _jq_card("Not Fully Wired Yet", "True app control", "Jarvis still needs specific action routes before it can edit every app record safely."),
-                _jq_card("Not Fully Wired Yet", "Outside systems", "QuickBooks, texts, email, Pentair, and other external systems need integrations before Jarvis can act there."),
-            ],
-        }
-
-    if "active job" in low:
-        return {
-            "reply": "Your active job is the job shown on the current Jarvis page. Use ?Jarvis, set active job to Alexander? to change it.",
-            "links": [
-                _jq_card("Active Job", "Change active job", "Say: Jarvis, set active job to [client name or address]."),
-                _jq_card("Open", "Active Job Center", "Open the active job page.", "/jarvis-brain/job"),
-            ],
-        }
-
-    if "switch login" in low or "switch logins" in low or "return to admin" in low:
-        return {
-            "reply": "Use the Login Bridge to switch between Admin, Crew, and Client. Use Return to Admin to get back to Mike/Admin.",
-            "links": [
-                _jq_card("Switch Login", "Login Bridge", "Switch between Admin, Crew, and Client.", "/jarvis-brain/login-bridge"),
-                _jq_card("Return", "Return to Admin", "Go back to Mike/Admin.", "/jarvis-brain/return-admin"),
-            ],
-        }
-
-    if "what am i forgetting" in low or "what matters" in low:
-        return {
-            "reply": "Check open billing notes, materials, problems, follow-ups, overdue jobs, and client requests. Those are the things most likely to bite you.",
-            "links": [
-                _jq_card("Open", "Today Ops", "Daily command board.", "/jarvis-brain/today"),
-                _jq_card("Open", "Command Desk", "Open Jarvis queue.", "/jarvis-brain/desk"),
-            ],
-        }
-
-    return {
-        "reply": (
-            "I heard that as a question, not a job note. I can answer it here now. "
-            "If you want me to save something, start with billing note, field log, material needed, problem found, or remind me."
-        ),
-        "links": [
-            _jq_card("Tip", "Ask questions normally", "Example: Jarvis, what am I forgetting?"),
-            _jq_card("Tip", "Save notes intentionally", "Example: Jarvis, field log: cleaned heater and tested operation."),
-        ],
-    }
-
-
-@app.middleware("http")
-async def jarvis_question_intercept_middleware(request, call_next):
-    if request.url.path != "/jarvis-brain/command" or request.method.upper() != "POST":
-        return await call_next(request)
-
-    try:
-        body = await request.body()
-        payload = _jq_json.loads(body.decode("utf-8") or "{}")
-    except Exception:
-        payload = {}
-
-    text = str(payload.get("text") or payload.get("message") or "").strip()
-
-    if text and _jq_is_question(text):
-        answer = _jq_answer(text)
-        return _JQJSONResponse({
-            "ok": True,
-            "inline_answer_mode": True,
-            "reply": answer["reply"],
-            "links": answer.get("links", []),
-        })
-
-    return await call_next(request)
-
-# ============================================================
-# END JARVIS QUESTION INTERCEPT FIX
 # ============================================================
 

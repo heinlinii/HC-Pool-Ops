@@ -9,15 +9,8 @@ import os as _jarvis_os
 import re as _jarvis_re
 import json as _jarvis_json
 from datetime import datetime as _jarvis_datetime, date as _jarvis_date, timedelta as _jarvis_timedelta
-from fastapi import Request, Form
 from fastapi.responses import RedirectResponse as _JarvisRedirectResponse, HTMLResponse as _JarvisHTMLResponse, JSONResponse as _JarvisJSONResponse
-from fastapi.templating import Jinja2Templates
-
-try:
-    from .. import app, templates
-except Exception:
-    from app import app
-    templates = Jinja2Templates(directory=_jarvis_os.path.normpath(_jarvis_os.path.join(_jarvis_os.path.dirname(__file__), "..", "templates")))
+from fastapi import Request, Form
 
 JARVIS_BRAIN_ENABLED = _jarvis_os.environ.get("JARVIS_BRAIN_ENABLED", "true").lower() in ("1", "true", "yes", "on")
 JARVIS_BRAIN_TAKES_OVER = _jarvis_os.environ.get("JARVIS_BRAIN_TAKES_OVER", "true").lower() in ("1", "true", "yes", "on")
@@ -340,32 +333,28 @@ def _jjobs_for_user(user):
 
 def _jproperties_for_user(user):
     try:
-        pfu = globals().get("properties_for_user")
-        if callable(pfu):
-            return pfu(user)
+        prop_func = globals().get("properties_for_user")
+        if callable(prop_func):
+            return prop_func(user)
     except Exception:
-        pass
-    if _jis_admin(user) or _jis_employee(user):
-        return _jrows("SELECT * FROM poolops2_properties ORDER BY client,address")
-    if _jis_client(user):
-        cname = _jname(user)
-        return _jrows("SELECT * FROM poolops2_properties WHERE client=? OR client_id=? ORDER BY address", (cname, (user or {}).get("id")))
-    return []
+        if _jis_admin(user) or _jis_employee(user):
+            return _jrows("SELECT * FROM poolops2_properties ORDER BY client,address")
+        if _jis_client(user):
+            cname = _jname(user)
+            return _jrows("SELECT * FROM poolops2_properties WHERE client=? OR client_id=? ORDER BY address", (cname, (user or {}).get("id")))
+        return []
 
 
 def _jphotos_for_user(user):
     try:
-        pfu = globals().get("photos_for_user")
-        if callable(pfu):
-            return pfu(user)
+        return photos_for_user(user)
     except Exception:
-        pass
-    if _jis_admin(user) or _jis_employee(user):
-        return _jrows("SELECT * FROM poolops2_photo_logs ORDER BY id DESC LIMIT 60")
-    if _jis_client(user):
-        cname = _jname(user)
-        return _jrows("SELECT * FROM poolops2_photo_logs WHERE client=? ORDER BY id DESC LIMIT 60", (cname,))
-    return []
+        if _jis_admin(user) or _jis_employee(user):
+            return _jrows("SELECT * FROM poolops2_photo_logs ORDER BY id DESC LIMIT 60")
+        if _jis_client(user):
+            cname = _jname(user)
+            return _jrows("SELECT * FROM poolops2_photo_logs WHERE client=? ORDER BY id DESC LIMIT 60", (cname,))
+        return []
 
 
 def _jopen_memory(limit=12, user=None):

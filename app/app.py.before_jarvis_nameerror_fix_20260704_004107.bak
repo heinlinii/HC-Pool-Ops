@@ -1,0 +1,4480 @@
+from fastapi import FastAPI, Request, Form, UploadFile, File
+from fastapi.responses import RedirectResponse, HTMLResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+from starlette.middleware.sessions import SessionMiddleware
+from pathlib import Path
+from datetime import datetime, date, timedelta
+from app.routes import pool_monitoring, timeclock
+from app.routes.auth import (
+    current_user,
+    require_login,
+    is_admin,
+    is_client,
+    is_employee,
+    login_redirect,
+    admin_redirect,
+)
+import calendar
+import json
+import os
+import shutil
+import sqlite3
+import uuid
+import boto3
+import csv
+import io
+import re
+import html
+try:
+    import psycopg
+    from psycopg.rows import dict_row
+except Exception:
+    psycopg = None
+    dict_row = None
+
+ROOT = Path(__file__).resolve().parent.parent
+DB_PATH = ROOT / "poolops2_local.db"
+LEGACY_DB_PATH = ROOT / "poolops_local.db"
+UPLOAD_DIR = ROOT / "app" / "static" / "uploads"
+UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+R2_ENABLED = os.environ.get("R2_ENABLED", "").lower() == "true"
+R2_ACCOUNT_ID = os.environ.get("R2_ACCOUNT_ID", "")
+R2_ACCESS_KEY_ID = os.environ.get("R2_ACCESS_KEY_ID", "")
+R2_SECRET_ACCESS_KEY = os.environ.get("R2_SECRET_ACCESS_KEY", "")
+R2_BUCKET_NAME = os.environ.get("R2_BUCKET_NAME", "")
+R2_PUBLIC_URL = os.environ.get("R2_PUBLIC_URL", "").rstrip("/")
+
+def r2_client():
+    if not (R2_ENABLED and R2_ACCOUNT_ID and R2_ACCESS_KEY_ID and R2_SECRET_ACCESS_KEY and R2_BUCKET_NAME):
+        return None
+    return boto3.client(
+        "s3",
+        endpoint_url=f"https://{R2_ACCOUNT_ID}.r2.cloudflarestorage.com",
+        aws_access_key_id=R2_ACCESS_KEY_ID,
+        aws_secret_access_key=R2_SECRET_ACCESS_KEY,
+        region_name="auto",
+    )
+THEME_FILE = ROOT / "app" / "dashboard_theme.json"
+DESIGN_FILE = ROOT / "app" / "design_studio.json"
+app = FastAPI(title="Heinlin Field Ops")
+app.add_middleware(SessionMiddleware, secret_key="heinlin-field-ops-local-secret")
+app.mount("/static", StaticFiles(directory=str(ROOT / "app" / "static")), name="static")
+templates = Jinja2Templates(directory=str(ROOT / "app" / "templates"))
+app.include_router(pool_monitoring.router)
+# app.include_router(timeclock.router)
+
+DEFAULT_THEME = {
+    "title": "HEINLIN FIELD OPS",
+    "subtitle": "Got pool related troubles? Ready to enter your work performed, materials used, problems found, reminders, and operational memory? Click on the fountain and tell Jarvis! He'll take care of the rest!",
+    "hero_title": "Command Center",
+    "hero_subtitle": "Jobs, clients, properties, schedule, maps, photos, billing, QuickBooks, weather, and invisible office.",
+    "background_image": "",
+    "calendar_background": "",
+    "clients_image": "/static/uploads/fountain.jpg",
+    "properties_image": "/static/uploads/maria.jpg",
+    "jobs_image": "/static/uploads/McCord.jpg",
+    "schedule_image": "/static/uploads/pate.jpg",
+    "photos_image": "/static/uploads/boger.jpg",
+    "crew_image": "/static/uploads/fountain.jpg",
+    "estimates_image": "/static/uploads/maria.jpg",
+    "job_costing_image": "/static/uploads/McCord.jpg",
+    "quickbooks_image": "/static/uploads/pate.jpg",
+    "weather_image": "/static/uploads/boger.jpg",
+    "field_log_image": "/static/uploads/fountain.jpg",
+    "map_image": "/static/uploads/maria.jpg",
+}
+
+
+
+DATABASE_URL = os.environ.get("DATABASE_URL", "").strip()
+USE_POSTGRES = bool(DATABASE_URL and DATABASE_URL.startswith(("postgres://", "postgresql://")))
+
+
+def db():
+    """Return a SQLite connection locally, or Postgres on Render when DATABASE_URL is set."""
+    if USE_POSTGRES:
+        if psycopg is None:
+            raise RuntimeError("psycopg is required for Postgres DATABASE_URL")
+        return psycopg.connect(DATABASE_URL, row_factory=dict_row)
+    if not DB_PATH.exists() and LEGACY_DB_PATH.exists():
+        shutil.copy2(LEGACY_DB_PATH, DB_PATH)
+    con = sqlite3.connect(DB_PATH)
+    con.row_factory = sqlite3.Row
+    return con
+
+
+def _convert_placeholders(sql: str) -> str:
+    # The app was originally written with SQLite '?' placeholders.
+    # psycopg uses '%s'. This simple conversion is safe for our parameterized app queries.
+    return sql.replace("?", "%s")
+
+
+def rows(sql, params=()):
+    con = db()
+    try:
+        if USE_POSTGRES:
+            s = sql.strip()
+            low = s.lower()
+            if "sqlite_master" in low:
+                with con.cursor() as cur:
+                    cur.execute("SELECT tablename AS name FROM pg_tables WHERE schemaname='public' ORDER BY tablename")
+                    return [dict(r) for r in cur.fetchall()]
+            if low.startswith("pragma table_info"):
+                table = s[s.find("(")+1:s.rfind(")")].strip().strip('"')
+                with con.cursor() as cur:
+                    cur.execute("SELECT column_name AS name FROM information_schema.columns WHERE table_schema='public' AND table_name=%s ORDER BY ordinal_position", (table,))
+                    return [dict(r) for r in cur.fetchall()]
+            with con.cursor() as cur:
+                cur.execute(_convert_placeholders(sql), params)
+                return [dict(r) for r in cur.fetchall()]
+        else:
+            return [dict(r) for r in con.execute(sql, params).fetchall()]
+    finally:
+        con.close()
+
+
+def one(sql, params=()):
+    data = rows(sql, params)
+    return data[0] if data else None
+
+
+def exec_sql(sql, params=()):
+    con = db()
+    try:
+        if USE_POSTGRES:
+            with con.cursor() as cur:
+                cur.execute(_convert_placeholders(sql), params)
+                new_id = None
+                try:
+                    if cur.description:
+                        row = cur.fetchone()
+                        if row:
+                            new_id = list(dict(row).values())[0]
+                except Exception:
+                    pass
+                con.commit()
+                return new_id
+        else:
+            cur = con.execute(sql, params)
+            con.commit()
+            return cur.lastrowid
+    finally:
+        con.close()
+
+
+def table_columns(table):
+    if USE_POSTGRES:
+        return [r["name"] for r in rows("SELECT column_name AS name FROM information_schema.columns WHERE table_schema='public' AND table_name=? ORDER BY ordinal_position", (table,))]
+    con = db()
+    try:
+        return [r["name"] for r in con.execute(f"PRAGMA table_info({table})").fetchall()]
+    finally:
+        con.close()
+
+
+def add_col(table, col, spec):
+    if col not in table_columns(table):
+        try:
+            exec_sql(f"ALTER TABLE {table} ADD COLUMN {col} {spec}")
+        except Exception:
+            pass
+
+
+def ensure_schema():
+    con = db()
+    try:
+        c = con.cursor()
+        if USE_POSTGRES:
+            c.execute("""CREATE TABLE IF NOT EXISTS poolops2_users (
+                id SERIAL PRIMARY KEY,
+                username TEXT UNIQUE NOT NULL,
+                password TEXT NOT NULL,
+                role TEXT DEFAULT 'admin',
+                name TEXT DEFAULT ''
+            )""")
+            c.execute("""CREATE TABLE IF NOT EXISTS poolops2_clients (
+                id SERIAL PRIMARY KEY,
+                name TEXT NOT NULL,
+                contact_name TEXT DEFAULT '', phone TEXT DEFAULT '', mobile TEXT DEFAULT '', email TEXT DEFAULT '',
+                billing_address TEXT DEFAULT '', shipping_address TEXT DEFAULT '', city TEXT DEFAULT '', state TEXT DEFAULT '', zip_code TEXT DEFAULT '',
+                company TEXT DEFAULT '', notes TEXT DEFAULT '', portal_username TEXT DEFAULT '', portal_password TEXT DEFAULT '', card_image TEXT DEFAULT ''
+            )""")
+            c.execute("""CREATE TABLE IF NOT EXISTS poolops2_properties (
+                id SERIAL PRIMARY KEY,
+                client_id INTEGER, client TEXT DEFAULT '', property_name TEXT DEFAULT '', address TEXT DEFAULT '', city TEXT DEFAULT '', state TEXT DEFAULT '', zip_code TEXT DEFAULT '',
+                pool_type TEXT DEFAULT '', pool_size TEXT DEFAULT '', pool_depth TEXT DEFAULT '', cover_type TEXT DEFAULT '', finish_type TEXT DEFAULT '',
+                pump_model TEXT DEFAULT '', filter_model TEXT DEFAULT '', heater_model TEXT DEFAULT '', sanitizer TEXT DEFAULT '', automation_system TEXT DEFAULT '',
+                gate_code TEXT DEFAULT '', service_plan TEXT DEFAULT '', notes TEXT DEFAULT '', card_image TEXT DEFAULT '', latitude REAL, longitude REAL,
+                pool_notes TEXT DEFAULT '', equipment_notes TEXT DEFAULT ''
+            )""")
+
+            c.execute("""CREATE TABLE IF NOT EXISTS pool_monitoring (
+                id SERIAL PRIMARY KEY,
+                client_id INTEGER REFERENCES poolops2_clients(id),
+                property_id INTEGER REFERENCES poolops2_properties(id),
+                system_brand TEXT DEFAULT 'Pentair',
+                system_type TEXT DEFAULT '',
+                pentair_account_email TEXT DEFAULT '',
+                monitoring_status TEXT DEFAULT 'Not Started',
+                last_checked DATE,
+                current_alert TEXT DEFAULT '',
+                equipment_notes TEXT DEFAULT '',
+                service_notes TEXT DEFAULT '',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )""")
+            c.execute("""CREATE TABLE IF NOT EXISTS poolops2_jobs (
+                id SERIAL PRIMARY KEY,
+                client TEXT DEFAULT '', property TEXT DEFAULT '', address TEXT DEFAULT '', job_type TEXT DEFAULT '', status TEXT DEFAULT 'Pending', crew TEXT DEFAULT 'Unassigned',
+                date TEXT DEFAULT '', priority TEXT DEFAULT 'Normal', notes TEXT DEFAULT '', scheduled_start TEXT, scheduled_end TEXT, card_image TEXT DEFAULT ''
+            )""")
+            c.execute("""CREATE TABLE IF NOT EXISTS poolops2_employees (
+                id SERIAL PRIMARY KEY,
+                name TEXT DEFAULT '', role TEXT DEFAULT '', phone TEXT DEFAULT '', email TEXT DEFAULT '', active BOOLEAN DEFAULT true, card_image TEXT DEFAULT '', username TEXT DEFAULT '', password TEXT DEFAULT ''
+            )""")
+            c.execute("""CREATE TABLE IF NOT EXISTS employee_location_points (
+                id SERIAL PRIMARY KEY,
+                employee_id INTEGER,
+                employee_name TEXT DEFAULT '',
+                latitude REAL,
+                longitude REAL,
+                accuracy REAL,
+                speed REAL,
+                heading REAL,
+                source TEXT DEFAULT 'employee_portal',
+                note TEXT DEFAULT '',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )""")
+            c.execute("""CREATE TABLE IF NOT EXISTS poolops2_photo_logs (
+                id SERIAL PRIMARY KEY,
+                job_id INTEGER, property_id INTEGER, client TEXT DEFAULT '', photo_type TEXT DEFAULT 'Progress', title TEXT DEFAULT '',
+                photo_url TEXT DEFAULT '', date TEXT DEFAULT '', notes TEXT DEFAULT '', latitude REAL, longitude REAL
+            )""")
+            c.execute("""CREATE TABLE IF NOT EXISTS poolops2_calendar_day_images (
+                id SERIAL PRIMARY KEY,
+                day_date TEXT UNIQUE NOT NULL,
+                image_url TEXT DEFAULT '',
+                notes TEXT DEFAULT ''
+            )""")
+            c.execute("""CREATE TABLE IF NOT EXISTS poolops2_equipment (
+                id SERIAL PRIMARY KEY,
+                property_id INTEGER,
+                equipment_type TEXT DEFAULT '', brand TEXT DEFAULT '', model TEXT DEFAULT '', serial TEXT DEFAULT '', installed_date TEXT DEFAULT '', notes TEXT DEFAULT ''
+            )""")
+            c.execute("""CREATE TABLE IF NOT EXISTS poolops2_estimates (
+                id SERIAL PRIMARY KEY,
+                client TEXT DEFAULT '', property TEXT DEFAULT '', title TEXT DEFAULT '', status TEXT DEFAULT 'Draft', amount REAL DEFAULT 0, notes TEXT DEFAULT '', created_at TEXT DEFAULT ''
+            )""")
+            c.execute("""CREATE TABLE IF NOT EXISTS field_logs (
+                id SERIAL PRIMARY KEY,
+                employee_name TEXT DEFAULT '', crew TEXT DEFAULT '', client TEXT DEFAULT '', property TEXT DEFAULT '', address TEXT DEFAULT '', date TEXT DEFAULT '',
+                arrival_time TEXT DEFAULT '', departure_time TEXT DEFAULT '', total_hours REAL DEFAULT 0, tools_used TEXT DEFAULT '', materials_used TEXT DEFAULT '',
+                equipment_used TEXT DEFAULT '', work_completed TEXT DEFAULT '', issues TEXT DEFAULT '', next_steps TEXT DEFAULT '', weather TEXT DEFAULT '', photo_count INTEGER DEFAULT 0, created_at TEXT DEFAULT ''
+            )""")
+            c.execute("""CREATE TABLE IF NOT EXISTS poolops2_job_costs (
+                id SERIAL PRIMARY KEY,
+                job_id INTEGER, client TEXT DEFAULT '', labor REAL DEFAULT 0, materials REAL DEFAULT 0, subs REAL DEFAULT 0, equipment REAL DEFAULT 0, fuel REAL DEFAULT 0, other REAL DEFAULT 0, invoice_amount REAL DEFAULT 0, notes TEXT DEFAULT ''
+            )""")
+            c.execute("""CREATE TABLE IF NOT EXISTS poolops2_office_notes (
+                id SERIAL PRIMARY KEY,
+                note TEXT DEFAULT '',
+                created_at TEXT DEFAULT ''
+            )""")
+          
+            c.execute("""CREATE TABLE IF NOT EXISTS invisible_office_items (
+                id SERIAL PRIMARY KEY,
+                source TEXT DEFAULT 'manual',
+                category TEXT DEFAULT 'General Note',
+                title TEXT DEFAULT '',
+                body TEXT DEFAULT '',
+                client TEXT DEFAULT '',
+                property TEXT DEFAULT '',
+                job_id INTEGER,
+                assigned_to TEXT DEFAULT '',
+                due_date TEXT DEFAULT '',
+                priority TEXT DEFAULT 'Normal',
+                status TEXT DEFAULT 'Open',
+                created_by TEXT DEFAULT '',
+                created_at TEXT DEFAULT '',
+                completed_at TEXT DEFAULT ''
+            )""")
+            c.execute("""CREATE TABLE IF NOT EXISTS poolops2_invoices (
+                id SERIAL PRIMARY KEY,
+                job_id INTEGER, client TEXT DEFAULT '', description TEXT DEFAULT '', amount REAL DEFAULT 0, status TEXT DEFAULT 'Draft', date TEXT DEFAULT '', notes TEXT DEFAULT '',
+                qb_invoice_number TEXT DEFAULT '', due_date TEXT DEFAULT '', open_balance REAL DEFAULT 0, source TEXT DEFAULT ''
+            )""")
+        else:
+            c.execute("""CREATE TABLE IF NOT EXISTS poolops2_users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                username TEXT UNIQUE NOT NULL,
+                password TEXT NOT NULL,
+                role TEXT DEFAULT 'admin',
+                name TEXT DEFAULT ''
+            )""")
+            c.execute("""CREATE TABLE IF NOT EXISTS poolops2_clients (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                contact_name TEXT DEFAULT '', phone TEXT DEFAULT '', mobile TEXT DEFAULT '', email TEXT DEFAULT '',
+                billing_address TEXT DEFAULT '', shipping_address TEXT DEFAULT '', city TEXT DEFAULT '', state TEXT DEFAULT '', zip_code TEXT DEFAULT '',
+                company TEXT DEFAULT '', notes TEXT DEFAULT '', portal_username TEXT DEFAULT '', portal_password TEXT DEFAULT '', card_image TEXT DEFAULT ''
+            )""")
+            c.execute("""CREATE TABLE IF NOT EXISTS poolops2_properties (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                client_id INTEGER, client TEXT DEFAULT '', property_name TEXT DEFAULT '', address TEXT DEFAULT '', city TEXT DEFAULT '', state TEXT DEFAULT '', zip_code TEXT DEFAULT '',
+                pool_type TEXT DEFAULT '', pool_size TEXT DEFAULT '', pool_depth TEXT DEFAULT '', cover_type TEXT DEFAULT '', finish_type TEXT DEFAULT '',
+                pump_model TEXT DEFAULT '', filter_model TEXT DEFAULT '', heater_model TEXT DEFAULT '', sanitizer TEXT DEFAULT '', automation_system TEXT DEFAULT '',
+                gate_code TEXT DEFAULT '', service_plan TEXT DEFAULT '', notes TEXT DEFAULT '', card_image TEXT DEFAULT '', latitude REAL, longitude REAL,
+                pool_notes TEXT DEFAULT '', equipment_notes TEXT DEFAULT ''
+            )""")
+            c.execute("""CREATE TABLE IF NOT EXISTS pool_monitoring (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                client_id INTEGER,
+                property_id INTEGER,
+                system_brand TEXT DEFAULT 'Pentair',
+                system_type TEXT DEFAULT '',
+                pentair_account_email TEXT DEFAULT '',
+                monitoring_status TEXT DEFAULT 'Not Started',
+                last_checked DATE,
+                current_alert TEXT DEFAULT '',
+                equipment_notes TEXT DEFAULT '',
+                service_notes TEXT DEFAULT '',
+                created_at TEXT DEFAULT '',
+                updated_at TEXT DEFAULT ''
+            )""")
+
+            c.execute("""CREATE TABLE IF NOT EXISTS poolops2_jobs (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                client TEXT DEFAULT '', property TEXT DEFAULT '', address TEXT DEFAULT '', job_type TEXT DEFAULT '', status TEXT DEFAULT 'Pending', crew TEXT DEFAULT 'Unassigned',
+                date TEXT DEFAULT '', priority TEXT DEFAULT 'Normal', notes TEXT DEFAULT '', scheduled_start TEXT, scheduled_end TEXT, card_image TEXT DEFAULT ''
+            )""")
+            c.execute("""CREATE TABLE IF NOT EXISTS poolops2_employees (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT DEFAULT '', role TEXT DEFAULT '', phone TEXT DEFAULT '', email TEXT DEFAULT '', active BOOLEAN DEFAULT true, card_image TEXT DEFAULT '', username TEXT DEFAULT '', password TEXT DEFAULT ''
+            )""")
+            c.execute("""CREATE TABLE IF NOT EXISTS employee_location_points (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                employee_id INTEGER,
+                employee_name TEXT DEFAULT '',
+                latitude REAL,
+                longitude REAL,
+                accuracy REAL,
+                speed REAL,
+                heading REAL,
+                source TEXT DEFAULT 'employee_portal',
+                note TEXT DEFAULT '',
+                created_at TEXT DEFAULT ''
+            )""")
+            c.execute("""CREATE TABLE IF NOT EXISTS poolops2_photo_logs (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                job_id INTEGER, property_id INTEGER, client TEXT DEFAULT '', photo_type TEXT DEFAULT 'Progress', title TEXT DEFAULT '',
+                photo_url TEXT DEFAULT '', date TEXT DEFAULT '', notes TEXT DEFAULT '', latitude REAL, longitude REAL
+            )""")
+            c.execute("""CREATE TABLE IF NOT EXISTS poolops2_calendar_day_images (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                day_date TEXT UNIQUE NOT NULL,
+                image_url TEXT DEFAULT '',
+                notes TEXT DEFAULT ''
+            )""")
+            c.execute("""CREATE TABLE IF NOT EXISTS poolops2_equipment (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                property_id INTEGER,
+                equipment_type TEXT DEFAULT '', brand TEXT DEFAULT '', model TEXT DEFAULT '', serial TEXT DEFAULT '', installed_date TEXT DEFAULT '', notes TEXT DEFAULT ''
+            )""")
+            c.execute("""CREATE TABLE IF NOT EXISTS poolops2_estimates (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                client TEXT DEFAULT '', property TEXT DEFAULT '', title TEXT DEFAULT '', status TEXT DEFAULT 'Draft', amount REAL DEFAULT 0, notes TEXT DEFAULT '', created_at TEXT DEFAULT ''
+            )""")
+            c.execute("""CREATE TABLE IF NOT EXISTS field_logs (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                employee_name TEXT DEFAULT '', crew TEXT DEFAULT '', client TEXT DEFAULT '', property TEXT DEFAULT '', address TEXT DEFAULT '', date TEXT DEFAULT '',
+                arrival_time TEXT DEFAULT '', departure_time TEXT DEFAULT '', total_hours REAL DEFAULT 0, tools_used TEXT DEFAULT '', materials_used TEXT DEFAULT '',
+                equipment_used TEXT DEFAULT '', work_completed TEXT DEFAULT '', issues TEXT DEFAULT '', next_steps TEXT DEFAULT '', weather TEXT DEFAULT '', photo_count INTEGER DEFAULT 0, created_at TEXT DEFAULT ''
+            )""")
+            c.execute("""CREATE TABLE IF NOT EXISTS poolops2_job_costs (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                job_id INTEGER, client TEXT DEFAULT '', labor REAL DEFAULT 0, materials REAL DEFAULT 0, subs REAL DEFAULT 0, equipment REAL DEFAULT 0, fuel REAL DEFAULT 0, other REAL DEFAULT 0, invoice_amount REAL DEFAULT 0, notes TEXT DEFAULT ''
+            )""")
+            c.execute("""CREATE TABLE IF NOT EXISTS poolops2_office_notes (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                note TEXT DEFAULT '',
+                created_at TEXT DEFAULT ''
+            )""")
+            c.execute("""CREATE TABLE IF NOT EXISTS invisible_office_items (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                source TEXT DEFAULT 'manual',
+                category TEXT DEFAULT 'General Note',
+                title TEXT DEFAULT '',
+                body TEXT DEFAULT '',
+                client TEXT DEFAULT '',
+                property TEXT DEFAULT '',
+                job_id INTEGER,
+                assigned_to TEXT DEFAULT '',
+                due_date TEXT DEFAULT '',
+                priority TEXT DEFAULT 'Normal',
+                status TEXT DEFAULT 'Open',
+                created_by TEXT DEFAULT '',
+                created_at TEXT DEFAULT '',
+                completed_at TEXT DEFAULT ''
+            )""")
+            c.execute("""CREATE TABLE IF NOT EXISTS poolops2_invoices (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                job_id INTEGER, client TEXT DEFAULT '', description TEXT DEFAULT '', amount REAL DEFAULT 0, status TEXT DEFAULT 'Draft', date TEXT DEFAULT '', notes TEXT DEFAULT '',
+                qb_invoice_number TEXT DEFAULT '', due_date TEXT DEFAULT '', open_balance REAL DEFAULT 0, source TEXT DEFAULT ''
+            )""")
+        con.commit()
+    finally:
+        con.close()
+
+    for table, cols in {
+        "poolops2_users": [("active", "BOOLEAN DEFAULT true" if USE_POSTGRES else "INTEGER DEFAULT 1")],
+        "poolops2_clients": [("portal_username", "TEXT DEFAULT ''"), ("portal_password", "TEXT DEFAULT ''"), ("card_image", "TEXT DEFAULT ''")],
+        "poolops2_properties": [("card_image", "TEXT DEFAULT ''"), ("pool_notes", "TEXT DEFAULT ''"), ("equipment_notes", "TEXT DEFAULT ''"), ("latitude", "REAL"), ("longitude", "REAL")],
+        "poolops2_jobs": [("scheduled_start", "TEXT"), ("scheduled_end", "TEXT"), ("card_image", "TEXT DEFAULT ''")],
+        "poolops2_employees": [("username", "TEXT DEFAULT ''"), ("password", "TEXT DEFAULT ''"), ("card_image", "TEXT DEFAULT ''"), ("clocked_in", "BOOLEAN DEFAULT false" if USE_POSTGRES else "INTEGER DEFAULT 0"), ("clock_lat", "REAL"), ("clock_lng", "REAL"), ("clocked_in_at", "TEXT DEFAULT ''"), ("last_seen_at", "TEXT DEFAULT ''")],
+        "poolops2_photo_logs": [("property_id", "INTEGER"), ("latitude", "REAL"), ("longitude", "REAL")],
+        "field_logs": [("latitude", "REAL"), ("longitude", "REAL")],
+        "poolops2_invoices": [("qb_invoice_number", "TEXT DEFAULT ''"), ("due_date", "TEXT DEFAULT ''"), ("open_balance", "REAL DEFAULT 0"), ("source", "TEXT DEFAULT ''")],
+    }.items():
+        for col, spec in cols:
+            add_col(table, col, spec)
+
+    if not one("SELECT id FROM poolops2_users WHERE username=?", ("mike",)):
+        exec_sql("INSERT INTO poolops2_users (username,password,role,name) VALUES (?,?,?,?)", ("mike", "mike", "admin", "Mike"))
+
+@app.on_event("startup")
+def startup():
+    ensure_schema()
+    ensure_legacy_schema()
+    print("HEINLIN FIELD OPS READY")
+
+
+def theme():
+    data = DEFAULT_THEME.copy()
+    if THEME_FILE.exists():
+        try:
+            data.update(json.loads(THEME_FILE.read_text(encoding="utf-8")))
+        except Exception:
+            pass
+    return data
+
+
+def save_theme(data):
+    THEME_FILE.write_text(json.dumps(data, indent=2), encoding="utf-8")
+
+DEFAULT_DESIGN = {
+    "global": {
+        "brass_color": "#d6b36a",
+        "dark_bg": "#071017",
+        "card_bg": "rgba(7, 14, 20, .94)",
+        "card_radius": "24px",
+        "page_padding": "80px 18px 40px",
+        "button_height": "104px",
+        "button_radius": "22px",
+        "mobile_page_padding": "56px 12px 28px",
+    },
+    "dashboard": {
+        "legacy_line": "Heinlin Field Ops • Founded 1907 • 5 Generations Strong",
+        "crest_image": "/static/heinlin-wide-crest.png",
+        "motto_first": "Work Hard.",
+        "motto_second": "Play Harder.",
+        "hero_subline": "Built by hand. Run like a machine. No lost notes. No mystery jobs.",
+        "search_title": "What needs handled?",
+        "search_subtitle": "Search it, say it, or hit the button.",
+        "search_placeholder": "Find a client, job, property, photo, log, map, weather...",
+        "handle_button": "Handle It",
+        "page_top_space": "54px",
+        "crest_width": "920px",
+        "crest_height": "420px",
+        "motto_size": "clamp(3rem, 7vw, 7.8rem)",
+        "motto_top_space": "22px",
+        "section_gap": "22px",
+        "button_height": "104px",
+    },
+    "login": {
+        "title": "Heinlin Field Ops",
+        "legacy_line": "Founded 1907 • 5 Generations Strong",
+        "subtitle": "Built by the hands that perfected the term work hard play harder.",
+        "button_text": "Enter Operations Center",
+        "crest_image": "/static/heinlin-wide-crest.png",
+        "background_image": "/static/heinlin-wide-crest.png",
+        "crest_width": "760px",
+        "card_width": "460px",
+    },
+    "schedule": {
+        "title": "Schedule",
+        "day_title": "Daily Schedule",
+        "week_title": "Weekly Schedule",
+        "subtitle": "Jobs, field work, service calls, and crew movement.",
+        "empty_text": "No jobs are scheduled for this view yet.",
+        "button_daily": "Daily",
+        "button_weekly": "Weekly",
+        "button_yearly": "Yearly",
+        "button_jobs": "Jobs",
+        "button_dashboard": "Dashboard",
+        "button_text": "Add Schedule Item",
+    },
+    "map": {
+        "title": "Field Map",
+        "subtitle": "Property pins, clocked-in employees, and jobsite locations.",
+        "map_height": "560px",
+        "mobile_map_height": "480px",
+        "top_padding": "115px",
+        "mobile_top_padding": "95px",
+    },
+    "clients": {
+        "title": "Clients",
+        "subtitle": "The people, properties, pools, and promises we are responsible for.",
+        "button_text": "Add Client",
+    },
+    "properties": {
+        "title": "Properties",
+        "subtitle": "Every pool, address, gate code, equipment pad, and detail in one place.",
+        "button_text": "Add Property",
+    },
+    "jobs": {
+        "title": "Jobs",
+        "subtitle": "Scheduled work, service calls, repairs, and field notes.",
+        "button_text": "Add Job",
+    },
+    "crew": {
+        "title": "Employees",
+        "subtitle": "Crew access, login credentials, roles, and field visibility.",
+        "button_text": "Add Employee",
+    },
+    "employee": {
+        "title": "Crew Portal",
+        "subtitle": "My jobs, clock in/out, photos, field notes, weather, and map.",
+        "button_text": "Clock / Field Work",
+    },
+    "crew_dashboard": {
+        "greeting_prefix": "Good morning",
+        "title": "Crew Portal",
+        "subtitle": "My jobs, clock in/out, photos, field notes, weather, and map.",
+        "section_title": "Crew Tools",
+        "crest_image": "/static/heinlin-wide-crest.png",
+        "crest_width": "340px",
+        "crest_top": "210px",
+        "crest_right": "70px",
+        "crest_opacity": "0.92",
+        "hero_padding_top": "150px",
+        "dashboard_padding_top": "120px",
+        "tools": [
+            {"label": "My Day", "description": "Today's work", "href": "/crew/my-day", "enabled": True},
+            {"label": "Crew Portal", "description": "Clock and GPS", "href": "/employee", "enabled": True},
+            {"label": "My Jobs", "description": "Assigned work", "href": "/jobs", "enabled": True},
+            {"label": "Photos", "description": "Field proof", "href": "/photos", "enabled": True},
+            {"label": "Schedule", "description": "Today", "href": "/schedule/day", "enabled": True},
+            {"label": "Map", "description": "Locations", "href": "/map", "enabled": True},
+            {"label": "Weather", "description": "Conditions", "href": "/weather", "enabled": True},
+            {"label": "GPS Day Log", "description": "Raw GPS points", "href": "/gps/day", "enabled": True},
+            {"label": "GPS Stops", "description": "Stops and time on site", "href": "/gps/stops", "enabled": True},
+            {"label": "AI Systems", "description": "Jarvis tools and office memory", "href": "/ai-systems", "enabled": True},
+            {"label": "Talk to Jarvis", "description": "Tell Jarvis what needs handled, filed, remembered, or followed up.", "href": "/assistant-interview-live", "enabled": True},
+            {"label": "Invisible Office", "description": "Saved notes, follow-ups, reminders, materials, problems, billing notes, and Jarvis-filed work.", "href": "/invisible-office", "enabled": True},
+        ],
+    },
+    "ai_systems": {
+        "title": "AI Systems",
+        "subtitle": "All Jarvis tools, office memory, and AI workflows in one place.",
+        "cards": [
+            {"label": "Talk to Jarvis", "description": "Tell Jarvis what needs handled, filed, remembered, or followed up.", "href": "/assistant-interview-live", "image": "", "enabled": True},
+            {"label": "Invisible Office", "description": "Saved notes, follow-ups, reminders, materials, problems, billing notes, and Jarvis-filed work.", "href": "/invisible-office", "image": "", "enabled": True},
+            {"label": "Organize My Day", "description": "Turn work, notes, and priorities into a useful day plan.", "href": "/organize-my-day", "image": "", "enabled": True},
+            {"label": "Design Studio", "description": "Edit dashboard wording, buttons, and visual settings.", "href": "/design-studio", "image": "", "enabled": True, "roles": ["admin"]},
+            {"label": "Link Check", "description": "Check app navigation and find broken internal links.", "href": "/admin/link-check", "image": "", "enabled": True, "roles": ["admin"]},
+            {"label": "Crew Portal", "description": "Clock, GPS, jobs, photos, and field tools.", "href": "/employee", "image": "", "enabled": True, "roles": ["employee"]},
+        ],
+    },
+    "photos": {
+        "title": "Photos",
+        "subtitle": "Job photos, property photos, progress shots, and field proof.",
+        "button_text": "Upload Photos",
+    },
+    "pool_monitoring": {
+        "title": "Pool Monitoring",
+        "subtitle": "Pentair access, pool alerts, service notes, and monitored systems.",
+        "button_text": "Add Pool Monitor",
+    },
+}
+
+def deep_update(base, updates):
+    for key, value in updates.items():
+        if isinstance(value, dict) and isinstance(base.get(key), dict):
+            deep_update(base[key], value)
+        else:
+            base[key] = value
+    return base
+
+
+def design_settings():
+    data = json.loads(json.dumps(DEFAULT_DESIGN))
+
+    if DESIGN_FILE.exists():
+        try:
+            saved = json.loads(DESIGN_FILE.read_text(encoding="utf-8"))
+            deep_update(data, saved)
+        except Exception:
+            pass
+
+    return data
+
+
+def save_design_settings(data):
+    DESIGN_FILE.write_text(json.dumps(data, indent=2), encoding="utf-8")
+
+
+# Auth helpers live in app/routes/auth.py for Core 2 route refactor.
+
+
+def is_office_user(user):
+    return user and str(user.get("role", "")).lower().strip() == "office"
+
+
+def can_accounting(user):
+    return is_admin(user) or is_office_user(user)
+
+
+def client_name_for_user(user):
+    if not user:
+        return ""
+    if is_client(user):
+        c = one("SELECT * FROM poolops2_clients WHERE id=?", (user.get("id"),))
+        return (c or {}).get("name", "")
+    return ""
+
+
+def client_can_access(user, client_id=None, client_name=""):
+    if is_admin(user):
+        return True
+    if not is_client(user):
+        return False
+    if client_id is not None and str(user.get("id")) == str(client_id):
+        return True
+    own = client_name_for_user(user).strip().lower()
+    return bool(own and client_name and own == str(client_name).strip().lower())
+
+
+def property_can_access(user, prop):
+    if is_admin(user):
+        return True
+    if not prop:
+        return False
+    if is_client(user):
+        return client_can_access(user, prop.get("client_id"), prop.get("client"))
+    if is_employee(user):
+        return True
+    return False
+
+
+def employee_can_access_job(user, job):
+    if is_admin(user):
+        return True
+    if not job:
+        return False
+    if is_employee(user):
+        crew = str(job.get("crew") or "").lower()
+        name = str(user.get("name") or "").lower()
+        return crew in ("", "unassigned") or (name and name in crew)
+    return False
+
+
+def jobs_for_user(user):
+    if is_admin(user):
+        return rows("SELECT * FROM poolops2_jobs ORDER BY id DESC")
+
+    if is_employee(user):
+        name = str(user.get("name") or "").strip()
+        username = str(user.get("username") or "").strip()
+
+        return rows(
+            """
+            SELECT * FROM poolops2_jobs
+            WHERE crew LIKE ?
+               OR crew LIKE ?
+               OR crew=''
+               OR crew='Unassigned'
+               OR crew IS NULL
+            ORDER BY id DESC
+            """,
+            (f"%{name}%", f"%{username}%")
+        )
+
+    if is_client(user):
+        cname = client_name_for_user(user)
+        return rows("SELECT * FROM poolops2_jobs WHERE client=? ORDER BY id DESC", (cname,))
+
+    return []
+
+
+def properties_for_user(user):
+    if is_admin(user) or is_employee(user):
+        return rows("SELECT * FROM poolops2_properties ORDER BY client,address")
+    if is_client(user):
+        cname = client_name_for_user(user)
+        return rows("SELECT * FROM poolops2_properties WHERE client_id=? OR client=? ORDER BY address", (user.get("id"), cname))
+    return []
+
+def photos_for_user(user):
+    if is_admin(user) or is_employee(user):
+        return rows("SELECT * FROM poolops2_photo_logs ORDER BY id DESC")
+    if is_client(user):
+        cname = client_name_for_user(user)
+        return rows("SELECT * FROM poolops2_photo_logs WHERE client=? ORDER BY id DESC", (cname,))
+    return []
+
+
+# login_redirect imported from app.routes.auth
+
+def safe_filename(filename):
+    ext = Path(filename or "photo.jpg").suffix.lower() or ".jpg"
+    return f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:8]}{ext}"
+
+
+async def save_upload(file: UploadFile | None):
+    if not file or not file.filename:
+        return ""
+
+    name = safe_filename(file.filename)
+    content = await file.read()
+
+    client = r2_client()
+
+    if client:
+        try:
+            key = f"uploads/{name}"
+
+            client.put_object(
+                Bucket=R2_BUCKET_NAME,
+                Key=key,
+                Body=content,
+                ContentType=file.content_type or "application/octet-stream",
+            )
+
+            if R2_PUBLIC_URL:
+                return f"{R2_PUBLIC_URL}/{key}"
+
+            return f"https://pub-{R2_ACCOUNT_ID}.r2.dev/{key}"
+
+        except Exception as e:
+            print(f"R2 upload failed, falling back to local storage: {e}")
+
+    path = UPLOAD_DIR / name
+
+    with path.open("wb") as f:
+        f.write(content)
+
+    return f"/static/uploads/{name}"
+
+
+def schedule_date(job):
+    val = job.get("scheduled_start") or job.get("date") or ""
+
+    if not val:
+        return ""
+
+    # Render/Postgres may return real date/datetime objects.
+    if isinstance(val, datetime):
+        return val.date().isoformat()
+
+    if isinstance(val, date):
+        return val.isoformat()
+
+    # SQLite/local usually returns text.
+    val = str(val).strip()
+
+    if not val:
+        return ""
+
+    return val[:10]
+
+def month_grid(year=None, month=None, job_rows=None):
+    today = date.today()
+    year = year or today.year
+    month = month or today.month
+    cal = calendar.Calendar(firstweekday=6)
+    day_rows = []
+    jobs = job_rows if job_rows is not None else rows("SELECT * FROM poolops2_jobs ORDER BY id DESC")
+    images = {r["day_date"]: r for r in rows("SELECT * FROM poolops2_calendar_day_images")}
+    for d in cal.itermonthdates(year, month):
+        ds = d.isoformat()
+        day_rows.append({
+            "date": ds,
+            "day": d.day,
+            "in_month": d.month == month,
+            "is_today": d == today,
+            "jobs": [j for j in jobs if schedule_date(j) == ds],
+            "image": images.get(ds, {}).get("image_url", ""),
+            "notes": images.get(ds, {}).get("notes", ""),
+        })
+    return day_rows
+
+
+def ctx(request, **kw):
+    u = current_user(request)
+    return {
+        "request": request,
+        "user": u,
+        "theme": theme(),
+        "design": design_settings(),
+        "is_admin": is_admin(u),
+        "is_client": is_client(u),
+        "is_employee": is_employee(u),
+        "is_office": is_office_user(u),
+        **kw,
+    }
+
+
+# Route modules that need ctx/app helpers must be included AFTER ctx exists.
+from app.routes import properties
+app.include_router(properties.router)
+
+from app.routes import crew
+app.include_router(crew.router)
+
+from app.routes import schedule_board
+app.include_router(schedule_board.router)
+
+
+@app.get("/", response_class=HTMLResponse)
+def root(request: Request):
+    if current_user(request):
+        return RedirectResponse("/jarvis", status_code=303)
+    return RedirectResponse("/login", status_code=303)
+
+
+@app.get("/login", response_class=HTMLResponse)
+def login_page(request: Request):
+    return templates.TemplateResponse("login.html", ctx(request, error=""))
+
+
+@app.post("/login")
+def login_post(request: Request, username: str = Form(""), password: str = Form("")):
+    ensure_schema()
+
+    username = username.strip()
+    password = password.strip()
+
+    if not username or not password:
+        return templates.TemplateResponse(
+            "login.html",
+            ctx(request, error="Enter a username and password.")
+        )
+
+    username_l = username.lower()
+
+    # 1. Admin login from users table
+    u = one(
+        """
+       SELECT * FROM poolops2_users
+WHERE lower(username)=lower(?)
+  AND password=?
+  AND lower(coalesce(role,'')) IN
+      ('admin','office','crew','employee','client')
+        """,
+        (username, password)
+    )
+
+    if u:
+        role = str(u.get("role") or "crew").lower()
+
+        if role == "employee":
+            role = "crew"
+
+        request.session["user"] = {
+            "id": u["id"],
+            "username": u.get("username") or u.get("name") or username,
+            "role": role,
+            "name": u.get("name") or u.get("username") or username,
+        }
+
+        if role == "admin":
+            return RedirectResponse("/jarvis", status_code=303)
+
+        if role == "office":
+            return RedirectResponse("/billing", status_code=303)
+
+        if role in ("crew", "employee", "worker"):
+            return RedirectResponse("/crew-home", status_code=303)
+
+        if role == "client":
+            return RedirectResponse("/client-portal", status_code=303)
+
+        return RedirectResponse("/jarvis", status_code=303)
+    # 2. Crew / employee login
+    if USE_POSTGRES:
+        employee_sql = """
+            SELECT * FROM poolops2_employees
+            WHERE coalesce(password,'')=?
+              AND coalesce(active::text, 'true') IN ('true', '1', 't')
+        """
+    else:
+        employee_sql = """
+            SELECT * FROM poolops2_employees
+            WHERE coalesce(password,'')=?
+              AND coalesce(active, 1)=1
+        """
+
+    employees = rows(employee_sql, (password,))
+
+    for e in employees:
+        emp_username = str(e.get("username") or "").strip().lower()
+        emp_name = str(e.get("name") or "").strip().lower()
+        emp_first = emp_name.split(" ")[0] if emp_name else ""
+        emp_dot_name = emp_name.replace(" ", ".")
+        emp_nospace_name = emp_name.replace(" ", "")
+
+        accepted_names = {
+            emp_username,
+            emp_name,
+            emp_first,
+            emp_dot_name,
+            emp_nospace_name,
+        }
+
+        if username_l in accepted_names:
+            request.session["user"] = {
+                "id": e["id"],
+                "username": e.get("username") or e.get("name") or username,
+                "role": "employee",
+                "name": e.get("name") or e.get("username") or username
+            }
+            return RedirectResponse("/employee", status_code=303)
+
+    # 3. Crew/employee fallback from users table
+    crew_user = one(
+        """
+        SELECT * FROM poolops2_users
+        WHERE lower(username)=lower(?)
+          AND password=?
+          AND lower(coalesce(role,'')) IN ('employee', 'crew')
+        """,
+        (username, password)
+    )
+
+    if crew_user:
+        request.session["user"] = {
+            "id": crew_user["id"],
+            "username": crew_user.get("username") or username,
+            "role": "employee",
+            "name": crew_user.get("name") or crew_user.get("username") or username
+        }
+        return RedirectResponse("/employee", status_code=303)
+
+    # 4. Client portal login
+    c = one(
+        """
+        SELECT * FROM poolops2_clients
+        WHERE lower(portal_username)=lower(?)
+          AND portal_password=?
+        """,
+        (username, password)
+    )
+
+    if c:
+        request.session["user"] = {
+            "id": c["id"],
+            "username": c["portal_username"],
+            "role": "client",
+            "name": c["name"]
+        }
+        return RedirectResponse("/client-portal", status_code=303)
+
+    return templates.TemplateResponse(
+        "login.html",
+        ctx(request, error="Login not found. Check the username and password.")
+    )
+
+@app.get("/logout")
+def logout(request: Request):
+    request.session.clear()
+    return RedirectResponse("/login", status_code=303)
+
+
+
+# Dashboard and Command Center routes live in app/routes/dashboard.py
+
+# =========================================
+# SAFE NAVIGATION ALIASES
+# Keeps old dashboard/client/crew buttons from breaking
+# =========================================
+
+@app.get("/handle-it", response_class=HTMLResponse)
+def handle_it_alias(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    return RedirectResponse("/organize-my-day", status_code=303)
+
+
+@app.get("/send-it", response_class=HTMLResponse)
+def send_it_alias(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    return RedirectResponse("/assistant-interview-live", status_code=303)
+
+
+@app.get("/sendit", response_class=HTMLResponse)
+def sendit_alias(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    return RedirectResponse("/assistant-interview-live", status_code=303)
+
+
+@app.get("/talk-to-jarvis", response_class=HTMLResponse)
+def talk_to_jarvis_alias(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    return RedirectResponse("/assistant-interview-live", status_code=303)
+
+
+@app.get("/talk-to-jarvis-live", response_class=HTMLResponse)
+def talk_to_jarvis_live_alias(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    return RedirectResponse("/assistant-interview-live", status_code=303)
+
+
+@app.get("/ai", response_class=HTMLResponse)
+def ai_alias(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    return RedirectResponse("/assistant-interview-live", status_code=303)
+
+
+@app.get("/assistant-live", response_class=HTMLResponse)
+def assistant_live_alias(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    return RedirectResponse("/assistant-interview-live", status_code=303)
+
+
+@app.get("/schedule/today", response_class=HTMLResponse)
+def schedule_today_alias(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    return RedirectResponse("/schedule/day", status_code=303)
+
+
+@app.get("/todays-schedule", response_class=HTMLResponse)
+def todays_schedule_alias(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    return RedirectResponse("/schedule/day", status_code=303)
+
+def classify_invisible_office_item(text: str):
+    """
+    First-pass Jarvis filing logic.
+    This sorts Assistant Live messages into useful Invisible Office buckets.
+    """
+    raw = (text or "").strip()
+    lower = raw.lower()
+
+    category = "General Note"
+    priority = "Normal"
+
+    if any(w in lower for w in ["call", "text", "email", "follow up", "follow-up", "reach out", "check with"]):
+        category = "Client Follow-Up"
+
+    if any(w in lower for w in ["material", "materials", "need", "buy", "pickup", "pick up", "order", "salt", "check valve", "pipe", "fitting"]):
+        category = "Material Needed"
+
+    if any(w in lower for w in ["bill", "billing", "invoice", "paid", "payment", "charge", "estimate", "quote"]):
+        category = "Billing Note"
+
+    if any(w in lower for w in ["schedule", "tomorrow", "next week", "monday", "tuesday", "wednesday", "thursday", "friday"]):
+        category = "Schedule Task"
+
+    if any(w in lower for w in ["problem", "issue", "broken", "leak", "leaking", "error", "failed", "bad", "cracked", "not working"]):
+        category = "Problem Found"
+
+    if any(w in lower for w in ["heater", "pump", "filter", "automation", "salt cell", "intellicenter", "pentair", "hayward", "valve", "actuator"]):
+        category = "Equipment Note"
+
+    if any(w in lower for w in ["urgent", "asap", "emergency", "today", "right now", "critical"]):
+        priority = "High"
+
+    title = raw[:70].strip()
+    if len(raw) > 70:
+        title += "..."
+
+    return {
+        "category": category,
+        "priority": priority,
+        "title": title or "Jarvis Note",
+        "body": raw,
+    }
+
+
+def save_invisible_office_item(
+    request: Request,
+    body: str,
+    source: str = "manual",
+    category: str = "",
+    title: str = "",
+    client: str = "",
+    property: str = "",
+    job_id: int | None = None,
+    assigned_to: str = "",
+    due_date: str = "",
+    priority: str = "",
+):
+    u = current_user(request) or {}
+
+    classified = classify_invisible_office_item(body)
+
+    final_category = category.strip() or classified["category"]
+    final_title = title.strip() or classified["title"]
+    final_priority = priority.strip() or classified["priority"]
+
+    exec_sql(
+        """
+        INSERT INTO invisible_office_items
+        (source, category, title, body, client, property, job_id, assigned_to, due_date, priority, status, created_by, created_at)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)
+        """,
+        (
+            source,
+            final_category,
+            final_title,
+            body.strip(),
+            client.strip(),
+            property.strip(),
+            job_id,
+            assigned_to.strip(),
+            due_date.strip(),
+            final_priority,
+            "Open",
+            u.get("name") or u.get("username") or "",
+            datetime.now().isoformat(timespec="seconds"),
+        )
+    )
+
+@app.get("/assistant-interview-live", response_class=HTMLResponse)
+def assistant_interview_live(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+
+    return templates.TemplateResponse(
+        "assistant_interview_live.html",
+        ctx(request)
+    )
+
+
+@app.get("/ai-systems", response_class=HTMLResponse)
+def ai_systems(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+
+    return templates.TemplateResponse(
+        "ai_systems.html",
+        ctx(request)
+    )
+
+
+@app.post("/assistant-live/send")
+def assistant_live_send(
+    request: Request,
+    message: str = Form(""),
+    client: str = Form(""),
+    property: str = Form(""),
+    due_date: str = Form(""),
+    priority: str = Form(""),
+):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+
+    text = message.strip()
+
+    if text:
+        save_invisible_office_item(
+            request=request,
+            body=text,
+            source="Assistant Live",
+            client=client,
+            property=property,
+            due_date=due_date,
+            priority=priority,
+        )
+
+    return RedirectResponse("/invisible-office", status_code=303)
+
+@app.get("/today", response_class=HTMLResponse)
+def today_alias(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    return RedirectResponse("/organize-my-day", status_code=303)
+
+
+@app.get("/todays-work", response_class=HTMLResponse)
+def todays_work_alias(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    return RedirectResponse("/organize-my-day", status_code=303)
+
+
+@app.get("/today-work", response_class=HTMLResponse)
+def today_work_alias(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    return RedirectResponse("/organize-my-day", status_code=303)
+
+
+@app.get("/my-day", response_class=HTMLResponse)
+def my_day_alias(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+
+    if is_employee(u):
+        return RedirectResponse("/crew/my-day", status_code=303)
+
+    return RedirectResponse("/organize-my-day", status_code=303)
+
+
+@app.get("/crew-login", response_class=HTMLResponse)
+def crew_login_alias(request: Request):
+    return RedirectResponse("/login", status_code=303)
+
+
+@app.get("/crew-portal", response_class=HTMLResponse)
+def crew_portal_alias(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    return RedirectResponse("/employee", status_code=303)
+
+
+@app.get("/employees", response_class=HTMLResponse)
+def employees_alias(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    return RedirectResponse("/crew", status_code=303)
+
+
+@app.get("/calendar", response_class=HTMLResponse)
+def calendar_alias(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    return RedirectResponse("/schedule/year", status_code=303)
+
+
+@app.get("/daily-schedule", response_class=HTMLResponse)
+def daily_schedule_alias(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    return RedirectResponse("/schedule/day", status_code=303)
+
+
+@app.get("/monthly-schedule", response_class=HTMLResponse)
+def monthly_schedule_alias(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    return RedirectResponse("/schedule/year", status_code=303)
+
+# =========================================
+# ADMIN LINK CHECK
+# =========================================
+
+@app.get("/gps-day-log", response_class=HTMLResponse)
+def gps_day_log_alias(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    return RedirectResponse("/gps/day", status_code=303)
+
+
+@app.get("/gps-stops", response_class=HTMLResponse)
+def gps_stops_alias(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    return RedirectResponse("/gps/stops", status_code=303)
+
+@app.get("/admin/link-check", response_class=HTMLResponse)
+def admin_link_check(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+
+    if not is_admin(u):
+        return RedirectResponse("/jarvis", status_code=303)
+
+    links = [
+        ("Dashboard / Jarvis", "/jarvis"),
+        ("Design Studio", "/design-studio"),
+        ("Pool Monitoring", "/pool-monitoring"),
+        ("Organize My Day", "/organize-my-day"),
+        ("Handle It", "/handle-it"),
+        ("Schedule", "/schedule"),
+        ("Today Schedule", "/schedule/today"),
+        ("GPS Day Log", "/gps/day"),
+        ("GPS Stops", "/gps/stops"),
+        ("Crew Login", "/crew-login"),
+        ("Crew Portal", "/employee"),
+        ("Crew My Day", "/crew/my-day"),
+        ("Clients", "/clients"),
+        ("Properties", "/properties"),
+        ("Jobs", "/jobs"),
+        ("Photos", "/photos"),
+        ("Crew", "/crew"),
+        ("Weather", "/weather"),
+        ("Weather Watch", "/weather"),
+        ("Map", "/map"),
+        ("Daily Schedule", "/schedule/day"),
+        ("Full Calendar", "/schedule/year"),
+        ("Field Logs", "/field-logs"),
+        ("Estimates", "/estimates"),
+        ("Job Costing", "/job-costing"),
+        ("QuickBooks", "/quickbooks"),
+        ("AI Systems", "/ai-systems"),
+        ("Invisible Office", "/invisible-office"),
+        ("Talk to Jarvis", "/assistant-interview-live"),
+        ("Edit Dashboard", "/dashboard/theme"),
+        ("Logout", "/logout"),
+    ]
+
+    return templates.TemplateResponse(
+        "link_check.html",
+        ctx(request, links=links)
+    )
+
+@app.get("/detailed", response_class=HTMLResponse)
+def detailed_redirect(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    return RedirectResponse("/jarvis", status_code=303)
+
+
+@app.get("/dashboard/theme", response_class=HTMLResponse)
+def dashboard_theme(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+
+    if not is_admin(u):
+        return RedirectResponse("/jarvis", status_code=303)
+
+    return RedirectResponse("/design-studio", status_code=303)
+
+
+@app.post("/dashboard/theme")
+async def dashboard_theme_save(request: Request,
+    title: str = Form(""), subtitle: str = Form(""), hero_title: str = Form(""), hero_subtitle: str = Form(""),
+    background_image: UploadFile = File(None), calendar_background: UploadFile = File(None),
+    clients_image: UploadFile = File(None), properties_image: UploadFile = File(None), jobs_image: UploadFile = File(None),
+    schedule_image: UploadFile = File(None), photos_image: UploadFile = File(None), crew_image: UploadFile = File(None),
+    estimates_image: UploadFile = File(None), job_costing_image: UploadFile = File(None), quickbooks_image: UploadFile = File(None),
+    weather_image: UploadFile = File(None), field_log_image: UploadFile = File(None), map_image: UploadFile = File(None)):
+    u = require_login(request)
+    if not is_admin(u):
+        return login_redirect()
+    t = theme()
+    for k, v in {"title": title, "subtitle": subtitle, "hero_title": hero_title, "hero_subtitle": hero_subtitle}.items():
+        t[k] = v.strip()
+    for key, file in {
+        "background_image": background_image, "calendar_background": calendar_background, "clients_image": clients_image,
+        "properties_image": properties_image, "jobs_image": jobs_image, "schedule_image": schedule_image, "photos_image": photos_image,
+        "crew_image": crew_image, "estimates_image": estimates_image, "job_costing_image": job_costing_image,
+        "quickbooks_image": quickbooks_image, "weather_image": weather_image, "field_log_image": field_log_image, "map_image": map_image,
+    }.items():
+        url = await save_upload(file)
+        if url:
+            t[key] = url
+    save_theme(t)
+    return RedirectResponse("/jarvis", status_code=303)
+
+@app.get("/design-studio", response_class=HTMLResponse)
+def design_studio_page(request: Request):
+    u = require_login(request)
+    if not is_admin(u):
+        return login_redirect()
+
+    return templates.TemplateResponse(
+        "design_studio.html",
+        ctx(request, design=design_settings())
+    )
+
+
+@app.post("/design-studio")
+def design_studio_save(
+    request: Request,
+    legacy_line: str = Form(""),
+    crest_image: str = Form(""),
+    motto_first: str = Form(""),
+    motto_second: str = Form(""),
+    hero_subline: str = Form(""),
+    search_title: str = Form(""),
+    search_subtitle: str = Form(""),
+    search_placeholder: str = Form(""),
+    handle_button: str = Form(""),
+    page_top_space: str = Form("54px"),
+    crest_width: str = Form("920px"),
+    crest_height: str = Form("420px"),
+    motto_size: str = Form("clamp(3rem, 7vw, 7.8rem)"),
+    motto_top_space: str = Form("22px"),
+    section_gap: str = Form("22px"),
+    button_height: str = Form("104px"),
+    schedule_title: str = Form("Schedule"),
+    schedule_day_title: str = Form("Daily Schedule"),
+    schedule_week_title: str = Form("Weekly Schedule"),
+    schedule_subtitle: str = Form("Jobs, field work, service calls, and crew movement."),
+    schedule_empty_text: str = Form("No jobs are scheduled for this view yet."),
+    schedule_button_daily: str = Form("Daily"),
+    schedule_button_weekly: str = Form("Weekly"),
+    schedule_button_yearly: str = Form("Yearly"),
+    map_title: str = Form("Field Map"),
+    map_subtitle: str = Form("Property pins, clocked-in employees, and jobsite locations."),
+    map_height: str = Form("560px"),
+    mobile_map_height: str = Form("480px"),
+    map_top_padding: str = Form("115px"),
+    map_mobile_top_padding: str = Form("95px"),
+    login_title: str = Form("Heinlin Field Ops"),
+    login_legacy_line: str = Form("Founded 1907 • 5 Generations Strong"),
+    login_subtitle: str = Form("Built by the hands that perfected the term work hard play harder."),
+    login_button_text: str = Form("Enter Operations Center"),
+    login_crest_image: str = Form("/static/heinlin-wide-crest.png"),
+    login_background_image: str = Form("/static/heinlin-wide-crest.png"),
+    login_crest_width: str = Form("760px"),
+    login_card_width: str = Form("460px"),
+    crew_title: str = Form("Employees"),
+    crew_subtitle: str = Form("Crew access, login credentials, roles, and field visibility."),
+    crew_button_text: str = Form("Add Employee"),
+
+    employee_title: str = Form("Crew Portal"),
+    employee_subtitle: str = Form("My jobs, clock in/out, photos, field notes, weather, and map."),
+    employee_button_text: str = Form("Clock / Field Work"),
+    crew_dashboard_title: str = Form("Crew Portal"),
+    crew_dashboard_subtitle: str = Form("My jobs, clock in/out, photos, field notes, weather, and map."),
+    crew_dashboard_section_title: str = Form("Crew Tools"),
+    crew_dashboard_crest_image: str = Form("/static/heinlin-wide-crest.png"),
+    crew_dashboard_crest_width: str = Form("340px"),
+    crew_dashboard_crest_top: str = Form("210px"),
+    crew_dashboard_crest_right: str = Form("70px"),
+    crew_dashboard_crest_opacity: str = Form("0.92"),
+    crew_dashboard_hero_padding_top: str = Form("150px"),
+    crew_dashboard_dashboard_padding_top: str = Form("120px"),
+    crew_dashboard_tools_json: str = Form(""),
+    ai_systems_cards_json: str = Form(""),
+    dashboard_card_accounts: str = Form(""),
+    dashboard_card_today: str = Form(""),
+    dashboard_card_pool_systems: str = Form(""),
+    dashboard_card_field_operations: str = Form(""),
+    dashboard_card_business: str = Form(""),
+    dashboard_card_jarvis: str = Form(""),
+
+    photos_title: str = Form("Photos"),
+    photos_subtitle: str = Form("Job photos, property photos, progress shots, and field proof."),
+    photos_button_text: str = Form("Upload Photos"),
+
+    pool_monitoring_title: str = Form("Pool Monitoring"),
+    pool_monitoring_subtitle: str = Form("Pentair access, pool alerts, service notes, and monitored systems."),
+    pool_monitoring_button_text: str = Form("Add Pool Monitor"),
+    clients_title: str = Form("Clients"),
+    clients_subtitle: str = Form("The people, properties, pools, and promises we are responsible for."),
+    clients_button_text: str = Form("Add Client"),
+    properties_title: str = Form("Properties"),
+    properties_subtitle: str = Form("Every pool, address, gate code, equipment pad, and detail in one place."),
+    properties_button_text: str = Form("Add Property"),
+    jobs_title: str = Form("Jobs"),
+    jobs_subtitle: str = Form("Scheduled work, service calls, repairs, and field notes."),
+    jobs_button_text: str = Form("Add Job"),
+
+):
+    u = require_login(request)
+    if not is_admin(u):
+        return login_redirect()
+
+    data = design_settings()
+
+    data["dashboard"] = {
+        "legacy_line": legacy_line.strip() or DEFAULT_DESIGN["dashboard"]["legacy_line"],
+        "crest_image": crest_image.strip() or DEFAULT_DESIGN["dashboard"]["crest_image"],
+        "motto_first": motto_first.strip() or DEFAULT_DESIGN["dashboard"]["motto_first"],
+        "motto_second": motto_second.strip() or DEFAULT_DESIGN["dashboard"]["motto_second"],
+        "hero_subline": hero_subline.strip() or DEFAULT_DESIGN["dashboard"]["hero_subline"],
+        "search_title": search_title.strip() or DEFAULT_DESIGN["dashboard"]["search_title"],
+        "search_subtitle": search_subtitle.strip() or DEFAULT_DESIGN["dashboard"]["search_subtitle"],
+        "search_placeholder": search_placeholder.strip() or DEFAULT_DESIGN["dashboard"]["search_placeholder"],
+        "handle_button": handle_button.strip() or DEFAULT_DESIGN["dashboard"]["handle_button"],
+
+        "page_top_space": page_top_space.strip() or "54px",
+        "crest_width": crest_width.strip() or "920px",
+        "crest_height": crest_height.strip() or "420px",
+        "motto_size": motto_size.strip() or "clamp(3rem, 7vw, 7.8rem)",
+        "motto_top_space": motto_top_space.strip() or "22px",
+        "section_gap": section_gap.strip() or "22px",
+        "button_height": button_height.strip() or "104px",
+    }
+
+    data["schedule"] = {
+        "title": schedule_title.strip() or "Schedule",
+        "day_title": schedule_day_title.strip() or "Daily Schedule",
+        "week_title": schedule_week_title.strip() or "Weekly Schedule",
+        "subtitle": schedule_subtitle.strip() or "Jobs, field work, service calls, and crew movement.",
+        "empty_text": schedule_empty_text.strip() or "No jobs are scheduled for this view yet.",
+        "button_daily": schedule_button_daily.strip() or "Daily",
+        "button_weekly": schedule_button_weekly.strip() or "Weekly",
+        "button_yearly": schedule_button_yearly.strip() or "Yearly",
+        "button_jobs": "Jobs",
+        "button_dashboard": "Dashboard",
+        "button_text": "Add Schedule Item",
+    }
+
+    data["map"] = {
+        "title": map_title.strip() or "Field Map",
+        "subtitle": map_subtitle.strip() or "Property pins, clocked-in employees, and jobsite locations.",
+        "map_height": map_height.strip() or "560px",
+        "mobile_map_height": mobile_map_height.strip() or "480px",
+        "top_padding": map_top_padding.strip() or "115px",
+        "mobile_top_padding": map_mobile_top_padding.strip() or "95px",
+    }
+
+    data["login"] = {
+        "title": login_title.strip() or "Heinlin Field Ops",
+        "legacy_line": login_legacy_line.strip() or "Founded 1907 • 5 Generations Strong",
+        "subtitle": login_subtitle.strip() or "Built by the hands that perfected the term work hard play harder.",
+        "button_text": login_button_text.strip() or "Enter Operations Center",
+        "crest_image": login_crest_image.strip() or "/static/heinlin-wide-crest.png",
+        "background_image": login_background_image.strip() or "/static/heinlin-wide-crest.png",
+        "crest_width": login_crest_width.strip() or "760px",
+        "card_width": login_card_width.strip() or "460px",
+    }
+    data["crew"] = {
+        "title": crew_title.strip() or "Employees",
+        "subtitle": crew_subtitle.strip() or "Crew access, login credentials, roles, and field visibility.",
+        "button_text": crew_button_text.strip() or "Add Employee",
+    }
+
+    data["employee"] = {
+        "title": employee_title.strip() or "Crew Portal",
+        "subtitle": employee_subtitle.strip() or "My jobs, clock in/out, photos, field notes, weather, and map.",
+        "button_text": employee_button_text.strip() or "Clock / Field Work",
+    }
+
+    previous_crew_dashboard = data.get("crew_dashboard", DEFAULT_DESIGN["crew_dashboard"])
+    crew_dashboard_tools = previous_crew_dashboard.get("tools", DEFAULT_DESIGN["crew_dashboard"]["tools"])
+    try:
+        parsed_tools = json.loads(crew_dashboard_tools_json or "[]")
+        if isinstance(parsed_tools, list):
+            crew_dashboard_tools = parsed_tools
+    except Exception:
+        pass
+
+    data["crew_dashboard"] = {
+        "greeting_prefix": previous_crew_dashboard.get("greeting_prefix", "Good morning"),
+        "title": crew_dashboard_title.strip() or "Crew Portal",
+        "subtitle": crew_dashboard_subtitle.strip() or "My jobs, clock in/out, photos, field notes, weather, and map.",
+        "section_title": crew_dashboard_section_title.strip() or "Crew Tools",
+        "crest_image": crew_dashboard_crest_image.strip() or "/static/heinlin-wide-crest.png",
+        "crest_width": crew_dashboard_crest_width.strip() or "340px",
+        "crest_top": crew_dashboard_crest_top.strip() or "210px",
+        "crest_right": crew_dashboard_crest_right.strip() or "70px",
+        "crest_opacity": crew_dashboard_crest_opacity.strip() or "0.92",
+        "hero_padding_top": crew_dashboard_hero_padding_top.strip() or "150px",
+        "dashboard_padding_top": crew_dashboard_dashboard_padding_top.strip() or "120px",
+        "tools": crew_dashboard_tools,
+    }
+
+    previous_ai_systems = data.get("ai_systems", DEFAULT_DESIGN["ai_systems"])
+    ai_systems_cards = previous_ai_systems.get("cards", DEFAULT_DESIGN["ai_systems"]["cards"])
+    try:
+        parsed_ai_cards = json.loads(ai_systems_cards_json or "[]")
+        if isinstance(parsed_ai_cards, list):
+            ai_systems_cards = parsed_ai_cards
+    except Exception:
+        pass
+
+    data["ai_systems"] = {
+        "title": previous_ai_systems.get("title", "AI Systems"),
+        "subtitle": previous_ai_systems.get("subtitle", "All Jarvis tools, office memory, and AI workflows in one place."),
+        "cards": ai_systems_cards,
+    }
+
+    data["photos"] = {
+        "title": photos_title.strip() or "Photos",
+        "subtitle": photos_subtitle.strip() or "Job photos, property photos, progress shots, and field proof.",
+        "button_text": photos_button_text.strip() or "Upload Photos",
+    }
+
+    data["pool_monitoring"] = {
+        "title": pool_monitoring_title.strip() or "Pool Monitoring",
+        "subtitle": pool_monitoring_subtitle.strip() or "Pentair access, pool alerts, service notes, and monitored systems.",
+        "button_text": pool_monitoring_button_text.strip() or "Add Pool Monitor",
+    }
+
+
+    data["clients"] = {
+        "title": clients_title.strip() or "Clients",
+        "subtitle": clients_subtitle.strip() or "The people, properties, pools, and promises we are responsible for.",
+        "button_text": clients_button_text.strip() or "Add Client",
+    }
+
+    data["properties"] = {
+        "title": properties_title.strip() or "Properties",
+        "subtitle": properties_subtitle.strip() or "Every pool, address, gate code, equipment pad, and detail in one place.",
+        "button_text": properties_button_text.strip() or "Add Property",
+    }
+
+    data["jobs"] = {
+        "title": jobs_title.strip() or "Jobs",
+        "subtitle": jobs_subtitle.strip() or "Scheduled work, service calls, repairs, and field notes.",
+        "button_text": jobs_button_text.strip() or "Add Job",
+    }
+
+    data["dashboard_cards"] = {
+        "accounts": dashboard_card_accounts.strip(),
+        "today": dashboard_card_today.strip(),
+        "pool_systems": dashboard_card_pool_systems.strip(),
+        "field_operations": dashboard_card_field_operations.strip(),
+        "business": dashboard_card_business.strip(),
+        "jarvis": dashboard_card_jarvis.strip(),
+    }
+
+    save_design_settings(data)
+
+    return RedirectResponse("/design-studio", status_code=303)
+
+# ============================================================
+# DASHBOARD CARD IMAGE SETTINGS
+# ============================================================
+
+DASHBOARD_CARD_KEYS = [
+    "accounts",
+    "today",
+    "pool_systems",
+    "field_operations",
+    "business",
+    "jarvis",
+]
+
+
+def dashboard_card_defaults():
+    return {
+        key: {
+            "image": "",
+            "size": "cover",
+            "position": "center",
+            "brightness": "0.28",
+        }
+        for key in DASHBOARD_CARD_KEYS
+    }
+
+
+def normalize_dashboard_cards(design):
+    defaults = dashboard_card_defaults()
+    existing = design.get("dashboard_cards", {})
+
+    for key in DASHBOARD_CARD_KEYS:
+        existing_value = existing.get(key, "")
+
+        if isinstance(existing_value, str):
+            defaults[key]["image"] = existing_value.strip()
+
+        elif isinstance(existing_value, dict):
+            defaults[key]["image"] = str(existing_value.get("image", "")).strip()
+            defaults[key]["size"] = str(existing_value.get("size", "cover")).strip() or "cover"
+            defaults[key]["position"] = str(existing_value.get("position", "center")).strip() or "center"
+            defaults[key]["brightness"] = str(existing_value.get("brightness", "0.28")).strip() or "0.28"
+
+    return defaults
+
+
+@app.get("/dashboard-card-images", response_class=HTMLResponse)
+def dashboard_card_images_page(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    if not is_admin(u):
+        return admin_redirect(u)
+
+    design = design_settings()
+    dashboard_cards = normalize_dashboard_cards(design)
+
+    return templates.TemplateResponse(
+        "dashboard_card_images.html",
+        ctx(
+            request,
+            dashboard_cards=dashboard_cards,
+        ),
+    )
+
+
+@app.post("/dashboard-card-images")
+async def save_dashboard_card_images(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    if not is_admin(u):
+        return admin_redirect(u)
+
+    form = await request.form()
+
+    design = design_settings()
+    dashboard_cards = {}
+
+    for key in DASHBOARD_CARD_KEYS:
+        raw_brightness = str(form.get(f"{key}_brightness", "0.28")).strip()
+
+        try:
+            brightness = float(raw_brightness)
+        except Exception:
+            brightness = 0.28
+
+        if brightness < 0:
+            brightness = 0
+
+        if brightness > 1:
+            brightness = 1
+
+        dashboard_cards[key] = {
+            "image": str(form.get(f"{key}_image", "")).strip(),
+            "size": str(form.get(f"{key}_size", "cover")).strip() or "cover",
+            "position": str(form.get(f"{key}_position", "center")).strip() or "center",
+            "brightness": str(brightness),
+        }
+
+    design["dashboard_cards"] = dashboard_cards
+
+    DESIGN_FILE.write_text(
+        json.dumps(design, indent=2),
+        encoding="utf-8",
+    )
+
+    return RedirectResponse("/dashboard-card-images", status_code=303)
+
+# ============================================================
+# UNIVERSAL PAGE DESIGNER + DESIGN IMAGE UPLOADS
+# ============================================================
+
+DESIGN_UPLOAD_DIR = ROOT / "app" / "static" / "design_uploads"
+DESIGN_UPLOAD_URL_PREFIX = "/static/design_uploads"
+
+PAGE_DESIGN_KEYS = [
+    "dashboard",
+    "accounts",
+    "today",
+    "field_operations",
+    "pool_systems",
+    "business",
+    "jarvis_tools",
+    "clients",
+    "properties",
+    "jobs",
+    "billing",
+    "photos",
+    "schedule",
+    "weather",
+    "map",
+    "employee",
+    "pool_monitoring",
+    "design_studio",
+]
+
+
+PAGE_DESIGN_LABELS = {
+    "dashboard": "Dashboard",
+    "accounts": "Accounts",
+    "today": "Today",
+    "field_operations": "Field Operations",
+    "pool_systems": "Pool Systems",
+    "business": "Business",
+    "jarvis_tools": "Jarvis Tools",
+    "clients": "Clients",
+    "properties": "Properties",
+    "jobs": "Jobs",
+    "billing": "Billing",
+    "photos": "Photos",
+    "schedule": "Schedule",
+    "weather": "Weather",
+    "map": "Map",
+    "employee": "Employee / Clock",
+    "pool_monitoring": "Pool Monitoring",
+    "design_studio": "Design Studio",
+}
+
+
+def page_design_defaults():
+    return {
+        "background_image": "",
+        "background_size": "cover",
+        "background_position": "center",
+        "background_brightness": "0.28",
+        "page_overlay": "0.55",
+        "card_opacity": "0.08",
+        "card_radius": "26px",
+        "title_size": "clamp(44px, 8vw, 88px)",
+        "top_space": "28px",
+        "button_height": "48px",
+    }
+
+
+def normalize_page_design(design):
+    if not isinstance(design, dict):
+        design = {}
+
+    pages = design.get("pages", {})
+    if not isinstance(pages, dict):
+        pages = {}
+
+    defaults = {}
+
+    for key in PAGE_DESIGN_KEYS:
+        existing = pages.get(key, {})
+        if not isinstance(existing, dict):
+            existing = {}
+
+        page = page_design_defaults()
+
+        for setting_key, default_value in page.items():
+            page[setting_key] = str(existing.get(setting_key, default_value)).strip() or default_value
+
+        defaults[key] = page
+
+    design["pages"] = defaults
+    return defaults
+
+
+def clean_uploaded_filename(filename):
+    name = Path(filename or "upload").name
+    name = re.sub(r"[^A-Za-z0-9._-]+", "-", name).strip("-")
+
+    if not name:
+        name = "upload.jpg"
+
+    stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    return f"{stamp}_{name}"
+
+
+@app.get("/design-upload", response_class=HTMLResponse)
+def design_upload_page(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    if not is_admin(u):
+        return admin_redirect(u)
+
+    DESIGN_UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+
+    uploaded_files = []
+
+    for path in sorted(DESIGN_UPLOAD_DIR.glob("*"), reverse=True):
+        if path.is_file():
+            uploaded_files.append(
+                {
+                    "name": path.name,
+                    "url": f"{DESIGN_UPLOAD_URL_PREFIX}/{path.name}",
+                }
+            )
+
+    return templates.TemplateResponse(
+        "design_upload.html",
+        ctx(
+            request,
+            uploaded_files=uploaded_files,
+        ),
+    )
+
+
+@app.post("/design-upload")
+async def save_design_upload(request: Request, image: UploadFile = File(...)):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    if not is_admin(u):
+        return admin_redirect(u)
+
+    DESIGN_UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+
+    filename = clean_uploaded_filename(image.filename)
+    destination = DESIGN_UPLOAD_DIR / filename
+
+    with destination.open("wb") as out_file:
+        shutil.copyfileobj(image.file, out_file)
+
+    return RedirectResponse("/design-upload", status_code=303)
+
+
+@app.get("/page-designer", response_class=HTMLResponse)
+def page_designer_page(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    if not is_admin(u):
+        return admin_redirect(u)
+
+    design = design_settings()
+    pages = normalize_page_design(design)
+
+    return templates.TemplateResponse(
+        "page_designer.html",
+        ctx(
+            request,
+            pages=pages,
+            page_labels=PAGE_DESIGN_LABELS,
+            page_keys=PAGE_DESIGN_KEYS,
+        ),
+    )
+
+
+@app.post("/page-designer")
+async def save_page_designer(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    if not is_admin(u):
+        return admin_redirect(u)
+
+    form = await request.form()
+
+    design = design_settings()
+    if not isinstance(design, dict):
+        design = {}
+
+    pages = normalize_page_design(design)
+
+    for page_key in PAGE_DESIGN_KEYS:
+        page = pages.get(page_key, page_design_defaults())
+
+        for setting_key, default_value in page_design_defaults().items():
+            form_key = f"{page_key}_{setting_key}"
+            page[setting_key] = str(form.get(form_key, page.get(setting_key, default_value))).strip() or default_value
+
+        pages[page_key] = page
+
+    design["pages"] = pages
+
+    DESIGN_FILE.write_text(
+        json.dumps(design, indent=2),
+        encoding="utf-8",
+    )
+
+    return RedirectResponse("/page-designer", status_code=303)
+
+# ============================================================
+# DASHBOARD CARD IMAGE SETTINGS
+# ============================================================
+
+DASHBOARD_CARD_KEYS = [
+    "accounts",
+    "today",
+    "pool_systems",
+    "field_operations",
+    "business",
+    "jarvis",
+]
+
+
+def dashboard_card_defaults():
+    return {
+        key: {
+            "image": "",
+            "size": "cover",
+            "position": "center",
+            "brightness": "0.28",
+        }
+        for key in DASHBOARD_CARD_KEYS
+    }
+
+
+def normalize_dashboard_cards(design):
+    defaults = dashboard_card_defaults()
+    existing = design.get("dashboard_cards", {})
+
+    for key in DASHBOARD_CARD_KEYS:
+        old_value = existing.get(key, "")
+
+        if isinstance(old_value, str):
+            defaults[key]["image"] = old_value
+        elif isinstance(old_value, dict):
+            defaults[key]["image"] = str(old_value.get("image", "")).strip()
+            defaults[key]["size"] = str(old_value.get("size", "cover")).strip() or "cover"
+            defaults[key]["position"] = str(old_value.get("position", "center")).strip() or "center"
+            defaults[key]["brightness"] = str(old_value.get("brightness", "0.28")).strip() or "0.28"
+
+    design["dashboard_cards"] = defaults
+    return defaults
+
+
+@app.get("/dashboard-card-images", response_class=HTMLResponse)
+def dashboard_card_images_page(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    if not is_admin(u):
+        return admin_redirect(u)
+
+    design = design_settings()
+    dashboard_cards = normalize_dashboard_cards(design)
+
+    return templates.TemplateResponse(
+        "dashboard_card_images.html",
+        ctx(
+            request,
+            dashboard_cards=dashboard_cards,
+        ),
+    )
+
+
+@app.post("/dashboard-card-images")
+async def save_dashboard_card_images(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    if not is_admin(u):
+        return admin_redirect(u)
+
+    form = await request.form()
+    design = design_settings()
+
+    dashboard_cards = {}
+
+    for key in DASHBOARD_CARD_KEYS:
+        brightness_raw = str(form.get(f"{key}_brightness", "0.28")).strip()
+
+        try:
+            brightness_value = float(brightness_raw)
+        except Exception:
+            brightness_value = 0.28
+
+        if brightness_value < 0:
+            brightness_value = 0
+        if brightness_value > 1:
+            brightness_value = 1
+
+        dashboard_cards[key] = {
+            "image": str(form.get(f"{key}_image", "")).strip(),
+            "size": str(form.get(f"{key}_size", "cover")).strip() or "cover",
+            "position": str(form.get(f"{key}_position", "center")).strip() or "center",
+            "brightness": str(brightness_value),
+        }
+
+    design["dashboard_cards"] = dashboard_cards
+
+    DESIGN_FILE.write_text(json.dumps(design, indent=2), encoding="utf-8")
+
+    return RedirectResponse("/dashboard-card-images", status_code=303)
+
+@app.post("/calendar/day-image")
+async def calendar_day_image(request: Request, day_date: str = Form(...), notes: str = Form(""), image: UploadFile = File(None)):
+    u = require_login(request)
+    if not is_admin(u):
+        return login_redirect()
+    existing = one("SELECT * FROM poolops2_calendar_day_images WHERE day_date=?", (day_date,))
+    url = await save_upload(image)
+    if existing:
+        exec_sql("UPDATE poolops2_calendar_day_images SET image_url=coalesce(nullif(?,''), image_url), notes=? WHERE day_date=?", (url, notes, day_date))
+    else:
+        exec_sql("INSERT INTO poolops2_calendar_day_images (day_date,image_url,notes) VALUES (?,?,?)", (day_date, url, notes))
+    return RedirectResponse("/jarvis", status_code=303)
+
+
+# =========================================
+# ADMIN DELETE HELPERS
+# =========================================
+def _safe_delete_upload(photo_url: str):
+    """Delete local uploaded file when it lives under /static/uploads/."""
+    if not photo_url:
+        return
+    try:
+        if not str(photo_url).startswith("/static/uploads/"):
+            return
+        rel = str(photo_url).replace("/static/", "", 1)
+        path = ROOT / "app" / "static" / rel
+        # Never allow a URL to escape the uploads folder.
+        uploads_root = (ROOT / "app" / "static" / "uploads").resolve()
+        resolved = path.resolve()
+        if uploads_root in resolved.parents or resolved == uploads_root:
+            if resolved.exists() and resolved.is_file():
+                resolved.unlink()
+    except Exception:
+        pass
+
+
+def _try_exec(sql, params=()):
+    try:
+        return exec_sql(sql, params)
+    except Exception:
+        return None
+
+
+def _delete_photo_records(photo_rows):
+    for ph in photo_rows or []:
+        _safe_delete_upload(ph.get("photo_url", ""))
+        _try_exec("DELETE FROM poolops2_photo_logs WHERE id=?", (ph.get("id"),))
+
+
+
+
+
+# Client routes live in app/routes/clients.py
+from app.routes import clients
+app.include_router(clients.router)
+
+@app.get("/jobs", response_class=HTMLResponse)
+def jobs(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+
+    if is_client(u):
+        return RedirectResponse("/client-portal", status_code=303)
+
+    job_rows = jobs_for_user(u)
+
+    return templates.TemplateResponse(
+        "jobs.html",
+        ctx(
+            request,
+            jobs=job_rows,
+            records=job_rows,
+            items=job_rows,
+            job_list=job_rows,
+            q="",
+        )
+    )
+
+
+@app.get("/jobs/{job_id}", response_class=HTMLResponse)
+def job_detail(request: Request, job_id: int):
+    u = require_login(request)
+    if not u: return login_redirect()
+    if is_client(u): return RedirectResponse("/jarvis", status_code=303)
+    job = one("SELECT * FROM poolops2_jobs WHERE id=?", (job_id,))
+    if not job or not employee_can_access_job(u, job): return RedirectResponse("/jobs", status_code=303)
+    costs = rows("SELECT * FROM poolops2_job_costs WHERE job_id=?", (job_id,))
+    photos = rows("SELECT * FROM poolops2_photo_logs WHERE job_id=?", (job_id,))
+    return templates.TemplateResponse("job_detail.html", ctx(request, job=job, costs=costs, photos=photos))
+
+
+@app.post("/jobs/{job_id}/save")
+def job_save(request: Request, job_id: int, client: str = Form(""), property: str = Form(""), address: str = Form(""), job_type: str = Form(""), status: str = Form(""), crew: str = Form(""), date: str = Form(""), priority: str = Form(""), notes: str = Form("")):
+    if not is_admin(require_login(request)): return login_redirect()
+    exec_sql("UPDATE poolops2_jobs SET client=?, property=?, address=?, job_type=?, status=?, crew=?, date=?, scheduled_start=?, priority=?, notes=? WHERE id=?", (client, property, address, job_type, status, crew, date, date, priority, notes, job_id))
+    return RedirectResponse(f"/jobs/{job_id}", status_code=303)
+
+
+@app.post("/jobs/new")
+def job_new(request: Request, client: str = Form(""), property: str = Form(""), address: str = Form(""), job_type: str = Form("Service"), date: str = Form("")):
+    if not is_admin(require_login(request)): return login_redirect()
+    jid = exec_sql("INSERT INTO poolops2_jobs (client,property,address,job_type,status,crew,date,scheduled_start,priority,notes) VALUES (?,?,?,?,?,?,?,?,?,?)", (client, property, address, job_type, "Scheduled", "Unassigned", date, date, "Normal", ""))
+    return RedirectResponse(f"/jobs/{jid}", status_code=303)
+
+
+@app.post("/jobs/{job_id}/delete")
+def job_delete(request: Request, job_id: int):
+    if not is_admin(require_login(request)):
+        return login_redirect()
+
+    job = one("SELECT * FROM poolops2_jobs WHERE id=?", (job_id,))
+    if not job:
+        return RedirectResponse("/jobs", status_code=303)
+
+    _delete_photo_records(rows("SELECT * FROM poolops2_photo_logs WHERE job_id=?", (job_id,)))
+    _try_exec("DELETE FROM poolops2_job_costs WHERE job_id=?", (job_id,))
+    _try_exec("DELETE FROM poolops2_invoices WHERE job_id=?", (job_id,))
+    _try_exec("DELETE FROM poolops2_jobs WHERE id=?", (job_id,))
+    return RedirectResponse("/jobs", status_code=303)
+
+@app.post("/jobs/{job_id}/start")
+def start_job(job_id: int, request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+
+    exec_sql(
+        "UPDATE poolops2_jobs SET status=? WHERE id=?",
+        ("In Progress", job_id)
+    )
+
+    return RedirectResponse(f"/jobs/{job_id}", status_code=303)
+
+
+@app.post("/jobs/{job_id}/complete")
+def complete_job(job_id: int, request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+
+    exec_sql(
+        "UPDATE poolops2_jobs SET status=? WHERE id=?",
+        ("Complete", job_id)
+    )
+
+    return RedirectResponse(f"/jobs/{job_id}/legacy", status_code=303)
+
+@app.get("/schedule/year", response_class=HTMLResponse)
+def schedule_year(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+
+    today = date.today()
+    year = int(request.query_params.get("year", today.year))
+
+    months = []
+    for month in range(1, 13):
+        cal = calendar.Calendar(firstweekday=6)
+        days = []
+        for week in cal.monthdayscalendar(year, month):
+            days.extend(week)
+
+        months.append({
+            "year": year,
+            "month": month,
+            "name": calendar.month_name[month],
+            "days": days,
+        })
+
+    return templates.TemplateResponse(
+        "schedule_year.html",
+        ctx(request, months=months, year=year)
+    )
+
+@app.get("/organize-my-day", response_class=HTMLResponse)
+def organize_my_day(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+
+    today = date.today().isoformat()
+
+    today_jobs = [
+        j for j in jobs_for_user(u)
+        if schedule_date(j) == today
+    ]
+
+    overdue_jobs = [
+        j for j in jobs_for_user(u)
+        if schedule_date(j) and schedule_date(j) < today and str(j.get("status", "")).lower() not in ("complete", "completed", "done")
+    ]
+
+    clocked_in = []
+    if is_admin(u):
+        clocked_in = rows(
+            "SELECT * FROM poolops2_employees WHERE clocked_in=? ORDER BY name",
+            (True if USE_POSTGRES else 1,)
+        )
+
+    return templates.TemplateResponse(
+        "organize_my_day.html",
+        ctx(
+            request,
+            today=today,
+            today_jobs=today_jobs,
+            overdue_jobs=overdue_jobs,
+            clocked_in=clocked_in,
+        )
+    )
+
+@app.get("/crew/my-day", response_class=HTMLResponse)
+def crew_my_day(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+
+    today = date.today().isoformat()
+    job_rows = jobs_for_user(u)
+
+    my_jobs = []
+    for j in job_rows:
+        jd = schedule_date(j)
+        status = str(j.get("status", "") or "").lower()
+        if jd == today and status not in ("complete", "completed", "done"):
+            my_jobs.append(j)
+
+    return templates.TemplateResponse(
+        "crew_my_day.html",
+        ctx(request, today=today, my_jobs=my_jobs)
+    )
+
+@app.get("/schedule")
+def schedule(request: Request):
+    return RedirectResponse("/schedule/year", status_code=303)
+
+@app.get("/schedule/month", response_class=HTMLResponse)
+def schedule_month(request: Request):
+    u = require_login(request)
+    if not u: return login_redirect()
+    return templates.TemplateResponse("schedule_month.html", ctx(request, days=month_grid(job_rows=jobs_for_user(u))))
+
+@app.get("/schedule/day", response_class=HTMLResponse)
+def schedule_day(request: Request):
+    u = require_login(request)
+    if not u: return login_redirect()
+    selected_day = request.query_params.get("date") or date.today().isoformat()
+    visible_jobs = [j for j in jobs_for_user(u) if schedule_date(j) == selected_day]
+    design = design_settings()
+    title = design.get("schedule", {}).get("day_title", "Daily Schedule")
+    return templates.TemplateResponse("schedule_list.html", ctx(request, title=title, selected_day=selected_day, jobs=visible_jobs))
+
+@app.get("/schedule/week", response_class=HTMLResponse)
+def schedule_week(request: Request):
+    u = require_login(request)
+    if not u: return login_redirect()
+    start = date.today(); end = start + timedelta(days=7)
+    jobs = []
+    for j in jobs_for_user(u):
+        ds = schedule_date(j)
+        try:
+            d = date.fromisoformat(ds)
+            if start <= d <= end: jobs.append(j)
+        except Exception: pass
+    design = design_settings()
+    title = design.get("schedule", {}).get("week_title", "Weekly Schedule")
+    return templates.TemplateResponse("schedule_list.html", ctx(request, title=title, jobs=jobs))
+
+
+@app.get("/photos", response_class=HTMLResponse)
+def photos(request: Request):
+    u = require_login(request)
+    if not u: return login_redirect()
+    return templates.TemplateResponse("photos.html", ctx(request, photos=photos_for_user(u), jobs=jobs_for_user(u), properties=properties_for_user(u)))
+
+@app.post("/photos/add")
+async def photos_add(request: Request, job_id: int = Form(0), property_id: int = Form(0), photo_type: str = Form("Progress"), title: str = Form("Photo"), date_str: str = Form(""), notes: str = Form(""), photo_files: list[UploadFile] = File(None)):
+    u = require_login(request)
+    if not u: return login_redirect()
+    if is_client(u): return RedirectResponse("/jarvis", status_code=303)
+    prop = one("SELECT * FROM poolops2_properties WHERE id=?", (property_id,)) if property_id else None
+    job = one("SELECT * FROM poolops2_jobs WHERE id=?", (job_id,)) if job_id else None
+    client = (prop or job or {}).get("client", "")
+    for f in (photo_files or []):
+        url = await save_upload(f)
+        if url:
+            exec_sql("INSERT INTO poolops2_photo_logs (job_id,property_id,client,photo_type,title,photo_url,date,notes) VALUES (?,?,?,?,?,?,?,?)", (job_id or None, property_id or None, client, photo_type, title, url, date_str or date.today().isoformat(), notes))
+    return RedirectResponse("/photos", status_code=303)
+
+
+@app.post("/photos/{photo_id}/delete")
+def photo_delete(request: Request, photo_id: int):
+    if not is_admin(require_login(request)):
+        return login_redirect()
+
+    ph = one("SELECT * FROM poolops2_photo_logs WHERE id=?", (photo_id,))
+    if ph:
+        _safe_delete_upload(ph.get("photo_url", ""))
+        _try_exec("DELETE FROM poolops2_photo_logs WHERE id=?", (photo_id,))
+    return RedirectResponse("/photos", status_code=303)
+
+
+@app.get("/crew", response_class=HTMLResponse)
+def crew(request: Request):
+    u = require_login(request)
+    if not u: return login_redirect()
+    if not is_admin(u): return admin_redirect(u)
+    employee_rows = rows("""
+        SELECT *
+        FROM poolops2_employees
+        WHERE coalesce(name,'') <> ''
+        ORDER BY name
+    """)
+    return templates.TemplateResponse("crew.html", ctx(request, employees=employee_rows))
+
+@app.post("/crew/new")
+def crew_new(request: Request, name: str = Form("New Employee"), role: str = Form("Crew"), phone: str = Form(""), email: str = Form(""), username: str = Form(""), password: str = Form("")):
+    u = require_login(request)
+    if not is_admin(u): return login_redirect()
+    eid = exec_sql("INSERT INTO poolops2_employees (name,role,phone,email,username,password,active) VALUES (?,?,?,?,?,?,?)", (name.strip() or "New Employee", role.strip() or "Crew", phone, email, username or name.strip().lower().replace(" ", "."), password or "1234", True if USE_POSTGRES else 1))
+    return RedirectResponse("/crew", status_code=303)
+
+@app.post("/crew/{emp_id}/delete")
+def crew_delete(request: Request, emp_id: int):
+    u = require_login(request)
+    if not is_admin(u): return login_redirect()
+    _try_exec("DELETE FROM poolops2_employees WHERE id=?", (emp_id,))
+    return RedirectResponse("/crew", status_code=303)
+
+@app.post("/crew/{emp_id}/save")
+def crew_save(
+    request: Request,
+    emp_id: int,
+    name: str = Form(""),
+    role: str = Form(""),
+    phone: str = Form(""),
+    email: str = Form(""),
+    username: str = Form(""),
+    password: str = Form(""),
+    active: str = Form("1"),
+):
+    if not is_admin(require_login(request)):
+        return login_redirect()
+
+    # Render/Postgres stores active as a real boolean in some deployments,
+    # while the old local SQLite build used 1/0. Passing integer 1 into a
+    # Postgres boolean column can throw a save error, so normalize it here.
+    active_value = str(active).strip().lower() in ("1", "true", "yes", "on", "active")
+
+    # Some live employee tables were created before username/password existed.
+    # Update only columns that are actually present so Crew save never crashes
+    # from a schema mismatch.
+    cols = set(table_columns("poolops2_employees"))
+    updates = []
+    values = []
+    for col, val in [
+        ("name", name),
+        ("role", role),
+        ("phone", phone),
+        ("email", email),
+        ("username", username),
+        ("password", password),
+        ("active", active_value),
+    ]:
+        if col in cols:
+            updates.append(f"{col}=?")
+            values.append(val)
+
+    if updates:
+        values.append(emp_id)
+        exec_sql(f"UPDATE poolops2_employees SET {', '.join(updates)} WHERE id=?", tuple(values))
+
+    return RedirectResponse("/crew", status_code=303)
+
+
+
+@app.get("/employee", response_class=HTMLResponse)
+def employee_portal(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+
+    if is_client(u):
+        return RedirectResponse("/jarvis", status_code=303)
+
+    employee = None
+
+    if is_employee(u):
+        employee = one(
+            "SELECT * FROM poolops2_employees WHERE id=?",
+            (u.get("id"),)
+        )
+
+    return templates.TemplateResponse(
+        "employee_portal.html",
+        ctx(
+            request,
+            employee=employee,
+            jobs=jobs_for_user(u),
+            photos=photos_for_user(u)
+        )
+    )
+
+@app.post("/employee/profile")
+def employee_profile_save(request: Request, name: str = Form(""), phone: str = Form(""), email: str = Form(""), username: str = Form(""), password: str = Form("")):
+    u = require_login(request)
+    if not u: return login_redirect()
+    if not is_employee(u): return admin_redirect(u)
+    exec_sql("UPDATE poolops2_employees SET name=?, phone=?, email=?, username=?, password=? WHERE id=?", (name, phone, email, username, password, u.get("id")))
+    u.update({"name": name, "username": username})
+    request.session["user"] = u
+    return RedirectResponse("/employee", status_code=303)
+    
+
+@app.post("/employee/clock")
+def employee_clock(request: Request, action: str = Form("in"), lat: str = Form(""), lng: str = Form("")):
+    u = require_login(request)
+
+    if not u:
+        return login_redirect()
+
+    if not (is_employee(u) or is_admin(u)):
+        return login_redirect()
+
+    now = datetime.now().isoformat(timespec="minutes")
+    clocked = action == "in"
+
+    employee_id = u.get("id")
+    employee_name = u.get("name") or u.get("username") or "Mike"
+
+    if is_admin(u):
+        existing = one(
+            "SELECT * FROM poolops2_employees WHERE lower(name)=lower(?) OR lower(username)=lower(?) ORDER BY id LIMIT 1",
+            (employee_name, u.get("username") or "")
+        )
+
+        if not existing:
+            employee_id = exec_sql(
+                """
+                INSERT INTO poolops2_employees
+                (name, role, phone, email, username, password, active)
+                VALUES (?,?,?,?,?,?,?)
+                """,
+                (
+                    employee_name,
+                    "Admin",
+                    "",
+                    "",
+                    u.get("username") or employee_name.lower().replace(" ", "."),
+                    "",
+                    True if USE_POSTGRES else 1,
+                )
+            )
+        else:
+            employee_id = existing.get("id")
+
+    exec_sql(
+        """
+        UPDATE poolops2_employees
+        SET clocked_in=?,
+            clock_lat=?,
+            clock_lng=?,
+            clocked_in_at=?,
+            last_seen_at=?
+        WHERE id=?
+        """,
+        (
+            clocked,
+            float(lat) if lat else None,
+            float(lng) if lng else None,
+            now if clocked else "",
+            now,
+            employee_id,
+        )
+    )
+
+    return RedirectResponse("/employee", status_code=303)
+
+@app.get("/client-portal", response_class=HTMLResponse)
+def client_portal(request: Request):
+    u = require_login(request)
+    if not u: return login_redirect()
+    if not is_client(u) and not is_admin(u):
+        return RedirectResponse("/jarvis", status_code=303)
+    client = one("SELECT * FROM poolops2_clients WHERE id=?", (u.get("id"),)) if is_client(u) else None
+    if is_admin(u) and not client:
+        # Admin can preview a generic client portal with no destructive access.
+        client = rows("SELECT * FROM poolops2_clients ORDER BY name LIMIT 1")
+        client = client[0] if client else None
+    cname = client.get("name") if client else ""
+    cid = client.get("id") if client else 0
+    props = rows("SELECT * FROM poolops2_properties WHERE client_id=? OR client=? ORDER BY address", (cid, cname))
+    photos = rows("SELECT * FROM poolops2_photo_logs WHERE client=? ORDER BY id DESC", (cname,))
+    jobs = rows("SELECT * FROM poolops2_jobs WHERE client=? ORDER BY id DESC", (cname,))
+    return templates.TemplateResponse("client_portal.html", ctx(request, client=client, properties=props, photos=photos, jobs=jobs))
+
+
+
+# ============================================================
+# HEINLIN LEGACY - LESSONS, STANDARDS, AND JOB KNOWLEDGE
+# ============================================================
+
+def ensure_legacy_schema():
+    try:
+        exec_sql(
+            """
+            CREATE TABLE IF NOT EXISTS hfo_legacy_lessons (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                job_id INTEGER,
+                client TEXT DEFAULT '',
+                property TEXT DEFAULT '',
+                address TEXT DEFAULT '',
+                problem TEXT DEFAULT '',
+                cause TEXT DEFAULT '',
+                fix TEXT DEFAULT '',
+                lesson TEXT DEFAULT '',
+                standard_update TEXT DEFAULT '',
+                tags TEXT DEFAULT '',
+                created_by TEXT DEFAULT '',
+                created_at TEXT DEFAULT ''
+            )
+            """
+        )
+    except Exception:
+        exec_sql(
+            """
+            CREATE TABLE IF NOT EXISTS hfo_legacy_lessons (
+                id SERIAL PRIMARY KEY,
+                job_id INTEGER,
+                client TEXT DEFAULT '',
+                property TEXT DEFAULT '',
+                address TEXT DEFAULT '',
+                problem TEXT DEFAULT '',
+                cause TEXT DEFAULT '',
+                fix TEXT DEFAULT '',
+                lesson TEXT DEFAULT '',
+                standard_update TEXT DEFAULT '',
+                tags TEXT DEFAULT '',
+                created_by TEXT DEFAULT '',
+                created_at TEXT DEFAULT ''
+            )
+            """
+        )
+
+
+def _e(value):
+    return html.escape(str(value or ""))
+
+
+def legacy_shell(title, body, user=None):
+    return f"""
+    <!doctype html>
+    <html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>{_e(title)}</title>
+        <style>
+            body {{ margin:0; font-family:Arial, sans-serif; background:#071017; color:#f5efe2; }}
+            .wrap {{ max-width:1180px; margin:0 auto; padding:34px 18px 70px; }}
+            .top {{ display:flex; justify-content:space-between; gap:12px; align-items:center; flex-wrap:wrap; }}
+            h1 {{ margin:0; font-size:clamp(34px, 6vw, 74px); color:#d6b36a; letter-spacing:.04em; text-transform:uppercase; }}
+            .sub {{ color:#c9c1b0; font-size:18px; margin:8px 0 24px; }}
+            .card {{ background:rgba(255,255,255,.06); border:1px solid rgba(214,179,106,.35); border-radius:22px; padding:18px; margin:16px 0; box-shadow:0 16px 38px rgba(0,0,0,.35); }}
+            label {{ display:block; color:#d6b36a; font-weight:700; margin:14px 0 6px; }}
+            input, textarea {{ width:100%; box-sizing:border-box; background:#0b1720; color:#fff; border:1px solid rgba(214,179,106,.35); border-radius:14px; padding:12px; font-size:16px; }}
+            textarea {{ min-height:110px; }}
+            .btn, button {{ display:inline-block; background:#d6b36a; color:#071017; border:none; border-radius:999px; padding:12px 18px; font-weight:800; text-decoration:none; cursor:pointer; margin:4px 6px 4px 0; }}
+            .btn.dark {{ background:#10202c; color:#f5efe2; border:1px solid rgba(214,179,106,.45); }}
+            .grid {{ display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:14px; }}
+            .muted {{ color:#b8ae9d; }}
+            .pill {{ display:inline-block; padding:5px 10px; border:1px solid rgba(214,179,106,.5); border-radius:999px; color:#d6b36a; margin:2px; font-size:13px; }}
+            .lesson-title {{ font-size:22px; color:#fff; font-weight:800; margin-bottom:6px; }}
+        </style>
+    </head>
+    <body><div class="wrap">{body}</div></body>
+    </html>
+    """
+
+
+@app.get("/legacy", response_class=HTMLResponse)
+def legacy_library(request: Request, q: str = ""):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    if is_client(u):
+        return RedirectResponse("/client-portal", status_code=303)
+
+    ensure_legacy_schema()
+    q = (q or "").strip()
+
+    if q:
+        lessons = rows(
+            """
+            SELECT * FROM hfo_legacy_lessons
+            WHERE problem LIKE ? OR cause LIKE ? OR fix LIKE ? OR lesson LIKE ? OR standard_update LIKE ? OR tags LIKE ? OR client LIKE ? OR property LIKE ?
+            ORDER BY id DESC
+            LIMIT 200
+            """,
+            tuple([f"%{q}%"] * 8),
+        )
+    else:
+        lessons = rows("SELECT * FROM hfo_legacy_lessons ORDER BY id DESC LIMIT 200")
+
+    cards = []
+    for item in lessons:
+        tags = "".join(f'<span class="pill">{_e(t.strip())}</span>' for t in str(item.get("tags") or "").split(",") if t.strip())
+        job_link = f'<a class="btn dark" href="/jobs/{_e(item.get("job_id"))}">Open Job</a>' if item.get("job_id") else ""
+        cards.append(f"""
+        <div class="card">
+            <div class="lesson-title">{_e(item.get('problem') or 'Legacy Lesson')}</div>
+            <div class="muted">{_e(item.get('client'))} • {_e(item.get('property'))} • {_e(item.get('created_at'))}</div>
+            <p><b>Cause:</b> {_e(item.get('cause'))}</p>
+            <p><b>Fix:</b> {_e(item.get('fix'))}</p>
+            <p><b>What we learned:</b> {_e(item.get('lesson'))}</p>
+            <p><b>Heinlin Standard:</b> {_e(item.get('standard_update'))}</p>
+            <div>{tags}</div>
+            <div style="margin-top:12px;">{job_link}</div>
+        </div>
+        """)
+
+    body = f"""
+    <div class="top">
+        <div>
+            <h1>Heinlin Legacy</h1>
+            <div class="sub">Jobs → Photos → Notes → Lessons → Standards. This is the digital apprenticeship system.</div>
+        </div>
+        <div>
+            <a class="btn dark" href="/jarvis">Dashboard</a>
+            <a class="btn dark" href="/jobs">Jobs</a>
+        </div>
+    </div>
+    <form method="get" action="/legacy" class="card">
+        <label>Search the Heinlin playbook</label>
+        <input name="q" value="{_e(q)}" placeholder="heater, IntelliFlo3, concrete, winterize, valve actuator, skimmer leak...">
+        <button type="submit">Search Legacy</button>
+    </form>
+    <div class="grid">
+        {''.join(cards) if cards else '<div class="card"><b>No legacy lessons yet.</b><p class="muted">Complete a job, answer what we learned, and this library starts building itself.</p></div>'}
+    </div>
+    """
+    return HTMLResponse(legacy_shell("Heinlin Legacy", body, u))
+
+
+@app.get("/jobs/{job_id}/legacy", response_class=HTMLResponse)
+def job_legacy_review(request: Request, job_id: int):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    if is_client(u):
+        return RedirectResponse("/client-portal", status_code=303)
+
+    ensure_legacy_schema()
+    job = one("SELECT * FROM poolops2_jobs WHERE id=?", (job_id,))
+    if not job or not employee_can_access_job(u, job):
+        return admin_redirect(u)
+
+    existing = rows("SELECT * FROM hfo_legacy_lessons WHERE job_id=? ORDER BY id DESC", (job_id,))
+    existing_html = "".join(f"""
+        <div class="card">
+            <b>{_e(x.get('problem'))}</b>
+            <p><b>Lesson:</b> {_e(x.get('lesson'))}</p>
+            <p class="muted">Saved by {_e(x.get('created_by'))} at {_e(x.get('created_at'))}</p>
+        </div>
+    """ for x in existing)
+
+    body = f"""
+    <div class="top">
+        <div>
+            <h1>What Did We Learn?</h1>
+            <div class="sub">{_e(job.get('client'))} • {_e(job.get('property'))} • {_e(job.get('address'))}</div>
+        </div>
+        <div>
+            <a class="btn dark" href="/jobs/{job_id}">Back to Job</a>
+            <a class="btn dark" href="/legacy">Legacy Library</a>
+        </div>
+    </div>
+    <form class="card" method="post" action="/jobs/{job_id}/legacy">
+        <label>Problem found</label>
+        <textarea name="problem" placeholder="What was wrong, unusual, risky, expensive, confusing, or important on this job?"></textarea>
+
+        <label>Cause</label>
+        <textarea name="cause" placeholder="What caused it? Bad install, freeze damage, poor flow, wiring mistake, settling, corrosion, hidden valve, customer operation, etc."></textarea>
+
+        <label>Fix</label>
+        <textarea name="fix" placeholder="Exactly how did Heinlin fix it?"></textarea>
+
+        <label>What did we learn here?</label>
+        <textarea name="lesson" placeholder="The lesson future crews need to know before they hit this problem again."></textarea>
+
+        <label>Heinlin Standard / Playbook Update</label>
+        <textarea name="standard_update" placeholder="From now on, how should Heinlin handle this situation?"></textarea>
+
+        <label>Tags</label>
+        <input name="tags" placeholder="Pentair, heater, relay, winterization, concrete, liner, plumbing">
+
+        <button type="submit">Save to Heinlin Legacy</button>
+    </form>
+    {existing_html}
+    """
+    return HTMLResponse(legacy_shell("Legacy Review", body, u))
+
+
+@app.post("/jobs/{job_id}/legacy")
+def job_legacy_save(
+    request: Request,
+    job_id: int,
+    problem: str = Form(""),
+    cause: str = Form(""),
+    fix: str = Form(""),
+    lesson: str = Form(""),
+    standard_update: str = Form(""),
+    tags: str = Form(""),
+):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    if is_client(u):
+        return RedirectResponse("/client-portal", status_code=303)
+
+    ensure_legacy_schema()
+    job = one("SELECT * FROM poolops2_jobs WHERE id=?", (job_id,))
+    if not job or not employee_can_access_job(u, job):
+        return admin_redirect(u)
+
+    exec_sql(
+        """
+        INSERT INTO hfo_legacy_lessons
+        (job_id, client, property, address, problem, cause, fix, lesson, standard_update, tags, created_by, created_at)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
+        """,
+        (
+            job_id,
+            job.get("client", ""),
+            job.get("property", ""),
+            job.get("address", ""),
+            problem.strip(),
+            cause.strip(),
+            fix.strip(),
+            lesson.strip(),
+            standard_update.strip(),
+            tags.strip(),
+            u.get("name") or u.get("username") or "",
+            datetime.now().isoformat(timespec="seconds"),
+        ),
+    )
+
+    return RedirectResponse("/legacy", status_code=303)
+
+
+
+
+
+
+# ============================================================
+# HEINLIN LEGACY COMMAND CENTER - EDITABLE DASHBOARD + PROPERTY BRAIN
+# ============================================================
+
+
+from app.routes import dashboard
+app.include_router(dashboard.router)
+
+# Property Brain and remaining legacy routes stay in app.py for this phase.
+@app.get("/properties/{property_id}/brain", response_class=HTMLResponse)
+@app.get("/property-brain/{property_id}", response_class=HTMLResponse)
+def property_brain(request: Request, property_id: int):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+
+    prop = one("SELECT * FROM poolops2_properties WHERE id=?", (property_id,))
+    if not prop or not property_can_access(u, prop):
+        return admin_redirect(u)
+
+    cname = prop.get("client", "")
+    client = None
+    if prop.get("client_id"):
+        client = one("SELECT * FROM poolops2_clients WHERE id=?", (prop.get("client_id"),))
+    if not client and cname:
+        client = one("SELECT * FROM poolops2_clients WHERE name=?", (cname,))
+
+    jobs = rows(
+        """
+        SELECT * FROM poolops2_jobs
+        WHERE address=? OR property=? OR client=?
+        ORDER BY id DESC
+        """,
+        (prop.get("address", ""), prop.get("property_name", ""), cname),
+    )
+    photos = rows("SELECT * FROM poolops2_photo_logs WHERE property_id=? OR client=? ORDER BY id DESC LIMIT 80", (property_id, cname))
+    equipment = rows("SELECT * FROM poolops2_equipment WHERE property_id=? ORDER BY id DESC", (property_id,))
+
+    ensure_legacy_schema()
+    lessons = rows(
+        """
+        SELECT * FROM hfo_legacy_lessons
+        WHERE address=? OR property=? OR client=?
+        ORDER BY id DESC
+        LIMIT 60
+        """,
+        (prop.get("address", ""), prop.get("property_name", ""), cname),
+    )
+
+    return templates.TemplateResponse(
+        "property_brain.html",
+        ctx(
+            request,
+            prop=prop,
+            client=client,
+            jobs=jobs,
+            photos=photos,
+            equipment=equipment,
+            lessons=lessons,
+        )
+    )
+
+
+@app.get("/legacy-dashboard", response_class=HTMLResponse)
+def legacy_dashboard_alias(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    return RedirectResponse("/legacy", status_code=303)
+
+@app.get("/estimates", response_class=HTMLResponse)
+def estimates(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    if not can_accounting(u):
+        return admin_redirect(u)
+
+    return templates.TemplateResponse(
+        "simple_crud.html",
+        ctx(
+            request,
+            title="Estimates",
+            table="poolops2_estimates",
+            records=rows("SELECT * FROM poolops2_estimates ORDER BY id DESC"),
+            fields=["client", "property", "title", "status", "amount", "notes"]
+        )
+    )
+
+@app.post("/estimates/add")
+def estimates_add(request: Request, client: str = Form(""), property: str = Form(""), title: str = Form(""), status: str = Form("Draft"), amount: float = Form(0), notes: str = Form("")):
+    if not is_admin(require_login(request)): return login_redirect()
+    exec_sql("INSERT INTO poolops2_estimates (client,property,title,status,amount,notes,created_at) VALUES (?,?,?,?,?,?,?)", (client, property, title, status, amount, notes, date.today().isoformat()))
+    return RedirectResponse("/estimates", status_code=303)
+
+@app.get("/job-costing", response_class=HTMLResponse)
+def job_costing(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    if not can_accounting(u):
+        return admin_redirect(u)
+
+    return templates.TemplateResponse(
+        "job_costing.html",
+        ctx(
+            request,
+            costs=rows("SELECT * FROM poolops2_job_costs ORDER BY id DESC"),
+            jobs=rows("SELECT * FROM poolops2_jobs ORDER BY id DESC")
+        )
+    )
+
+@app.post("/job-costing/add")
+def job_costing_add(request: Request, job_id: int = Form(0), client: str = Form(""), labor: float = Form(0), materials: float = Form(0), subs: float = Form(0), equipment: float = Form(0), fuel: float = Form(0), other: float = Form(0), invoice_amount: float = Form(0), notes: str = Form("")):
+    if not is_admin(require_login(request)): return login_redirect()
+    exec_sql("INSERT INTO poolops2_job_costs (job_id,client,labor,materials,subs,equipment,fuel,other,invoice_amount,notes) VALUES (?,?,?,?,?,?,?,?,?,?)", (job_id, client, labor, materials, subs, equipment, fuel, other, invoice_amount, notes))
+    return RedirectResponse("/job-costing", status_code=303)
+
+@app.get("/field-logs", response_class=HTMLResponse)
+@app.get("/field-log", response_class=HTMLResponse)
+def field_logs(request: Request):
+    u = require_login(request)
+    if not u: return login_redirect()
+    if is_client(u): return RedirectResponse("/jarvis", status_code=303)
+    logs = rows("SELECT * FROM field_logs ORDER BY id DESC") if is_admin(u) else rows("SELECT * FROM field_logs WHERE employee_name=? ORDER BY id DESC", (u.get("name", ""),))
+    return templates.TemplateResponse("field_logs.html", ctx(request, logs=logs, jobs=jobs_for_user(u)))
+
+@app.post("/field-logs/add")
+def field_logs_add(request: Request, employee_name: str = Form(""), client: str = Form(""), property: str = Form(""), address: str = Form(""), date_str: str = Form(""), total_hours: float = Form(0), tools_used: str = Form(""), materials_used: str = Form(""), equipment_used: str = Form(""), work_completed: str = Form(""), issues: str = Form(""), next_steps: str = Form(""), weather: str = Form(""), latitude: str = Form(""), longitude: str = Form("")):
+    u = require_login(request)
+    if not u: return login_redirect()
+    if is_client(u): return RedirectResponse("/jarvis", status_code=303)
+    emp_name = employee_name if is_admin(u) else u.get("name", "")
+    exec_sql("INSERT INTO field_logs (employee_name,client,property,address,date,total_hours,tools_used,materials_used,equipment_used,work_completed,issues,next_steps,weather,latitude,longitude,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", (emp_name, client, property, address, date_str or date.today().isoformat(), total_hours, tools_used, materials_used, equipment_used, work_completed, issues, next_steps, weather, float(latitude) if latitude else None, float(longitude) if longitude else None, datetime.now().isoformat()))
+    return RedirectResponse("/field-logs", status_code=303)
+
+@app.get("/freeze-watch", response_class=HTMLResponse)
+def freeze_watch_alias(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    return RedirectResponse("/weather", status_code=303)
+
+
+@app.get("/weather-watch", response_class=HTMLResponse)
+def weather_watch_alias(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    return RedirectResponse("/weather", status_code=303)
+
+@app.get("/quickbooks", response_class=HTMLResponse)
+def quickbooks(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    if not can_accounting(u):
+        return admin_redirect(u)
+
+    return templates.TemplateResponse("quickbooks.html", ctx(request))
+
+@app.get("/quickbooks/invoices/import", response_class=HTMLResponse)
+def quickbooks_invoice_import_page(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+
+    if not can_accounting(u):
+        return RedirectResponse("/jarvis", status_code=303)
+
+    return templates.TemplateResponse(
+        "quickbooks_invoice_import.html",
+        ctx(request, imported=None, skipped=None, errors=None)
+    )
+
+
+@app.post("/quickbooks/invoices/import", response_class=HTMLResponse)
+async def quickbooks_invoice_import(
+    request: Request,
+    csv_file: UploadFile = File(None),
+):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+
+    if not can_accounting(u):
+        return RedirectResponse("/jarvis", status_code=303)
+
+    imported = []
+    skipped = []
+    errors = []
+
+    if not csv_file or not csv_file.filename:
+        return templates.TemplateResponse(
+            "quickbooks_invoice_import.html",
+            ctx(request, imported=[], skipped=[], errors=["No CSV file uploaded."])
+        )
+
+    try:
+        raw = await csv_file.read()
+        text = raw.decode("utf-8-sig")
+        raw_rows = list(csv.reader(io.StringIO(text)))
+        header_aliases = {
+            "Date": ["date"],
+            "Transaction type": ["transaction type", "transaction", "transactio"],
+            "Num": ["num", "number", "invoice number"],
+            "Name": ["name", "customer", "client"],
+            "Memo": ["memo"],
+            "Due date": ["due date", "duedate"],
+            "Amount": ["amount"],
+            "Open balance": ["open balance", "openbalance", "balance"],
+        }
+        header_index = None
+
+        def clean_header(value):
+            return " ".join(str(value or "").strip().lower().split())
+
+        def canonical_header(value):
+            cleaned_value = clean_header(value)
+            compact_value = cleaned_value.replace(" ", "")
+            for canonical, aliases in header_aliases.items():
+                for alias in aliases:
+                    if cleaned_value == alias or compact_value == alias.replace(" ", ""):
+                        return canonical
+            return str(value or "").strip()
+
+        for idx, raw_row in enumerate(raw_rows):
+            canonical_cells = {canonical_header(cell) for cell in raw_row}
+            if all(header in canonical_cells for header in header_aliases):
+                header_index = idx
+                break
+
+        if header_index is None:
+            errors.append("Could not find the QuickBooks invoice header row. Expected: Date, Transaction type, Num, Name, Memo, Due date, Amount, Open balance.")
+            return templates.TemplateResponse(
+                "quickbooks_invoice_import.html",
+                ctx(request, imported=imported, skipped=skipped, errors=errors)
+            )
+
+        def csv_value(row, name):
+            return (row.get(name) or "").strip()
+
+        def money_value(value):
+            cleaned = str(value or "").strip()
+            if not cleaned:
+                return 0.0
+            negative = cleaned.startswith("(") and cleaned.endswith(")")
+            cleaned = cleaned.replace("$", "").replace(",", "").replace("(", "").replace(")", "")
+            try:
+                amount = float(cleaned)
+            except Exception:
+                amount = 0.0
+            return -amount if negative else amount
+
+        for index, row in enumerate(raw_rows[header_index + 1:], start=header_index + 2):
+            try:
+                row = {canonical_header(raw_rows[header_index][i]): (row[i] if i < len(row) else "") for i in range(len(raw_rows[header_index]))}
+                invoice_date = csv_value(row, "Date")
+                transaction_type = csv_value(row, "Transaction type")
+                invoice_number = csv_value(row, "Num")
+                client = csv_value(row, "Name")
+                memo = csv_value(row, "Memo")
+                due_date = csv_value(row, "Due date")
+                amount_raw = csv_value(row, "Amount")
+                open_balance_raw = csv_value(row, "Open balance")
+
+                row_text = " ".join(str(v or "").strip() for v in row.values()).strip()
+                if not row_text:
+                    continue
+
+                if any(str(v or "").strip().upper() == "TOTAL" for v in row.values()):
+                    skipped.append(f"Row {index}: TOTAL row skipped.")
+                    continue
+
+                if transaction_type.lower() != "invoice":
+                    continue
+
+                amount = money_value(amount_raw)
+                open_balance = money_value(open_balance_raw)
+                status = "Paid" if open_balance == 0 else "Open"
+
+                invoice_description = memo or f"QuickBooks Invoice {invoice_number}".strip()
+
+                notes_parts = []
+                notes_parts.append("Imported from QuickBooks Invoice List CSV")
+
+                if invoice_number:
+                    notes_parts.append(f"Invoice #: {invoice_number}")
+                if due_date:
+                    notes_parts.append(f"Due Date: {due_date}")
+                if memo:
+                    notes_parts.append(f"Memo: {memo}")
+
+                notes = " | ".join(notes_parts)
+
+                existing = None
+                if invoice_number:
+                    existing = one(
+                        "SELECT id FROM poolops2_invoices WHERE qb_invoice_number=? AND source=?",
+                        (invoice_number, "QuickBooks Invoice List CSV")
+                    )
+                if not existing:
+                    existing = one(
+                        """
+                        SELECT id FROM poolops2_invoices
+                        WHERE client=?
+                          AND description=?
+                          AND amount=?
+                          AND date=?
+                          AND source=?
+                        """,
+                        (client, invoice_description, amount, invoice_date, "QuickBooks Invoice List CSV")
+                    )
+
+                if existing:
+                    exec_sql(
+                        """
+                        UPDATE poolops2_invoices
+                        SET client=?, description=?, amount=?, status=?, date=?, notes=?,
+                            qb_invoice_number=?, due_date=?, open_balance=?, source=?
+                        WHERE id=?
+                        """,
+                        (
+                            client,
+                            invoice_description,
+                            amount,
+                            status,
+                            invoice_date,
+                            notes,
+                            invoice_number,
+                            due_date,
+                            open_balance,
+                            "QuickBooks Invoice List CSV",
+                            existing["id"],
+                        )
+                    )
+                    imported.append(f"Row {index}: updated {client} invoice {invoice_number or existing['id']} - {status}.")
+                    continue
+
+                exec_sql(
+                    """
+                    INSERT INTO poolops2_invoices
+                    (job_id, client, description, amount, status, date, notes, qb_invoice_number, due_date, open_balance, source)
+                    VALUES (?,?,?,?,?,?,?,?,?,?,?)
+                    """,
+                    (
+                        None,
+                        client,
+                        invoice_description,
+                        amount,
+                        status,
+                        invoice_date,
+                        notes,
+                        invoice_number,
+                        due_date,
+                        open_balance,
+                        "QuickBooks Invoice List CSV",
+                    )
+                )
+
+                imported.append(f"Row {index}: imported {client} — ${amount:,.2f}")
+
+            except Exception as row_error:
+                errors.append(f"Row {index}: {row_error}")
+
+    except Exception as e:
+        errors.append(str(e))
+
+    return templates.TemplateResponse(
+        "quickbooks_invoice_import.html",
+        ctx(request, imported=imported, skipped=skipped, errors=errors)
+    )
+
+@app.get("/billing", response_class=HTMLResponse)
+def billing_page(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    if not can_accounting(u):
+        return admin_redirect(u)
+
+    invoice_rows = rows(
+        """
+        SELECT *
+        FROM poolops2_invoices
+        ORDER BY date DESC, id DESC
+        LIMIT 1000
+        """
+    )
+
+    summary = one(
+        """
+        SELECT
+            COALESCE(SUM(amount), 0) AS total_billed,
+            COALESCE(SUM(CASE WHEN status='Paid' THEN amount ELSE 0 END), 0) AS paid_total,
+            COALESCE(SUM(open_balance), 0) AS open_total,
+            COUNT(*) AS invoice_count
+        FROM poolops2_invoices
+        """
+    )
+
+    return templates.TemplateResponse(
+        "billing.html",
+        ctx(
+            request,
+            invoices=invoice_rows,
+            records=invoice_rows,
+            items=invoice_rows,
+            total_billed=(summary.get("total_billed", 0) if summary else 0),
+            paid_total=(summary.get("paid_total", 0) if summary else 0),
+            open_total=(summary.get("open_total", 0) if summary else 0),
+            invoice_count=(summary.get("invoice_count", 0) if summary else 0),
+        )
+    )
+
+@app.get("/weather", response_class=HTMLResponse)
+def weather(request: Request):
+    if not require_login(request): return login_redirect()
+    return templates.TemplateResponse("weather.html", ctx(request))
+
+@app.get("/contact-us", response_class=HTMLResponse)
+def contact_us(request: Request):
+    if not require_login(request): return login_redirect()
+    return templates.TemplateResponse("contact_us.html", ctx(request))
+
+@app.get("/map", response_class=HTMLResponse)
+def map_page(request: Request):
+    u = require_login(request)
+    if not u: return login_redirect()
+    employees = rows("SELECT * FROM poolops2_employees WHERE clocked_in=?", (True if USE_POSTGRES else 1,)) if is_admin(u) else []
+    return templates.TemplateResponse("map.html", ctx(request, properties=properties_for_user(u), employees=employees))
+
+@app.get("/invisible-office", response_class=HTMLResponse)
+def invisible_office(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    if not is_admin(u):
+        return admin_redirect(u)
+
+    items = rows("SELECT * FROM invisible_office_items ORDER BY id DESC")
+
+    return templates.TemplateResponse(
+        "invisible_office.html",
+        ctx(request, items=items)
+    )
+
+from app.routes import work_engine
+app.include_router(work_engine.router)
+
+from app.routes import property_brain
+app.include_router(property_brain.router)
+
+from app.routes import client_portal_v2
+app.include_router(client_portal_v2.router)
+
+from app.routes import office
+app.include_router(office.router)
+
+from app.routes import job_detail_v2
+app.include_router(job_detail_v2.router)
+
+from app.routes import mike_mode
+app.include_router(mike_mode.router)
+
+from app.routes import jarvis_approval
+app.include_router(jarvis_approval.router)
+
+from app.routes import invisible_office_edit
+app.include_router(invisible_office_edit.router)
+
+from app.routes import gps_tracking
+app.include_router(gps_tracking.router)
+
+from app.routes import account_management
+app.include_router(account_management.router)
+
+from app.routes import jarvis_command
+app.include_router(jarvis_command.router)
+
+from app.routes import jarvis_brain
+app.include_router(jarvis_brain.router)
+
+from app.routes import crew_home
+app.include_router(crew_home.router)
+
+@app.post("/invisible-office/add")
+def invisible_office_add(
+    request: Request,
+    note: str = Form(""),
+):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+
+    text = note.strip()
+    if text:
+        save_invisible_office_item(
+            request=request,
+            body=text,
+            source="manual",
+        )
+
+    return RedirectResponse("/invisible-office", status_code=303)
+
+
+@app.post("/invisible-office/{item_id}/delete")
+def invisible_office_delete(request: Request, item_id: int):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+
+    if not is_admin(u):
+        return RedirectResponse("/invisible-office", status_code=303)
+
+    exec_sql("DELETE FROM invisible_office_items WHERE id=?", (item_id,))
+
+    return RedirectResponse("/invisible-office", status_code=303)
+
+
+@app.post("/invisible-office/note")
+def invisible_office_note(request: Request, note: str = Form("")):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    if not is_admin(u):
+        return admin_redirect(u)
+    if note.strip():
+        save_invisible_office_item(
+            request=request,
+            body=note.strip(),
+            source="manual",
+        )
+    return RedirectResponse("/invisible-office", status_code=303)
+
+@app.get("/invisible-office/search", response_class=HTMLResponse)
+def invisible_office_search(request: Request, q: str = ""):
+    user = require_login(request)
+    if not user:
+        return RedirectResponse("/login", status_code=303)
+    if not is_admin(user):
+        return admin_redirect(user)
+
+    q = (q or "").strip()
+    results = []
+
+    def get_tables():
+        try:
+            return [r.get("name") for r in rows("SELECT name FROM sqlite_master WHERE type='table'") if r.get("name")]
+        except Exception:
+            return []
+
+    def get_cols(table):
+        try:
+            return [r.get("name") for r in rows(f"PRAGMA table_info({table})") if r.get("name")]
+        except Exception:
+            return []
+
+    def find_table(*keys):
+        for t in get_tables():
+            low = t.lower()
+            if all(k.lower() in low for k in keys):
+                return t
+        return None
+
+    def title_for(row, cols):
+        for combo in [
+            ["client_name"], ["property_name"], ["name"], ["contact_name"],
+            ["address"], ["job_name"], ["title"], ["description"]
+        ]:
+            vals = [str(row.get(c) or "") for c in combo if c in cols and row.get(c)]
+            if vals:
+                return " ".join(vals)
+        return "Record"
+
+    def detail_for(row, cols):
+        preferred = ["address", "city", "state", "zip", "phone", "email", "job_type", "status", "date", "scheduled_date", "notes", "description"]
+        out = []
+        for c in preferred:
+            if c in cols and row.get(c):
+                val = str(row.get(c))
+                if len(val) > 120:
+                    val = val[:120] + "..."
+                out.append(val)
+            if len(out) >= 5:
+                break
+        return " | ".join(out)
+
+    def kind_for(table):
+        t = table.lower()
+        if "propert" in t:
+            return "Property"
+        if "client" in t:
+            return "Client"
+        if "job" in t:
+            return "Job"
+        if "photo" in t:
+            return "Photo"
+        if "field" in t:
+            return "Field Log"
+        if "employee" in t or "crew" in t:
+            return "Crew"
+        if "estimate" in t:
+            return "Estimate"
+        if "cost" in t:
+            return "Job Cost"
+        if "invoice" in t or "quickbook" in t:
+            return "Billing"
+        return table
+
+    def url_for(table, row):
+        rid = row.get("id") or ""
+        t = table.lower()
+        if "propert" in t:
+            return f"/properties/{rid}" if rid else "/properties"
+        if "client" in t:
+            return f"/clients/{rid}" if rid else "/clients"
+        if "job" in t:
+            return f"/jobs/{rid}" if rid else "/jobs"
+        if "photo" in t:
+            return "/photos"
+        if "field" in t:
+            return "/field-logs"
+        if "employee" in t or "crew" in t:
+            return "/crew"
+        if "estimate" in t:
+            return "/estimates"
+        if "cost" in t:
+            return "/job-costing"
+        if "invoice" in t or "quickbook" in t:
+            return "/quickbooks"
+        return "/invisible-office"
+
+    def add_result(kind, title, detail, url, badge=""):
+        results.append({"kind": kind, "title": title, "detail": detail, "url": url, "badge": badge})
+
+    def search_table(table, q, limit=25):
+        cols = get_cols(table)
+        search_cols = [c for c in cols if c.lower() not in ["id"]]
+        if not search_cols:
+            return []
+        where = " OR ".join([f"CAST({c} AS TEXT) LIKE ?" for c in search_cols])
+        try:
+            return rows(f"SELECT * FROM {table} WHERE {where} LIMIT {limit}", tuple([f"%{q}%"] * len(search_cols)))
+        except Exception:
+            return []
+
+    if q:
+        tables = get_tables()
+        property_table = find_table("propert")
+        client_table = find_table("client")
+        job_table = find_table("job")
+        photo_table = find_table("photo")
+        field_table = find_table("field")
+
+        matched_properties = []
+
+        # First, prioritize property cards because property is the center of the system.
+        if property_table:
+            pcols = get_cols(property_table)
+            for p in search_table(property_table, q, 20):
+                matched_properties.append(p)
+                title = title_for(p, pcols)
+                detail = detail_for(p, pcols)
+                add_result("Property Card", title, detail, url_for(property_table, p), "Open Property Brain")
+
+                # Pull related jobs by property_id, client_id, property name, or address if possible.
+                if job_table:
+                    jcols = get_cols(job_table)
+                    clauses = []
+                    params = []
+                    if "property_id" in jcols and p.get("id"):
+                        clauses.append("CAST(property_id AS TEXT)=?")
+                        params.append(str(p.get("id")))
+                    if "client_id" in jcols and p.get("client_id"):
+                        clauses.append("CAST(client_id AS TEXT)=?")
+                        params.append(str(p.get("client_id")))
+                    for key in ["property_name", "name", "address"]:
+                        if key in pcols and p.get(key):
+                            for jc in ["property_name", "client_name", "description", "notes", "address"]:
+                                if jc in jcols:
+                                    clauses.append(f"CAST({jc} AS TEXT) LIKE ?")
+                                    params.append(f"%{p.get(key)}%")
+                    if clauses:
+                        try:
+                            for j in rows(f"SELECT * FROM {job_table} WHERE {' OR '.join(clauses)} LIMIT 8", tuple(params)):
+                                add_result("Related Job", title_for(j, jcols), detail_for(j, jcols), url_for(job_table, j), "Linked to Property")
+                        except Exception:
+                            pass
+
+                # Pull related photos by property_id or property text.
+                if photo_table:
+                    phcols = get_cols(photo_table)
+                    clauses = []
+                    params = []
+                    if "property_id" in phcols and p.get("id"):
+                        clauses.append("CAST(property_id AS TEXT)=?")
+                        params.append(str(p.get("id")))
+                    for key in ["property_name", "name", "address"]:
+                        if key in pcols and p.get(key):
+                            for pc in ["property_name", "caption", "description", "notes", "filename", "path"]:
+                                if pc in phcols:
+                                    clauses.append(f"CAST({pc} AS TEXT) LIKE ?")
+                                    params.append(f"%{p.get(key)}%")
+                    if clauses:
+                        try:
+                            for ph in rows(f"SELECT * FROM {photo_table} WHERE {' OR '.join(clauses)} LIMIT 8", tuple(params)):
+                                add_result("Related Photo", title_for(ph, phcols), detail_for(ph, phcols), url_for(photo_table, ph), "Photo Memory")
+                        except Exception:
+                            pass
+
+                # Pull related field logs.
+                if field_table:
+                    fcols = get_cols(field_table)
+                    clauses = []
+                    params = []
+                    if "property_id" in fcols and p.get("id"):
+                        clauses.append("CAST(property_id AS TEXT)=?")
+                        params.append(str(p.get("id")))
+                    for key in ["property_name", "name", "address"]:
+                        if key in pcols and p.get(key):
+                            for fc in ["property_name", "client_name", "notes", "description", "work_performed"]:
+                                if fc in fcols:
+                                    clauses.append(f"CAST({fc} AS TEXT) LIKE ?")
+                                    params.append(f"%{p.get(key)}%")
+                    if clauses:
+                        try:
+                            for fl in rows(f"SELECT * FROM {field_table} WHERE {' OR '.join(clauses)} LIMIT 8", tuple(params)):
+                                add_result("Related Field Log", title_for(fl, fcols), detail_for(fl, fcols), url_for(field_table, fl), "Field Memory")
+                        except Exception:
+                            pass
+
+        # Then do a broad fallback search across operational tables.
+        for table in tables:
+            if not any(k in table.lower() for k in ["client", "propert", "job", "photo", "field", "employee", "crew", "estimate", "cost", "invoice", "quickbook", "office_note"]):
+                continue
+            cols = get_cols(table)
+            for row in search_table(table, q, 12):
+                add_result(kind_for(table), title_for(row, cols), detail_for(row, cols), url_for(table, row), "Search Match")
+            if len(results) >= 75:
+                break
+
+        # De-duplicate by kind/title/detail/url.
+        seen = set()
+        clean = []
+        for r in results:
+            key = (r.get("kind"), r.get("title"), r.get("detail"), r.get("url"))
+            if key not in seen:
+                clean.append(r)
+                seen.add(key)
+        results = clean[:75]
+
+    try:
+        notes = rows("SELECT * FROM poolops2_office_notes ORDER BY id DESC LIMIT 25")
+    except Exception:
+        notes = []
+
+    return templates.TemplateResponse("invisible_office.html", {
+        "request": request,
+        "user": user,
+        "theme": theme(),
+        "notes": notes,
+        "q": q,
+        "results": results,
+        "title": "Invisible Office"
+    })
+
+# ============================================================
+# JARVIS BRAIN LAYER - HEINLIN FIELD OPS
+# Safe add-on generated for Mike Heinlin II
+# Purpose: Make Jarvis the voice-first command center above the app.
+# ============================================================
+
+import os as _jarvis_os
+import re as _jarvis_re
+import json as _jarvis_json
+from datetime import datetime as _jarvis_datetime, date as _jarvis_date, timedelta as _jarvis_timedelta
+from fastapi.responses import RedirectResponse as _JarvisRedirectResponse, HTMLResponse as _JarvisHTMLResponse, JSONResponse as _JarvisJSONResponse
+
+JARVIS_BRAIN_ENABLED = _jarvis_os.environ.get("JARVIS_BRAIN_ENABLED", "true").lower() in ("1", "true", "yes", "on")
+JARVIS_BRAIN_TAKES_OVER = _jarvis_os.environ.get("JARVIS_BRAIN_TAKES_OVER", "true").lower() in ("1", "true", "yes", "on")
+JARVIS_BRAIN_VERSION = "2026.07.03-complete-working-safe-addon"
+
+
+def _jnow():
+    return _jarvis_datetime.now().isoformat(timespec="seconds")
+
+
+def _jtoday():
+    return _jarvis_date.today().isoformat()
+
+
+def _jtry(func, default=None):
+    try:
+        return func()
+    except Exception as exc:
+        print(f"JARVIS BRAIN soft error: {exc}")
+        return default
+
+
+def _juser(request):
+    try:
+        current_user_func = globals().get("current_user")
+        if callable(current_user_func):
+            return current_user_func(request)
+    except Exception:
+        pass
+    if hasattr(request, "session"):
+        return request.session.get("user")
+    return getattr(request, "user", None)
+
+
+def _jrole(user):
+    role = str((user or {}).get("role") or "").lower().strip()
+    if role == "employee":
+        role = "crew"
+    return role or "guest"
+
+
+def _jis_admin(user):
+    try:
+        is_admin_func = globals().get("is_admin")
+        if callable(is_admin_func):
+            return bool(is_admin_func(user))
+    except Exception:
+        pass
+    return _jrole(user) == "admin"
+
+
+def _jis_client(user):
+    try:
+        is_client_func = globals().get("is_client")
+        if callable(is_client_func):
+            return bool(is_client_func(user))
+    except Exception:
+        pass
+    return _jrole(user) == "client"
+
+
+def _jis_employee(user):
+    try:
+        is_employee_func = globals().get("is_employee")
+        if callable(is_employee_func):
+            return bool(is_employee_func(user))
+    except Exception:
+        pass
+    return _jrole(user) in ("crew", "employee")
+
+
+def _jlogin_redirect():
+    try:
+        login_redirect_func = globals().get("login_redirect")
+        if callable(login_redirect_func):
+            return login_redirect_func()
+    except Exception:
+        pass
+    return _JarvisRedirectResponse("/login", status_code=303)
+
+
+def _jadmin_redirect(user=None):
+    try:
+        admin_redirect_func = globals().get("admin_redirect")
+        if callable(admin_redirect_func):
+            return admin_redirect_func(user)
+    except Exception:
+        pass
+    role = _jrole(user)
+    if role == "client":
+        return _JarvisRedirectResponse("/client-portal", status_code=303)
+    if role == "crew":
+        return _JarvisRedirectResponse("/employee", status_code=303)
+    return _JarvisRedirectResponse("/jarvis-brain", status_code=303)
+
+
+def _jctx(request, **kw):
+    try:
+        ctx_func = globals().get("ctx")
+        if callable(ctx_func):
+            return ctx_func(request, **kw)
+    except Exception:
+        pass
+    return {"request": request, "user": _juser(request), **kw}
+
+
+def _jrows(sql, params=()):
+    try:
+        rows_func = globals().get("rows")
+        if callable(rows_func):
+            return rows_func(sql, params)
+    except Exception as exc:
+        print(f"JARVIS BRAIN rows failed: {exc}\nSQL: {sql}")
+    return []
+
+
+def _jone(sql, params=()):
+    try:
+        one_func = globals().get("one")
+        if callable(one_func):
+            return one_func(sql, params)
+    except Exception as exc:
+        print(f"JARVIS BRAIN one failed: {exc}\nSQL: {sql}")
+    return None
+
+
+def _jexec(sql, params=()):
+    try:
+        exec_func = globals().get("exec_sql") or globals().get("exec")
+        if callable(exec_func):
+            return exec_func(sql, params)
+    except Exception as exc:
+        print(f"JARVIS BRAIN exec failed: {exc}\nSQL: {sql}")
+    return None
+
+
+def _jtable_columns(table):
+    try:
+        tc_func = globals().get("table_columns")
+        if callable(tc_func):
+            return tc_func(table)
+    except Exception:
+        pass
+    return []
+
+
+def _jadd_col(table, col, spec):
+    try:
+        if col not in _jtable_columns(table):
+            _jexec(f"ALTER TABLE {table} ADD COLUMN {col} {spec}")
+    except Exception:
+        pass
+
+
+def _juses_postgres():
+    try:
+        if "USE_POSTGRES" in globals():
+            return bool(globals().get("USE_POSTGRES"))
+    except Exception:
+        pass
+    return bool(_jarvis_os.environ.get("DATABASE_URL", "").startswith(("postgres://", "postgresql://")))
+
+
+def _jlike():
+    # Postgres handles LIKE case sensitively; we normalize enough in app-side matching.
+    return "LIKE"
+
+
+def _jbool(value):
+    return str(value).strip().lower() in ("1", "true", "yes", "on", "active", "in")
+
+
+def _jfirst_existing_table(candidates):
+    for table in candidates:
+        cols = _jtable_columns(table)
+        if cols:
+            return table
+    return ""
+
+
+def ensure_jarvis_brain_schema():
+    if _juses_postgres():
+        _jexec("""
+            CREATE TABLE IF NOT EXISTS jarvis_memory (
+                id SERIAL PRIMARY KEY,
+                source TEXT DEFAULT 'Jarvis Brain',
+                memory_type TEXT DEFAULT 'General',
+                title TEXT DEFAULT '',
+                body TEXT DEFAULT '',
+                client TEXT DEFAULT '',
+                property TEXT DEFAULT '',
+                job_id INTEGER,
+                assigned_to TEXT DEFAULT '',
+                due_date TEXT DEFAULT '',
+                priority TEXT DEFAULT 'Normal',
+                status TEXT DEFAULT 'Open',
+                created_by TEXT DEFAULT '',
+                created_at TEXT DEFAULT '',
+                completed_at TEXT DEFAULT ''
+            )
+        """)
+        _jexec("""
+            CREATE TABLE IF NOT EXISTS jarvis_command_log (
+                id SERIAL PRIMARY KEY,
+                user_name TEXT DEFAULT '',
+                user_role TEXT DEFAULT '',
+                command_text TEXT DEFAULT '',
+                intent TEXT DEFAULT '',
+                response_text TEXT DEFAULT '',
+                action_taken TEXT DEFAULT '',
+                latitude REAL,
+                longitude REAL,
+                created_at TEXT DEFAULT ''
+            )
+        """)
+    else:
+        _jexec("""
+            CREATE TABLE IF NOT EXISTS jarvis_memory (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                source TEXT DEFAULT 'Jarvis Brain',
+                memory_type TEXT DEFAULT 'General',
+                title TEXT DEFAULT '',
+                body TEXT DEFAULT '',
+                client TEXT DEFAULT '',
+                property TEXT DEFAULT '',
+                job_id INTEGER,
+                assigned_to TEXT DEFAULT '',
+                due_date TEXT DEFAULT '',
+                priority TEXT DEFAULT 'Normal',
+                status TEXT DEFAULT 'Open',
+                created_by TEXT DEFAULT '',
+                created_at TEXT DEFAULT '',
+                completed_at TEXT DEFAULT ''
+            )
+        """)
+        _jexec("""
+            CREATE TABLE IF NOT EXISTS jarvis_command_log (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_name TEXT DEFAULT '',
+                user_role TEXT DEFAULT '',
+                command_text TEXT DEFAULT '',
+                intent TEXT DEFAULT '',
+                response_text TEXT DEFAULT '',
+                action_taken TEXT DEFAULT '',
+                latitude REAL,
+                longitude REAL,
+                created_at TEXT DEFAULT ''
+            )
+        """)
+
+    # Strengthen current Invisible Office table without breaking older builds.
+    if _jtable_columns("invisible_office_items"):
+        for col, spec in [
+            ("source", "TEXT DEFAULT 'Jarvis Brain'"),
+            ("category", "TEXT DEFAULT 'General Note'"),
+            ("title", "TEXT DEFAULT ''"),
+            ("body", "TEXT DEFAULT ''"),
+            ("client", "TEXT DEFAULT ''"),
+            ("property", "TEXT DEFAULT ''"),
+            ("job_id", "INTEGER"),
+            ("assigned_to", "TEXT DEFAULT ''"),
+            ("due_date", "TEXT DEFAULT ''"),
+            ("priority", "TEXT DEFAULT 'Normal'"),
+            ("status", "TEXT DEFAULT 'Open'"),
+            ("created_by", "TEXT DEFAULT ''"),
+            ("created_at", "TEXT DEFAULT ''"),
+            ("completed_at", "TEXT DEFAULT ''"),
+        ]:
+            _jadd_col("invisible_office_items", col, spec)
+
+
+def _jname(user):
+    return str((user or {}).get("name") or (user or {}).get("username") or "Mike").strip() or "Mike"
+
+
+def _jgreeting(user):
+    h = _jarvis_datetime.now().hour
+    part = "morning" if h < 12 else "afternoon" if h < 17 else "evening"
+    name = _jname(user).split()[0]
+    role = _jrole(user)
+    if role == "client":
+        return f"Good {part}. I can show your project updates, photos, schedule notes, and service requests."
+    if role == "crew":
+        return f"Good {part}, {name}. I’ll keep you on the rails: clock, photos, notes, jobs, and what to do next."
+    return f"Good {part}, {name}. I’ve got you. Tell me what needs handled and I’ll file it, prompt it, or turn it into work."
+
+
+def _jschedule_date(job):
+    try:
+        sd_func = globals().get("schedule_date")
+        if callable(sd_func):
+            return sd_func(job)
+    except Exception:
+        pass
+
+    val = (job or {}).get("scheduled_start") or (job or {}).get("date") or ""
+    if isinstance(val, _jarvis_datetime):
+        return val.date().isoformat()
+    if isinstance(val, _jarvis_date):
+        return val.isoformat()
+    return str(val or "")[:10]
+
+
+def _jjobs_for_user(user):
+    try:
+        jfu = globals().get("jobs_for_user")
+        if callable(jfu):
+            return jfu(user)
+    except Exception:
+        if _jis_admin(user):
+            return _jrows("SELECT * FROM poolops2_jobs ORDER BY id DESC")
+        if _jis_client(user):
+            cname = _jname(user)
+            return _jrows("SELECT * FROM poolops2_jobs WHERE client=? ORDER BY id DESC", (cname,))
+        if _jis_employee(user):
+            name = _jname(user)
+            return _jrows("SELECT * FROM poolops2_jobs WHERE crew LIKE ? OR crew='' OR crew='Unassigned' OR crew IS NULL ORDER BY id DESC", (f"%{name}%",))
+        return []
+
+
+def _jproperties_for_user(user):
+    try:
+        prop_func = globals().get("properties_for_user")
+        if callable(prop_func):
+            return prop_func(user)
+    except Exception:
+        if _jis_admin(user) or _jis_employee(user):
+            return _jrows("SELECT * FROM poolops2_properties ORDER BY client,address")
+        if _jis_client(user):
+            cname = _jname(user)
+            return _jrows("SELECT * FROM poolops2_properties WHERE client=? OR client_id=? ORDER BY address", (cname, (user or {}).get("id")))
+        return []
+
+
+def _jphotos_for_user(user):
+    try:
+        return photos_for_user(user)
+    except Exception:
+        if _jis_admin(user) or _jis_employee(user):
+            return _jrows("SELECT * FROM poolops2_photo_logs ORDER BY id DESC LIMIT 60")
+        if _jis_client(user):
+            cname = _jname(user)
+            return _jrows("SELECT * FROM poolops2_photo_logs WHERE client=? ORDER BY id DESC LIMIT 60", (cname,))
+        return []
+
+
+def _jopen_memory(limit=12, user=None):
+    ensure_jarvis_brain_schema()
+    if _jis_admin(user):
+        return _jrows("SELECT * FROM jarvis_memory WHERE coalesce(status,'Open') <> 'Done' ORDER BY id DESC LIMIT ?", (limit,))
+    if _jis_employee(user):
+        name = _jname(user)
+        return _jrows("SELECT * FROM jarvis_memory WHERE (assigned_to=? OR assigned_to='' OR assigned_to IS NULL) AND coalesce(status,'Open') <> 'Done' ORDER BY id DESC LIMIT ?", (name, limit))
+    if _jis_client(user):
+        cname = _jname(user)
+        return _jrows("SELECT * FROM jarvis_memory WHERE client=? AND coalesce(status,'Open') <> 'Done' ORDER BY id DESC LIMIT ?", (cname, limit))
+    return []
+
+
+def _jclassify_text(text):
+    raw = (text or "").strip()
+    low = raw.lower()
+    memory_type = "General Note"
+    priority = "Normal"
+    intent = "remember"
+
+    if any(x in low for x in ["clock in", "clock me in", "start gps", "start my day"]):
+        intent = "clock_in"
+        memory_type = "Time Clock"
+    elif any(x in low for x in ["clock out", "clock me out", "end my day"]):
+        intent = "clock_out"
+        memory_type = "Time Clock"
+    elif any(x in low for x in ["what next", "what's next", "what do i do", "what am i forgetting", "start briefing", "morning briefing"]):
+        intent = "briefing"
+        memory_type = "Briefing"
+    elif any(x in low for x in ["bill", "invoice", "charge", "billing", "paid", "payment"]):
+        intent = "billing_note"
+        memory_type = "Billing Note"
+    elif any(x in low for x in ["estimate", "quote", "bid"]):
+        intent = "estimate_note"
+        memory_type = "Estimate / Quote"
+    elif any(x in low for x in ["material", "materials", "need", "buy", "pickup", "pick up", "order", "pipe", "fitting", "union", "cement", "rebar", "concrete", "salt", "check valve"]):
+        intent = "materials"
+        memory_type = "Material Needed"
+    elif any(x in low for x in ["call", "text", "email", "follow up", "follow-up", "reach out", "remind me"]):
+        intent = "follow_up"
+        memory_type = "Follow-Up"
+    elif any(x in low for x in ["problem", "issue", "broken", "leak", "leaking", "error", "failed", "bad", "cracked", "not working", "buzz", "buzzing"]):
+        intent = "problem"
+        memory_type = "Problem Found"
+    elif any(x in low for x in ["field log", "work completed", "we did", "we got", "installed", "replaced", "cleaned", "poured", "formed"]):
+        intent = "field_log"
+        memory_type = "Field Log"
+
+    if any(x in low for x in ["urgent", "asap", "emergency", "today", "right now", "critical", "danger", "gas", "electrical"]):
+        priority = "High"
+
+    title = raw[:80].strip() or "Jarvis Note"
+    if len(raw) > 80:
+        title += "..."
+
+    return {"intent": intent, "memory_type": memory_type, "priority": priority, "title": title, "body": raw}
+
+
+def _jextract_client_property_job(text, user=None):
+    # Best-effort context resolver. It never blocks the command.
+    text = text or ""
+    low = text.lower()
+    jobs = _jjobs_for_user(user)
+    props = _jproperties_for_user(user)
+    hit_job = None
+    hit_prop = None
+
+    for job in jobs[:300]:
+        hay = " ".join([
+            str(job.get("client") or ""),
+            str(job.get("property") or ""),
+            str(job.get("address") or ""),
+            str(job.get("job_type") or ""),
+        ]).lower()
+        tokens = [str(job.get("client") or "").lower(), str(job.get("property") or "").lower(), str(job.get("address") or "").lower()]
+        tokens = [t for t in tokens if t and len(t) > 2]
+        if any(t in low for t in tokens) or (hay and hay in low):
+            hit_job = job
+            break
+
+    for prop in props[:300]:
+        tokens = [str(prop.get("client") or "").lower(), str(prop.get("property_name") or "").lower(), str(prop.get("address") or "").lower()]
+        tokens = [t for t in tokens if t and len(t) > 2]
+        if any(t in low for t in tokens):
+            hit_prop = prop
+            break
+
+    client = (hit_job or hit_prop or {}).get("client") or (_jname(user) if _jis_client(user) else "")
+    prop_name = (hit_job or {}).get("property") or (hit_prop or {}).get("property_name") or (hit_prop or {}).get("address") or ""
+    job_id = (hit_job or {}).get("id")
+    return client, prop_name, job_id, hit_job, hit_prop
+
+
+def _jsave_memory(request, text, memory_type="", title="", client="", property="", job_id=None, assigned_to="", due_date="", priority="", source="Jarvis Brain"):
+    ensure_jarvis_brain_schema()
+    user = _juser(request) or {}
+    classified = _jclassify_text(text)
+    final_type = (memory_type or classified["memory_type"]).strip() or "General Note"
+    final_title = (title or classified["title"]).strip() or "Jarvis Note"
+    final_priority = (priority or classified["priority"]).strip() or "Normal"
+    created_by = _jname(user)
+
+    memory_id = _jexec(
+        """
+        INSERT INTO jarvis_memory
+        (source, memory_type, title, body, client, property, job_id, assigned_to, due_date, priority, status, created_by, created_at)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)
+        """,
+        (source, final_type, final_title, (text or "").strip(), client or "", property or "", job_id, assigned_to or "", due_date or "", final_priority, "Open", created_by, _jnow()),
+    )
+
+    if _jtable_columns("invisible_office_items"):
+        _jexec(
+            """
+            INSERT INTO invisible_office_items
+            (source, category, title, body, client, property, job_id, assigned_to, due_date, priority, status, created_by, created_at)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)
+            """,
+            (source, final_type, final_title, (text or "").strip(), client or "", property or "", job_id, assigned_to or "", due_date or "", final_priority, "Open", created_by, _jnow()),
+        )
+    return memory_id
+
+
+def _jsave_command_log(user, command_text, intent, response_text, action_taken="", lat=None, lng=None):
+    ensure_jarvis_brain_schema()
+    _jexec(
+        """
+        INSERT INTO jarvis_command_log
+        (user_name, user_role, command_text, intent, response_text, action_taken, latitude, longitude, created_at)
+        VALUES (?,?,?,?,?,?,?,?,?)
+        """,
+        (_jname(user), _jrole(user), command_text or "", intent or "", response_text or "", action_taken or "", lat, lng, _jnow()),
+    )
+
+
+def _jclock_employee(user, action, lat=None, lng=None):
+    if not _jis_employee(user):
+        return False, "Clock commands are crew-only from crew login. Admin can manage employees from the crew page."
+    cols = _jtable_columns("poolops2_employees")
+    if not cols:
+        return False, "I could not find the employee table yet."
+    now_minutes = _jarvis_datetime.now().isoformat(timespec="minutes")
+    active = action == "in"
+    emp_id = (user or {}).get("id")
+    if not emp_id:
+        return False, "I could not identify the employee record."
+
+    updates = []
+    vals = []
+    for col, val in [
+        ("clocked_in", active),
+        ("clock_lat", float(lat) if lat not in (None, "") else None),
+        ("clock_lng", float(lng) if lng not in (None, "") else None),
+        ("clocked_in_at", now_minutes if active else ""),
+        ("last_seen_at", now_minutes),
+    ]:
+        if col in cols:
+            updates.append(f"{col}=?")
+            vals.append(val)
+    if not updates:
+        return False, "The employee table does not have clock columns yet."
+    vals.append(emp_id)
+    _jexec(f"UPDATE poolops2_employees SET {', '.join(updates)} WHERE id=?", tuple(vals))
+    return True, "You are clocked in." if active else "You are clocked out."
+
+
+def _jmake_field_log_if_requested(request, user, text, client="", property="", lat=None, lng=None):
+    if not _jtable_columns("field_logs"):
+        return None
+    classified = _jclassify_text(text)
+    if classified["intent"] != "field_log":
+        return None
+    emp_name = _jname(user)
+    return _jexec(
+        """
+        INSERT INTO field_logs
+        (employee_name, client, property, address, date, total_hours, tools_used, materials_used, equipment_used, work_completed, issues, next_steps, weather, latitude, longitude, created_at)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+        """,
+        (emp_name, client or "", property or "", "", _jtoday(), 0, "", "", "", text.strip(), "", "", "", float(lat) if lat not in (None, "") else None, float(lng) if lng not in (None, "") else None, _jnow()),
+    )
+
+
+def _jbriefing(user):
+    today = _jtoday()
+    jobs = _jjobs_for_user(user)
+    today_jobs = [j for j in jobs if _jschedule_date(j) == today]
+    overdue_jobs = []
+    for j in jobs:
+        ds = _jschedule_date(j)
+        status = str(j.get("status") or "").lower()
+        if ds and ds < today and status not in ("complete", "completed", "done", "closed"):
+            overdue_jobs.append(j)
+
+    memory = _jopen_memory(10, user)
+    photos_today = []
+    if not _jis_client(user):
+        photos_today = [p for p in _jphotos_for_user(user) if str(p.get("date") or p.get("created_at") or "")[:10] == today]
+
+    clocked_in = []
+    if _jis_admin(user) and _jtable_columns("poolops2_employees"):
+        clocked_in = _jrows("SELECT * FROM poolops2_employees WHERE clocked_in=? ORDER BY name", (True if _juses_postgres() else 1,))
+
+    stats = {
+        "today_jobs": len(today_jobs),
+        "overdue_jobs": len(overdue_jobs),
+        "open_memory": len(memory),
+        "photos_today": len(photos_today),
+        "clocked_in": len(clocked_in),
+        "total_jobs_visible": len(jobs),
+    }
+
+    actions = []
+    if _jis_client(user):
+        actions = [
+            "View your project photos.",
+            "Send Mike a service request or project question.",
+            "Check your current job status and schedule notes.",
+        ]
+    elif _jis_employee(user):
+        if today_jobs:
+            actions.append(f"You have {len(today_jobs)} job(s) showing for today. Open My Day and follow the first card.")
+        else:
+            actions.append("No assigned job is showing for today. Ask Mike or check the schedule before starting work.")
+        actions.extend([
+            "Clock in when you arrive.",
+            "Take arrival photos before work starts.",
+            "Tell Jarvis what you did before leaving so the field log is saved.",
+        ])
+    else:
+        if overdue_jobs:
+            actions.append(f"You have {len(overdue_jobs)} overdue job(s) that need status, schedule, or follow-up cleaned up.")
+        if today_jobs:
+            actions.append(f"You have {len(today_jobs)} job(s) scheduled today.")
+        if memory:
+            actions.append(f"You have {len(memory)} open Jarvis memory item(s) waiting in the Invisible Office.")
+        if not photos_today:
+            actions.append("No photos are logged for today yet. Arrival/progress/completion photos protect you.")
+        actions.extend([
+            "Say: ‘Jarvis, log what I just said’ to turn rough talk into office memory.",
+            "Say: ‘Jarvis, add this to billing’ when something should become money.",
+        ])
+
+    if not actions:
+        actions.append("Everything looks quiet from the data I can see. Tell me what needs handled first.")
+
+    return {
+        "today": today,
+        "stats": stats,
+        "today_jobs": today_jobs[:8],
+        "overdue_jobs": overdue_jobs[:8],
+        "memory": memory[:8],
+        "actions": actions[:8],
+    }
+
+
+def _jquick_actions(user):
+    role = _jrole(user)
+    if role == "client":
+        return [
+            {"label": "Project Update", "command": "Jarvis, show my project update."},
+            {"label": "Service Request", "command": "Jarvis, I need to send Mike a service request."},
+            {"label": "Photos", "href": "/client-portal"},
+        ]
+    if role == "crew":
+        return [
+            {"label": "Clock In", "command": "Jarvis, clock me in."},
+            {"label": "Clock Out", "command": "Jarvis, clock me out."},
+            {"label": "What Next?", "command": "Jarvis, what should I do next?"},
+            {"label": "Save Field Log", "command": "Jarvis, field log: "},
+            {"label": "Upload Photos", "href": "/photos"},
+            {"label": "My Day", "href": "/crew/my-day"},
+        ]
+    return [
+        {"label": "Morning Briefing", "command": "Jarvis, what matters today?"},
+        {"label": "What Am I Forgetting?", "command": "Jarvis, what am I forgetting?"},
+        {"label": "Billing Note", "command": "Jarvis, add this to billing: "},
+        {"label": "Material Needed", "command": "Jarvis, material needed: "},
+        {"label": "Follow Up", "command": "Jarvis, remind me to follow up with "},
+        {"label": "Invisible Office", "href": "/invisible-office"},
+        {"label": "Organize My Day", "href": "/organize-my-day"},
+        {"label": "Crew", "href": "/crew"},
+    ]
+
+
+def _janswer_search(user, text):
+    q = (text or "").strip()
+    q = _jarvis_re.sub(r"^(jarvis[, ]*)?(find|search|look up|show me)\s+", "", q, flags=_jarvis_re.I).strip()
+    if not q:
+        return None
+    like = f"%{q}%"
+    results = []
+    if _jis_client(user):
+        cname = _jname(user)
+        for table, url, kind in [("poolops2_jobs", "/client-portal", "Job"), ("poolops2_photo_logs", "/client-portal", "Photo")]:
+            if _jtable_columns(table):
+                for r in _jrows(f"SELECT * FROM {table} WHERE client=? AND CAST(client AS TEXT) LIKE ? LIMIT 8", (cname, like)):
+                    results.append({"kind": kind, "title": r.get("property") or r.get("title") or r.get("client") or kind, "url": url})
+    else:
+        for table, url, kind, cols in [
+            ("poolops2_clients", "/clients", "Client", ["name", "contact_name", "phone", "email", "notes"]),
+            ("poolops2_properties", "/properties", "Property", ["client", "property_name", "address", "notes", "equipment_notes"]),
+            ("poolops2_jobs", "/jobs", "Job", ["client", "property", "address", "job_type", "notes"]),
+            ("jarvis_memory", "/jarvis-brain", "Jarvis Memory", ["title", "body", "client", "property"]),
+        ]:
+            have = [c for c in cols if c in _jtable_columns(table)]
+            if not have:
+                continue
+            where = " OR ".join([f"CAST({c} AS TEXT) LIKE ?" for c in have])
+            for r in _jrows(f"SELECT * FROM {table} WHERE {where} ORDER BY id DESC LIMIT 8", tuple([like] * len(have))):
+                title = r.get("name") or r.get("property_name") or r.get("property") or r.get("title") or r.get("client") or kind
+                rid = r.get("id")
+                link = f"{url}/{rid}" if rid and url in ("/clients", "/properties", "/jobs") else url
+                results.append({"kind": kind, "title": title, "url": link})
+    if results:
+        return results[:10]
+    return []
+
+
+@app.middleware("http")
+async def jarvis_brain_front_door_middleware(request, call_next):
+    # Makes Jarvis Brain the front door without deleting your existing /jarvis route.
+    if JARVIS_BRAIN_ENABLED and JARVIS_BRAIN_TAKES_OVER and request.url.path == "/jarvis":
+        return _JarvisRedirectResponse("/jarvis-brain", status_code=303)
+    return await call_next(request)
+
+
+@app.get("/jarvis-brain", response_class=_JarvisHTMLResponse)
+def jarvis_brain_page(request: Request):
+    if not JARVIS_BRAIN_ENABLED:
+        return _JarvisRedirectResponse("/jarvis", status_code=303)
+    user = _juser(request)
+    if not user:
+        return _jlogin_redirect()
+    ensure_jarvis_brain_schema()
+    briefing = _jbriefing(user)
+    recent_commands = _jrows("SELECT * FROM jarvis_command_log ORDER BY id DESC LIMIT 10") if _jis_admin(user) else _jrows("SELECT * FROM jarvis_command_log WHERE user_name=? ORDER BY id DESC LIMIT 10", (_jname(user),))
+    return templates.TemplateResponse(
+        "jarvis_brain.html",
+        _jctx(
+            request,
+            jarvis_version=JARVIS_BRAIN_VERSION,
+            greeting=_jgreeting(user),
+            role=_jrole(user),
+            briefing=briefing,
+            quick_actions=_jquick_actions(user),
+            recent_commands=recent_commands,
+            today=_jtoday(),
+        ),
+    )
+
+
+@app.get("/jarvis/brain", response_class=_JarvisHTMLResponse)
+def jarvis_brain_alias(request: Request):
+    user = _juser(request)
+    if not user:
+        return _jlogin_redirect()
+    return _JarvisRedirectResponse("/jarvis-brain", status_code=303)
+
+
+@app.get("/jarvis-brain/install-check")
+def jarvis_brain_install_check(request: Request):
+    user = _juser(request)
+    if not user:
+        return _jlogin_redirect()
+    ensure_jarvis_brain_schema()
+    return _JarvisJSONResponse({
+        "ok": True,
+        "version": JARVIS_BRAIN_VERSION,
+        "takes_over_jarvis": JARVIS_BRAIN_TAKES_OVER,
+        "role": _jrole(user),
+        "tables": {
+            "jarvis_memory": bool(_jtable_columns("jarvis_memory")),
+            "jarvis_command_log": bool(_jtable_columns("jarvis_command_log")),
+            "invisible_office_items": bool(_jtable_columns("invisible_office_items")),
+            "field_logs": bool(_jtable_columns("field_logs")),
+            "jobs": bool(_jtable_columns("poolops2_jobs")),
+            "employees": bool(_jtable_columns("poolops2_employees")),
+        }
+    })
+
+
+@app.get("/jarvis-brain/briefing.json")
+def jarvis_brain_briefing_json(request: Request):
+    user = _juser(request)
+    if not user:
+        return _JarvisJSONResponse({"ok": False, "error": "Login required"}, status_code=401)
+    return _JarvisJSONResponse({"ok": True, "briefing": _jbriefing(user), "greeting": _jgreeting(user)})
+
+
+@app.post("/jarvis-brain/command")
+async def jarvis_brain_command(request: Request):
+    user = _juser(request)
+    if not user:
+        return _JarvisJSONResponse({"ok": False, "reply": "Login required."}, status_code=401)
+    ensure_jarvis_brain_schema()
+
+    payload = {}
+    try:
+        payload = await request.json()
+    except Exception:
+        try:
+            form = await request.form()
+            payload = dict(form)
+        except Exception:
+            payload = {}
+
+    text = str(payload.get("text") or payload.get("message") or "").strip()
+    lat = payload.get("lat") or payload.get("latitude") or ""
+    lng = payload.get("lng") or payload.get("longitude") or ""
+
+    if not text:
+        return _JarvisJSONResponse({"ok": False, "reply": "Tell me what needs handled."})
+
+    classified = _jclassify_text(text)
+    intent = classified["intent"]
+    reply = "I saved it to Jarvis memory and the Invisible Office."
+    action_taken = "memory_saved"
+    links = []
+    cards = []
+
+    low = text.lower()
+
+    if intent == "clock_in":
+        ok, msg = _jclock_employee(user, "in", lat, lng)
+        reply = msg
+        action_taken = "clock_in" if ok else "clock_in_failed"
+    elif intent == "clock_out":
+        ok, msg = _jclock_employee(user, "out", lat, lng)
+        reply = msg
+        action_taken = "clock_out" if ok else "clock_out_failed"
+    elif intent == "briefing":
+        b = _jbriefing(user)
+        reply = "Here’s what matters: " + " ".join(b.get("actions", [])[:4])
+        action_taken = "briefing_returned"
+        cards = [{"title": "Today", "value": b["stats"]["today_jobs"], "detail": "jobs today"}, {"title": "Open Memory", "value": b["stats"]["open_memory"], "detail": "items"}, {"title": "Overdue", "value": b["stats"]["overdue_jobs"], "detail": "jobs"}]
+    elif _jarvis_re.search(r"\b(find|search|look up|show me)\b", low):
+        found = _janswer_search(user, text)
+        if found:
+            reply = f"I found {len(found)} possible match(es)."
+            links = found
+        else:
+            reply = "I searched the clients, properties, jobs, and Jarvis memory I can access, but I did not find a solid match."
+        action_taken = "search"
+    else:
+        client, prop, job_id, hit_job, hit_prop = _jextract_client_property_job(text, user)
+        _jsave_memory(request, text, memory_type=classified["memory_type"], title=classified["title"], client=client, property=prop, job_id=job_id, priority=classified["priority"])
+        field_log_id = _jmake_field_log_if_requested(request, user, text, client=client, property=prop, lat=lat, lng=lng)
+        if field_log_id:
+            reply = "I saved that as a field log and also filed it in Jarvis memory."
+            action_taken = "field_log_saved"
+            links.append({"kind": "Field Logs", "title": "Open Field Logs", "url": "/field-logs"})
+        elif classified["intent"] == "billing_note":
+            reply = "I saved that as a billing note. It is waiting in the Invisible Office so you can turn it into money instead of forgetting it."
+            links.append({"kind": "Billing", "title": "Open Invisible Office", "url": "/invisible-office"})
+        elif classified["intent"] == "materials":
+            reply = "I saved that as a material-needed item."
+        elif classified["intent"] == "follow_up":
+            reply = "I saved that as a follow-up/reminder."
+        elif classified["intent"] == "problem":
+            reply = "I saved that as a problem found. That protects the job history and gives you something to follow up on."
+        else:
+            reply = "I saved that to Jarvis memory and filed it where the office can see it."
+
+    _jsave_command_log(user, text, intent, reply, action_taken, float(lat) if str(lat).strip() else None, float(lng) if str(lng).strip() else None)
+    return _JarvisJSONResponse({
+        "ok": True,
+        "reply": reply,
+        "intent": intent,
+        "action_taken": action_taken,
+        "links": links,
+        "cards": cards,
+        "briefing": _jbriefing(user),
+    })
+
+
+@app.post("/jarvis-brain/memory")
+def jarvis_brain_memory_save(request: Request, note: str = Form(""), memory_type: str = Form("General Note"), priority: str = Form("Normal"), client: str = Form(""), property: str = Form(""), due_date: str = Form("")):
+    user = _juser(request)
+    if not user:
+        return _jlogin_redirect()
+    if not note.strip():
+        return _JarvisRedirectResponse("/jarvis-brain", status_code=303)
+    _jsave_memory(request, note.strip(), memory_type=memory_type, priority=priority, client=client, property=property, due_date=due_date, source="Jarvis Brain Manual")
+    return _JarvisRedirectResponse("/jarvis-brain", status_code=303)
+
+
+@app.post("/jarvis-brain/memory/{memory_id}/done")
+def jarvis_brain_memory_done(request: Request, memory_id: int):
+    user = _juser(request)
+    if not user:
+        return _jlogin_redirect()
+    if not _jis_admin(user) and not _jis_employee(user):
+        return _jadmin_redirect(user)
+    _jexec("UPDATE jarvis_memory SET status=?, completed_at=? WHERE id=?", ("Done", _jnow(), memory_id))
+    return _JarvisRedirectResponse("/jarvis-brain", status_code=303)
+
+
+@app.get("/jarvis-brain/export.json")
+def jarvis_brain_export(request: Request):
+    user = _juser(request)
+    if not user:
+        return _jlogin_redirect()
+    if not _jis_admin(user):
+        return _jadmin_redirect(user)
+    ensure_jarvis_brain_schema()
+    return _JarvisJSONResponse({
+        "version": JARVIS_BRAIN_VERSION,
+        "memory": _jrows("SELECT * FROM jarvis_memory ORDER BY id DESC LIMIT 500"),
+        "commands": _jrows("SELECT * FROM jarvis_command_log ORDER BY id DESC LIMIT 500"),
+    })
+
+
+# Legacy names Mike already uses in conversation.
+@app.get("/brain", response_class=_JarvisHTMLResponse)
+def brain_alias(request: Request):
+    return _JarvisRedirectResponse("/jarvis-brain", status_code=303)
+
+@app.get("/mike-brain", response_class=_JarvisHTMLResponse)
+def mike_brain_alias(request: Request):
+    return _JarvisRedirectResponse("/jarvis-brain", status_code=303)
+
+# ============================================================
+# END JARVIS BRAIN LAYER
+# ============================================================

@@ -178,6 +178,22 @@ def ensure_schema():
                 role TEXT DEFAULT 'admin',
                 name TEXT DEFAULT ''
             )""")
+            c.execute("""CREATE TABLE IF NOT EXISTS jarvis_actions (
+                id SERIAL PRIMARY KEY,
+                command TEXT NOT NULL,
+                intent TEXT DEFAULT 'unknown',
+                client TEXT DEFAULT '',
+                property TEXT DEFAULT '',
+                status TEXT DEFAULT 'New',
+                response TEXT DEFAULT '',
+                error TEXT DEFAULT '',
+                approval_required BOOLEAN DEFAULT true,
+                approved BOOLEAN DEFAULT false,
+                data_json TEXT DEFAULT '',
+                created_by TEXT DEFAULT '',
+                created_at TEXT DEFAULT '',
+                completed_at TEXT DEFAULT ''
+            )""")
             c.execute("""CREATE TABLE IF NOT EXISTS poolops2_clients (
                 id SERIAL PRIMARY KEY,
                 name TEXT NOT NULL,
@@ -248,6 +264,22 @@ def ensure_schema():
                 password TEXT NOT NULL,
                 role TEXT DEFAULT 'admin',
                 name TEXT DEFAULT ''
+            )""")
+            c.execute("""CREATE TABLE IF NOT EXISTS jarvis_actions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                command TEXT NOT NULL,
+                intent TEXT DEFAULT 'unknown',
+                client TEXT DEFAULT '',
+                property TEXT DEFAULT '',
+                status TEXT DEFAULT 'New',
+                response TEXT DEFAULT '',
+                error TEXT DEFAULT '',
+                approval_required INTEGER DEFAULT 1,
+                approved INTEGER DEFAULT 0,
+                data_json TEXT DEFAULT '',
+                created_by TEXT DEFAULT '',
+                created_at TEXT DEFAULT '',
+                completed_at TEXT DEFAULT ''
             )""")
             c.execute("""CREATE TABLE IF NOT EXISTS poolops2_clients (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -695,14 +727,38 @@ def jarvis_landing(request: Request):
 
     today = date.today().isoformat()
 
+    recent_actions = rows(
+        "SELECT * FROM jarvis_actions ORDER BY id DESC LIMIT 10"
+    )
+
     return templates.TemplateResponse(
         "jarvis.html",
         ctx(
             request,
             today=today,
             greeting=greeting,
-        )                                                                           
-    ) 
+            recent_actions=recent_actions,
+        )
+    )
+
+def jarvis_detect_intent(command: str):
+    text = (command or "").lower()
+
+    if "owe" in text or "owes" in text or "statement" in text or "invoice" in text:
+        if "send" in text or "email" in text:
+            return "send_billing_statement"
+        return "billing_lookup"
+
+    if "schedule" in text or "calendar" in text:
+        return "schedule"
+
+    if "job" in text:
+        return "job"
+
+    if "note" in text or "remember" in text or "log" in text:
+        return "field_log"
+
+    return "general"
 
 @app.get("/jarvis/search")
 def jarvis_search(request: Request, q: str = ""):
@@ -746,6 +802,59 @@ def jarvis_search(request: Request, q: str = ""):
         return RedirectResponse("/weather", status_code=303)
 
     return RedirectResponse("/organize-my-day", status_code=303)
+
+@app.post("/jarvis/action")
+def jarvis_action(request: Request, command: str = Form("")):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+
+    command = (command or "").strip()
+    if not command:
+        return RedirectResponse("/jarvis", status_code=303)
+
+    intent = jarvis_detect_intent(command)
+
+    created_by = u.get("name") or u.get("username") or "Unknown"
+    created_at = datetime.now().strftime("%Y-%m-%d %I:%M %p")
+
+    response = ""
+
+    if intent == "send_billing_statement":
+        response = (
+            "I saved this billing command. QuickBooks is not connected yet, "
+            "so I cannot send it automatically until we add the QuickBooks API bridge."
+        )
+    elif intent == "billing_lookup":
+        response = "I saved this billing lookup command."
+    elif intent == "schedule":
+        response = "I saved this scheduling command."
+    elif intent == "job":
+        response = "I saved this job command."
+    elif intent == "field_log":
+        response = "I saved this field log command."
+    else:
+        response = "I saved this Jarvis command."
+
+    exec_sql(
+        """
+        INSERT INTO jarvis_actions
+        (command, intent, status, response, approval_required, approved, created_by, created_at)
+        VALUES (?,?,?,?,?,?,?,?)
+        """,
+        (
+            command,
+            intent,
+            "New",
+            response,
+            True if USE_POSTGRES else 1,
+            False if USE_POSTGRES else 0,
+            created_by,
+            created_at,
+        )
+    )
+
+    return RedirectResponse("/jarvis", status_code=303)
 
 @app.get("/dashboard", response_class=HTMLResponse)
 def dashboard(request: Request, y: int = None, m: int = None):

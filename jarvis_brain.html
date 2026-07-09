@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Jarvis Brain | Heinlin Field Ops</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="/static/jarvis-brain.css">
+</head>
+<body class="jarvis-body">
+  <div class="jarvis-shell">
+    <header class="jarvis-hero">
+      <div>
+        <p class="eyebrow">HEINLIN FIELD OPS</p>
+        <h1>Jarvis Brain</h1>
+        <p class="subtitle">{{ greeting }}</p>
+      </div>
+      <div class="status-pill">
+        {{ role|upper }} · {{ today }}
+      </div>
+    </header>
+
+    <section class="grid">
+      <div class="card command-card">
+        <h2>Talk to Jarvis</h2>
+        <p class="muted">Type or use the mic. Jarvis will classify it, file it, and tell you the next move.</p>
+
+        <textarea id="jarvisCommand" placeholder="Jarvis, what am I forgetting?"></textarea>
+        <div class="row">
+          <button id="sendJarvis" type="button">Send to Jarvis</button>
+          <button id="micJarvis" type="button" class="secondary">🎙️ Mic</button>
+        </div>
+
+        <div id="jarvisReply" class="reply">
+          Ready.
+        </div>
+
+        <div id="jarvisLinks" class="links"></div>
+      </div>
+
+      <div class="card">
+        <h2>What Matters</h2>
+        {% if briefing and briefing.actions %}
+          <ul class="action-list">
+            {% for a in briefing.actions %}
+              <li>{{ a }}</li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="muted">No briefing items loaded yet.</p>
+        {% endif %}
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Quick Actions</h2>
+      <div class="quick-grid">
+        {% for action in quick_actions %}
+          {% if action.href %}
+            <a class="quick" href="{{ action.href }}">{{ action.label }}</a>
+          {% else %}
+            <button class="quick quick-command" data-command="{{ action.command }}">{{ action.label }}</button>
+          {% endif %}
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="grid">
+      <div class="card">
+        <h2>Today</h2>
+        <div class="stat-grid">
+          <div><b>{{ briefing.stats.today_jobs if briefing else 0 }}</b><span>Jobs today</span></div>
+          <div><b>{{ briefing.stats.open_memory if briefing else 0 }}</b><span>Open memory</span></div>
+          <div><b>{{ briefing.stats.overdue_jobs if briefing else 0 }}</b><span>Overdue</span></div>
+          <div><b>{{ briefing.stats.photos_today if briefing else 0 }}</b><span>Photos today</span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Recent Commands</h2>
+        {% if recent_commands %}
+          <ul class="small-list">
+            {% for c in recent_commands %}
+              <li><b>{{ c.intent or c.get('intent','') }}</b> — {{ c.command_text or c.get('command_text','') }}</li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="muted">No commands logged yet.</p>
+        {% endif %}
+      </div>
+    </section>
+
+    <footer>
+      <a href="/dashboard">Dashboard</a>
+      <a href="/invisible-office">Invisible Office</a>
+      <a href="/logout">Logout</a>
+      <span>{{ jarvis_version }}</span>
+    </footer>
+  </div>
+
+  <script src="/static/jarvis-brain.js"></script>
+</body>
+</html>
