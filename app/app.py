@@ -5320,6 +5320,73 @@ def jarvis_brain_install_check_level7():
         "stats": stats,
     })
 
+def jarvis_detect_intent(command: str):
+    text = (command or "").lower()
+
+    if "owe" in text or "owes" in text or "statement" in text or "invoice" in text:
+        if "send" in text or "email" in text:
+            return "send_billing_statement"
+        return "billing_lookup"
+
+    if "schedule" in text or "calendar" in text:
+        return "schedule"
+
+    if "job" in text:
+        return "job"
+
+    if "note" in text or "remember" in text or "log" in text:
+        return "field_log"
+
+    return "general"
+
+
+@app.post("/jarvis/action")
+def jarvis_action(request: Request, command: str = Form("")):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+
+    command = (command or "").strip()
+    if not command:
+        return RedirectResponse("/jarvis", status_code=303)
+
+    intent = jarvis_detect_intent(command)
+    created_by = u.get("name") or u.get("username") or "Unknown"
+    created_at = datetime.now().strftime("%Y-%m-%d %I:%M %p")
+
+    response = "I saved this Jarvis command."
+
+    if intent == "send_billing_statement":
+        response = "I saved this billing command. QuickBooks is not connected yet."
+    elif intent == "billing_lookup":
+        response = "I saved this billing lookup command."
+    elif intent == "schedule":
+        response = "I saved this scheduling command."
+    elif intent == "job":
+        response = "I saved this job command."
+    elif intent == "field_log":
+        response = "I saved this field log command."
+
+    exec_sql(
+        """
+        INSERT INTO jarvis_actions
+        (command, intent, status, response, approval_required, approved, created_by, created_at)
+        VALUES (?,?,?,?,?,?,?,?)
+        """,
+        (
+            command,
+            intent,
+            "New",
+            response,
+            True if USE_POSTGRES else 1,
+            False if USE_POSTGRES else 0,
+            created_by,
+            created_at,
+        )
+    )
+
+    return RedirectResponse("/jarvis", status_code=303)
+
 @app.post("/jarvis/action/{action_id}/done")
 def jarvis_action_done(request: Request, action_id: int):
     u = require_login(request)
