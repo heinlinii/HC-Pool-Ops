@@ -530,6 +530,22 @@ def ensure_schema():
                 role TEXT DEFAULT 'admin',
                 name TEXT DEFAULT ''
             )""")
+            c.execute("""CREATE TABLE IF NOT EXISTS jarvis_actions (
+                id SERIAL PRIMARY KEY,
+                command TEXT NOT NULL,
+                intent TEXT DEFAULT 'unknown',
+                client TEXT DEFAULT '',
+                property TEXT DEFAULT '',
+                status TEXT DEFAULT 'New',
+                response TEXT DEFAULT '',
+                error TEXT DEFAULT '',
+                approval_required BOOLEAN DEFAULT true,
+                approved BOOLEAN DEFAULT false,
+                data_json TEXT DEFAULT '',
+                created_by TEXT DEFAULT '',
+                created_at TEXT DEFAULT '',
+                completed_at TEXT DEFAULT ''
+            )""")
             c.execute("""CREATE TABLE IF NOT EXISTS poolops2_clients (
                 id SERIAL PRIMARY KEY,
                 name TEXT NOT NULL,
@@ -648,6 +664,22 @@ def ensure_schema():
                 password TEXT NOT NULL,
                 role TEXT DEFAULT 'admin',
                 name TEXT DEFAULT ''
+            )""")
+            c.execute("""CREATE TABLE IF NOT EXISTS jarvis_actions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                command TEXT NOT NULL,
+                intent TEXT DEFAULT 'unknown',
+                client TEXT DEFAULT '',
+                property TEXT DEFAULT '',
+                status TEXT DEFAULT 'New',
+                response TEXT DEFAULT '',
+                error TEXT DEFAULT '',
+                approval_required INTEGER DEFAULT 1,
+                approved INTEGER DEFAULT 0,
+                data_json TEXT DEFAULT '',
+                created_by TEXT DEFAULT '',
+                created_at TEXT DEFAULT '',
+                completed_at TEXT DEFAULT ''
             )""")
             c.execute("""CREATE TABLE IF NOT EXISTS poolops2_clients (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
