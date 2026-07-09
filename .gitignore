@@ -5,3 +5,12 @@ __pycache__/
 *.sqlite3
 backup_*.json
 poolops2_local_before_*.db
+# Heinlin cleanup
+*.zip
+*.db
+*.db-*
+.venv/
+.uv-cache/
+__pycache__/
+jarvis_backups/
+backups/

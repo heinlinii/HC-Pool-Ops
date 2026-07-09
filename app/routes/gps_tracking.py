@@ -364,7 +364,7 @@ def gps_clock(
         ),
     )
 
-    return RedirectResponse("/gps", status_code=303)
+    return RedirectResponse("/gps?autostart=1" if clocked else "/gps", status_code=303)
 
 
 @router.post("/gps/ping")
@@ -393,6 +393,8 @@ def gps_ping(
     employee_id = employee.get("id")
     employee_name = employee.get("name") or user.get("name") or user.get("username") or "Mike"
 
+    now_stamp = datetime.now().isoformat(timespec="seconds")
+
     _safe_exec(
         """
         INSERT INTO employee_location_points
@@ -409,8 +411,20 @@ def gps_ping(
             heading,
             source,
             note,
-            datetime.now().isoformat(timespec="seconds"),
+            now_stamp,
         ),
+    )
+
+    # Keep the employee live-status table current too. This fixes the common
+    # problem where the raw GPS table records points but the app still shows
+    # the employee as stale or not moving.
+    _safe_exec(
+        """
+        UPDATE poolops2_employees
+        SET clock_lat=?, clock_lng=?, last_seen_at=?
+        WHERE id=?
+        """,
+        (latitude, longitude, now_stamp, employee_id),
     )
 
     return JSONResponse(
@@ -423,6 +437,68 @@ def gps_ping(
         }
     )
 
+
+
+
+@router.post("/gps/ping-json")
+async def gps_ping_json(request: Request):
+    """Accept GPS points from fetch(JSON) as well as FormData.
+    Some mobile browsers/apps send JSON when the screen is locked or restored.
+    This endpoint makes the tracker harder to break.
+    """
+    h = _helpers()
+    user = h["require_login"](request)
+
+    if not user:
+        return JSONResponse({"ok": False, "error": "Not logged in"}, status_code=401)
+
+    if not (h["is_admin"](user) or h["is_employee"](user)):
+        return JSONResponse({"ok": False, "error": "Not allowed"}, status_code=403)
+
+    try:
+        payload = await request.json()
+    except Exception:
+        payload = {}
+
+    ensure_gps_schema()
+    employee = get_or_create_employee_for_user(user)
+    employee_id = employee.get("id")
+    employee_name = employee.get("name") or user.get("name") or user.get("username") or "Mike"
+
+    latitude = float(payload.get("latitude"))
+    longitude = float(payload.get("longitude"))
+    accuracy = float(payload.get("accuracy") or 0)
+    speed = float(payload.get("speed") or 0)
+    heading = float(payload.get("heading") or 0)
+    source = str(payload.get("source") or "gps_tracker_json")
+    note = str(payload.get("note") or "GPS tracker JSON")
+    now_stamp = datetime.now().isoformat(timespec="seconds")
+
+    _safe_exec(
+        """
+        INSERT INTO employee_location_points
+        (employee_id, employee_name, latitude, longitude, accuracy, speed, heading, source, note, created_at)
+        VALUES (?,?,?,?,?,?,?,?,?,?)
+        """,
+        (employee_id, employee_name, latitude, longitude, accuracy, speed, heading, source, note, now_stamp),
+    )
+    _safe_exec(
+        """
+        UPDATE poolops2_employees
+        SET clock_lat=?, clock_lng=?, last_seen_at=?
+        WHERE id=?
+        """,
+        (latitude, longitude, now_stamp, employee_id),
+    )
+
+    return JSONResponse({
+        "ok": True,
+        "employee_id": employee_id,
+        "employee_name": employee_name,
+        "created_at": now_stamp,
+        "latitude": latitude,
+        "longitude": longitude,
+    })
 
 @router.get("/gps/day", response_class=HTMLResponse)
 def gps_day(request: Request):

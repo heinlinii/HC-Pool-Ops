@@ -1,0 +1,37 @@
+JARVIS ENGINE + GPS + QUICKBOOKS UPGRADE
+
+What changed:
+1. Jarvis billing commands now create a billing.send_statement action with customer detection, invoice lookup, statement preview link, and approval queue payload.
+2. Commands like "Send Scheller everything he owes" no longer inherit the last active job. They resolve to the customer and QuickBooks/Billing flow.
+3. QuickBooks Online OAuth scaffolding is added:
+   - /quickbooks/connect
+   - /quickbooks/callback
+   - /quickbooks/status
+   - /quickbooks/statement/preview?customer=Scheller
+   - /quickbooks/action/send-statement
+4. QuickBooks live calls use QBO if connected; otherwise Jarvis falls back to imported QuickBooks invoice CSV data already in poolops2_invoices.
+5. GPS tracking is hardened:
+   - Clock In redirects to /gps?autostart=1
+   - Tracking starts with an immediate point, then saves every 30 seconds while open
+   - Last live location updates poolops2_employees as points save
+   - Added /gps/ping-json for mobile/browser JSON pings
+   - Tracker remembers active tracking in localStorage while the page stays open/restores
+6. .gitignore was updated to keep zips, db files, venvs, caches, and backup folders out of GitHub.
+
+Before live QuickBooks connection works, set these in Render:
+QUICKBOOKS_CLIENT_ID
+QUICKBOOKS_CLIENT_SECRET
+QUICKBOOKS_REDIRECT_URI=https://www.hc-pools.com/quickbooks/callback
+QUICKBOOKS_ENV=sandbox or production
+
+After replacing files:
+git add app .gitignore JARVIS_ENGINE_UPGRADE_NOTES.txt
+git commit -m "Install unified Jarvis billing GPS QuickBooks upgrade"
+git push
+
+Then test:
+1. /quickbooks/status
+2. /quickbooks
+3. /quickbooks/statement/preview?customer=Scheller
+4. /jarvis-brain -> Send Scheller everything he owes
+5. /gps -> Clock In, allow location, verify /gps/day and /gps/stops

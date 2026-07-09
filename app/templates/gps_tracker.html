@@ -16,7 +16,7 @@
   {% endif %}
 
   <p class="muted">
-    Tap Clock In first, then Start GPS Tracking. Keep this page open while you work.
+    Tap Clock In once. Field Ops will auto-start GPS tracking and keep saving points while this page is open.
   </p>
 
   <div class="grid">
@@ -115,7 +115,7 @@ function clockWithGps(action) {
 async function sendPoint(position, forced=false) {
   const now = Date.now();
 
-  if (!forced && now - lastSentAt < 60000) {
+  if (!forced && now - lastSentAt < 30000) {
     return;
   }
 
@@ -166,6 +166,14 @@ function startTracking() {
 
   statusText("Requesting GPS permission...");
 
+  navigator.geolocation.getCurrentPosition(function(position) {
+    sendPoint(position, true);
+  }, function(error) {
+    statusText("Waiting for GPS lock: " + error.message);
+  }, { enableHighAccuracy: true, maximumAge: 5000, timeout: 20000 });
+
+  localStorage.setItem("hfo_gps_tracking", "1");
+
   gpsWatchId = navigator.geolocation.watchPosition(
     function(position) {
       sendPoint(position);
@@ -204,8 +212,15 @@ function stopTracking() {
     forcePingTimer = null;
   }
 
+  localStorage.removeItem("hfo_gps_tracking");
   statusText("GPS tracking stopped.");
 }
+
+window.addEventListener("load", function() {
+  if (localStorage.getItem("hfo_gps_tracking") === "1") {
+    setTimeout(startTracking, 800);
+  }
+});
 </script>
 
 {% if autostart %}

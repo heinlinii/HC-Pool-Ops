@@ -4,7 +4,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
 from pathlib import Path
-from datetime import datetime, date, timedelta, timedelta, timezone
+from datetime import datetime, date, timedelta, timezone
 from app.routes import pool_monitoring, timeclock
 from app.routes.auth import (
     current_user,
@@ -29,6 +29,9 @@ import html
 import logging
 import urllib.request
 import urllib.parse
+import base64
+import secrets
+import requests
 try:
     import psycopg
     from psycopg.rows import dict_row
@@ -3387,6 +3390,357 @@ def quickbooks(request: Request):
 
     return templates.TemplateResponse("quickbooks.html", ctx(request))
 
+
+# ============================================================
+# QUICKBOOKS ONLINE INTEGRATION - JARVIS READY
+# OAuth, token storage, imported/QBO invoice lookup, statement preview, and action queue.
+# Requires these Render environment variables before live QBO calls work:
+# QUICKBOOKS_CLIENT_ID, QUICKBOOKS_CLIENT_SECRET, QUICKBOOKS_REDIRECT_URI
+# Optional: QUICKBOOKS_ENV=sandbox or production
+# ============================================================
+
+QBO_AUTH_URL = "https://appcenter.intuit.com/connect/oauth2"
+QBO_TOKEN_URL = "https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer"
+QBO_SCOPE = "com.intuit.quickbooks.accounting"
+
+def qbo_env():
+    return (os.getenv("QUICKBOOKS_ENV") or "sandbox").strip().lower()
+
+def qbo_base_url():
+    return "https://sandbox-quickbooks.api.intuit.com" if qbo_env() != "production" else "https://quickbooks.api.intuit.com"
+
+def qbo_config():
+    return {
+        "client_id": os.getenv("QUICKBOOKS_CLIENT_ID", ""),
+        "client_secret": os.getenv("QUICKBOOKS_CLIENT_SECRET", ""),
+        "redirect_uri": os.getenv("QUICKBOOKS_REDIRECT_URI", ""),
+        "env": qbo_env(),
+    }
+
+def qbo_ready():
+    cfg = qbo_config()
+    return bool(cfg["client_id"] and cfg["client_secret"] and cfg["redirect_uri"])
+
+def ensure_qbo_schema():
+    if USE_POSTGRES:
+        exec_sql("""
+        CREATE TABLE IF NOT EXISTS quickbooks_tokens (
+            id SERIAL PRIMARY KEY,
+            realm_id TEXT DEFAULT '',
+            access_token TEXT DEFAULT '',
+            refresh_token TEXT DEFAULT '',
+            expires_at TEXT DEFAULT '',
+            refresh_expires_at TEXT DEFAULT '',
+            environment TEXT DEFAULT 'sandbox',
+            created_at TEXT DEFAULT '',
+            updated_at TEXT DEFAULT ''
+        )
+        """)
+    else:
+        exec_sql("""
+        CREATE TABLE IF NOT EXISTS quickbooks_tokens (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            realm_id TEXT DEFAULT '',
+            access_token TEXT DEFAULT '',
+            refresh_token TEXT DEFAULT '',
+            expires_at TEXT DEFAULT '',
+            refresh_expires_at TEXT DEFAULT '',
+            environment TEXT DEFAULT 'sandbox',
+            created_at TEXT DEFAULT '',
+            updated_at TEXT DEFAULT ''
+        )
+        """)
+
+def qbo_token_row():
+    try:
+        ensure_qbo_schema()
+        return one("SELECT * FROM quickbooks_tokens ORDER BY id DESC LIMIT 1")
+    except Exception:
+        return None
+
+def qbo_connected():
+    row = qbo_token_row()
+    return bool(row and row.get("realm_id") and row.get("refresh_token"))
+
+def qbo_save_tokens(data, realm_id):
+    ensure_qbo_schema()
+    now = datetime.now().isoformat(timespec="seconds")
+    expires_at = (datetime.now() + timedelta(seconds=int(data.get("expires_in") or 3600))).isoformat(timespec="seconds")
+    refresh_expires_at = (datetime.now() + timedelta(seconds=int(data.get("x_refresh_token_expires_in") or 8640000))).isoformat(timespec="seconds")
+    exec_sql("DELETE FROM quickbooks_tokens")
+    exec_sql("""
+        INSERT INTO quickbooks_tokens
+        (realm_id, access_token, refresh_token, expires_at, refresh_expires_at, environment, created_at, updated_at)
+        VALUES (?,?,?,?,?,?,?,?)
+    """, (
+        realm_id or "",
+        data.get("access_token") or "",
+        data.get("refresh_token") or "",
+        expires_at,
+        refresh_expires_at,
+        qbo_env(),
+        now,
+        now,
+    ))
+
+def qbo_basic_auth_header():
+    cfg = qbo_config()
+    raw = f"{cfg['client_id']}:{cfg['client_secret']}".encode("utf-8")
+    return "Basic " + base64.b64encode(raw).decode("ascii")
+
+def qbo_refresh_access_token():
+    row = qbo_token_row()
+    if not row or not row.get("refresh_token"):
+        return None
+    payload = {"grant_type": "refresh_token", "refresh_token": row.get("refresh_token")}
+    headers = {
+        "Authorization": qbo_basic_auth_header(),
+        "Accept": "application/json",
+        "Content-Type": "application/x-www-form-urlencoded",
+    }
+    r = requests.post(QBO_TOKEN_URL, data=payload, headers=headers, timeout=30)
+    if r.status_code >= 400:
+        return None
+    data = r.json()
+    qbo_save_tokens(data, row.get("realm_id"))
+    return qbo_token_row()
+
+def qbo_get_access_token():
+    row = qbo_token_row()
+    if not row:
+        return None
+    exp = parse_date_safe(row.get("expires_at")) if 'parse_date_safe' in globals() else None
+    if not exp:
+        try:
+            exp = datetime.fromisoformat(str(row.get("expires_at") or ""))
+        except Exception:
+            exp = None
+    if exp and exp > datetime.now() + timedelta(minutes=5):
+        return row.get("access_token")
+    row = qbo_refresh_access_token()
+    return row.get("access_token") if row else None
+
+def qbo_query(sql):
+    row = qbo_token_row()
+    token = qbo_get_access_token()
+    if not row or not token:
+        return {"ok": False, "error": "QuickBooks is not connected."}
+    realm_id = row.get("realm_id")
+    url = f"{qbo_base_url()}/v3/company/{realm_id}/query"
+    headers = {"Authorization": f"Bearer {token}", "Accept": "application/json"}
+    r = requests.get(url, params={"query": sql, "minorversion": "75"}, headers=headers, timeout=30)
+    if r.status_code == 401:
+        token = qbo_get_access_token()
+        headers["Authorization"] = f"Bearer {token}"
+        r = requests.get(url, params={"query": sql, "minorversion": "75"}, headers=headers, timeout=30)
+    if r.status_code >= 400:
+        return {"ok": False, "status_code": r.status_code, "error": r.text[:1200]}
+    return {"ok": True, "data": r.json()}
+
+def qbo_escape(value):
+    return str(value or "").replace("'", "\\'")
+
+def qbo_find_customer(customer_name):
+    name = jarvis_clean_name(customer_name)
+    if not name:
+        return None
+    result = qbo_query(f"select * from Customer where DisplayName = '{qbo_escape(name)}' maxresults 5")
+    customers = (((result.get("data") or {}).get("QueryResponse") or {}).get("Customer") or []) if result.get("ok") else []
+    if customers:
+        return customers[0]
+    result = qbo_query(f"select * from Customer where DisplayName like '%{qbo_escape(name)}%' maxresults 10")
+    customers = (((result.get("data") or {}).get("QueryResponse") or {}).get("Customer") or []) if result.get("ok") else []
+    return customers[0] if customers else None
+
+def qbo_open_invoices_for_customer(customer_name):
+    cust = qbo_find_customer(customer_name)
+    if not cust:
+        return {"ok": False, "source": "quickbooks", "customer": customer_name, "error": "Customer not found in QuickBooks."}
+    cust_id = cust.get("Id")
+    result = qbo_query(f"select * from Invoice where CustomerRef = '{cust_id}' maxresults 100")
+    if not result.get("ok"):
+        return result
+    invoices = (((result.get("data") or {}).get("QueryResponse") or {}).get("Invoice") or [])
+    open_items = []
+    total = 0.0
+    for inv in invoices:
+        bal = float(inv.get("Balance") or 0)
+        if bal > 0:
+            open_items.append(inv)
+            total += bal
+    return {
+        "ok": True,
+        "source": "quickbooks",
+        "customer": cust.get("DisplayName") or customer_name,
+        "customer_id": cust_id,
+        "open_invoice_count": len(open_items),
+        "open_balance": round(total, 2),
+        "invoices": open_items,
+    }
+
+def local_open_invoices_for_customer(customer_name):
+    summary = jarvis_billing_summary(customer_name)
+    return {
+        "ok": True,
+        "source": "imported",
+        "customer": summary.get("client") or customer_name,
+        "open_invoice_count": summary.get("open_invoice_count", 0),
+        "open_balance": summary.get("open_balance", 0.0),
+        "invoices": summary.get("invoices", []),
+    }
+
+def unified_open_invoices_for_customer(customer_name):
+    if qbo_connected():
+        live = qbo_open_invoices_for_customer(customer_name)
+        if live.get("ok"):
+            return live
+    return local_open_invoices_for_customer(customer_name)
+
+def create_billing_action(command, customer, source="jarvis", approval_required=True):
+    summary = unified_open_invoices_for_customer(customer)
+    created_at = datetime.now().isoformat(timespec="seconds")
+    payload = {
+        "action": "billing.send_statement",
+        "customer": summary.get("customer") or customer,
+        "invoice_count": summary.get("open_invoice_count", 0),
+        "open_balance": summary.get("open_balance", 0.0),
+        "invoice_source": summary.get("source"),
+        "invoices": summary.get("invoices", [])[:25],
+        "next_step": "approval_required",
+    }
+    response = (
+        f"Statement package ready for {payload['customer']}: "
+        f"{payload['invoice_count']} open invoice(s), ${payload['open_balance']:,.2f}. "
+        "Approve it from QuickBooks Preview before sending."
+    )
+    try:
+        exec_sql("""
+            INSERT INTO jarvis_actions
+            (command, intent, client, property, status, response, approval_required, approved, data_json, created_by, created_at)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?)
+        """, (
+            command,
+            "billing.send_statement",
+            payload["customer"],
+            "",
+            "Needs Approval" if approval_required else "Ready",
+            response,
+            True if USE_POSTGRES else 1,
+            False if USE_POSTGRES else 0,
+            json.dumps(payload, default=str),
+            source,
+            created_at,
+        ))
+    except Exception:
+        pass
+    return payload, response
+
+@app.get("/quickbooks/status")
+def quickbooks_status(request: Request):
+    u = require_login(request)
+    if not u:
+        return {"ok": False, "error": "Not logged in"}
+    row = qbo_token_row()
+    return {
+        "ok": True,
+        "configured": qbo_ready(),
+        "connected": qbo_connected(),
+        "environment": qbo_env(),
+        "realm_id": (row or {}).get("realm_id", ""),
+        "expires_at": (row or {}).get("expires_at", ""),
+        "redirect_uri": qbo_config().get("redirect_uri", ""),
+    }
+
+@app.get("/quickbooks/connect")
+def quickbooks_connect(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    if not can_accounting(u):
+        return admin_redirect(u)
+    if not qbo_ready():
+        return HTMLResponse("<h1>QuickBooks is not configured</h1><p>Add QUICKBOOKS_CLIENT_ID, QUICKBOOKS_CLIENT_SECRET, and QUICKBOOKS_REDIRECT_URI in Render first.</p><p><a href='/quickbooks'>Back</a></p>")
+    state = secrets.token_urlsafe(24)
+    request.session["qbo_state"] = state
+    params = urllib.parse.urlencode({
+        "client_id": qbo_config()["client_id"],
+        "response_type": "code",
+        "scope": QBO_SCOPE,
+        "redirect_uri": qbo_config()["redirect_uri"],
+        "state": state,
+    })
+    return RedirectResponse(f"{QBO_AUTH_URL}?{params}", status_code=303)
+
+@app.get("/quickbooks/callback")
+def quickbooks_callback(request: Request, code: str = "", state: str = "", realmId: str = "", error: str = ""):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    if error:
+        return HTMLResponse(f"<h1>QuickBooks connection failed</h1><p>{html.escape(error)}</p><p><a href='/quickbooks'>Back</a></p>")
+    expected = request.session.get("qbo_state")
+    if not expected or state != expected:
+        return HTMLResponse("<h1>QuickBooks security check failed</h1><p>State token did not match. Try Connect again.</p><p><a href='/quickbooks'>Back</a></p>")
+    headers = {
+        "Authorization": qbo_basic_auth_header(),
+        "Accept": "application/json",
+        "Content-Type": "application/x-www-form-urlencoded",
+    }
+    payload = {"grant_type": "authorization_code", "code": code, "redirect_uri": qbo_config()["redirect_uri"]}
+    r = requests.post(QBO_TOKEN_URL, data=payload, headers=headers, timeout=30)
+    if r.status_code >= 400:
+        return HTMLResponse(f"<h1>QuickBooks token exchange failed</h1><pre>{html.escape(r.text[:2000])}</pre><p><a href='/quickbooks'>Back</a></p>")
+    qbo_save_tokens(r.json(), realmId)
+    return RedirectResponse("/quickbooks?connected=1", status_code=303)
+
+@app.post("/quickbooks/disconnect")
+def quickbooks_disconnect(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    if not can_accounting(u):
+        return admin_redirect(u)
+    ensure_qbo_schema()
+    exec_sql("DELETE FROM quickbooks_tokens")
+    return RedirectResponse("/quickbooks", status_code=303)
+
+@app.get("/quickbooks/statement/preview", response_class=HTMLResponse)
+def quickbooks_statement_preview(request: Request, customer: str = ""):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    if not can_accounting(u):
+        return admin_redirect(u)
+    customer = jarvis_resolve_customer_name(customer) or customer
+    summary = unified_open_invoices_for_customer(customer) if customer else {"invoices": [], "open_invoice_count": 0, "open_balance": 0, "customer": ""}
+    rows_html = ""
+    for inv in summary.get("invoices", []):
+        num = inv.get("DocNumber") or inv.get("invoice_number") or inv.get("id") or inv.get("Id") or ""
+        date_val = inv.get("TxnDate") or inv.get("date") or ""
+        due = inv.get("DueDate") or inv.get("due_date") or ""
+        bal = inv.get("Balance") if "Balance" in inv else inv.get("open_balance", inv.get("amount", 0))
+        rows_html += f"<tr><td>{html.escape(str(num))}</td><td>{html.escape(str(date_val))}</td><td>{html.escape(str(due))}</td><td style='text-align:right'>${float(bal or 0):,.2f}</td></tr>"
+    if not rows_html:
+        rows_html = "<tr><td colspan='4'>No open invoices found.</td></tr>"
+    return HTMLResponse(f"""
+    <html><head><title>Statement Preview</title><style>body{{font-family:Arial;background:#090c10;color:#fff;padding:24px}}.card{{max-width:900px;margin:auto;background:#111722;border:1px solid #72501e;border-radius:18px;padding:22px}}a,.btn{{color:#f1c46b}}table{{width:100%;border-collapse:collapse;margin-top:18px}}td,th{{border-bottom:1px solid #2f2f2f;padding:10px;text-align:left}}</style></head>
+    <body><div class='card'><h1>Statement Preview</h1><p><b>Customer:</b> {html.escape(str(summary.get('customer') or customer))}</p><p><b>Source:</b> {html.escape(str(summary.get('source') or 'imported'))}</p><p><b>Open invoices:</b> {summary.get('open_invoice_count',0)} &nbsp; <b>Total:</b> ${float(summary.get('open_balance') or 0):,.2f}</p>
+    <table><tr><th>Invoice #</th><th>Date</th><th>Due</th><th style='text-align:right'>Open Balance</th></tr>{rows_html}</table>
+    <form method='post' action='/quickbooks/action/send-statement' style='margin-top:18px'><input type='hidden' name='customer' value='{html.escape(str(summary.get('customer') or customer))}'><button class='btn' type='submit'>Queue Statement for Approval</button></form>
+    <p><a href='/quickbooks'>Back to QuickBooks</a> | <a href='/jarvis-brain'>Back to Jarvis</a></p></div></body></html>
+    """)
+
+@app.post("/quickbooks/action/send-statement")
+def quickbooks_queue_statement(request: Request, customer: str = Form("")):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    if not can_accounting(u):
+        return admin_redirect(u)
+    customer = jarvis_resolve_customer_name(customer) or customer
+    create_billing_action(f"Send {customer} everything owed", customer, source=(u.get("name") or "Jarvis"), approval_required=True)
+    return RedirectResponse(f"/quickbooks/statement/preview?customer={urllib.parse.quote(customer)}", status_code=303)
+
 @app.get("/quickbooks/invoices/import", response_class=HTMLResponse)
 def quickbooks_invoice_import_page(request: Request):
     u = require_login(request)
@@ -5549,28 +5903,34 @@ def jarvis_billing_summary(customer_name: str):
 
 def jarvis_billing_reply(command: str, send_requested: bool = False):
     customer = jarvis_resolve_customer_name(command)
-    summary = jarvis_billing_summary(customer or command)
-
     if not customer:
         return "I saved that as a QuickBooks billing action, but I could not confidently identify the customer."
 
-    if summary.get("open_invoice_count", 0):
+    try:
+        payload, queued_reply = create_billing_action(command, customer, source="Jarvis", approval_required=True)
+        preview_url = f"/quickbooks/statement/preview?customer={urllib.parse.quote(payload.get('customer') or customer)}"
         return (
-            f"I found {summary['open_invoice_count']} open invoice(s) for {summary['client']} "
-            f"totaling ${summary['open_balance']:,.2f}. I saved this as a QuickBooks billing action. "
-            "Once QuickBooks/Gmail are connected, this will generate one statement/invoice packet, email it, and log it."
+            f"{queued_reply} Open preview: {preview_url}. "
+            "I did not send anything yet; it is queued for approval so you stay in control."
+        )
+    except Exception:
+        summary = jarvis_billing_summary(customer or command)
+        if summary.get("open_invoice_count", 0):
+            return (
+                f"I found {summary['open_invoice_count']} open invoice(s) for {summary['client']} "
+                f"totaling ${summary['open_balance']:,.2f}. QuickBooks Preview: "
+                f"/quickbooks/statement/preview?customer={urllib.parse.quote(summary['client'])}."
+            )
+        if summary.get("invoice_count", 0):
+            return (
+                f"I found {summary['invoice_count']} invoice record(s) for {summary['client']}, "
+                "but I do not see an open balance in the imported invoice table. I saved the billing action for review."
+            )
+        return (
+            f"I identified {customer}, but I do not see imported open invoices for that customer yet. "
+            "I saved the billing action for review."
         )
 
-    if summary.get("invoice_count", 0):
-        return (
-            f"I found {summary['invoice_count']} invoice record(s) for {summary['client']}, "
-            "but I do not see an open balance in the imported invoice table. I saved the billing action for review."
-        )
-
-    return (
-        f"I identified {customer}, but I do not see imported open invoices for that customer yet. "
-        "I saved the billing action for review."
-    )
 def jarvis_detect_intent(command: str):
     """Rule-based Jarvis intent detector for the old /jarvis/action form."""
     text = (command or "").lower().strip()
