@@ -5357,7 +5357,10 @@ def jarvis_action(request: Request, command: str = Form("")):
     response = "I saved this Jarvis command."
 
     if intent == "send_billing_statement":
-        response = "I saved this billing command. QuickBooks is not connected yet."
+        response = (
+            "I saved this billing command. QuickBooks is not connected yet, "
+            "so I cannot send it automatically until we add the QuickBooks API bridge."
+        )
     elif intent == "billing_lookup":
         response = "I saved this billing lookup command."
     elif intent == "schedule":
@@ -5386,6 +5389,7 @@ def jarvis_action(request: Request, command: str = Form("")):
     )
 
     return RedirectResponse("/jarvis", status_code=303)
+
 
 @app.post("/jarvis/action/{action_id}/done")
 def jarvis_action_done(request: Request, action_id: int):
