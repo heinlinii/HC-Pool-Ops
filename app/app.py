@@ -5038,7 +5038,23 @@ def _j7_log_command(request, text, reply, intent):
 def _j7_action_save(request, text, reply):
     user = _j7_user(request)
     c = _j7_classify(text)
-    ctx, ctx_source = _j7_resolve_context(text, user)
+
+    # Billing/customer commands should NOT inherit the active job.
+    # Example: "Send Scheller everything he owes" must attach to Scheller,
+    # not whatever job was last active, such as Alexander.
+    billing_intents = ("send_billing_statement", "billing_note")
+    if c["intent"] in billing_intents:
+        customer = jarvis_resolve_customer_name(text)
+        ctx = {
+            "job_id": None,
+            "client": customer,
+            "property": "",
+            "address": "",
+            "job_type": "",
+        }
+        ctx_source = "billing_customer_match" if customer else "billing_no_customer_match"
+    else:
+        ctx, ctx_source = _j7_resolve_context(text, user)
 
     item = {
         "created_at": _j7_now(),
@@ -5102,23 +5118,27 @@ def _j7_action_save(request, text, reply):
         invisible_saved = _j7_insert_existing("invisible_office_items", dict(office_data, category="Field Log")) or invisible_saved
 
     action_saved = False
-    if c["intent"] in ("send_billing_statement", "billing_note"):
+    if c["intent"] in billing_intents:
+        billing_summary = jarvis_billing_summary(item.get("client") or jarvis_extract_customer(c["body"]))
         try:
             action_saved = _j7_insert_existing("jarvis_actions", {
                 "command": c["body"],
                 "intent": c["intent"],
-                "client": item.get("client") or jarvis_extract_customer(c["body"]),
-                "property": item.get("property") or item.get("address") or "",
+                "client": billing_summary.get("client") or item.get("client") or jarvis_extract_customer(c["body"]),
+                "property": "",
                 "status": "New",
                 "response": reply,
                 "approval_required": True if USE_POSTGRES else 1,
                 "approved": False if USE_POSTGRES else 0,
                 "data_json": _j7_json.dumps({
                     "source": "jarvis_brain",
-                    "job_id": item.get("job_id"),
-                    "client": item.get("client") or jarvis_extract_customer(c["body"]),
-                    "property": item.get("property") or item.get("address") or "",
+                    "job_id": None,
+                    "client": billing_summary.get("client") or item.get("client") or jarvis_extract_customer(c["body"]),
+                    "property": "",
                     "priority": item.get("priority"),
+                    "invoice_count": billing_summary.get("invoice_count", 0),
+                    "open_invoice_count": billing_summary.get("open_invoice_count", 0),
+                    "open_balance": billing_summary.get("open_balance", 0),
                     "future_action": "quickbooks_statement_or_invoice_email",
                 }),
                 "created_by": item.get("created_by"),
@@ -5398,6 +5418,159 @@ def jarvis_extract_customer(command: str):
     return ""
 
 
+
+
+def jarvis_clean_name(value: str):
+    """Normalize a guessed customer name without destroying the real spelling."""
+    import re
+    text = str(value or "").strip()
+    text = re.sub(r"^jarvis[,:\-\s]+", "", text, flags=re.I).strip()
+    text = re.sub(r"\b(everything|all|invoice|invoices|statement|balance|owed|owes|owe|send|email|text|forward|bill|billing|for|the|a|an)\b", " ", text, flags=re.I)
+    text = " ".join(text.replace("?", " ").replace(".", " ").split()).strip(" .'\"!:")
+    return text
+
+
+def jarvis_find_client_by_name(name: str):
+    """Return the best client row matching a guessed customer name."""
+    guess = jarvis_clean_name(name)
+    if not guess:
+        return None
+
+    try:
+        exact = one(
+            """
+            SELECT * FROM poolops2_clients
+            WHERE lower(name)=lower(?)
+               OR lower(contact_name)=lower(?)
+               OR lower(company)=lower(?)
+            ORDER BY id DESC
+            LIMIT 1
+            """,
+            (guess, guess, guess),
+        )
+        if exact:
+            return exact
+    except Exception:
+        pass
+
+    try:
+        like = f"%{guess}%"
+        matches = rows(
+            """
+            SELECT * FROM poolops2_clients
+            WHERE name LIKE ?
+               OR contact_name LIKE ?
+               OR company LIKE ?
+               OR email LIKE ?
+               OR notes LIKE ?
+            ORDER BY id DESC
+            LIMIT 10
+            """,
+            (like, like, like, like, like),
+        )
+        if matches:
+            return matches[0]
+    except Exception:
+        pass
+
+    return None
+
+
+def jarvis_resolve_customer_name(command: str):
+    """Extract and verify customer names like Scheller from billing commands."""
+    guessed = jarvis_extract_customer(command)
+    client = jarvis_find_client_by_name(guessed)
+    if client:
+        return client.get("name") or client.get("contact_name") or guessed
+    return guessed
+
+
+def jarvis_billing_summary(customer_name: str):
+    """Summarize imported/open invoices for a customer from poolops2_invoices."""
+    customer = jarvis_resolve_customer_name(customer_name) or jarvis_clean_name(customer_name)
+    summary = {
+        "client": customer,
+        "invoice_count": 0,
+        "open_invoice_count": 0,
+        "open_balance": 0.0,
+        "invoices": [],
+    }
+    if not customer:
+        return summary
+
+    try:
+        invs = rows(
+            """
+            SELECT * FROM poolops2_invoices
+            WHERE client LIKE ?
+            ORDER BY due_date DESC, date DESC, id DESC
+            LIMIT 100
+            """,
+            (f"%{customer}%",),
+        )
+    except Exception:
+        invs = []
+
+    if not invs:
+        # If client table cleaned the name differently, retry with the raw extracted name.
+        raw = jarvis_clean_name(customer_name)
+        if raw and raw.lower() != customer.lower():
+            try:
+                invs = rows(
+                    """
+                    SELECT * FROM poolops2_invoices
+                    WHERE client LIKE ?
+                    ORDER BY due_date DESC, date DESC, id DESC
+                    LIMIT 100
+                    """,
+                    (f"%{raw}%",),
+                )
+            except Exception:
+                invs = []
+
+    open_invs = []
+    open_total = 0.0
+    for inv in invs:
+        try:
+            bal = float(inv.get("open_balance") or 0)
+        except Exception:
+            bal = 0.0
+        status = str(inv.get("status") or "").lower()
+        if bal > 0 or status in ("open", "overdue", "past due", "unpaid"):
+            open_invs.append(inv)
+            open_total += bal if bal else float(inv.get("amount") or 0)
+
+    summary["invoice_count"] = len(invs)
+    summary["open_invoice_count"] = len(open_invs)
+    summary["open_balance"] = round(open_total, 2)
+    summary["invoices"] = open_invs[:10]
+    return summary
+
+
+def jarvis_billing_reply(command: str, send_requested: bool = False):
+    customer = jarvis_resolve_customer_name(command)
+    summary = jarvis_billing_summary(customer or command)
+
+    if not customer:
+        return "I saved that as a QuickBooks billing action, but I could not confidently identify the customer."
+
+    if summary.get("open_invoice_count", 0):
+        return (
+            f"I found {summary['open_invoice_count']} open invoice(s) for {summary['client']} "
+            f"totaling ${summary['open_balance']:,.2f}. I saved this as a QuickBooks billing action. "
+            "Once QuickBooks/Gmail are connected, this will generate one statement/invoice packet, email it, and log it."
+        )
+
+    if summary.get("invoice_count", 0):
+        return (
+            f"I found {summary['invoice_count']} invoice record(s) for {summary['client']}, "
+            "but I do not see an open balance in the imported invoice table. I saved the billing action for review."
+        )
+
+    return (
+        f"I identified {customer}, but I do not see imported open invoices for that customer yet. "
+        "I saved the billing action for review."
+    )
 def jarvis_detect_intent(command: str):
     """Rule-based Jarvis intent detector for the old /jarvis/action form."""
     text = (command or "").lower().strip()
@@ -5839,10 +6012,10 @@ async def jarvis_brain_level7_command(request: Request):
         return JSONResponse({"ok": True, "version": JARVIS_BRAIN_VERSION, "reply": reply, "stats": _j7_dashboard_stats()})
 
     if c["intent"] == "send_billing_statement":
-        who = jarvis_extract_customer(text)
-        reply = "I saved that as a QuickBooks billing action" + (f" for {who}" if who else "") + ". Once QuickBooks and Gmail are connected, this will become: generate one statement/invoice packet, email it, and log it."
+        reply = jarvis_billing_reply(text, send_requested=True)
     elif c["intent"] == "billing_note":
-        reply = "I saved that as a billing note and tied it to the active or matched job if I could."
+        customer = jarvis_resolve_customer_name(text)
+        reply = (f"I saved that as a billing note for {customer}." if customer else "I saved that as a billing note.")
     elif c["intent"] == "field_log":
         reply = "I saved that as a field log and tied it to the active or matched job if I could."
     elif c["intent"] == "material_needed":
@@ -5857,7 +6030,10 @@ async def jarvis_brain_level7_command(request: Request):
     item = _j7_action_save(request, text, reply)
 
     if item.get("client") or item.get("address"):
-        reply += f" Job context: {item.get('client') or ''} {item.get('property') or item.get('address') or ''}."
+        if item.get("intent") in ("send_billing_statement", "billing_note"):
+            reply += f" Customer: {item.get('client') or ''}."
+        else:
+            reply += f" Job context: {item.get('client') or ''} {item.get('property') or item.get('address') or ''}."
     if item.get("invisible_saved"):
         reply += " Invisible Office save confirmed."
     if item.get("field_log_saved"):
@@ -11402,8 +11578,19 @@ def _jq_answer(text):
         }
 
     if "active job" in low:
+        active = {}
+        try:
+            active = _j7_active_context() or {}
+        except Exception:
+            active = {}
+        if active:
+            title = active.get("title") or active.get("client") or active.get("address") or "the current active job"
+            addr = active.get("address") or ""
+            reply = f"Your active job is {title}." + (f" Address: {addr}." if addr else "")
+        else:
+            reply = "No active job is set. Say: Jarvis, set active job to [client name or address]."
         return {
-            "reply": "Your active job is the job shown on the current Jarvis page. Use ?Jarvis, set active job to Alexander? to change it.",
+            "reply": reply,
             "links": [
                 _jq_card("Active Job", "Change active job", "Say: Jarvis, set active job to [client name or address]."),
                 _jq_card("Open", "Active Job Center", "Open the active job page.", "/jarvis-brain/job"),
