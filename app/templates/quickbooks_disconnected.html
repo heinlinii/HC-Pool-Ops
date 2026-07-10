@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="panel card" style="max-width:760px;margin:auto;">
+  <h1>{% if ok %}QuickBooks Disconnected{% else %}QuickBooks Connection Removed{% endif %}</h1>
+  <p>{{ message }}</p>
+  {% if not ok %}<p>The local tokens were still removed. You can also remove the app from your Intuit account's connected-app settings.</p>{% endif %}
+  <a class="btn primary" href="/quickbooks/connect">Reconnect QuickBooks</a>
+  <a class="btn" href="/quickbooks">QuickBooks Control</a>
+</section>
+{% endblock %}
