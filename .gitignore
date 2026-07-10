@@ -7,10 +7,13 @@ backup_*.json
 poolops2_local_before_*.db
 # Heinlin cleanup
 *.zip
-*.db
 *.db-*
 .venv/
 .uv-cache/
-__pycache__/
 jarvis_backups/
 backups/
+
+# Local-only files
+*.py[cod]
+poolops*_local*.db
+poolops_local.db
