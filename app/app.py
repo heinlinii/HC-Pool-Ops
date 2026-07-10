@@ -3404,7 +3404,7 @@ QBO_TOKEN_URL = "https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer"
 QBO_SCOPE = "com.intuit.quickbooks.accounting"
 
 def qbo_env():
-    return (os.getenv("QUICKBOOKS_ENV") or "sandbox").strip().lower()
+    return (os.getenv("QUICKBOOKS_ENVIRONMENT") or os.getenv("QUICKBOOKS_ENV") or "sandbox").strip().lower()
 
 def qbo_base_url():
     return "https://sandbox-quickbooks.api.intuit.com" if qbo_env() != "production" else "https://quickbooks.api.intuit.com"
@@ -3693,6 +3693,19 @@ def quickbooks_callback(request: Request, code: str = "", state: str = "", realm
     qbo_save_tokens(r.json(), realmId)
     return RedirectResponse("/quickbooks?connected=1", status_code=303)
 
+@app.get("/quickbooks/reconnect")
+def quickbooks_reconnect(request: Request):
+    return quickbooks_connect(request)
+
+@app.get("/quickbooks/disconnect", response_class=HTMLResponse)
+def quickbooks_disconnect_page(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    if not can_accounting(u):
+        return admin_redirect(u)
+    return templates.TemplateResponse("quickbooks_disconnect.html", ctx(request))
+
 @app.post("/quickbooks/disconnect")
 def quickbooks_disconnect(request: Request):
     u = require_login(request)
@@ -3700,9 +3713,25 @@ def quickbooks_disconnect(request: Request):
         return login_redirect()
     if not can_accounting(u):
         return admin_redirect(u)
+    row = qbo_token_row() or {}
+    token = row.get("refresh_token") or row.get("access_token")
+    if token and qbo_ready():
+        try:
+            requests.post(
+                "https://developer.api.intuit.com/v2/oauth2/tokens/revoke",
+                data={"token": token},
+                headers={
+                    "Authorization": qbo_basic_auth_header(),
+                    "Accept": "application/json",
+                    "Content-Type": "application/x-www-form-urlencoded",
+                },
+                timeout=20,
+            )
+        except Exception:
+            pass
     ensure_qbo_schema()
     exec_sql("DELETE FROM quickbooks_tokens")
-    return RedirectResponse("/quickbooks", status_code=303)
+    return templates.TemplateResponse("quickbooks_disconnected.html", ctx(request))
 
 @app.get("/quickbooks/statement/preview", response_class=HTMLResponse)
 def quickbooks_statement_preview(request: Request, customer: str = ""):
@@ -4050,6 +4079,21 @@ app.include_router(jarvis_approval.router)
 
 from app.routes import invisible_office_edit
 app.include_router(invisible_office_edit.router)
+
+@app.get("/legal/terms", response_class=HTMLResponse)
+def legal_terms(request: Request):
+    return templates.TemplateResponse("legal_terms.html", ctx(request))
+
+@app.get("/legal/privacy", response_class=HTMLResponse)
+def legal_privacy(request: Request):
+    return templates.TemplateResponse("legal_privacy.html", ctx(request))
+
+@app.get("/jarvis-voice", response_class=HTMLResponse)
+def jarvis_voice(request: Request):
+    u = require_login(request)
+    if not u:
+        return login_redirect()
+    return templates.TemplateResponse("jarvis_voice.html", ctx(request))
 
 from app.routes import gps_tracking
 app.include_router(gps_tracking.router)
@@ -12015,490 +12059,3 @@ async def jarvis_question_intercept_middleware(request, call_next):
 # END JARVIS QUESTION INTERCEPT FIX
 # ============================================================
 
-
-# ============================================================
-# JARVIS OPERATOR PATCH - Billing Action Engine + GPS Hardening
-# Added as a safe final layer. It intercepts true billing commands before
-# they fall through into Invisible Office / active-job memory.
-# ============================================================
-
-import re as _op_re
-import json as _op_json
-import html as _op_html
-from datetime import datetime as _op_datetime
-
-try:
-    from fastapi.responses import JSONResponse as _OPJSONResponse, HTMLResponse as _OPHTMLResponse, RedirectResponse as _OPRedirectResponse
-except Exception:
-    pass
-
-JARVIS_OPERATOR_PATCH_VERSION = "operator-billing-gps-2026-07-09"
-
-
-def _op_now():
-    return _op_datetime.now().isoformat(timespec="seconds")
-
-
-def _op_esc(value):
-    return _op_html.escape(str(value or ""))
-
-
-def _op_rows(sql, params=()):
-    try:
-        f = globals().get("rows")
-        if callable(f):
-            return f(sql, params) or []
-    except Exception as exc:
-        print("Jarvis operator rows skipped:", exc)
-    return []
-
-
-def _op_one(sql, params=()):
-    try:
-        f = globals().get("one")
-        if callable(f):
-            return f(sql, params)
-    except Exception as exc:
-        print("Jarvis operator one skipped:", exc)
-    return None
-
-
-def _op_exec(sql, params=()):
-    try:
-        f = globals().get("exec_sql")
-        if callable(f):
-            return f(sql, params)
-    except Exception as exc:
-        print("Jarvis operator exec skipped:", exc)
-    return None
-
-
-def _op_columns(table):
-    try:
-        f = globals().get("table_columns")
-        if callable(f):
-            return list(f(table) or [])
-    except Exception:
-        pass
-    return []
-
-
-def _op_current_user(request):
-    try:
-        f = globals().get("current_user")
-        if callable(f):
-            return f(request) or {}
-    except Exception:
-        pass
-    try:
-        return request.session.get("user") or {}
-    except Exception:
-        return {}
-
-
-def _op_user_name(request):
-    u = _op_current_user(request)
-    return str(u.get("name") or u.get("username") or "Jarvis").strip()
-
-
-def _op_money(value):
-    try:
-        amount = float(value or 0)
-    except Exception:
-        amount = 0.0
-    return "${:,.2f}".format(amount)
-
-
-def _op_clean_command(text):
-    text = str(text or "").strip()
-    text = _op_re.sub(r"^jarvis[,\s:\-]+", "", text, flags=_op_re.I).strip()
-    return text
-
-
-def _op_is_billing_command(text):
-    low = _op_clean_command(text).lower()
-    if not low:
-        return False
-
-    billing_words = [
-        "bill", "invoice", "statement", "owe", "owes", "owed", "balance",
-        "past due", "overdue", "quickbooks", "qbo", "accounts receivable",
-        "what he owes", "what she owes", "what they owe", "everything he owes",
-        "everything she owes", "everything they owe", "all he owes", "all she owes", "all they owe",
-    ]
-    action_words = ["send", "email", "text", "create", "make", "show", "find", "who", "what"]
-
-    return any(w in low for w in billing_words) and any(w in low for w in action_words)
-
-
-def _op_billing_intent(text):
-    low = _op_clean_command(text).lower()
-    if any(x in low for x in ["send", "email", "text", "forward"]):
-        return "billing.send_statement"
-    if any(x in low for x in ["who owes", "who is overdue", "accounts receivable"]):
-        return "billing.ar_summary"
-    if any(x in low for x in ["show", "find", "what", "how much"]):
-        return "billing.lookup_balance"
-    return "billing.action"
-
-
-def _op_extract_customer(text):
-    """Extract the customer from real commands like:
-    - Send Traylor a bill for what he owes
-    - Send Koch a bill for what they owe
-    - Email Scheller his statement
-    - What does Traylor owe?
-    """
-    raw = _op_clean_command(text)
-    if not raw:
-        return ""
-
-    patterns = [
-        r"send\s+(.+?)\s+(?:a\s+)?(?:bill|invoice|statement)\b",
-        r"email\s+(.+?)\s+(?:a\s+)?(?:bill|invoice|statement)\b",
-        r"text\s+(.+?)\s+(?:a\s+)?(?:bill|invoice|statement)\b",
-        r"send\s+(.+?)\s+(?:everything|all)\s+(?:he|she|they|this customer)?\s*(?:owes|owe|owed)",
-        r"email\s+(.+?)\s+(?:everything|all)\s+(?:he|she|they|this customer)?\s*(?:owes|owe|owed)",
-        r"(?:what|how much)\s+(?:does|do)\s+(.+?)\s+(?:owe|owes|owed)\b",
-        r"(.+?)\s+(?:owes|owe|owed)\b",
-        r"bill\s+(.+?)(?:\s+for\s+|$)",
-        r"invoice\s+(.+?)(?:\s+for\s+|$)",
-    ]
-
-    bad = {
-        "me", "him", "her", "them", "customer", "client", "what", "what he", "what she", "what they",
-        "for what", "for what he", "for what she", "for what they", "everything", "all",
-    }
-
-    for pat in patterns:
-        m = _op_re.search(pat, raw, flags=_op_re.I)
-        if not m:
-            continue
-        name = m.group(1).strip(" .'\"?!:;,")
-        name = _op_re.sub(r"\s+(?:for|about|regarding)\s+.*$", "", name, flags=_op_re.I).strip()
-        name = _op_re.sub(r"\s+(?:his|her|their|what|everything|all)$", "", name, flags=_op_re.I).strip()
-        low = name.lower().strip()
-        if name and low not in bad and len(name) <= 80:
-            return " ".join(w.capitalize() for w in name.split())
-
-    return ""
-
-
-def _op_client_match(customer_name):
-    if not customer_name:
-        return None
-    q = customer_name.strip()
-    like = f"%{q}%"
-
-    # Exact/near client match first.
-    for sql, params in [
-        ("SELECT * FROM poolops2_clients WHERE lower(name)=lower(?) ORDER BY id LIMIT 1", (q,)),
-        ("SELECT * FROM poolops2_clients WHERE name LIKE ? OR contact_name LIKE ? OR company LIKE ? ORDER BY name LIMIT 1", (like, like, like)),
-    ]:
-        try:
-            row = _op_one(sql, params)
-            if row:
-                return row
-        except Exception:
-            pass
-
-    # If no client card exists, infer from invoices.
-    try:
-        row = _op_one(
-            "SELECT client AS name, client AS contact_name, '' AS email FROM poolops2_invoices WHERE client LIKE ? ORDER BY client LIMIT 1",
-            (like,),
-        )
-        if row:
-            return row
-    except Exception:
-        pass
-
-    return None
-
-
-def _op_invoice_open_condition():
-    cols = set(_op_columns("poolops2_invoices"))
-    if not cols:
-        return "", ()
-    conditions = []
-    if "open_balance" in cols:
-        conditions.append("COALESCE(open_balance,0) > 0")
-    if "status" in cols:
-        conditions.append("lower(COALESCE(status,'')) NOT IN ('paid','void','cancelled','canceled','closed')")
-    if not conditions:
-        return "1=1", ()
-    return "(" + " OR ".join(conditions) + ")", ()
-
-
-def _op_invoice_amount(row):
-    # Open balance is what matters for statements. Fall back to amount.
-    try:
-        bal = float(row.get("open_balance") or 0)
-        if bal != 0:
-            return bal
-    except Exception:
-        pass
-    try:
-        return float(row.get("amount") or 0)
-    except Exception:
-        return 0.0
-
-
-def _op_find_invoices(customer_name, client_row=None):
-    cols = set(_op_columns("poolops2_invoices"))
-    if not cols:
-        return []
-
-    names = []
-    for val in [customer_name, (client_row or {}).get("name"), (client_row or {}).get("contact_name"), (client_row or {}).get("company")]:
-        val = str(val or "").strip()
-        if val and val.lower() not in [x.lower() for x in names]:
-            names.append(val)
-
-    if not names:
-        return []
-
-    open_sql, _ = _op_invoice_open_condition()
-    clauses = []
-    params = []
-    for name in names:
-        clauses.append("client LIKE ?")
-        params.append(f"%{name}%")
-
-    order = "ORDER BY due_date ASC, date ASC, id ASC"
-    try:
-        return _op_rows(
-            f"SELECT * FROM poolops2_invoices WHERE ({' OR '.join(clauses)}) AND {open_sql} {order} LIMIT 100",
-            tuple(params),
-        )
-    except Exception:
-        return []
-
-
-def _op_build_statement(customer_name, invoices):
-    total = sum(_op_invoice_amount(i) for i in invoices)
-    lines = []
-    for inv in invoices[:25]:
-        num = inv.get("qb_invoice_number") or inv.get("id") or ""
-        due = inv.get("due_date") or inv.get("date") or ""
-        desc = inv.get("description") or inv.get("notes") or "Invoice"
-        amt = _op_invoice_amount(inv)
-        lines.append({
-            "invoice": str(num),
-            "due_date": str(due),
-            "description": str(desc)[:160],
-            "amount_due": amt,
-            "amount_due_text": _op_money(amt),
-        })
-    return {"customer": customer_name, "invoice_count": len(invoices), "total_due": total, "total_due_text": _op_money(total), "lines": lines}
-
-
-def _op_save_billing_action(request, command, customer_name, client_row, statement, intent):
-    created_by = _op_user_name(request)
-    created_at = _op_now()
-    payload = {
-        "source": "jarvis_operator_patch",
-        "version": JARVIS_OPERATOR_PATCH_VERSION,
-        "customer": customer_name,
-        "client": client_row or {},
-        "statement": statement,
-        "next_step": "preview_then_send_when_quickbooks_gmail_credentials_are_connected",
-    }
-
-    response = (
-        f"Billing action prepared for {customer_name}. "
-        f"Found {statement.get('invoice_count', 0)} open invoice(s), total {statement.get('total_due_text', '$0.00')}."
-    )
-
-    action_id = _op_exec(
-        """
-        INSERT INTO jarvis_actions
-        (command, intent, client, property, status, response, approval_required, approved, data_json, created_by, created_at)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?)
-        """,
-        (
-            command,
-            intent,
-            customer_name,
-            "",
-            "Ready for Review",
-            response,
-            True if globals().get("USE_POSTGRES") else 1,
-            False if globals().get("USE_POSTGRES") else 0,
-            _op_json.dumps(payload),
-            created_by,
-            created_at,
-        ),
-    )
-    return action_id, response
-
-
-def _op_handle_billing_command(request, text):
-    customer = _op_extract_customer(text)
-    intent = _op_billing_intent(text)
-
-    if not customer and intent != "billing.ar_summary":
-        return {
-            "ok": False,
-            "reply": "I heard a billing command, but I could not tell which customer. Try: Send Traylor a bill for what he owes.",
-            "links": [{"kind": "Billing", "title": "Open Billing", "detail": "Review imported QuickBooks invoices.", "url": "/billing"}],
-        }
-
-    if intent == "billing.ar_summary":
-        open_sql, _ = _op_invoice_open_condition()
-        inv = _op_rows(f"SELECT * FROM poolops2_invoices WHERE {open_sql} ORDER BY client, due_date ASC, id ASC LIMIT 300", ())
-        by_client = {}
-        for row in inv:
-            name = str(row.get("client") or "Unknown").strip() or "Unknown"
-            by_client.setdefault(name, {"count": 0, "total": 0.0})
-            by_client[name]["count"] += 1
-            by_client[name]["total"] += _op_invoice_amount(row)
-        ranked = sorted(by_client.items(), key=lambda x: x[1]["total"], reverse=True)[:12]
-        links = [
-            {"kind": "Open Balance", "title": name, "detail": f"{v['count']} open invoice(s) • {_op_money(v['total'])}", "url": f"/jarvis-billing/customer/{name}"}
-            for name, v in ranked
-        ]
-        total = sum(v["total"] for _, v in ranked)
-        return {"ok": True, "reply": f"I found {len(by_client)} customer(s) with open balances in the imported invoice table. Top visible total: {_op_money(total)}.", "links": links}
-
-    client = _op_client_match(customer)
-    resolved = (client or {}).get("name") or customer
-    invoices = _op_find_invoices(resolved, client)
-    # If the client-card name did not match invoice import naming, try the original spoken customer too.
-    if not invoices and resolved.lower() != customer.lower():
-        invoices = _op_find_invoices(customer, client)
-        resolved = customer
-
-    statement = _op_build_statement(resolved, invoices)
-    action_id, saved_response = _op_save_billing_action(request, text, resolved, client, statement, intent)
-
-    if invoices:
-        line_bits = []
-        for line in statement["lines"][:5]:
-            inv_num = line["invoice"] or "invoice"
-            due = f" due {line['due_date']}" if line.get("due_date") else ""
-            line_bits.append(f"#{inv_num}{due}: {line['amount_due_text']}")
-        preview = "; ".join(line_bits)
-        reply = (
-            f"Customer: {resolved}. I found {statement['invoice_count']} open invoice(s), total {statement['total_due_text']}. "
-            f"Preview: {preview}. I put this in the Jarvis billing action queue for review."
-        )
-    else:
-        reply = (
-            f"Customer: {resolved}. I did not find open invoices in the imported QuickBooks invoice table yet. "
-            f"I still created a billing action so it does not get lost. Import/sync QuickBooks invoices and this command will produce the statement preview."
-        )
-
-    links = [
-        {"kind": "Billing Action", "title": "Review prepared billing action", "detail": saved_response, "url": f"/jarvis-billing/action/{action_id}" if action_id else "/billing"},
-        {"kind": "Customer Billing", "title": f"Open {resolved} billing", "detail": f"{statement['invoice_count']} invoice(s) • {statement['total_due_text']}", "url": f"/jarvis-billing/customer/{resolved}"},
-        {"kind": "Billing", "title": "Open Billing Page", "detail": "Imported QuickBooks invoice list.", "url": "/billing"},
-    ]
-
-    return {"ok": True, "operator_action": True, "version": JARVIS_OPERATOR_PATCH_VERSION, "reply": reply, "links": links, "statement": statement, "action_id": action_id}
-
-
-@app.middleware("http")
-async def jarvis_operator_billing_intercept(request, call_next):
-    # Intercept Jarvis command API before the older note-taking handlers process true billing commands.
-    if request.url.path == "/jarvis-brain/command" and request.method.upper() == "POST":
-        try:
-            body = await request.body()
-            payload = _op_json.loads(body.decode("utf-8") or "{}")
-        except Exception:
-            payload = {}
-        text = str(payload.get("text") or payload.get("message") or "").strip()
-        if text and _op_is_billing_command(text):
-            return _OPJSONResponse(_op_handle_billing_command(request, text))
-    return await call_next(request)
-
-
-@app.get("/jarvis-billing/customer/{customer_name}", response_class=HTMLResponse)
-def jarvis_operator_customer_billing(customer_name: str, request: Request):
-    # Simple statement preview using imported QuickBooks invoice data.
-    user = _op_current_user(request)
-    if not user:
-        return _OPRedirectResponse("/login", status_code=303)
-
-    customer = str(customer_name or "").strip()
-    client = _op_client_match(customer)
-    resolved = (client or {}).get("name") or customer
-    invoices = _op_find_invoices(resolved, client)
-    if not invoices and resolved.lower() != customer.lower():
-        invoices = _op_find_invoices(customer, client)
-        resolved = customer
-    statement = _op_build_statement(resolved, invoices)
-
-    rows_html = ""
-    for line in statement["lines"]:
-        rows_html += f"""
-        <tr>
-          <td>{_op_esc(line.get('invoice'))}</td>
-          <td>{_op_esc(line.get('due_date'))}</td>
-          <td>{_op_esc(line.get('description'))}</td>
-          <td style="text-align:right;">{_op_esc(line.get('amount_due_text'))}</td>
-        </tr>
-        """
-    if not rows_html:
-        rows_html = '<tr><td colspan="4">No open invoices found in imported QuickBooks invoice data.</td></tr>'
-
-    html = f"""
-<!doctype html>
-<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Jarvis Billing - {_op_esc(resolved)}</title>
-<style>
-body{{margin:0;font-family:Arial,sans-serif;background:#070a0f;color:#f5efe3}}.wrap{{max-width:1050px;margin:0 auto;padding:28px}}.card{{background:#101722;border:1px solid #5d421d;border-radius:20px;padding:20px;margin:16px 0}}h1{{color:#d9b56d}}table{{width:100%;border-collapse:collapse}}td,th{{border-bottom:1px solid #2d2113;padding:10px;text-align:left}}a,.btn{{display:inline-block;background:#b8873a;color:#111;text-decoration:none;border-radius:999px;padding:10px 14px;font-weight:900;margin:4px}}
-</style></head><body><div class="wrap">
-<h1>Jarvis Billing Preview</h1>
-<div class="card"><h2>{_op_esc(resolved)}</h2><p><b>{statement['invoice_count']}</b> open invoice(s) • <b>{_op_esc(statement['total_due_text'])}</b> total due</p><p>This uses the imported QuickBooks invoice table. Live sending still requires QuickBooks/Gmail credentials.</p></div>
-<div class="card"><table><tr><th>Invoice</th><th>Due Date</th><th>Description</th><th style="text-align:right;">Amount Due</th></tr>{rows_html}</table></div>
-<div class="card"><a class="btn" href="/billing">Billing</a><a class="btn" href="/quickbooks/invoices/import">Import QuickBooks CSV</a><a class="btn" href="/jarvis-brain">Jarvis Brain</a></div>
-</div></body></html>
-"""
-    return _OPHTMLResponse(html)
-
-
-@app.get("/jarvis-billing/action/{action_id}", response_class=HTMLResponse)
-def jarvis_operator_billing_action(action_id: int, request: Request):
-    user = _op_current_user(request)
-    if not user:
-        return _OPRedirectResponse("/login", status_code=303)
-    action = _op_one("SELECT * FROM jarvis_actions WHERE id=?", (action_id,))
-    if not action:
-        return _OPHTMLResponse("<h1>Billing action not found</h1><p><a href='/jarvis-brain'>Back</a></p>", status_code=404)
-    try:
-        data = _op_json.loads(action.get("data_json") or "{}")
-    except Exception:
-        data = {}
-    statement = data.get("statement") or {}
-    customer = statement.get("customer") or action.get("client") or "Customer"
-    lines = statement.get("lines") or []
-    line_html = ""
-    for line in lines:
-        line_html += f"<li>Invoice #{_op_esc(line.get('invoice'))}: {_op_esc(line.get('amount_due_text'))} {_op_esc(line.get('due_date'))}</li>"
-    if not line_html:
-        line_html = "<li>No open invoice lines were found yet.</li>"
-    html = f"""
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Billing Action</title>
-<style>body{{margin:0;font-family:Arial,sans-serif;background:#070a0f;color:#f5efe3}}.wrap{{max-width:900px;margin:0 auto;padding:28px}}.card{{background:#101722;border:1px solid #5d421d;border-radius:20px;padding:20px;margin:16px 0}}h1{{color:#d9b56d}}a,.btn{{display:inline-block;background:#b8873a;color:#111;text-decoration:none;border-radius:999px;padding:10px 14px;font-weight:900;margin:4px}}</style></head>
-<body><div class="wrap"><h1>Jarvis Billing Action</h1><div class="card"><h2>{_op_esc(customer)}</h2><p>Status: {_op_esc(action.get('status'))}</p><p>{_op_esc(action.get('response'))}</p><ul>{line_html}</ul><p><b>Total:</b> {_op_esc(statement.get('total_due_text') or '$0.00')}</p></div><div class="card"><p>Sending is intentionally held for review until QuickBooks/Gmail credentials are connected and approved.</p><a class="btn" href="/jarvis-billing/customer/{_op_esc(customer)}">Statement Preview</a><a class="btn" href="/billing">Billing</a><a class="btn" href="/jarvis-brain">Jarvis Brain</a></div></div></body></html>"""
-    return _OPHTMLResponse(html)
-
-
-@app.get("/jarvis-billing/system.json")
-def jarvis_operator_billing_system():
-    return _OPJSONResponse({
-        "ok": True,
-        "version": JARVIS_OPERATOR_PATCH_VERSION,
-        "tables": {
-            "poolops2_clients_columns": _op_columns("poolops2_clients"),
-            "poolops2_invoices_columns": _op_columns("poolops2_invoices"),
-            "jarvis_actions_columns": _op_columns("jarvis_actions"),
-        },
-        "quickbooks_live_ready": bool(os.environ.get("QUICKBOOKS_CLIENT_ID") and os.environ.get("QUICKBOOKS_CLIENT_SECRET")),
-        "required_live_env": ["QUICKBOOKS_CLIENT_ID", "QUICKBOOKS_CLIENT_SECRET", "QUICKBOOKS_REDIRECT_URI", "QUICKBOOKS_REALM_ID"],
-    })
-
-# ============================================================
-# END JARVIS OPERATOR PATCH
-# ============================================================

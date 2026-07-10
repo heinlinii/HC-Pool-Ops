@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="card" style="max-width:850px;margin:auto">
+<h1>Jarvis Voice Link</h1>
+<p>Keep this page open on your phone with your AirPods connected. Tap Start once, then speak commands. Your browser sends the words to Jarvis and reads the reply through the active audio device.</p>
+<div style="display:flex;gap:10px;flex-wrap:wrap"><button id="start" class="btn primary">Start Listening</button><button id="stop" class="btn">Stop</button></div>
+<p id="status" style="margin-top:14px">Ready.</p><div id="heard" class="card"></div>
+<script>
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+const statusEl=document.getElementById('status'), heard=document.getElementById('heard');
+let rec=null, keep=false;
+function speak(t){ if(!t)return; speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(t); speechSynthesis.speak(u); }
+async function sendCommand(text){
+  statusEl.textContent='Jarvis is handling it…';
+  const body=new URLSearchParams({command:text});
+  const r=await fetch('/jarvis/action',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body,redirect:'follow'});
+  const msg=r.ok?'Command received. I filed it in Jarvis.':'I could not process that command.';
+  statusEl.textContent=msg; speak(msg);
+}
+if(!SR){statusEl.textContent='This browser does not support live speech recognition. Use Chrome or Edge on your phone.';}
+else{
+ rec=new SR(); rec.continuous=false; rec.interimResults=false; rec.lang='en-US';
+ rec.onresult=e=>{const text=e.results[0][0].transcript; heard.textContent='You said: '+text; sendCommand(text);};
+ rec.onend=()=>{if(keep)setTimeout(()=>rec.start(),600)};
+ rec.onerror=e=>{statusEl.textContent='Voice error: '+e.error};
+ document.getElementById('start').onclick=()=>{keep=true;statusEl.textContent='Listening…';rec.start();};
+ document.getElementById('stop').onclick=()=>{keep=false;rec.stop();statusEl.textContent='Stopped.';};
+}
+</script>
+</section>
+{% endblock %}
